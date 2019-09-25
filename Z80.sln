@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28922.388
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Z80_Core", "Z80_Core\Z80_Core.csproj", "{F1912952-2484-4C19-8137-D0F2BB18BEDA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Z80_Core", "Z80_Core\Z80_Core.csproj", "{F1912952-2484-4C19-8137-D0F2BB18BEDA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Z80_Core_Tests", "Z80_Core_Tests\Z80_Core_Tests.csproj", "{95AE3BEE-40CA-4FCE-87D5-972BF84D9C0F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{F1912952-2484-4C19-8137-D0F2BB18BEDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F1912952-2484-4C19-8137-D0F2BB18BEDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F1912952-2484-4C19-8137-D0F2BB18BEDA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95AE3BEE-40CA-4FCE-87D5-972BF84D9C0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95AE3BEE-40CA-4FCE-87D5-972BF84D9C0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95AE3BEE-40CA-4FCE-87D5-972BF84D9C0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95AE3BEE-40CA-4FCE-87D5-972BF84D9C0F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

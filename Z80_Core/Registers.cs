@@ -35,7 +35,7 @@ namespace Z80.Core
         public byte R { get { return _registerStorage[23]; } set { _registerStorage[23] = value; } }
 
         // program counter
-        public ushort PC { get { return BitConverter.ToUInt16(_registerStorage, 24); } private set { byte[] bytes = BitConverter.GetBytes(value); B = bytes[0]; C = bytes[1]; } } // cannot set value directly
+        public ushort PC { get { return Get16BitValue(24); } private set { Set16BitValue(value, 24); } } // cannot set value directly
 
         public void ExchangeAF()
         {
