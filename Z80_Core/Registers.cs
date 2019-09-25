@@ -21,14 +21,14 @@ namespace Z80.Core
 
         // 16-bit pairs
         public ushort AF { get { return Get16BitValue(0); } } // cannot set value as 16-bit register due to flags, use LD A, x instead
-        public ushort BC { get { return Get16BitValue(2); } set { Set16BitValue(value, 2); } }
-        public ushort DE { get { return Get16BitValue(4); } set { Set16BitValue(value, 4); } }
-        public ushort HL { get { return Get16BitValue(6); } set { Set16BitValue(value, 6); } }
+        public ushort BC { get { return Get16BitValue(2); } set { Set16BitValue(2, value); } }
+        public ushort DE { get { return Get16BitValue(4); } set { Set16BitValue(4, value); } }
+        public ushort HL { get { return Get16BitValue(6); } set { Set16BitValue(6, value); } }
 
         // 16-bit registers
-        public ushort IX { get { return Get16BitValue(16); } set { Set16BitValue(value, 16); } }
-        public ushort IY { get { return Get16BitValue(18); } set { Set16BitValue(value, 18); } }
-        public ushort SP { get { return Get16BitValue(20); } set { Set16BitValue(value, 20); } }
+        public ushort IX { get { return Get16BitValue(16); } set { Set16BitValue(16, value); } }
+        public ushort IY { get { return Get16BitValue(18); } set { Set16BitValue(18, value); } }
+        public ushort SP { get { return Get16BitValue(20); } set { Set16BitValue(20, value); } }
 
         // 8-bit 'other' registers
         public byte I { get { return _registerStorage[22]; } set { _registerStorage[22] = value; } }
@@ -39,14 +39,14 @@ namespace Z80.Core
 
         public void ExchangeAF()
         {
-            SwapPair(0);
+            ExchangePair(0);
         }
 
-        public void Exchange()
+        public void ExchangeAll()
         {
-            for(int i = 0; i<7; i++)
+            for(int i = 0; i < 8; i+=2)
             {
-                SwapPair(i);
+                ExchangePair(i);
             }
         }
 
@@ -55,20 +55,19 @@ namespace Z80.Core
             return BitConverter.ToUInt16(_registerStorage, registerIndex);
         }
 
-        private void Set16BitValue(ushort value, int registerIndex)
+        private void Set16BitValue(int registerIndex, ushort value)
         {
             byte[] bytes = BitConverter.GetBytes(value);
             _registerStorage[registerIndex] = bytes[0]; _registerStorage[registerIndex+1] = bytes[1];
         }
 
-        private void SwapPair(int registerIndex)
+        private void ExchangePair(int registerIndex)
         {
-            byte alt1 = _registerStorage[registerIndex+8];
-            byte alt2 = _registerStorage[registerIndex+9];
-            _registerStorage[registerIndex+8] = _registerStorage[registerIndex];
-            _registerStorage[registerIndex+9] = _registerStorage[registerIndex+1];
-            _registerStorage[registerIndex] = alt1;
-            _registerStorage[registerIndex] = alt2;
+            int altRegisterIndex = registerIndex + 8;
+
+            ushort alternateValue = Get16BitValue(altRegisterIndex);
+            Set16BitValue(altRegisterIndex, Get16BitValue(registerIndex));
+            Set16BitValue(registerIndex, alternateValue);
         }
     }
 }
