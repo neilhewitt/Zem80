@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.28922.388
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Z80_Core", "Z80_Core\Z80_Core.csproj", "{F1912952-2484-4C19-8137-D0F2BB18BEDA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Z80_Core_Tests", "Z80_Core_Tests\Z80_Core_Tests.csproj", "{95AE3BEE-40CA-4FCE-87D5-972BF84D9C0F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Z80_Core_Tests", "Z80_Core_Tests\Z80_Core_Tests.csproj", "{95AE3BEE-40CA-4FCE-87D5-972BF84D9C0F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

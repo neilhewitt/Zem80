@@ -63,46 +63,53 @@ namespace Z80.Core.Tests
         [Test]
         public void CanExchangeRegistersWithAltRegistersAndBack()
         {
-            ushort[] values = new ushort[4];
-            ushort[] altValues = new ushort[4];
-            ushort[] valuesRecovered = new ushort[4];
-            ushort[] altValuesRecovered = new ushort[4];
+            ushort[] values = new ushort[3];
+            ushort[] altValues = new ushort[3];
+            ushort[] valuesRecovered = new ushort[3];
+            ushort[] altValuesRecovered = new ushort[3];
             Random random = new Random();
-            values[0] = (ushort)random.Next(255); // must be a byte value to fit A only
-            altValues[0] = (ushort)random.Next(255);
-            for (int i = 1; i < 4; i++)
+            for (int i = 0; i < 3; i++)
             {
                 values[i] = (ushort)random.Next(ushort.MaxValue);
                 altValues[i] = (ushort)random.Next(ushort.MaxValue);
             }
 
             Processor cpu = new Processor();
-            cpu.Registers.A = BitConverter.GetBytes(values[0])[0]; // can't set AF directly
-            cpu.Registers.BC = values[1];
-            cpu.Registers.DE = values[2];
-            cpu.Registers.HL = values[3];
-           cpu.Registers.ExchangeAll();
-            cpu.Registers.A = BitConverter.GetBytes(altValues[0])[0]; // can't set AF directly
-            cpu.Registers.BC = altValues[1];
-            cpu.Registers.DE = altValues[2];
-            cpu.Registers.HL = altValues[3];
-            cpu.Registers.ExchangeAll();
-            valuesRecovered[0] = cpu.Registers.AF;
-            valuesRecovered[1] = cpu.Registers.BC;
-            valuesRecovered[2] = cpu.Registers.DE;
-            valuesRecovered[3] = cpu.Registers.HL;
-            cpu.Registers.ExchangeAll();
-            altValuesRecovered[0] = cpu.Registers.AF;
-            altValuesRecovered[1] = cpu.Registers.BC;
-            altValuesRecovered[2] = cpu.Registers.DE;
-            altValuesRecovered[3] = cpu.Registers.HL;
+            cpu.Registers.BC = values[0];
+            cpu.Registers.DE = values[1];
+            cpu.Registers.HL = values[2];
+            cpu.Registers.ExchangeBCDEHL();
+            cpu.Registers.BC = altValues[0];
+            cpu.Registers.DE = altValues[1];
+            cpu.Registers.HL = altValues[2];
+            cpu.Registers.ExchangeBCDEHL();
+            valuesRecovered[0] = cpu.Registers.BC;
+            valuesRecovered[1] = cpu.Registers.DE;
+            valuesRecovered[2] = cpu.Registers.HL;
+            cpu.Registers.ExchangeBCDEHL();
+            altValuesRecovered[0] = cpu.Registers.BC;
+            altValuesRecovered[1] = cpu.Registers.DE;
+            altValuesRecovered[2] = cpu.Registers.HL;
 
             bool valuesAreCorrect = true;
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 3; i++)
             {
                 if (values[i] != valuesRecovered[i] || altValues[i] != altValuesRecovered[i]) valuesAreCorrect = false;
             }
             Assert.That(valuesAreCorrect);
+        }
+
+        [Test]
+        public void CanObtainRegisterState()
+        {
+            ushort TEST_VALUE = 37268;
+
+            Processor cpu = new Processor();
+            cpu.Registers.BC = TEST_VALUE;
+            cpu.Registers.HL = TEST_VALUE;
+
+            Registers state = cpu.Registers.Snapshot();
+            Assert.That(state.BC == TEST_VALUE && state.HL == TEST_VALUE);
         }
     }
 }
