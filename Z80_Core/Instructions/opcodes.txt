@@ -332,9 +332,6 @@ case: "ED 5B nn nn"          // LD DE,(nn)
 case: "ED 47"                // LD I,A
 case: "ED 4F"                // LD R,A
 case: "ED 7B nn nn"          // LD SP,(nn)
-case: "ED C1+8*r"            // MULUB A,r
-case: "ED C3"                // MULUW HL,BC
-case: "ED F3"                // MULUW HL,SP
 case: "ED 79"                // OUT (C),A
 case: "ED 41"                // OUT (C),B
 case: "ED 49"                // OUT (C),C

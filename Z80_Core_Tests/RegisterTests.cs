@@ -6,7 +6,7 @@ using Z80;
 namespace Z80.Core.Tests
 { 
     [TestFixture]
-    public class Test
+    public class RegisterTests
     {
         [Test]
         public void CanSetAndRead8BitRegisterValue()
