@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class NoArgumentInstructionWithOpcodeOffset : InstructionBase, IOpcodeOffset
+    public class NoArgumentInstructionWithOpcodeOffset : Instruction, IOpcodeOffset
     {
         public byte Offset { get; private set; }
 

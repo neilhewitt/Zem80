@@ -10,14 +10,14 @@ namespace Z80.Core
 
         public byte ReadByteAt(uint address)
         {
-            IMemory memory = _map.MemoryFor(address);
-            return memory?.ReadByteAt(address) ?? 255; // default value if page is unallocated
+            IMemoryLocation memory = _map.MemoryFor(address);
+            return memory?.ReadByteAt(address) ?? 255; // default value if address is unallocated
         }
 
         public ushort ReadWordAt(uint address)
         {
-            IMemory memory = _map.MemoryFor(address);
-            return memory?.ReadWordAt(address) ?? 65535; // default value if page is unallocated
+            IMemoryLocation memory = _map.MemoryFor(address);
+            return memory?.ReadWordAt(address) ?? 65535; // default value if address is unallocated
         }
 
         public MemoryReader(MemoryMap map)

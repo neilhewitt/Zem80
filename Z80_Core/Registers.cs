@@ -5,12 +5,12 @@ using System.Linq;
 
 namespace Z80.Core
 {
-    public class Registers
+    public class Registers : IRegisters
     {
         private byte[] _registers = new byte[26];
         private byte _AFOffset = 0;
         private byte _BCDEHLOffset = 0;
-        
+
         // 8-bit registers
         public byte A { get { return _registers[_AFOffset]; } set { _registers[_AFOffset] = value; } }
         public byte F { get { return _registers[_AFOffset + 1]; } private set { _registers[_AFOffset + 1] = value; } } // flags register: cannot be directly set
@@ -66,7 +66,7 @@ namespace Z80.Core
         private void Set16BitValue(int registerIndex, ushort value)
         {
             byte[] bytes = BitConverter.GetBytes(value);
-            _registers[registerIndex] = bytes[0]; _registers[registerIndex+1] = bytes[1];
+            _registers[registerIndex] = bytes[0]; _registers[registerIndex + 1] = bytes[1];
         }
 
         private void ExchangePair(int registerIndex)

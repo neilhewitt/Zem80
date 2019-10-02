@@ -5,21 +5,21 @@ using System.Linq;
 
 namespace Z80.Core
 {
-    public class MemoryMap
+    public class MemoryMap : IMemoryMap
     {
         public const ushort PAGE_SIZE_IN_KILOBYTES = 1;
 
-        private Dictionary<uint, IMemory> _pages = new Dictionary<uint, IMemory>();
+        private Dictionary<uint, IMemoryLocation> _pages = new Dictionary<uint, IMemoryLocation>();
 
         public uint SizeInKilobytes { get; private set; }
-        
-        public IMemory MemoryFor(uint address)
+
+        public IMemoryLocation MemoryFor(uint address)
         {
-            _pages.TryGetValue(PageNumberFromAddress(address), out IMemory memoryForPage);
+            _pages.TryGetValue(PageNumberFromAddress(address), out IMemoryLocation memoryForPage);
             return memoryForPage;
         }
 
-        public void Map(uint startAddress, uint sizeInKilobytes, IMemory memory, bool overwriteMappedPages = false)
+        public void Map(uint startAddress, uint sizeInKilobytes, IMemoryLocation memory, bool overwriteMappedPages = false)
         {
             if (startAddress % 1024 > 0)
             {
@@ -61,6 +61,6 @@ namespace Z80.Core
         public MemoryMap(uint sizeInKilobytes = 64)
         {
             SizeInKilobytes = sizeInKilobytes;
-        }        
+        }
     }
 }

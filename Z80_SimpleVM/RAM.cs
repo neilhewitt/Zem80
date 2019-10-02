@@ -5,7 +5,7 @@ using Z80.Core;
 
 namespace Z80.SimpleVM
 {
-    public class RAM : IMemory
+    public class RAM : IMemoryLocation
     {
         public bool ReadOnly => throw new NotImplementedException();
 

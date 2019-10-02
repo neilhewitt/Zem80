@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class SingleByteArgumentInstruction : InstructionBase, ISingleByteArgument
+    public class SingleByteArgumentInstruction : Instruction, ISingleByteArgument
     {
         public byte Argument { get; set; }
     }

@@ -313,7 +313,7 @@ case: "CB 38+r"              // SRL r
 case: "ED 4A"                // ADC HL,BC
 case: "ED 5A"                // ADC HL,DE
 case: "ED 6A"                // ADC HL,HL
-case: "ED 7A"                // ADC HL,SP
+case: "ED 7A"                // ADC HL,S
 case: "ED 78"                // IN A,(C)
 case: "ED 40"                // IN B,(C)
 case: "ED 48"                // IN C,(C)

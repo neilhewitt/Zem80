@@ -10,7 +10,7 @@ namespace Z80.Core
 
         public void WriteByteAt(uint address, byte value)
         {
-            IMemory memory = _map.MemoryFor(address);
+            IMemoryLocation memory = _map.MemoryFor(address);
             if (memory == null || memory.ReadOnly)
             {
                 throw new Exception("Readonly"); // TODO: custom exception type
@@ -21,7 +21,7 @@ namespace Z80.Core
 
         public void WriteWordAt(uint address, ushort value)
         {
-            IMemory memory = _map.MemoryFor(address);
+            IMemoryLocation memory = _map.MemoryFor(address);
             if (memory == null || memory.ReadOnly)
             {
                 throw new Exception("Readonly"); // TODO: custom exception type

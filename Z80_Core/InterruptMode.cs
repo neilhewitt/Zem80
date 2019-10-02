@@ -4,7 +4,10 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class NoArgumentInstruction : Instruction
-    {
+    public enum InterruptMode
+    { 
+        Zero,
+        One,
+        Two
     }
 }
