@@ -14,9 +14,9 @@ namespace Z80.Core
         public event EventHandler OnBeforeInstructionDataFetched;
         public event EventHandler<byte[]>  OnAfterInstructionDataFetched;
         public event EventHandler OnBeforeDecode;
-        public event EventHandler<IInstruction> OnInstructionDecoded;
-        public event EventHandler<IInstruction> OnBeforeInstructionExecuted;
-        public event EventHandler<IInstruction> OnAfterInstructionExecuted;
+        public event EventHandler<Instruction> OnInstructionDecoded;
+        public event EventHandler<Instruction> OnBeforeInstructionExecuted;
+        public event EventHandler<Instruction> OnAfterInstructionExecuted;
         public event EventHandler OnEndInstructionCycle;
 
         public void Start()

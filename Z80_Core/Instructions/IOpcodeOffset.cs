@@ -7,6 +7,6 @@ namespace Z80.Core
     public interface IOpcodeOffset
     {
         byte Offset { get; }
-        OpcodeOffsetType OffsetType { get; }
+        OffsetType OffsetType { get; }
     }
 }

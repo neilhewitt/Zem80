@@ -24,7 +24,8 @@ namespace Formatter
             //        { "0xFD 0xCB", new Dictionary<string, string>() },
             //    };
 
-            List<string> codeLines = new List<string>();
+            //Dictionary<string, List<string>> codeLines = new Dictionary<string, List<string>>();
+            List<string> output = new List<string>();
 
             foreach (string line in lines.Skip(1))
             {
@@ -99,9 +100,9 @@ namespace Formatter
                         // special case
                         if ((opcodeParts[0] == "DD" || opcodeParts[0] == "FD") && opcodeParts[1] == "CB")
                         {
-                            opcodePrefix = opcodeParts[0] + " 0x" + opcodeParts[1];
+                            opcodePrefix = opcodeParts[0] + " " + opcodeParts[1];
                             opcodeByte = opcodeParts[0] + " CB ";
-                            opcodeArgument1 = "o"; 
+                            opcodeArgument1 = "o";
 
                             if (opcodeParts[3].Contains("+"))
                             {
@@ -141,17 +142,100 @@ namespace Formatter
                         break;
                 }
 
-                if (opcodePattern.Length > 0) opcodePattern = "+" + opcodePattern;
+                if (opcodePattern.Length > 0)
+                {
+                    int index = opcodeByte.LastIndexOf(' ');
+                    if (index == -1) index = 0;
+                    string opcodeRaw = opcodeByte.Substring(index).Replace(" ", "");
+
+                    opcodePattern = "+" + opcodePattern;
+                    if (opcodePattern == "+r")
+                    {
+                        byte opcodeBase = byte.Parse(opcodeRaw, System.Globalization.NumberStyles.HexNumber);
+                        string code = "";
+                        for (byte b = 0; b < 8; b++)
+                        {
+                            opcodeBase = opcodeBase.SetBits(0, b.GetBits(0, 3));
+                            if (b != 6)
+                            {
+                                code = "{ (\"" + opcodePrefix + "\", 0x" + opcodeBase.ToString("X2") + "), 0x" + opcodeRaw + "},";
+                                output.Add(code);
+                            }
+                        }
+                    }
+                    else if (opcodePattern == "+p" || opcodePattern == "+q")
+                    {
+                        byte opcodeBase = byte.Parse(opcodeRaw, System.Globalization.NumberStyles.HexNumber);
+                        string code = "";
+                        for (byte b = 4; b < 6; b++)
+                        {
+                            opcodeBase = opcodeBase.SetBits(0, b.GetBits(0, 3));
+                            code = "{ (\"" + opcodePrefix + "\", 0x" + opcodeBase.ToString("X2") + "), 0x" + opcodeRaw + "},";
+                            output.Add(code);
+                        }
+                    }
+                    else if (opcodePattern == "+8*b" || opcodePattern == "+8*p" || opcodePattern == "+8*q")
+                    {
+                        byte opcodeBase = byte.Parse(opcodeRaw, System.Globalization.NumberStyles.HexNumber);
+                        string code = "";
+                        for (byte b = 0; b < 8; b++)
+                        {
+                            opcodeBase = opcodeBase.SetBits(3, b.GetBits(0, 3));
+                            code = "{ (\"" + opcodePrefix + "\", 0x" + (opcodeBase).ToString("X2") + "), 0x" + opcodeRaw + "}, ";
+                            output.Add(code);
+                        }
+                    }
+                    else if (opcodePattern == "+8*b+r")
+                    {
+                        byte opcodeBase = byte.Parse(opcodeRaw, System.Globalization.NumberStyles.HexNumber);
+                        string code = "";
+                        for (byte r = 0; r < 8; r++)
+                        {
+                            if (r != 6)
+                            {
+                                opcodeBase = opcodeBase.SetBits(0, r.GetBits(0, 3));
+                                for (byte b = 0; b < 8; b++)
+                                {
+                                    opcodeBase = opcodeBase.SetBits(3, b.GetBits(0, 3));
+                                    code = "{ (\"" + opcodePrefix + "\", 0x" + (opcodeBase).ToString("X2") + "), 0x" + opcodeRaw + "}, ";
+                                    output.Add(code);
+                                }
+                            }
+                        }
+                    }
+
+                }
+
+                opcodeByte = opcodeByte.PadLeft(2, '0');
+
+                File.WriteAllLines("..\\..\\..\\list.txt", output.Distinct());
+
 
                 // { 0x00, new InstructionInfo("ADC A,(HL)", 0x8E, "", "", "", 1, "7") }
-                string outputLine = "{ \"" + opcodePrefix + "\", new InstructionInfo(\"" + instruction
-                     + "\", \"" + opcodeByte + "\", \"" + opcodeArgument1 + "\", \"" + opcodeArgument2
-                     + "\", \"" + opcodePattern + "\", \"" + size + "\", \"" + timing + "\") },";
+                //string outputLine = "{ \"" + opcodeByte + "\", new InstructionInfo(\"" + opcodePrefix + "\",\"" + instruction
+                //     + "\", \"" + opcodeByte + "\", \"" + opcodeArgument1 + "\", \"" + opcodeArgument2
+                //     + "\", \"" + opcodePattern + "\", \"" + size + "\", \"" + timing + "\") },";
 
                 //opcodeSets["0x" + opcodePrefix].Add(opcodeByte, outputLine);
 
-                codeLines.Add(outputLine);
-                File.WriteAllLines("..\\..\\..\\code.txt", codeLines.OrderBy(x => x));
+                //if (!codeLines.ContainsKey(opcodePrefix))
+                //{
+                //    codeLines.Add(opcodePrefix, new List<string>());
+                //}
+
+                //codeLines[opcodePrefix].Add(outputLine);
+
+                //foreach (string key in codeLines.Keys)
+                //{
+                //    foreach(string content in codeLines[key])
+                //    {
+
+
+                //    }
+                //}
+
+
+
             }
         }
     }

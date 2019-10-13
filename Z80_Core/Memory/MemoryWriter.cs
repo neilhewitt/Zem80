@@ -19,6 +19,20 @@ namespace Z80.Core
             memory.WriteByteAt(address, value);
         }
 
+        public void WriteBytesAt(uint address, params byte[] bytes)
+        {
+            IMemoryLocation memory = _map.MemoryFor(address);
+            if (memory == null || memory.ReadOnly)
+            {
+                throw new Exception("Readonly"); // TODO: custom exception type
+            }
+
+            for (uint i = 0; i < bytes.Length; i++)
+            {
+                memory.WriteByteAt(address + i, bytes[i]);
+            }
+        }
+
         public void WriteWordAt(uint address, ushort value)
         {
             IMemoryLocation memory = _map.MemoryFor(address);

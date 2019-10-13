@@ -4,7 +4,7 @@
     {
         uint SizeInKilobytes { get; }
 
-        void Map(uint startAddress, uint sizeInKilobytes, IMemoryLocation memory, bool overwriteMappedPages = false);
+        void Map(IMemoryLocation memory, bool overwriteMappedPages = false);
         IMemoryLocation MemoryFor(uint address);
     }
 }

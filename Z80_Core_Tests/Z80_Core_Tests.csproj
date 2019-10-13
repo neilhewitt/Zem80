@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <AssemblyName>Z80.Core.Tests</AssemblyName>
-    <RootNamespace>Z80_Core.Tests</RootNamespace>
+    <RootNamespace>Z80.Core.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Z80_Core\Z80_Core.csproj" />
+    <ProjectReference Include="..\Z80_SimpleVM\Z80_SimpleVM.csproj" />
   </ItemGroup>
 
 </Project>

@@ -60,13 +60,18 @@ namespace Z80.Core
 
         private ushort Get16BitValue(int registerIndex)
         {
-            return BitConverter.ToUInt16(_registers, registerIndex);
+            return (ushort)((_registers[registerIndex + 1] * 256) + _registers[registerIndex]);
         }
 
         private void Set16BitValue(int registerIndex, ushort value)
         {
             byte[] bytes = BitConverter.GetBytes(value);
-            _registers[registerIndex] = bytes[0]; _registers[registerIndex + 1] = bytes[1];
+            bool isLittleEndian = BitConverter.IsLittleEndian;
+            // storage of register data is always in little-endian format (as the Z80 is little-endian, as is x86)
+            // but this code *could* be running on a big-ending architecture and the ushort value will come out
+            // in reverse order...
+
+            _registers[registerIndex] = bytes[isLittleEndian ? 0 : 1]; _registers[registerIndex + 1] = bytes[isLittleEndian ? 1 : 0];
         }
 
         private void ExchangePair(int registerIndex)

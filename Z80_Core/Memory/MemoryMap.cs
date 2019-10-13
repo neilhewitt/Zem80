@@ -19,8 +19,11 @@ namespace Z80.Core
             return memoryForPage;
         }
 
-        public void Map(uint startAddress, uint sizeInKilobytes, IMemoryLocation memory, bool overwriteMappedPages = false)
+        public void Map(IMemoryLocation memory, bool overwriteMappedPages = false)
         {
+            uint startAddress = memory.StartAddress;
+            uint sizeInKilobytes = memory.SizeInKilobytes;
+
             if (startAddress % 1024 > 0)
             {
                 throw new Exception("Start address must be on a page boundary (divisible by 1024)."); // TODO: custom exception

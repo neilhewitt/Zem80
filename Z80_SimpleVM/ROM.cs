@@ -5,32 +5,23 @@ using Z80.Core;
 
 namespace Z80.SimpleVM
 {
-    public class ROM : IMemoryLocation
+    public class ROM : RAM
     {
-        public bool ReadOnly => throw new NotImplementedException();
+        new public bool ReadOnly => true;
 
-        public uint startAddress => throw new NotImplementedException();
-
-        public uint sizeInKilobytes => throw new NotImplementedException();
-
-        public byte ReadByteAt(uint address)
+        public override void WriteByteAt(uint address, byte value)
         {
-            throw new NotImplementedException();
+            throw new InvalidOperationException();
         }
 
-        public ushort ReadWordAt(uint address)
+        public override void WriteWordAt(uint address, ushort value)
         {
-            throw new NotImplementedException();
+            throw new InvalidOperationException();
         }
 
-        public void WriteByteAt(uint address, byte value)
+        public ROM(uint startAddress, uint sizeInKilobytes)
+            : base(startAddress, sizeInKilobytes)
         {
-            throw new NotImplementedException();
-        }
-
-        public void WriteWordAt(uint address, ushort value)
-        {
-            throw new NotImplementedException();
         }
     }
 }

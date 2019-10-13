@@ -7,30 +7,56 @@ namespace Z80.SimpleVM
 {
     public class RAM : IMemoryLocation
     {
-        public bool ReadOnly => throw new NotImplementedException();
+        private byte[] _memory;
 
-        public uint startAddress => throw new NotImplementedException();
+        public uint StartAddress { get; private set; }
 
-        public uint sizeInKilobytes => throw new NotImplementedException();
+        public uint SizeInKilobytes { get; private set; }
+
+        public bool ReadOnly => false;
 
         public byte ReadByteAt(uint address)
         {
-            throw new NotImplementedException();
+            Check(address);
+            return _memory[address - StartAddress];
         }
 
         public ushort ReadWordAt(uint address)
         {
-            throw new NotImplementedException();
+            Check(address);
+            uint relativeAddress = address - StartAddress;
+            return (ushort)((_memory[relativeAddress + 1] * 256) + _memory[relativeAddress]); // always little-endian
         }
 
-        public void WriteByteAt(uint address, byte value)
+        public virtual void WriteByteAt(uint address, byte value)
         {
-            throw new NotImplementedException();
+            Check(address);
+            _memory[address - StartAddress] = value;
         }
 
-        public void WriteWordAt(uint address, ushort value)
+        public virtual void WriteWordAt(uint address, ushort value)
         {
-            throw new NotImplementedException();
+            Check(address);
+            uint relativeAddress = address - StartAddress;
+            byte msb = (byte)(value / 256); // most significant byte (little-endian regardless of architecture)
+            byte lsb = (byte)(value - msb); // least signifcant byte ("")
+            _memory[relativeAddress] = lsb;
+            _memory[relativeAddress + 1] = msb;
+        }
+
+        private void Check(uint address)
+        {
+            if (address < StartAddress || address >= (StartAddress + (SizeInKilobytes * 1024)))
+            {
+                throw new IndexOutOfRangeException("Specified address is outside this block."); // TODO: proper exception handling
+            }
+        }
+
+        public RAM(uint startAddress, uint sizeInKilobytes)
+        {
+            _memory = new byte[sizeInKilobytes * 1024];
+            SizeInKilobytes = sizeInKilobytes;
+            StartAddress = startAddress;
         }
     }
 }

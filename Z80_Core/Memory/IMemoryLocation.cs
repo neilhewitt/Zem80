@@ -6,8 +6,8 @@ namespace Z80.Core
 {
     public interface IMemoryLocation
     {
-        uint startAddress { get; }
-        uint sizeInKilobytes { get; }
+        uint StartAddress { get; }
+        uint SizeInKilobytes { get; }
         bool ReadOnly { get; }
         byte ReadByteAt(uint address);
         ushort ReadWordAt(uint address);
