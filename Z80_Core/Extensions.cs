@@ -17,6 +17,16 @@ namespace Z80.Core
             bits.SetBits(startIndex, numberOfBits, false);
             return bits.Value;
         }
+        public static bool[] GetBits(this byte input, int startIndex, int numberOfBits)
+        {
+            ByteBits bits = new ByteBits(input);
+            bool[] output = new bool[numberOfBits];
+            for (int i = startIndex; i < startIndex + numberOfBits; i++)
+            {
+                output[i - startIndex] = bits[i];
+            }
+            return output;
+        }
 
         public static byte SetBits(this byte input, int startIndex, params bool[] bitsToSet)
         {
@@ -39,17 +49,6 @@ namespace Z80.Core
         {
             ByteBits bits = new ByteBits(input);
             return bits[bitIndex];
-        }
-
-        public static bool[] GetBits(this byte input, int startIndex, int numberOfBits)
-        {
-            ByteBits bits = new ByteBits(input);
-            bool[] output = new bool[numberOfBits];
-            for (int i = startIndex; i < startIndex + numberOfBits; i++)
-            {
-                output[i - startIndex] = bits[i];
-            }
-            return output;
-        }
+        }        
     }
 }

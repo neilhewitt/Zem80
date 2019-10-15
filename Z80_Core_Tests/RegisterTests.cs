@@ -13,10 +13,10 @@ namespace Z80.Core.Tests
         {
             const byte TEST_VALUE = 128;
 
-            Processor cpu = new Processor();
-            cpu.Registers.A = TEST_VALUE;
+            Registers registers = new Registers();
+            registers.A = TEST_VALUE;
 
-            Assert.That(cpu.Registers.A == TEST_VALUE);
+            Assert.That(registers.A == TEST_VALUE);
         }
 
         [Test]
@@ -24,10 +24,10 @@ namespace Z80.Core.Tests
         {
             const ushort TEST_VALUE = 31724;
 
-            Processor cpu = new Processor();
-            cpu.Registers.BC = TEST_VALUE;
+            Registers registers = new Registers();
+            registers.BC = TEST_VALUE;
 
-            Assert.That(cpu.Registers.BC == TEST_VALUE);
+            Assert.That(registers.BC == TEST_VALUE);
         }
 
         [Test]
@@ -35,11 +35,11 @@ namespace Z80.Core.Tests
         {
             const ushort TEST_VALUE = 47881;
 
-            Processor cpu = new Processor();
-            cpu.Registers.BC = TEST_VALUE;
+            Registers registers = new Registers();
+            registers.BC = TEST_VALUE;
             byte[] bytes = BitConverter.GetBytes(TEST_VALUE);
 
-            Assert.That(cpu.Registers.BC == TEST_VALUE && cpu.Registers.B == bytes[0] && cpu.Registers.C == bytes[1]);
+            Assert.That(registers.BC == TEST_VALUE && registers.B == bytes[0] && registers.C == bytes[1]);
         }
 
         [Test]
@@ -48,14 +48,14 @@ namespace Z80.Core.Tests
             const byte AF_VALUE = 66;
             const byte ALT_AF_VALUE = 99;
 
-            Processor cpu = new Processor();
-            cpu.Registers.A = AF_VALUE;
-            cpu.Registers.ExchangeAF();
-            cpu.Registers.A = ALT_AF_VALUE;
-            cpu.Registers.ExchangeAF();
-            byte af = cpu.Registers.A;
-            cpu.Registers.ExchangeAF();
-            byte altAf = cpu.Registers.A;
+            Registers registers = new Registers();
+            registers.A = AF_VALUE;
+            registers.ExchangeAF();
+            registers.A = ALT_AF_VALUE;
+            registers.ExchangeAF();
+            byte af = registers.A;
+            registers.ExchangeAF();
+            byte altAf = registers.A;
 
             Assert.That(af == AF_VALUE && altAf == ALT_AF_VALUE);
         }
@@ -74,22 +74,22 @@ namespace Z80.Core.Tests
                 altValues[i] = (ushort)random.Next(ushort.MaxValue);
             }
 
-            Processor cpu = new Processor();
-            cpu.Registers.BC = values[0];
-            cpu.Registers.DE = values[1];
-            cpu.Registers.HL = values[2];
-            cpu.Registers.ExchangeBCDEHL();
-            cpu.Registers.BC = altValues[0];
-            cpu.Registers.DE = altValues[1];
-            cpu.Registers.HL = altValues[2];
-            cpu.Registers.ExchangeBCDEHL();
-            valuesRecovered[0] = cpu.Registers.BC;
-            valuesRecovered[1] = cpu.Registers.DE;
-            valuesRecovered[2] = cpu.Registers.HL;
-            cpu.Registers.ExchangeBCDEHL();
-            altValuesRecovered[0] = cpu.Registers.BC;
-            altValuesRecovered[1] = cpu.Registers.DE;
-            altValuesRecovered[2] = cpu.Registers.HL;
+            Registers registers = new Registers();
+            registers.BC = values[0];
+            registers.DE = values[1];
+            registers.HL = values[2];
+            registers.ExchangeBCDEHL();
+            registers.BC = altValues[0];
+            registers.DE = altValues[1];
+            registers.HL = altValues[2];
+            registers.ExchangeBCDEHL();
+            valuesRecovered[0] = registers.BC;
+            valuesRecovered[1] = registers.DE;
+            valuesRecovered[2] = registers.HL;
+            registers.ExchangeBCDEHL();
+            altValuesRecovered[0] = registers.BC;
+            altValuesRecovered[1] = registers.DE;
+            altValuesRecovered[2] = registers.HL;
 
             bool valuesAreCorrect = true;
             for (int i = 0; i < 3; i++)
@@ -104,11 +104,11 @@ namespace Z80.Core.Tests
         {
             ushort TEST_VALUE = 37268;
 
-            Processor cpu = new Processor();
-            cpu.Registers.BC = TEST_VALUE;
-            cpu.Registers.HL = TEST_VALUE;
+            Registers registers = new Registers();
+            registers.BC = TEST_VALUE;
+            registers.HL = TEST_VALUE;
 
-            Registers state = cpu.Registers.Snapshot();
+            Registers state = registers.Snapshot();
             Assert.That(state.BC == TEST_VALUE && state.HL == TEST_VALUE);
         }
     }

@@ -403,10 +403,10 @@ namespace Z80.Core
                 }
         };
 
-        public static InstructionInfo For(byte opcode, params byte[] prefix)
+        public static InstructionInfo Find(byte opcode, params byte[] prefix)
         {
             string prefixKey = String.Concat(prefix.Select(p => p.ToHexString()));
-            opcode = OpcodeBase.For(opcode, prefix);
+            opcode = Core.OpcodeFamily.RootOpcodeFrom(opcode, prefix);
             string opcodeKey = opcode.ToHexString();
             if (prefixKey.Length > 2)
             {
@@ -417,33 +417,90 @@ namespace Z80.Core
             {
                 if (_opcodeSets[prefixKey].ContainsKey(opcodeKey))
                 {
-                    return _opcodeSets[prefixKey][opcodeKey];
+                    InstructionInfo info = _opcodeSets[prefixKey][opcodeKey];
+                    info.Opcode = opcode; // have to set this here since we don't know the *actual* opcode until this point
+                    return info;
                 }
             }
 
             throw new Exception("Instruction not found. Are you in a data block?"); // TODO: custom exception handling
         }
 
+        public static InstructionInfo NOP => _opcodeSets["00"]["00"];
+
         public InstructionPrefix Prefix { get; private set; }
         public string Mnemonic { get; private set; }
-        public byte BaseOpcode { get; private set; }
-        public string Argument1 { get; private set; }
-        public string Argument2 { get; private set; }
-        public string Modifier { get; private set; }
-        public byte Size { get; private set; }
-        public string Timing { get; private set; }
-        
-        public InstructionInfo(string prefix, string name, string baseOpcode, string argument1, string argument2, string pattern, string size, string timing)
+        public byte Opcode { get; private set; }
+        public byte OpcodeFamily { get; private set; }
+        public ArgumentType Argument1 { get; private set; }
+        public ArgumentType Argument2 { get; private set; }
+        public ModifierType Modifier { get; private set; }
+        public byte SizeInBytes { get; private set; }
+        public byte ClockCycles { get; private set; }
+        public byte? ClockCyclesWhenTrue { get; private set; }
+
+        private ArgumentType GetArgumentFromString(string description)
+        {
+            return description switch
+            {
+                "o" => ArgumentType.Displacement,
+                "n" => ArgumentType.Immediate,
+                "nn" => ArgumentType.ImmediateWord,
+                _ => ArgumentType.None
+            };
+        }
+
+        private ModifierType GetModifierFromString(string description)
+        {
+            return description switch
+            {
+                "+r" => ModifierType.Register,
+                "+8*b" => ModifierType.Bit,
+                "+8*b+r" => ModifierType.Bit | ModifierType.Register,
+                "+p" => ModifierType.IndexRegister,
+                "+q" => ModifierType.IndexRegister,
+                "+8*p" => ModifierType.IndexRegisterHigh,
+                "+8*q" => ModifierType.IndexRegisterHigh,
+                _ => ModifierType.None
+            };
+        }
+
+        private InstructionInfo(string prefix, string name, string opcodeFamily, string argument1, string argument2, string modifier, string size, string timing)
         {
             Prefix = prefix == "00" ? InstructionPrefix.Unprefixed : Enum.Parse<InstructionPrefix>(prefix);
-            if (baseOpcode.StartsWith("DDCB") || baseOpcode.StartsWith("FDCB")) baseOpcode = baseOpcode.Substring(5);
-
+            if (opcodeFamily.StartsWith("DDCB") || opcodeFamily.StartsWith("FDCB")) opcodeFamily = opcodeFamily.Substring(5);
+            
             Mnemonic = name;
-            Argument1 = argument1;
-            Argument2 = argument2;
-            Modifier = pattern;
-            Size = byte.Parse(size, System.Globalization.NumberStyles.HexNumber);
-            Timing = timing;
+            OpcodeFamily = byte.Parse(opcodeFamily, System.Globalization.NumberStyles.HexNumber);
+            Argument1 = GetArgumentFromString(argument1);
+            Argument2 = GetArgumentFromString(argument2);
+            Modifier = GetModifierFromString(modifier);
+            SizeInBytes = byte.Parse(size, System.Globalization.NumberStyles.HexNumber);
+
+            string[] timingParts = timing.Split('/');
+            ClockCycles = byte.Parse(timingParts[0]);
+            if (timingParts.Length > 1)
+            {
+                ClockCyclesWhenTrue = byte.Parse(timingParts[1]);
+            }
         }
+    }
+
+    public enum ArgumentType
+    {
+        None,
+        Displacement,
+        Immediate,
+        ImmediateWord
+    }
+
+    [Flags]
+    public enum ModifierType
+    {
+        None,
+        Register,
+        Bit,
+        IndexRegister,
+        IndexRegisterHigh
     }
 }

@@ -13,7 +13,7 @@ namespace Z80.Core
 
         // 8-bit registers
         public byte A { get { return _registers[_AFOffset]; } set { _registers[_AFOffset] = value; } }
-        public byte F { get { return _registers[_AFOffset + 1]; } private set { _registers[_AFOffset + 1] = value; } } // flags register: cannot be directly set
+        public byte F { get { return _registers[_AFOffset + 1]; } set { _registers[_AFOffset + 1] = value; } } // flags register
         public byte B { get { return _registers[_BCDEHLOffset + 2]; } set { _registers[_BCDEHLOffset + 2] = value; } }
         public byte C { get { return _registers[_BCDEHLOffset + 3]; } set { _registers[_BCDEHLOffset + 3] = value; } }
         public byte D { get { return _registers[_BCDEHLOffset + 4]; } set { _registers[_BCDEHLOffset + 4] = value; } }
@@ -41,7 +41,7 @@ namespace Z80.Core
         public byte R { get { return _registers[23]; } set { _registers[23] = value; } }
 
         // program counter
-        public ushort PC { get { return Get16BitValue(24); } private set { Set16BitValue(value, 24); } } // program counter - cannot set value directly
+        public ushort PC { get { return Get16BitValue(24); } set { Set16BitValue(24, value); } } // program counter
 
         public void ExchangeAF()
         {
@@ -68,19 +68,11 @@ namespace Z80.Core
             byte[] bytes = BitConverter.GetBytes(value);
             bool isLittleEndian = BitConverter.IsLittleEndian;
             // storage of register data is always in little-endian format (as the Z80 is little-endian, as is x86)
-            // but this code *could* be running on a big-ending architecture and the ushort value will come out
-            // in reverse order...
+            // but this code *could* be running on a big-endian architecture and the ushort value will come out
+            // in reverse order... so set the bytes directly
 
-            _registers[registerIndex] = bytes[isLittleEndian ? 0 : 1]; _registers[registerIndex + 1] = bytes[isLittleEndian ? 1 : 0];
-        }
-
-        private void ExchangePair(int registerIndex)
-        {
-            int altRegisterIndex = registerIndex + 8;
-
-            ushort alternateValue = Get16BitValue(altRegisterIndex);
-            Set16BitValue(altRegisterIndex, Get16BitValue(registerIndex));
-            Set16BitValue(registerIndex, alternateValue);
+            _registers[registerIndex] = bytes[isLittleEndian ? 0 : 1]; 
+            _registers[registerIndex + 1] = bytes[isLittleEndian ? 1 : 0];
         }
 
         public Registers()

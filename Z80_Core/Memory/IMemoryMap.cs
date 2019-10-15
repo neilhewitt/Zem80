@@ -4,7 +4,7 @@
     {
         uint SizeInKilobytes { get; }
 
-        void Map(IMemoryLocation memory, bool overwriteMappedPages = false);
-        IMemoryLocation MemoryFor(uint address);
+        void Map(IMemorySegment memory, bool overwriteMappedPages = false);
+        IMemorySegment MemoryFor(uint address);
     }
 }

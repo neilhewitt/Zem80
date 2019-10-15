@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Text;
 using Z80.Core;
 
-namespace Z80.SimpleVM
+namespace Z80.Core
 {
-    public class RAM : IMemoryLocation
+    public class RAM : IMemorySegment
     {
         private byte[] _memory;
 

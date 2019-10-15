@@ -8,127 +8,117 @@ namespace Z80.Core
 {
     public partial class InstructionDecoder
     {
-        public Instruction Decode(MemoryReader memory, ushort address, out InstructionData data)
+        public InstructionInfo Decode(byte[] instruction, ushort address, out InstructionData data)
         {
             byte opcode = 0x00;
-            byte[] bytes = memory.ReadBytesAt(address, 4); // read next 4 bytes (max size is 4-byte instruction opcode)
+            data = new InstructionData();
 
-            // special case - sequences of DD or FD count as NOP until the final DD / FD
-            while ((bytes[0] == 0xDD && bytes[1] == 0xDD) || (bytes[0] == 0xFD && bytes[1] == 0xFD))
+            // special case - sequences of DD or FD (uniform or mixed) count as NOP until the final DD / FD
+            if ((instruction[0] == 0xDD || instruction[0] == 0xFD) && (instruction[1] == 0xDD || instruction[1] == 0xFD))
             {
-                address++;
-                bytes = memory.ReadBytesAt(address, 4);
+                return InstructionInfo.NOP;
             }
 
-            byte prefix = bytes[0];
+            byte prefix = instruction[0];
 
-            data = new InstructionData();
             data.IndexIX = prefix == 0xDD;
             data.IndexIY = prefix == 0xFD;
 
-            if (prefix == 0xCB || ((prefix == 0xDD || prefix == 0xFD) && bytes[1] == 0xCB))
+            if (prefix == 0xCB || ((prefix == 0xDD || prefix == 0xFD) && instruction[1] == 0xCB))
             {
                 // extended instructions (including double-prefix 'DD CB' and 'FD CD')
-                bool extendedIndexed = bytes[1] == 0xCB;
-                opcode = extendedIndexed ? bytes[3] : bytes[1];
+                bool doubleBytePrefixed = instruction[1] == 0xCB;
+                opcode = doubleBytePrefixed ? instruction[3] : instruction[1];
 
-                InstructionInfo info = extendedIndexed ? 
-                    InstructionInfo.For(opcode, bytes[0], bytes[1]) : 
-                    InstructionInfo.For(opcode, bytes[0]);
+                InstructionInfo info = doubleBytePrefixed ?
+                    InstructionInfo.Find(opcode, instruction[0], instruction[1]) :
+                    InstructionInfo.Find(opcode, instruction[0]);
 
-                Instruction instruction = Instruction.Build(opcode, info);
-
-                if (info.Modifier.Contains("+r"))
+                if ((info.Modifier & ModifierType.Register) == ModifierType.Register) // +r
                 {
                     data.RegisterIndex = GetRegisterIndex(opcode);
                 }
 
-                if (info.Modifier.Contains("+b"))
+                if ((info.Modifier & ModifierType.Bit) == ModifierType.Bit) // +8*b
                 {
                     data.BitIndex = GetBitIndex(opcode);
                 }
 
-                if (info.Argument1 == "o")
+                if (info.Argument1 == ArgumentType.Displacement)
                 {
-                    data.Displacement = bytes[2];
+                    data.Displacement = instruction[2];
                 }
 
-                return instruction;
+                return info;
             }
             else if (prefix == 0xED)
             {
                 // other extended instructions
-                opcode = bytes[1];
-                InstructionInfo info = InstructionInfo.For(opcode, prefix);
-                Instruction instruction = Instruction.Build(opcode, info);
+                opcode = instruction[1];
+                InstructionInfo info = InstructionInfo.Find(opcode, prefix);
 
-                if (info.Argument1 == "nn")
+                if (info.Argument1 == ArgumentType.ImmediateWord)
                 {
-                    data.Arguments = new byte[2] { bytes[2], bytes[3] };
+                    data.Arguments = new byte[2] { instruction[2], instruction[3] };
                 }
-                
-                return instruction;
+
+                return info;
             }
             else if (prefix == 0xDD || prefix == 0xFD)
             {
-                opcode = bytes[1];
-                InstructionInfo info = InstructionInfo.For(opcode, prefix);
-                Instruction instruction = Instruction.Build(opcode, info);
+                opcode = instruction[1];
+                InstructionInfo info = InstructionInfo.Find(opcode, prefix);
 
-                if (info.Modifier == "+p" || info.Modifier == "+q")
+                if ((info.Modifier & ModifierType.IndexRegister) == ModifierType.IndexRegister) // +p / +q
                 {
                     data.RegisterIndex = GetRegisterIndex(opcode);
                     data.DirectIX = (prefix == 0xDD && (data.RegisterIndex == RegisterIndex.IXh || data.RegisterIndex == RegisterIndex.IXl));
                     data.DirectIY = (prefix == 0xFD && (data.RegisterIndex == RegisterIndex.IYh || data.RegisterIndex == RegisterIndex.IYl));
                 }
 
-                if (info.Modifier == "+8*p" || info.Modifier == "+8*q")
+                if ((info.Modifier & ModifierType.IndexRegisterHigh) == ModifierType.IndexRegisterHigh) // +8*p / +8*q
                 {
                     data.RegisterIndex = GetRegisterIndex(opcode);
                 }
 
-                if (info.Argument1 == "o" || info.Argument1 == "n")
+                if (info.Argument1 == ArgumentType.Displacement || info.Argument1 == ArgumentType.Immediate)
                 {
-                    data.Displacement = bytes[2];
+                    data.Displacement = instruction[2];
                 }
-                else if (info.Argument1 == "nn")
+                else if (info.Argument1 == ArgumentType.ImmediateWord)
                 {
-                    data.Arguments = new byte[2] { bytes[2], bytes[3] };
+                    data.Arguments = new byte[2] { instruction[2], instruction[3] };
                 }
 
-                return instruction;
+                return info;
 
             }
             else
             {
                 prefix = 0x00;
+                opcode = instruction[0];
+
+                InstructionInfo info = InstructionInfo.Find(opcode, prefix);
+
+                if ((info.Modifier & ModifierType.Register) == ModifierType.Register) // +r
                 {
-                    // basic instructions
-                    opcode = bytes[0];
-
-                    InstructionInfo info = InstructionInfo.For(opcode, prefix);
-                    Instruction instruction = Instruction.Build(opcode, info);
-
-                    if (info.Modifier == "+r")
-                    {
-                        data.RegisterIndex = GetRegisterIndex(opcode);
-                    }
-
-                    if (info.Argument1 == "o")
-                    {
-                        data.Displacement = bytes[1];
-                    }
-                    else if (info.Argument1 == "n")
-                    {
-                        data.Arguments = new byte[1] { bytes[1] };
-                    }
-                    else if (info.Argument1 == "nn")
-                    {
-                        data.Arguments = new byte[2] { bytes[1], bytes[2] };
-                    }
-                    
-                    return instruction;
+                    data.RegisterIndex = GetRegisterIndex(opcode);
                 }
+
+                if (info.Argument1 == ArgumentType.Displacement)
+                {
+                    data.Displacement = instruction[1];
+                }
+                else if (info.Argument1 == ArgumentType.Immediate)
+                {
+                    data.Arguments = new byte[1] { instruction[1] };
+                }
+                else if (info.Argument1 == ArgumentType.ImmediateWord)
+                {
+                    data.Arguments = new byte[2] { instruction[1], instruction[2] };
+                }
+
+                return info;
             }
         }
 

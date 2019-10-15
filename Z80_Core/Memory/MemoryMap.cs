@@ -9,59 +9,59 @@ namespace Z80.Core
     {
         public const ushort PAGE_SIZE_IN_KILOBYTES = 1;
 
-        private Dictionary<uint, IMemoryLocation> _pages = new Dictionary<uint, IMemoryLocation>();
+        private Dictionary<uint, IMemorySegment> _segments = new Dictionary<uint, IMemorySegment>();
 
         public uint SizeInKilobytes { get; private set; }
 
-        public IMemoryLocation MemoryFor(uint address)
+        public IMemorySegment MemoryFor(uint address)
         {
-            _pages.TryGetValue(PageNumberFromAddress(address), out IMemoryLocation memoryForPage);
-            return memoryForPage;
+            _segments.TryGetValue(PageFromAddress(address), out IMemorySegment segmentForPage);
+            return segmentForPage;
         }
 
-        public void Map(IMemoryLocation memory, bool overwriteMappedPages = false)
+        public void Map(IMemorySegment entry, bool overwriteMappedPages = false)
         {
-            uint startAddress = memory.StartAddress;
-            uint sizeInKilobytes = memory.SizeInKilobytes;
+            uint startAddress = entry.StartAddress;
+            uint sizeInKilobytes = entry.SizeInKilobytes;
 
             if (startAddress % 1024 > 0)
             {
                 throw new Exception("Start address must be on a page boundary (divisible by 1024)."); // TODO: custom exception
             }
 
-            uint startPage = PageNumberFromAddress(startAddress);
+            uint startPage = PageFromAddress(startAddress);
             uint endPage = startPage + sizeInKilobytes - 1;
 
-            if (!overwriteMappedPages && _pages.Any(p => p.Key >= startPage && p.Key <= endPage))
+            if (!overwriteMappedPages && _segments.Any(p => p.Key >= startPage && p.Key <= endPage))
             {
                 throw new Exception("Would overwrite existing mapped page. Pass overwriteMappedPages = true to enable."); // TODO: custom exception
             }
 
             for (uint i = startPage; i <= endPage; i++)
             {
-                uint address = AddressFromPageNumber(i);
-                if (_pages.ContainsKey(i))
+                uint address = AddressFromPage(i);
+                if (_segments.ContainsKey(i))
                 {
-                    _pages[i] = memory;
+                    _segments[i] = entry;
                 }
                 else
                 {
-                    _pages.Add(i, memory);
+                    _segments.Add(i, entry);
                 }
             }
         }
 
-        private uint PageNumberFromAddress(uint address)
+        private uint PageFromAddress(uint address)
         {
             return (uint)(address / PAGE_SIZE_IN_KILOBYTES);
         }
 
-        private uint AddressFromPageNumber(uint pageNumber)
+        private uint AddressFromPage(uint pageNumber)
         {
             return (uint)(pageNumber * PAGE_SIZE_IN_KILOBYTES);
         }
 
-        public MemoryMap(uint sizeInKilobytes = 64)
+        public MemoryMap(uint sizeInKilobytes)
         {
             SizeInKilobytes = sizeInKilobytes;
         }

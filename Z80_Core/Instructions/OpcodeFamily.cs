@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Z80.Core
 {
-    public static class OpcodeBase
+    public static class OpcodeFamily
     {
         private static Dictionary<(string, byte), byte> _matrix = new Dictionary<(string, byte), byte>()
         {
@@ -518,7 +518,7 @@ namespace Z80.Core
             { ("00", 0xAF), 0xA8}
         };
 
-        public static byte For(byte opcode, byte[] prefix)
+        public static byte RootOpcodeFrom(byte opcode, byte[] prefix)
         {
             string prefixString = String.Join(' ', prefix.Select(p => p.ToHexString()));
             (string, byte) key = (prefixString, opcode);

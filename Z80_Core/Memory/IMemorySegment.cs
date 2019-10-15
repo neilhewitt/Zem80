@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public interface IMemoryLocation
+    public interface IMemorySegment
     {
         uint StartAddress { get; }
         uint SizeInKilobytes { get; }
