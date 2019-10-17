@@ -48,7 +48,7 @@ namespace Z80.Core
         {
             if (address < StartAddress || address >= (StartAddress + (SizeInKilobytes * 1024)))
             {
-                throw new IndexOutOfRangeException("Specified address is outside this block."); // TODO: proper exception handling
+                throw new MemorySegmentException("Specified address is outside the scope of this segment.");
             }
         }
 

@@ -12,10 +12,6 @@ namespace Z80.Core
         E = 3,
         H = 4,
         L = 5,
-        A = 7,
-        IXh = 4,
-        IXl = 5,
-        IYh = 4,
-        IYl = 5
+        A = 7
     }
 }

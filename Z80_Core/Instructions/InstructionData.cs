@@ -6,6 +6,7 @@ namespace Z80.Core
 {
     public class InstructionData
     {
+        public byte Opcode { get; set; }
         public byte? Displacement { get; set; }
         public uint? BitIndex { get; set; }
         public RegisterIndex? RegisterIndex { get; set; }

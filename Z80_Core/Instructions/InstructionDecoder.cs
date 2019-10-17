@@ -8,117 +8,121 @@ namespace Z80.Core
 {
     public partial class InstructionDecoder
     {
-        public InstructionInfo Decode(byte[] instruction, ushort address, out InstructionData data)
+        public InstructionPackage Decode(byte[] instructionBytes, ushort address)
         {
             byte opcode = 0x00;
-            data = new InstructionData();
+            InstructionData data = new InstructionData();
 
-            // special case - sequences of DD or FD (uniform or mixed) count as NOP until the final DD / FD
-            if ((instruction[0] == 0xDD || instruction[0] == 0xFD) && (instruction[1] == 0xDD || instruction[1] == 0xFD))
+            // handle NOP + special case - sequences of DD or FD (uniform or mixed) count as NOP until the final DD / FD
+            if (instructionBytes[0] == 0x00 || 
+                (instructionBytes[0] == 0xDD || instructionBytes[0] == 0xFD) && (instructionBytes[1] == 0xDD || instructionBytes[1] == 0xFD))
             {
-                return InstructionInfo.NOP;
+                return new InstructionPackage(Instruction.NOP, data);
             }
 
-            byte prefix = instruction[0];
-
+            byte prefix = instructionBytes[0];
             data.IndexIX = prefix == 0xDD;
             data.IndexIY = prefix == 0xFD;
 
-            if (prefix == 0xCB || ((prefix == 0xDD || prefix == 0xFD) && instruction[1] == 0xCB))
+            if (prefix == 0xCB || ((prefix == 0xDD || prefix == 0xFD) && instructionBytes[1] == 0xCB))
             {
                 // extended instructions (including double-prefix 'DD CB' and 'FD CD')
-                bool doubleBytePrefixed = instruction[1] == 0xCB;
-                opcode = doubleBytePrefixed ? instruction[3] : instruction[1];
+                bool doubleBytePrefixed = instructionBytes[1] == 0xCB;
+                opcode = doubleBytePrefixed ? instructionBytes[3] : instructionBytes[1];
 
-                InstructionInfo info = doubleBytePrefixed ?
-                    InstructionInfo.Find(opcode, instruction[0], instruction[1]) :
-                    InstructionInfo.Find(opcode, instruction[0]);
+                Instruction instruction = doubleBytePrefixed ?
+                    Instruction.Find(opcode, prefix == 0xDD ? InstructionPrefix.DDCB : InstructionPrefix.FDCB) :
+                    Instruction.Find(opcode, InstructionPrefix.CB);
 
-                if ((info.Modifier & ModifierType.Register) == ModifierType.Register) // +r
+                if (instruction.Modifier == ModifierType.Register) // +r
                 {
                     data.RegisterIndex = GetRegisterIndex(opcode);
                 }
 
-                if ((info.Modifier & ModifierType.Bit) == ModifierType.Bit) // +8*b
+                if (instruction.Modifier == ModifierType.Bit) // +8*b
                 {
                     data.BitIndex = GetBitIndex(opcode);
                 }
 
-                if (info.Argument1 == ArgumentType.Displacement)
+                if (instruction.Argument1 == ArgumentType.Displacement)
                 {
-                    data.Displacement = instruction[2];
+                    data.Displacement = instructionBytes[2];
                 }
 
-                return info;
+                data.Opcode = opcode;
+                return new InstructionPackage(instruction, data);
             }
             else if (prefix == 0xED)
             {
                 // other extended instructions
-                opcode = instruction[1];
-                InstructionInfo info = InstructionInfo.Find(opcode, prefix);
+                opcode = instructionBytes[1];
+                Instruction instruction = Instruction.Find(opcode, InstructionPrefix.ED);
 
-                if (info.Argument1 == ArgumentType.ImmediateWord)
+                if (instruction.Argument1 == ArgumentType.ImmediateWord)
                 {
-                    data.Arguments = new byte[2] { instruction[2], instruction[3] };
+                    data.Arguments = new byte[2] { instructionBytes[2], instructionBytes[3] };
                 }
 
-                return info;
+                data.Opcode = opcode;
+                return new InstructionPackage(instruction, data);
             }
             else if (prefix == 0xDD || prefix == 0xFD)
             {
-                opcode = instruction[1];
-                InstructionInfo info = InstructionInfo.Find(opcode, prefix);
+                opcode = instructionBytes[1];
+                Instruction instruction = Instruction.Find(opcode, prefix == 0xDD ? InstructionPrefix.DD : InstructionPrefix.FD);
 
-                if ((info.Modifier & ModifierType.IndexRegister) == ModifierType.IndexRegister) // +p / +q
+                if (instruction.Modifier == ModifierType.IndexRegister) // +p / +q
                 {
                     data.RegisterIndex = GetRegisterIndex(opcode);
-                    data.DirectIX = (prefix == 0xDD && (data.RegisterIndex == RegisterIndex.IXh || data.RegisterIndex == RegisterIndex.IXl));
-                    data.DirectIY = (prefix == 0xFD && (data.RegisterIndex == RegisterIndex.IYh || data.RegisterIndex == RegisterIndex.IYl));
+                    data.DirectIX = (prefix == 0xDD && (data.RegisterIndex == RegisterIndex.H || data.RegisterIndex == RegisterIndex.L));
+                    data.DirectIY = (prefix == 0xFD && (data.RegisterIndex == RegisterIndex.H || data.RegisterIndex == RegisterIndex.L));
                 }
 
-                if ((info.Modifier & ModifierType.IndexRegisterHigh) == ModifierType.IndexRegisterHigh) // +8*p / +8*q
+                if (instruction.Modifier == ModifierType.IndexRegisterHigh) // +8*p / +8*q
                 {
                     data.RegisterIndex = GetRegisterIndex(opcode);
                 }
 
-                if (info.Argument1 == ArgumentType.Displacement || info.Argument1 == ArgumentType.Immediate)
+                if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
                 {
-                    data.Displacement = instruction[2];
+                    data.Displacement = instructionBytes[2];
                 }
-                else if (info.Argument1 == ArgumentType.ImmediateWord)
+                else if (instruction.Argument1 == ArgumentType.ImmediateWord)
                 {
-                    data.Arguments = new byte[2] { instruction[2], instruction[3] };
+                    data.Arguments = new byte[2] { instructionBytes[2], instructionBytes[3] };
                 }
 
-                return info;
+                data.Opcode = opcode;
+                return new InstructionPackage(instruction, data);
 
             }
             else
             {
                 prefix = 0x00;
-                opcode = instruction[0];
+                opcode = instructionBytes[0];
 
-                InstructionInfo info = InstructionInfo.Find(opcode, prefix);
+                Instruction instruction = Instruction.Find(opcode, InstructionPrefix.Unprefixed);
 
-                if ((info.Modifier & ModifierType.Register) == ModifierType.Register) // +r
+                if (instruction.Modifier == ModifierType.Register) // +r
                 {
                     data.RegisterIndex = GetRegisterIndex(opcode);
                 }
 
-                if (info.Argument1 == ArgumentType.Displacement)
+                if (instruction.Argument1 == ArgumentType.Displacement)
                 {
-                    data.Displacement = instruction[1];
+                    data.Displacement = instructionBytes[1];
                 }
-                else if (info.Argument1 == ArgumentType.Immediate)
+                else if (instruction.Argument1 == ArgumentType.Immediate)
                 {
-                    data.Arguments = new byte[1] { instruction[1] };
+                    data.Arguments = new byte[1] { instructionBytes[1] };
                 }
-                else if (info.Argument1 == ArgumentType.ImmediateWord)
+                else if (instruction.Argument1 == ArgumentType.ImmediateWord)
                 {
-                    data.Arguments = new byte[2] { instruction[1], instruction[2] };
+                    data.Arguments = new byte[2] { instructionBytes[1], instructionBytes[2] };
                 }
 
-                return info;
+                data.Opcode = opcode;
+                return new InstructionPackage(instruction, data);
             }
         }
 

@@ -1,25 +1,26 @@
 ﻿using System;
+using System.Timers;
 
 namespace Z80.Core
 {
     public class Processor
     {
         private bool _running;
+        private InstructionDecoder _decoder = new InstructionDecoder();
 
         public IRegisters Registers { get; private set; }
+        public IFlags Flags { get; private set; }
         public IMemory Memory { get; private set; }
         public ushort AddressBus { get; private set; }
         public byte DataBus { get; private set; }
         public InterruptMode InterruptMode { get; private set; } = InterruptMode.Zero;
-
-        public event EventHandler OnBeforeFetch;
-        public event EventHandler<byte[]> OnBeforeDecode;
-        public event EventHandler<InstructionPackage> OnBeforeExecute;
-        public event EventHandler<InstructionPackage> OnAfterExecute;
+        public double SpeedInMhz { get; private set; }
 
         public void Start()
         {
+            Registers.Clear();
             _running = true;
+
             while (_running)
             {
                 InstructionCycle();
@@ -33,51 +34,25 @@ namespace Z80.Core
 
         private void InstructionCycle()
         {
-            // skeleton events for instruction cycle
-            OnBeforeFetch(this, EventArgs.Empty);
-            byte[] instruction = Fetch();
-
-            OnBeforeDecode(this, instruction);
-            InstructionPackage package = Decode(instruction);
-
-            OnBeforeExecute(this, package);
+            byte[] instruction = Memory.ReadBytesAt(Registers.PC, 4); // will succeed even if PC overflows - overflow bytes come back as 0x00
+            InstructionPackage package = _decoder.Decode(instruction, Registers.PC);
             // TODO: actually do stuff...
-            OnAfterExecute(this, package);
-
-            if (Registers.PC + package.Info.SizeInBytes > (Memory.SizeInKilobytes * 1024)) // overflow!
+           
+            if (!Registers.AdvancePC(package.Instruction.SizeInBytes))
             {
                 Stop();
-            }
-            else
-            {
-                Registers.PC += package.Info.SizeInBytes; // move the program counter on
+                return;
             }
 
-            // handle timing
+            // handle timing            
         }
 
-        private byte[] Fetch()
-        {
-            return Memory.ReadBytesAt(Registers.PC, 4);
-        }
-
-        private InstructionPackage Decode(byte[] instruction)
-        {
-            InstructionDecoder decoder = new InstructionDecoder();
-            InstructionInfo info = decoder.Decode(instruction, Registers.PC, out InstructionData data);
-            return new InstructionPackage(info, data);
-        }
-
-        internal Processor(IRegisters registers, IMemory memory)
+        internal Processor(IRegisters registers, IFlags flags, IMemory memory, double speedInMHz)
         {
             Registers = registers;
+            Flags = flags;
             Memory = memory;
-
-            // event sinks
-            OnBeforeFetch += (x, y) => { };
-            OnBeforeDecode += (x, y) => { };
-            OnBeforeExecute += (x, y) => { };
-            OnAfterExecute += (x, y) => { };
+            SpeedInMhz = speedInMHz;
         }
     }
 }

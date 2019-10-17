@@ -14,24 +14,23 @@ namespace Z80.Core
         public byte ReadByteAt(uint address)
         {
             IMemorySegment memory = _map.MemoryFor(address);
-            return memory?.ReadByteAt(address) ?? 255; // default value if address is unallocated
+            return memory?.ReadByteAt(address) ?? 0; // default value if address is unallocated
         }
 
         public byte[] ReadBytesAt(uint address, uint numberOfBytes)
         {
-            IMemorySegment memory = _map.MemoryFor(address);
             byte[] bytes = new byte[numberOfBytes];
             for (uint i = 0; i < numberOfBytes; i++)
             {
-                bytes[i] = memory?.ReadByteAt(address + i) ?? 255;
+                bytes[i] = ReadByteAt(address + i);
             }
             return bytes;
         }
 
         public ushort ReadWordAt(uint address)
         {
-            IMemorySegment memory = _map.MemoryFor(address);
-            return memory?.ReadWordAt(address) ?? 65535; // default value if address is unallocated
+            byte[] bytes = ReadBytesAt(address, 2);
+            return (ushort)((bytes[1] * 256) + bytes[0]);
         }
 
         public void WriteByteAt(uint address, byte value)
@@ -39,7 +38,7 @@ namespace Z80.Core
             IMemorySegment memory = _map.MemoryFor(address);
             if (memory == null || memory.ReadOnly)
             {
-                throw new Exception("Readonly"); // TODO: custom exception type
+                throw new Exception("Readonly or unmapped"); // TODO: custom exception type
             }
 
             memory.WriteByteAt(address, value);
@@ -47,27 +46,19 @@ namespace Z80.Core
 
         public void WriteBytesAt(uint address, params byte[] bytes)
         {
-            IMemorySegment memory = _map.MemoryFor(address);
-            if (memory == null || memory.ReadOnly)
-            {
-                throw new Exception("Readonly"); // TODO: custom exception type
-            }
-
             for (uint i = 0; i < bytes.Length; i++)
             {
-                memory.WriteByteAt(address + i, bytes[i]);
+                WriteByteAt(address + i, bytes[i]);
             }
         }
 
         public void WriteWordAt(uint address, ushort value)
         {
-            IMemorySegment memory = _map.MemoryFor(address);
-            if (memory == null || memory.ReadOnly)
-            {
-                throw new Exception("Readonly"); // TODO: custom exception type
-            }
+            byte[] bytes = new byte[2];
+            bytes[1] = (byte)(value / 256);
+            bytes[0] = (byte)(value % 256);
 
-            memory.WriteWordAt(address, value);
+            WriteBytesAt(address, bytes);
         }
 
         public Memory(IMemoryMap map)

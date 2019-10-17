@@ -21,8 +21,12 @@
         byte R { get; set; }
         ushort SP { get; set; }
 
+        RegisterFlags Flags { get; }
+
         void ExchangeAF();
         void ExchangeBCDEHL();
         Registers Snapshot();
+        void Clear();
+        bool AdvancePC(byte bytesToAdvance);
     }
 }

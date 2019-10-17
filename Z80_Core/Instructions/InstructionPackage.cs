@@ -6,12 +6,12 @@ namespace Z80.Core
 {
     public class InstructionPackage
     {
-        public InstructionInfo Info { get; }
+        public Instruction Instruction { get; }
         public InstructionData Data { get; }
 
-        public InstructionPackage(InstructionInfo info, InstructionData data)
+        public InstructionPackage(Instruction instruction, InstructionData data)
         {
-            Info = info;
+            Instruction = instruction;
             Data = data;
         }
     }

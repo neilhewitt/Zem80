@@ -25,7 +25,7 @@ namespace Z80.Core.Tests
         {
             Registers registers = new Registers();
             registers.F = initialFlagsValue; // all flags set except Sign
-            Flags flags = new Flags(registers);
+            RegisterFlags flags = new RegisterFlags(registers);
             
             var property = flags.GetType().GetProperty(flagName);
             var getter = property.GetMethod;

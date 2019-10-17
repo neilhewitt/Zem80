@@ -26,7 +26,7 @@ namespace Z80.Core
 
             if (startAddress % 1024 > 0)
             {
-                throw new Exception("Start address must be on a page boundary (divisible by 1024)."); // TODO: custom exception
+                throw new MemoryMapException("Start address must be on a page boundary (divisible by 1024).");
             }
 
             uint startPage = PageFromAddress(startAddress);
@@ -34,7 +34,7 @@ namespace Z80.Core
 
             if (!overwriteMappedPages && _segments.Any(p => p.Key >= startPage && p.Key <= endPage))
             {
-                throw new Exception("Would overwrite existing mapped page. Pass overwriteMappedPages = true to enable."); // TODO: custom exception
+                throw new MemoryMapException("Would overwrite existing mapped page/s. Specify overwriteMappedPages = true to enable masking the existing memory."); 
             }
 
             for (uint i = startPage; i <= endPage; i++)
@@ -53,7 +53,8 @@ namespace Z80.Core
 
         private uint PageFromAddress(uint address)
         {
-            return (uint)(address / PAGE_SIZE_IN_KILOBYTES);
+            uint pageIndex = (uint)Math.Ceiling((double)address / (double)(PAGE_SIZE_IN_KILOBYTES * 1024));
+            return pageIndex;
         }
 
         private uint AddressFromPage(uint pageNumber)

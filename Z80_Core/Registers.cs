@@ -7,7 +7,7 @@ namespace Z80.Core
 {
     public class Registers : IRegisters
     {
-        private byte[] _registers = new byte[26];
+        private byte[] _registers;
         private byte _AFOffset = 0;
         private byte _BCDEHLOffset = 0;
 
@@ -43,6 +43,8 @@ namespace Z80.Core
         // program counter
         public ushort PC { get { return Get16BitValue(24); } set { Set16BitValue(24, value); } } // program counter
 
+        public RegisterFlags Flags { get; private set; }
+
         public void ExchangeAF()
         {
             _AFOffset = (byte)((_AFOffset == 0) ? 8 : 0);
@@ -56,6 +58,22 @@ namespace Z80.Core
         public Registers Snapshot()
         {
             return new Registers(_registers);
+        }
+
+        public void Clear()
+        {
+            _registers = new byte[26];
+        }
+
+        public bool AdvancePC(byte bytesToAdvance)
+        { 
+            if ((uint)(PC + bytesToAdvance) >= ushort.MaxValue) // PC overflow
+            {
+                return false;
+            }
+
+            PC += bytesToAdvance;
+            return true;
         }
 
         private ushort Get16BitValue(int registerIndex)
@@ -77,10 +95,17 @@ namespace Z80.Core
 
         public Registers()
         {
+            _registers = new byte[26];
         }
 
         private Registers(byte[] registerValues)
         {
+            if (registerValues.Length != 26)
+            {
+                throw new ArgumentOutOfRangeException("Invalid format. Size of array registerValues must be 26 bytes.");
+
+            }
+            
             _registers = registerValues;
         }
     }

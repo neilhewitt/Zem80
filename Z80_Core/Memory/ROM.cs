@@ -11,12 +11,12 @@ namespace Z80.Core
 
         public override void WriteByteAt(uint address, byte value)
         {
-            throw new InvalidOperationException();
+            throw new MemoryNotWritableException();
         }
 
         public override void WriteWordAt(uint address, ushort value)
         {
-            throw new InvalidOperationException();
+            throw new MemoryNotWritableException();
         }
 
         public ROM(uint startAddress, uint sizeInKilobytes)
