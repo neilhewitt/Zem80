@@ -61,7 +61,7 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        public void CanExchangeRegistersWithAltRegistersAndBack()
+        public void CanExchangeBCDEHLWithAltBCDEHLAndBack()
         {
             ushort[] values = new ushort[3];
             ushort[] altValues = new ushort[3];

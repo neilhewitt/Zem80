@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using System.Reflection;
 
 namespace Z80.Core
 {
@@ -827,6 +828,7 @@ namespace Z80.Core
         public byte SizeInBytes { get; private set; }
         public byte ClockCycles { get; private set; }
         public byte? ClockCyclesConditional { get; private set; }
+        public IInstructionImplementation Implementation { get; private set; }
 
         private Instruction(InstructionPrefix prefix, byte opcode, string mnemonic, ArgumentType argument1, ArgumentType argument2, ModifierType modifier, byte size, byte clockCycles, byte? clockCyclesConditional)
         {
@@ -839,6 +841,9 @@ namespace Z80.Core
             SizeInBytes = size;
             ClockCycles = clockCycles;
             ClockCyclesConditional = clockCyclesConditional;
+
+            // this is expensive, but only done once at startup; binds the Instruction directly to the static method instance implementing it
+            Implementation = (IInstructionImplementation)Assembly.GetExecutingAssembly().GetType(mnemonic.Split(' ')[0], false);
         }
     }
 }

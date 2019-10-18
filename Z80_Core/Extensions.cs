@@ -17,6 +17,7 @@ namespace Z80.Core
             bits.SetBits(startIndex, numberOfBits, false);
             return bits.Value;
         }
+
         public static bool[] GetBits(this byte input, int startIndex, int numberOfBits)
         {
             ByteBits bits = new ByteBits(input);

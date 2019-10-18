@@ -24,14 +24,14 @@ namespace Z80.Core.Tests
         public void CanSetAndReadFlag(string flagName, byte initialFlagsValue)
         {
             Registers registers = new Registers();
-            registers.F = initialFlagsValue; // all flags set except Sign
+            registers.F = initialFlagsValue; // all flags set except <flagName>
             RegisterFlags flags = new RegisterFlags(registers);
             
             var property = flags.GetType().GetProperty(flagName);
             var getter = property.GetMethod;
             var setter = property.SetMethod;
 
-            Assert.That(FlagValue() == false);
+            Assert.That(FlagValue() == false); // just in case we screwed up the initial value...
             SetFlag();
             Assert.That(FlagValue() == true && registers.F == 0xFF);
             
