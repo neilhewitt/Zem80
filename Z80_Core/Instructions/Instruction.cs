@@ -842,8 +842,8 @@ namespace Z80.Core
             ClockCycles = clockCycles;
             ClockCyclesConditional = clockCyclesConditional;
 
-            // this is expensive, but only done once at startup; binds the Instruction directly to the static method instance implementing it
-            Type microcodeType = Assembly.GetExecutingAssembly().GetType("Z80.Core." + mnemonic.Split(' ')[0], false); // NOTE HARD-CODED NAMESPACE LITERAL
+            // this is expensive, but only done once at startup; binds the Instruction directly to the method instance implementing it
+            Type microcodeType = Assembly.GetExecutingAssembly().GetTypes().SingleOrDefault(x => x.Name == mnemonic.Split(' ')[0]);
             Implementation = (IInstructionImplementation)Activator.CreateInstance(microcodeType);
         }
     }

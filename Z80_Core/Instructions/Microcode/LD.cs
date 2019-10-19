@@ -10,7 +10,7 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Flags flags = new Flags();
+            Flags flags = new Flags(); // all LD instructions affect *no* flags unless I or R is read or set (see handleIRFlags() below)
 
             // shortcuts to keep code size down
             IRegisters r = cpu.Registers;
@@ -641,7 +641,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(flags, 0);
         }
 
         public LD()

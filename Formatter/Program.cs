@@ -141,7 +141,7 @@ namespace Z80.Core
                 code = code.Replace("{{DDCB}}", DDCB);
                 code = code.Replace("{{FDCB}}", FDCB);
 
-                File.WriteAllText(Path.Combine(path, instructionName + ".cs"), code);
+                //File.WriteAllText(Path.Combine(path, instructionName + ".cs"), code);
             }
         }
     }

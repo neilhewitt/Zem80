@@ -6,7 +6,6 @@ namespace Z80.Core
 {
     public class Memory : IMemory
     {
-        private const int DEFAULT_MEMORY_SIZE_IN_KILOBYTES = 16;
         private IMemoryMap _map;
 
         public uint SizeInKilobytes => _map.SizeInKilobytes;

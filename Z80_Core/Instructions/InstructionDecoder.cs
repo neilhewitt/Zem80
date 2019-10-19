@@ -27,7 +27,7 @@ namespace Z80.Core
             if (prefix == 0xCB || ((prefix == 0xDD || prefix == 0xFD) && instructionBytes[1] == 0xCB))
             {
                 // extended instructions (including double-prefix 'DD CB' and 'FD CD')
-                bool doubleBytePrefixed = instructionBytes[1] == 0xCB;
+                bool doubleBytePrefixed = prefix != 0xCB;
                 opcode = doubleBytePrefixed ? instructionBytes[3] : instructionBytes[1];
 
                 Instruction instruction = doubleBytePrefixed ?

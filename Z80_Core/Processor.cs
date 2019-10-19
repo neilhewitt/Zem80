@@ -36,7 +36,7 @@ namespace Z80.Core
         {
             byte[] instruction = Memory.ReadBytesAt(Registers.PC, 4); // will succeed even if PC overflows - overflow bytes come back as 0x00
             InstructionPackage package = _decoder.Decode(instruction, Registers.PC);
-            package.Instruction.Implementation.Execute(this, package); 
+            ExecutionResult result = package.Instruction.Implementation.Execute(this, package); 
            
             if (!Registers.AdvancePC(package.Instruction.SizeInBytes))
             {
