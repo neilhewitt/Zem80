@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class XOR : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -50,33 +50,6 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
-                        case 0xA8: // XOR B
-                            // code
-                            break;
-                        case 0xA9: // XOR C
-                            // code
-                            break;
-                        case 0xAA: // XOR D
-                            // code
-                            break;
-                        case 0xAB: // XOR E
-                            // code
-                            break;
-                        case 0xAC: // XOR H
-                            // code
-                            break;
-                        case 0xAD: // XOR L
-                            // code
-                            break;
-                        case 0xAF: // XOR A
-                            // code
-                            break;
-                        case 0xAE: // XOR (HL)
-                            // code
-                            break;
-                        case 0xEE: // XOR n
-                            // code
-                            break;
 
                     }
                     break;
@@ -136,6 +109,10 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public XOR()
+        {
         }
     }
 }

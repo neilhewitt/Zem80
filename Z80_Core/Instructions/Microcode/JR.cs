@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class JR : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -38,21 +38,6 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
-                        case 0x18: // JR o
-                            // code
-                            break;
-                        case 0x20: // JR NZ,o
-                            // code
-                            break;
-                        case 0x28: // JR Z,o
-                            // code
-                            break;
-                        case 0x30: // JR NC,o
-                            // code
-                            break;
-                        case 0x38: // JR C,o
-                            // code
-                            break;
 
                     }
                     break;
@@ -94,6 +79,10 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public JR()
+        {
         }
     }
 }

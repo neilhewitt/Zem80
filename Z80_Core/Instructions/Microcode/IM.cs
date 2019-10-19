@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class IM : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -73,6 +73,10 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public IM()
+        {
         }
     }
 }

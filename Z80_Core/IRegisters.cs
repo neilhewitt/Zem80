@@ -16,6 +16,10 @@
         byte I { get; set; }
         ushort IX { get; set; }
         ushort IY { get; set; }
+        byte IXh { get; set; }
+        byte IXl { get; set; }
+        byte IYh { get; set; }
+        byte IYl { get; set; }
         byte L { get; set; }
         ushort PC { get; set; }
         byte R { get; set; }

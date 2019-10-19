@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class INDR : IInstructionImplementation
+    public class RLC : IInstructionImplementation
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
@@ -16,6 +16,9 @@ namespace Z80.Core
                 case InstructionPrefix.Unprefixed:
                     switch (instruction.Opcode)
                     {
+                        case 0x07: // RLCA
+                            // code
+                            break;
 
                     }
                     break;
@@ -23,6 +26,30 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
+                        case 0x00: // RLC B
+                            // code
+                            break;
+                        case 0x01: // RLC C
+                            // code
+                            break;
+                        case 0x02: // RLC D
+                            // code
+                            break;
+                        case 0x03: // RLC E
+                            // code
+                            break;
+                        case 0x04: // RLC H
+                            // code
+                            break;
+                        case 0x05: // RLC L
+                            // code
+                            break;
+                        case 0x07: // RLC A
+                            // code
+                            break;
+                        case 0x06: // RLC (HL)
+                            // code
+                            break;
 
                     }
                     break;
@@ -30,9 +57,6 @@ namespace Z80.Core
                 case InstructionPrefix.ED:
                     switch (instruction.Opcode)
                     {
-                        case 0xBA: // INDR
-                            // code
-                            break;
 
                     }
                     break;
@@ -54,6 +78,9 @@ namespace Z80.Core
                 case InstructionPrefix.DDCB:
                     switch (instruction.Opcode)
                     {
+                        case 0x06: // RLC (IX+o)
+                            // code
+                            break;
 
                     }
                     break;
@@ -61,6 +88,9 @@ namespace Z80.Core
                 case InstructionPrefix.FDCB:
                     switch (instruction.Opcode)
                     {
+                        case 0x06: // RLC (IY+o)
+                            // code
+                            break;
 
                     }
                     break;
@@ -69,7 +99,7 @@ namespace Z80.Core
             return new ExecutionResult(new Flags(), 0);
         }
 
-        public INDR()
+        public RLC()
         {
         }
     }

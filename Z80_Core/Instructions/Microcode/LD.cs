@@ -6,10 +6,56 @@ namespace Z80.Core
 {
     public class LD : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            Flags flags = new Flags();
+
+            // shortcuts to keep code size down
+            IRegisters r = cpu.Registers;
+            byte arg0 = data.Arguments?[0] ?? 0;
+            byte arg1 = data.Arguments?[1] ?? 0;
+            ushort argWord = data.ArgumentsAsWord;
+
+            // local functions to keep code size down
+            byte readByte(ushort address)
+            {
+                return cpu.Memory.ReadByteAt(address);
+            }
+
+            ushort readWord(ushort address)
+            {
+                return cpu.Memory.ReadWordAt(address);
+            }
+
+            byte readOffset(ushort address, byte offset)
+            {
+                return cpu.Memory.ReadByteAt((ushort)(address + offset));
+            }
+
+            void writeByte(ushort address, byte value)
+            {
+                cpu.Memory.WriteByteAt(address, value);
+            }
+
+            void writeWord(ushort address, ushort value)
+            {
+                cpu.Memory.WriteWordAt(address, value);
+            }
+
+            void writeOffset(ushort address, byte offset, byte value)
+            {
+                cpu.Memory.WriteByteAt((ushort)(address + offset), value);
+            }
+
+            void handleIRFlags(byte input)
+            {
+                flags.Carry = r.Flags.Carry;
+                if (input == 0x00) flags.Zero = true;
+                if ((sbyte)input < 0) flags.Sign = true;
+                if (cpu.InterruptMode != InterruptMode.Zero) flags.Parity = true;
+            }
 
             switch (instruction.Prefix)
             {
@@ -17,517 +63,257 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x01: // LD BC,nn
-                            // code
+                            r.BC = argWord;
                             break;
                         case 0x02: // LD (BC),A
-                            // code
+                            writeByte(r.BC, r.A);
                             break;
                         case 0x06: // LD B,n
-                            // code
+                            r.B = arg0;
                             break;
                         case 0x0A: // LD A,(BC)
-                            // code
+                            r.A = readByte(r.BC);
                             break;
                         case 0x0E: // LD C,n
-                            // code
+                            r.C = arg0;
                             break;
                         case 0x11: // LD DE,nn
-                            // code
+                            r.DE = argWord;
                             break;
                         case 0x12: // LD (DE),A
-                            // code
+                            writeByte(r.DE, r.A);
                             break;
                         case 0x16: // LD D,n
-                            // code
+                            r.D = arg0;
                             break;
                         case 0x1A: // LD A,(DE)
-                            // code
+                            r.A = readByte(r.DE);
                             break;
                         case 0x1E: // LD E,n
-                            // code
+                            r.E = arg0;
                             break;
                         case 0x21: // LD HL,nn
-                            // code
+                            r.HL = argWord;
                             break;
                         case 0x22: // LD (nn),HL
-                            // code
+                            writeWord(r.HL, argWord);
                             break;
                         case 0x26: // LD H,n
-                            // code
+                            r.H = arg0;
                             break;
                         case 0x2A: // LD HL,(nn)
-                            // code
+                            r.HL = readWord(argWord);
                             break;
                         case 0x2E: // LD L,n
-                            // code
+                            r.L = arg0;
                             break;
                         case 0x31: // LD SP,nn
-                            // code
+                            r.SP = argWord;
                             break;
                         case 0x32: // LD (nn),A
-                            // code
+                            writeByte(argWord, r.A);
                             break;
                         case 0x36: // LD (HL),n
-                            // code
+                            writeByte(r.HL, arg0);
                             break;
                         case 0x3A: // LD A,(nn)
-                            // code
+                            r.A = readByte(argWord);
                             break;
                         case 0x3E: // LD A,n
-                            // code
+                            r.A = arg0;
                             break;
                         case 0x40: // LD B,B
-                            // code
+                            r.B = r.B; // yes, we have to do this, it's not just a NOP
                             break;
                         case 0x41: // LD B,C
-                            // code
+                            r.B = r.C;
                             break;
                         case 0x42: // LD B,D
-                            // code
+                            r.B = r.D;
                             break;
                         case 0x43: // LD B,E
-                            // code
+                            r.B = r.E;
                             break;
                         case 0x44: // LD B,H
-                            // code
+                            r.B = r.H;
                             break;
                         case 0x45: // LD B,L
-                            // code
+                            r.B = r.L;
                             break;
                         case 0x47: // LD B,A
-                            // code
+                            r.B = r.A;
                             break;
                         case 0x46: // LD B,(HL)
-                            // code
+                            r.B = readByte(r.HL);
                             break;
                         case 0x48: // LD C,B
-                            // code
+                            r.C = r.B;
                             break;
                         case 0x49: // LD C,C
-                            // code
+                            r.C = r.C;
                             break;
                         case 0x4A: // LD C,D
-                            // code
+                            r.C = r.D;
                             break;
                         case 0x4B: // LD C,E
-                            // code
+                            r.C = r.E;
                             break;
                         case 0x4C: // LD C,H
-                            // code
+                            r.C = r.H;
                             break;
                         case 0x4D: // LD C,L
-                            // code
+                            r.C = r.L;
                             break;
                         case 0x4F: // LD C,A
-                            // code
+                            r.C = r.A;
                             break;
                         case 0x4E: // LD C,(HL)
-                            // code
+                            r.C = readByte(r.HL);
                             break;
                         case 0x50: // LD D,B
-                            // code
+                            r.D = r.B;
                             break;
                         case 0x51: // LD D,C
-                            // code
+                            r.D = r.C;
                             break;
                         case 0x52: // LD D,D
-                            // code
+                            r.D = r.D;
                             break;
                         case 0x53: // LD D,E
-                            // code
+                            r.D = r.E;
                             break;
                         case 0x54: // LD D,H
-                            // code
+                            r.D = r.H;
                             break;
                         case 0x55: // LD D,L
-                            // code
+                            r.D = r.L;
                             break;
                         case 0x57: // LD D,A
-                            // code
+                            r.D = r.A;
                             break;
                         case 0x56: // LD D,(HL)
-                            // code
+                            r.D = readByte(r.HL);
                             break;
                         case 0x58: // LD E,B
-                            // code
+                            r.E = r.B;
                             break;
                         case 0x59: // LD E,C
-                            // code
+                            r.E = r.C;
                             break;
                         case 0x5A: // LD E,D
-                            // code
+                            r.E = r.D;
                             break;
                         case 0x5B: // LD E,E
-                            // code
+                            r.E = r.E;
                             break;
                         case 0x5C: // LD E,H
-                            // code
+                            r.E = r.H;
                             break;
                         case 0x5D: // LD E,L
-                            // code
+                            r.E = r.L;
                             break;
                         case 0x5F: // LD E,A
-                            // code
+                            r.E = r.A;
                             break;
                         case 0x5E: // LD E,(HL)
-                            // code
+                            r.E = readByte(r.HL);
                             break;
                         case 0x60: // LD H,B
-                            // code
+                            r.H = r.B;
                             break;
                         case 0x61: // LD H,C
-                            // code
+                            r.H = r.C;
                             break;
                         case 0x62: // LD H,D
-                            // code
+                            r.H = r.D;
                             break;
                         case 0x63: // LD H,E
-                            // code
+                            r.H = r.E;
                             break;
                         case 0x64: // LD H,H
-                            // code
+                            r.H = r.H;
                             break;
                         case 0x65: // LD H,L
-                            // code
+                            r.H = r.L;
                             break;
                         case 0x67: // LD H,A
-                            // code
+                            r.H = r.A;
                             break;
                         case 0x66: // LD H,(HL)
-                            // code
+                            r.H = readByte(r.HL);
                             break;
                         case 0x68: // LD L,B
-                            // code
+                            r.L = r.B;
                             break;
                         case 0x69: // LD L,C
-                            // code
+                            r.L = r.C;
                             break;
                         case 0x6A: // LD L,D
-                            // code
+                            r.L = r.D;
                             break;
                         case 0x6B: // LD L,E
-                            // code
+                            r.L = r.E;
                             break;
                         case 0x6C: // LD L,H
-                            // code
+                            r.L = r.H;
                             break;
                         case 0x6D: // LD L,L
-                            // code
+                            r.L = r.L;
                             break;
                         case 0x6F: // LD L,A
-                            // code
+                            r.L = r.A;
                             break;
                         case 0x6E: // LD L,(HL)
-                            // code
+                            r.L = readByte(r.HL);
                             break;
                         case 0x70: // LD (HL),B
-                            // code
+                            writeByte(r.HL, r.B);
                             break;
                         case 0x71: // LD (HL),C
-                            // code
+                            writeByte(r.HL, r.C);
                             break;
                         case 0x72: // LD (HL),D
-                            // code
+                            writeByte(r.HL, r.D);
                             break;
                         case 0x73: // LD (HL),E
-                            // code
+                            writeByte(r.HL, r.E);
                             break;
                         case 0x74: // LD (HL),H
-                            // code
+                            writeByte(r.HL, r.H);
                             break;
                         case 0x75: // LD (HL),L
-                            // code
+                            writeByte(r.HL, r.L);
                             break;
                         case 0x77: // LD (HL),A
-                            // code
+                            writeByte(r.HL, r.A);
                             break;
                         case 0x78: // LD A,B
-                            // code
+                            r.A = r.B;
                             break;
                         case 0x79: // LD A,C
-                            // code
+                            r.A = r.C;
                             break;
                         case 0x7A: // LD A,D
-                            // code
+                            r.A = r.D;
                             break;
                         case 0x7B: // LD A,E
-                            // code
+                            r.A = r.E;
                             break;
                         case 0x7C: // LD A,H
-                            // code
+                            r.A = r.H;
                             break;
                         case 0x7D: // LD A,L
-                            // code
+                            r.A = r.L;
                             break;
                         case 0x7F: // LD A,A
-                            // code
+                            r.A = r.A;
                             break;
                         case 0x7E: // LD A,(HL)
-                            // code
+                            r.A = readByte(r.HL);
                             break;
                         case 0xF9: // LD SP,HL
-                            // code
+                            r.SP = r.HL;
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-                        case 0x01: // LD BC,nn
-                            // code
-                            break;
-                        case 0x02: // LD (BC),A
-                            // code
-                            break;
-                        case 0x06: // LD B,n
-                            // code
-                            break;
-                        case 0x0A: // LD A,(BC)
-                            // code
-                            break;
-                        case 0x0E: // LD C,n
-                            // code
-                            break;
-                        case 0x11: // LD DE,nn
-                            // code
-                            break;
-                        case 0x12: // LD (DE),A
-                            // code
-                            break;
-                        case 0x16: // LD D,n
-                            // code
-                            break;
-                        case 0x1A: // LD A,(DE)
-                            // code
-                            break;
-                        case 0x1E: // LD E,n
-                            // code
-                            break;
-                        case 0x21: // LD HL,nn
-                            // code
-                            break;
-                        case 0x22: // LD (nn),HL
-                            // code
-                            break;
-                        case 0x26: // LD H,n
-                            // code
-                            break;
-                        case 0x2A: // LD HL,(nn)
-                            // code
-                            break;
-                        case 0x2E: // LD L,n
-                            // code
-                            break;
-                        case 0x31: // LD SP,nn
-                            // code
-                            break;
-                        case 0x32: // LD (nn),A
-                            // code
-                            break;
-                        case 0x36: // LD (HL),n
-                            // code
-                            break;
-                        case 0x3A: // LD A,(nn)
-                            // code
-                            break;
-                        case 0x3E: // LD A,n
-                            // code
-                            break;
-                        case 0x40: // LD B,B
-                            // code
-                            break;
-                        case 0x41: // LD B,C
-                            // code
-                            break;
-                        case 0x42: // LD B,D
-                            // code
-                            break;
-                        case 0x43: // LD B,E
-                            // code
-                            break;
-                        case 0x44: // LD B,H
-                            // code
-                            break;
-                        case 0x45: // LD B,L
-                            // code
-                            break;
-                        case 0x47: // LD B,A
-                            // code
-                            break;
-                        case 0x46: // LD B,(HL)
-                            // code
-                            break;
-                        case 0x48: // LD C,B
-                            // code
-                            break;
-                        case 0x49: // LD C,C
-                            // code
-                            break;
-                        case 0x4A: // LD C,D
-                            // code
-                            break;
-                        case 0x4B: // LD C,E
-                            // code
-                            break;
-                        case 0x4C: // LD C,H
-                            // code
-                            break;
-                        case 0x4D: // LD C,L
-                            // code
-                            break;
-                        case 0x4F: // LD C,A
-                            // code
-                            break;
-                        case 0x4E: // LD C,(HL)
-                            // code
-                            break;
-                        case 0x50: // LD D,B
-                            // code
-                            break;
-                        case 0x51: // LD D,C
-                            // code
-                            break;
-                        case 0x52: // LD D,D
-                            // code
-                            break;
-                        case 0x53: // LD D,E
-                            // code
-                            break;
-                        case 0x54: // LD D,H
-                            // code
-                            break;
-                        case 0x55: // LD D,L
-                            // code
-                            break;
-                        case 0x57: // LD D,A
-                            // code
-                            break;
-                        case 0x56: // LD D,(HL)
-                            // code
-                            break;
-                        case 0x58: // LD E,B
-                            // code
-                            break;
-                        case 0x59: // LD E,C
-                            // code
-                            break;
-                        case 0x5A: // LD E,D
-                            // code
-                            break;
-                        case 0x5B: // LD E,E
-                            // code
-                            break;
-                        case 0x5C: // LD E,H
-                            // code
-                            break;
-                        case 0x5D: // LD E,L
-                            // code
-                            break;
-                        case 0x5F: // LD E,A
-                            // code
-                            break;
-                        case 0x5E: // LD E,(HL)
-                            // code
-                            break;
-                        case 0x60: // LD H,B
-                            // code
-                            break;
-                        case 0x61: // LD H,C
-                            // code
-                            break;
-                        case 0x62: // LD H,D
-                            // code
-                            break;
-                        case 0x63: // LD H,E
-                            // code
-                            break;
-                        case 0x64: // LD H,H
-                            // code
-                            break;
-                        case 0x65: // LD H,L
-                            // code
-                            break;
-                        case 0x67: // LD H,A
-                            // code
-                            break;
-                        case 0x66: // LD H,(HL)
-                            // code
-                            break;
-                        case 0x68: // LD L,B
-                            // code
-                            break;
-                        case 0x69: // LD L,C
-                            // code
-                            break;
-                        case 0x6A: // LD L,D
-                            // code
-                            break;
-                        case 0x6B: // LD L,E
-                            // code
-                            break;
-                        case 0x6C: // LD L,H
-                            // code
-                            break;
-                        case 0x6D: // LD L,L
-                            // code
-                            break;
-                        case 0x6F: // LD L,A
-                            // code
-                            break;
-                        case 0x6E: // LD L,(HL)
-                            // code
-                            break;
-                        case 0x70: // LD (HL),B
-                            // code
-                            break;
-                        case 0x71: // LD (HL),C
-                            // code
-                            break;
-                        case 0x72: // LD (HL),D
-                            // code
-                            break;
-                        case 0x73: // LD (HL),E
-                            // code
-                            break;
-                        case 0x74: // LD (HL),H
-                            // code
-                            break;
-                        case 0x75: // LD (HL),L
-                            // code
-                            break;
-                        case 0x77: // LD (HL),A
-                            // code
-                            break;
-                        case 0x78: // LD A,B
-                            // code
-                            break;
-                        case 0x79: // LD A,C
-                            // code
-                            break;
-                        case 0x7A: // LD A,D
-                            // code
-                            break;
-                        case 0x7B: // LD A,E
-                            // code
-                            break;
-                        case 0x7C: // LD A,H
-                            // code
-                            break;
-                        case 0x7D: // LD A,L
-                            // code
-                            break;
-                        case 0x7F: // LD A,A
-                            // code
-                            break;
-                        case 0x7E: // LD A,(HL)
-                            // code
-                            break;
-                        case 0xF9: // LD SP,HL
-                            // code
-                            break;
-
                     }
                     break;
 
@@ -535,48 +321,39 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x43: // LD (nn),BC
-                            // code
+                            writeWord(argWord, r.BC);
                             break;
                         case 0x47: // LD I,A
-                            // code
+                            r.I = r.A;
+                            handleIRFlags(r.A);
                             break;
                         case 0x4B: // LD BC,(nn)
-                            // code
+                            r.BC = readWord(argWord);
                             break;
                         case 0x4F: // LD R,A
-                            // code
+                            r.R = r.A;
+                            handleIRFlags(r.A);
                             break;
                         case 0x53: // LD (nn),DE
-                            // code
+                            writeWord(argWord, r.DE);
                             break;
                         case 0x57: // LD A,I
-                            // code
+                            r.A = r.I;
+                            handleIRFlags(r.A);
                             break;
                         case 0x5B: // LD DE,(nn)
-                            // code
+                            r.DE = readWord(argWord);
                             break;
                         case 0x5F: // LD A,R
-                            // code
+                            r.A = r.R;
+                            handleIRFlags(r.A);
                             break;
                         case 0x73: // LD (nn),SP
-                            // code
+                            writeWord(argWord, r.SP);
                             break;
                         case 0x7B: // LD SP,(nn)
-                            // code
+                            r.SP = readWord(argWord);
                             break;
-                        case 0xA0: // LDI
-                            // code
-                            break;
-                        case 0xA8: // LDD
-                            // code
-                            break;
-                        case 0xB0: // LDIR
-                            // code
-                            break;
-                        case 0xB8: // LDDR
-                            // code
-                            break;
-
                     }
                     break;
 
@@ -584,139 +361,139 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x21: // LD IX,nn
-                            // code
+                            r.IX = argWord;
                             break;
                         case 0x22: // LD (nn),IX
-                            // code
+                            writeWord(argWord, r.IX);
                             break;
                         case 0x26: // LD IXh,n
-                            // code
+                            r.IXh = arg0;
                             break;
                         case 0x2A: // LD IX,(nn)
-                            // code
+                            r.IX = readWord(argWord);
                             break;
                         case 0x2E: // LD IXl,n
-                            // code
+                            r.IXl = arg0;
                             break;
                         case 0x36: // LD (IX+o),n
-                            // code
+                            writeOffset(r.IX, arg0, arg1);
                             break;
                         case 0x44: // LD B,IXh
-                            // code
+                            r.B = r.IXh;
                             break;
                         case 0x45: // LD B,IXl
-                            // code
+                            r.B = r.IXl;
                             break;
                         case 0x46: // LD B,(IX+o)
-                            // code
+                            r.B = readOffset(r.IX, arg0);
                             break;
                         case 0x4C: // LD C,IXh
-                            // code
+                            r.C = r.IXh;
                             break;
                         case 0x4D: // LD C,IXl
-                            // code
+                            r.C = r.IXl;
                             break;
                         case 0x4E: // LD C,(IX+o)
-                            // code
+                            r.C = readOffset(r.IX, arg0);
                             break;
                         case 0x54: // LD D,IXh
-                            // code
+                            r.D = r.IXh;
                             break;
                         case 0x55: // LD D,IXl
-                            // code
+                            r.D = r.IXl;
                             break;
                         case 0x56: // LD D,(IX+o)
-                            // code
+                            r.D = readOffset(r.IX, arg0);
                             break;
                         case 0x5C: // LD E,IXh
-                            // code
+                            r.E = r.IXh;
                             break;
                         case 0x5D: // LD E,IXl
-                            // code
+                            r.E = r.IXl;
                             break;
                         case 0x5E: // LD E,(IX+o)
-                            // code
+                            r.E = readOffset(r.IX, arg0);
                             break;
                         case 0x60: // LD IXh,B
-                            // code
+                            r.IXh = r.B;
                             break;
                         case 0x61: // LD IXh,C
-                            // code
+                            r.IXh = r.C;
                             break;
                         case 0x62: // LD IXh,D
-                            // code
+                            r.IXh = r.D;
                             break;
                         case 0x63: // LD IXh,E
-                            // code
+                            r.IXh = r.E;
                             break;
                         case 0x64: // LD IXh,IXh
-                            // code
+                            r.IXh = r.IXh;
                             break;
                         case 0x65: // LD IXh,IXl
-                            // code
+                            r.IXh = r.IXl;
                             break;
                         case 0x67: // LD IXh,A
-                            // code
+                            r.IXh = r.A;
                             break;
                         case 0x66: // LD H,(IX+o)
-                            // code
+                            r.H = readOffset(r.IX, arg0);
                             break;
                         case 0x68: // LD IXl,B
-                            // code
+                            r.IXl = r.B;
                             break;
                         case 0x69: // LD IXl,C
-                            // code
+                            r.IXl = r.C;
                             break;
                         case 0x6A: // LD IXl,D
-                            // code
+                            r.IXl = r.D;
                             break;
                         case 0x6B: // LD IXl,E
-                            // code
+                            r.IXl = r.E;
                             break;
                         case 0x6C: // LD IXl,IXh
-                            // code
+                            r.IXl = r.IXh;
                             break;
                         case 0x6D: // LD IXl,IXl
-                            // code
+                            r.IXl = r.IXl;
                             break;
                         case 0x6F: // LD IXl,A
-                            // code
+                            r.IXl = r.A;
                             break;
                         case 0x6E: // LD L,(IX+o)
-                            // code
+                            r.L = readOffset(r.IX, arg0);
                             break;
                         case 0x70: // LD (IX+o),B
-                            // code
+                            writeOffset(r.IX, arg0, r.B);
                             break;
                         case 0x71: // LD (IX+o),C
-                            // code
+                            writeOffset(r.IX, arg0, r.C);
                             break;
                         case 0x72: // LD (IX+o),D
-                            // code
+                            writeOffset(r.IX, arg0, r.D);
                             break;
                         case 0x73: // LD (IX+o),E
-                            // code
+                            writeOffset(r.IX, arg0, r.E);
                             break;
                         case 0x74: // LD (IX+o),H
-                            // code
+                            writeOffset(r.IX, arg0, r.H);
                             break;
                         case 0x75: // LD (IX+o),L
-                            // code
+                            writeOffset(r.IX, arg0, r.L);
                             break;
                         case 0x77: // LD (IX+o),A
-                            // code
+                            writeOffset(r.IX, arg0, r.A);
                             break;
                         case 0x7C: // LD A,IXh
-                            // code
+                            r.A = r.IXh;
                             break;
                         case 0x7D: // LD A,IXl
-                            // code
+                            r.A = r.IXl;
                             break;
                         case 0x7E: // LD A,(IX+o)
-                            // code
+                            r.A = readOffset(r.IX, arg0);
                             break;
                         case 0xF9: // LD SP,IX
-                            // code
+                            r.SP = r.IX;
                             break;
 
                     }
@@ -726,160 +503,149 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x21: // LD IY,nn
-                            // code
+                            r.IY = argWord;
                             break;
                         case 0x22: // LD (nn),IY
-                            // code
+                            writeWord(argWord, r.IY);
                             break;
                         case 0x26: // LD IYh,n
-                            // code
+                            r.IYh = arg0;
                             break;
                         case 0x2A: // LD IY,(nn)
-                            // code
+                            r.IY = readWord(argWord);
                             break;
                         case 0x2E: // LD IYl,n
-                            // code
+                            r.IYl = arg0;
                             break;
                         case 0x36: // LD (IY+o),n
-                            // code
+                            writeOffset(r.IY, arg0, arg1);
                             break;
                         case 0x44: // LD B,IYh
-                            // code
+                            r.B = r.IYh;
                             break;
                         case 0x45: // LD B,IYl
-                            // code
+                            r.B = r.IYl;
                             break;
                         case 0x46: // LD B,(IY+o)
-                            // code
+                            r.B = readOffset(r.IY, arg0);
                             break;
                         case 0x4C: // LD C,IYh
-                            // code
+                            r.C = r.IYh;
                             break;
                         case 0x4D: // LD C,IYl
-                            // code
+                            r.C = r.IYl;
                             break;
                         case 0x4E: // LD C,(IY+o)
-                            // code
+                            r.C = readOffset(r.IY, arg0);
                             break;
                         case 0x54: // LD D,IYh
-                            // code
+                            r.D = r.IYh;
                             break;
                         case 0x55: // LD D,IYl
-                            // code
+                            r.D = r.IYl;
                             break;
                         case 0x56: // LD D,(IY+o)
-                            // code
+                            r.D = readOffset(r.IY, arg0);
                             break;
                         case 0x5C: // LD E,IYh
-                            // code
+                            r.E = r.IYh;
                             break;
                         case 0x5D: // LD E,IYl
-                            // code
+                            r.E = r.IYl;
                             break;
                         case 0x5E: // LD E,(IY+o)
-                            // code
+                            r.E = readOffset(r.IY, arg0);
                             break;
                         case 0x60: // LD IYh,B
-                            // code
+                            r.IYh = r.B;
                             break;
                         case 0x61: // LD IYh,C
-                            // code
+                            r.IYh = r.C;
                             break;
                         case 0x62: // LD IYh,D
-                            // code
+                            r.IYh = r.D;
                             break;
                         case 0x63: // LD IYh,E
-                            // code
+                            r.IYh = r.E;
                             break;
                         case 0x64: // LD IYh,IYh
-                            // code
+                            r.IYh = r.IYh;
                             break;
                         case 0x65: // LD IYh,IYl
-                            // code
+                            r.IYh = r.IYl;
                             break;
                         case 0x67: // LD IYh,A
-                            // code
+                            r.IYh = r.A;
                             break;
                         case 0x66: // LD H,(IY+o)
-                            // code
+                            r.H = readOffset(r.IY, arg0);
                             break;
                         case 0x68: // LD IYl,B
-                            // code
+                            r.IYl = r.B;
                             break;
                         case 0x69: // LD IYl,C
-                            // code
+                            r.IYl = r.C;
                             break;
                         case 0x6A: // LD IYl,D
-                            // code
+                            r.IYl = r.D;
                             break;
                         case 0x6B: // LD IYl,E
-                            // code
+                            r.IYl = r.E;
                             break;
                         case 0x6C: // LD IYl,IYh
-                            // code
+                            r.IYl = r.IYh;
                             break;
                         case 0x6D: // LD IYl,IYl
-                            // code
+                            r.IYl = r.IYl;
                             break;
                         case 0x6F: // LD IYl,A
-                            // code
+                            r.IYl = r.A;
                             break;
                         case 0x6E: // LD L,(IY+o)
-                            // code
+                            r.L = readOffset(r.IY, arg0);
                             break;
                         case 0x70: // LD (IY+o),B
-                            // code
+                            writeOffset(r.IY, arg0, r.B);
                             break;
                         case 0x71: // LD (IY+o),C
-                            // code
+                            writeOffset(r.IY, arg0, r.C);
                             break;
                         case 0x72: // LD (IY+o),D
-                            // code
+                            writeOffset(r.IY, arg0, r.D);
                             break;
                         case 0x73: // LD (IY+o),E
-                            // code
+                            writeOffset(r.IY, arg0, r.E);
                             break;
                         case 0x74: // LD (IY+o),H
-                            // code
+                            writeOffset(r.IY, arg0, r.H);
                             break;
                         case 0x75: // LD (IY+o),L
-                            // code
+                            writeOffset(r.IY, arg0, r.L);
                             break;
                         case 0x77: // LD (IY+o),A
-                            // code
+                            writeOffset(r.IY, arg0, r.A);
                             break;
                         case 0x7C: // LD A,IYh
-                            // code
+                            r.A = r.IYh;
                             break;
                         case 0x7D: // LD A,IYl
-                            // code
+                            r.A = r.IYl;
                             break;
                         case 0x7E: // LD A,(IY+o)
-                            // code
+                            r.A = readOffset(r.IY, arg0);
                             break;
                         case 0xF9: // LD SP,IY
-                            // code
+                            r.SP = r.IY;
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public LD()
+        {
         }
     }
 }

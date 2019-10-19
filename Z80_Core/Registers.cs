@@ -36,6 +36,12 @@ namespace Z80.Core
         public ushort IY { get { return Get16BitValue(18); } set { Set16BitValue(18, value); } }
         public ushort SP { get { return Get16BitValue(20); } set { Set16BitValue(20, value); } }
 
+        // high/low bytes of IX/IY
+        public byte IXh { get { return _registers[16]; } set { _registers[16] = value; } }
+        public byte IXl { get { return _registers[17]; } set { _registers[17] = value; } }
+        public byte IYh { get { return _registers[18]; } set { _registers[18] = value; } }
+        public byte IYl { get { return _registers[19]; } set { _registers[19] = value; } }
+
         // 8-bit 'other' registers
         public byte I { get { return _registers[22]; } set { _registers[22] = value; } }
         public byte R { get { return _registers[23]; } set { _registers[23] = value; } }

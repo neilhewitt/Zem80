@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class ADC : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -50,33 +50,6 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
-                        case 0x88: // ADC A,B
-                            // code
-                            break;
-                        case 0x89: // ADC A,C
-                            // code
-                            break;
-                        case 0x8A: // ADC A,D
-                            // code
-                            break;
-                        case 0x8B: // ADC A,E
-                            // code
-                            break;
-                        case 0x8C: // ADC A,H
-                            // code
-                            break;
-                        case 0x8D: // ADC A,L
-                            // code
-                            break;
-                        case 0x8F: // ADC A,A
-                            // code
-                            break;
-                        case 0x8E: // ADC A,(HL)
-                            // code
-                            break;
-                        case 0xCE: // ADC A,n
-                            // code
-                            break;
 
                     }
                     break;
@@ -148,6 +121,10 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public ADC()
+        {
         }
     }
 }

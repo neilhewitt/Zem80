@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class AND : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -50,33 +50,6 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
-                        case 0xA0: // AND B
-                            // code
-                            break;
-                        case 0xA1: // AND C
-                            // code
-                            break;
-                        case 0xA2: // AND D
-                            // code
-                            break;
-                        case 0xA3: // AND E
-                            // code
-                            break;
-                        case 0xA4: // AND H
-                            // code
-                            break;
-                        case 0xA5: // AND L
-                            // code
-                            break;
-                        case 0xA7: // AND A
-                            // code
-                            break;
-                        case 0xA6: // AND (HL)
-                            // code
-                            break;
-                        case 0xE6: // AND n
-                            // code
-                            break;
 
                     }
                     break;
@@ -136,6 +109,10 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public AND()
+        {
         }
     }
 }

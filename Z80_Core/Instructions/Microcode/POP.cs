@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class POP : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -35,18 +35,6 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
-                        case 0xC1: // POP BC
-                            // code
-                            break;
-                        case 0xD1: // POP DE
-                            // code
-                            break;
-                        case 0xE1: // POP HL
-                            // code
-                            break;
-                        case 0xF1: // POP AF
-                            // code
-                            break;
 
                     }
                     break;
@@ -94,6 +82,10 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public POP()
+        {
         }
     }
 }

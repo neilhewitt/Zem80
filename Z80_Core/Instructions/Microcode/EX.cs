@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class EX : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -35,18 +35,6 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
-                        case 0x08: // EX AF,AF'
-                            // code
-                            break;
-                        case 0xD9: // EXX
-                            // code
-                            break;
-                        case 0xE3: // EX (SP),HL
-                            // code
-                            break;
-                        case 0xEB: // EX DE,HL
-                            // code
-                            break;
 
                     }
                     break;
@@ -94,6 +82,10 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public EX()
+        {
         }
     }
 }

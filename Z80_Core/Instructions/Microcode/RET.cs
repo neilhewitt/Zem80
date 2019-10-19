@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class RET : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -50,33 +50,6 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
-                        case 0xC0: // RET NZ
-                            // code
-                            break;
-                        case 0xC8: // RET Z
-                            // code
-                            break;
-                        case 0xC9: // RET
-                            // code
-                            break;
-                        case 0xD0: // RET NC
-                            // code
-                            break;
-                        case 0xD8: // RET C
-                            // code
-                            break;
-                        case 0xE0: // RET PO
-                            // code
-                            break;
-                        case 0xE8: // RET PE
-                            // code
-                            break;
-                        case 0xF0: // RET P
-                            // code
-                            break;
-                        case 0xF8: // RET M
-                            // code
-                            break;
 
                     }
                     break;
@@ -124,6 +97,10 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public RET()
+        {
         }
     }
 }

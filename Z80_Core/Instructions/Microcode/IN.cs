@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class IN : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -62,45 +62,6 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
-                        case 0x03: // INC BC
-                            // code
-                            break;
-                        case 0x04: // INC B
-                            // code
-                            break;
-                        case 0x0C: // INC C
-                            // code
-                            break;
-                        case 0x13: // INC DE
-                            // code
-                            break;
-                        case 0x14: // INC D
-                            // code
-                            break;
-                        case 0x1C: // INC E
-                            // code
-                            break;
-                        case 0x23: // INC HL
-                            // code
-                            break;
-                        case 0x24: // INC H
-                            // code
-                            break;
-                        case 0x2C: // INC L
-                            // code
-                            break;
-                        case 0x33: // INC SP
-                            // code
-                            break;
-                        case 0x34: // INC (HL)
-                            // code
-                            break;
-                        case 0x3C: // INC A
-                            // code
-                            break;
-                        case 0xDB: // IN A,(n)
-                            // code
-                            break;
 
                     }
                     break;
@@ -202,6 +163,10 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public IN()
+        {
         }
     }
 }

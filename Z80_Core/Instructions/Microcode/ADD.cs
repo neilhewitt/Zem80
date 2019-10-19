@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class ADD : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -62,45 +62,6 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
-                        case 0x09: // ADD HL,BC
-                            // code
-                            break;
-                        case 0x19: // ADD HL,DE
-                            // code
-                            break;
-                        case 0x29: // ADD HL,HL
-                            // code
-                            break;
-                        case 0x39: // ADD HL,SP
-                            // code
-                            break;
-                        case 0x80: // ADD A,B
-                            // code
-                            break;
-                        case 0x81: // ADD A,C
-                            // code
-                            break;
-                        case 0x82: // ADD A,D
-                            // code
-                            break;
-                        case 0x83: // ADD A,E
-                            // code
-                            break;
-                        case 0x84: // ADD A,H
-                            // code
-                            break;
-                        case 0x85: // ADD A,L
-                            // code
-                            break;
-                        case 0x87: // ADD A,A
-                            // code
-                            break;
-                        case 0x86: // ADD A,(HL)
-                            // code
-                            break;
-                        case 0xC6: // ADD A,n
-                            // code
-                            break;
 
                     }
                     break;
@@ -184,6 +145,10 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public ADD()
+        {
         }
     }
 }

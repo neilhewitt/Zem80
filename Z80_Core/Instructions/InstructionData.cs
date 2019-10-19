@@ -15,5 +15,6 @@ namespace Z80.Core
         public bool IndexIX { get; set; }
         public bool IndexIY { get; set; }
         public byte[] Arguments { get; set; } = new byte[0];
+        public ushort ArgumentsAsWord => (ushort)(((Arguments?[1] ?? 0) * 256) + Arguments?[2] ?? 0);
     }
 }

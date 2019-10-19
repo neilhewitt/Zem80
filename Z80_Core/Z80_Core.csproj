@@ -7,8 +7,4 @@
     <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="Instructions\Microcode\" />
-  </ItemGroup>
-
 </Project>

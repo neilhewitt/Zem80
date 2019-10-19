@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class RST : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -47,30 +47,6 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
-                        case 0xC7: // RST 0
-                            // code
-                            break;
-                        case 0xCF: // RST 8H
-                            // code
-                            break;
-                        case 0xD7: // RST 10H
-                            // code
-                            break;
-                        case 0xDF: // RST 18H
-                            // code
-                            break;
-                        case 0xE7: // RST 20H
-                            // code
-                            break;
-                        case 0xEF: // RST 28H
-                            // code
-                            break;
-                        case 0xF7: // RST 30H
-                            // code
-                            break;
-                        case 0xFF: // RST 38H
-                            // code
-                            break;
 
                     }
                     break;
@@ -112,6 +88,10 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public RST()
+        {
         }
     }
 }

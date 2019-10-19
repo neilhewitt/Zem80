@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class CALL : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -50,33 +50,6 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
-                        case 0xC4: // CALL NZ,nn
-                            // code
-                            break;
-                        case 0xCC: // CALL Z,nn
-                            // code
-                            break;
-                        case 0xCD: // CALL nn
-                            // code
-                            break;
-                        case 0xD4: // CALL NC,nn
-                            // code
-                            break;
-                        case 0xDC: // CALL C,nn
-                            // code
-                            break;
-                        case 0xE4: // CALL PO,nn
-                            // code
-                            break;
-                        case 0xEC: // CALL PE,nn
-                            // code
-                            break;
-                        case 0xF4: // CALL P,nn
-                            // code
-                            break;
-                        case 0xFC: // CALL M,nn
-                            // code
-                            break;
 
                     }
                     break;
@@ -118,6 +91,10 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public CALL()
+        {
         }
     }
 }

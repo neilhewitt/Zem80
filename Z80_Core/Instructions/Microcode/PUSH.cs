@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class PUSH : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -35,18 +35,6 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
-                        case 0xC5: // PUSH BC
-                            // code
-                            break;
-                        case 0xD5: // PUSH DE
-                            // code
-                            break;
-                        case 0xE5: // PUSH HL
-                            // code
-                            break;
-                        case 0xF5: // PUSH AF
-                            // code
-                            break;
 
                     }
                     break;
@@ -94,6 +82,10 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public PUSH()
+        {
         }
     }
 }

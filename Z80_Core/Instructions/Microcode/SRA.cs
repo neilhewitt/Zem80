@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class SRA : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -23,6 +23,30 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
+                        case 0x28: // SRA B
+                            // code
+                            break;
+                        case 0x29: // SRA C
+                            // code
+                            break;
+                        case 0x2A: // SRA D
+                            // code
+                            break;
+                        case 0x2B: // SRA E
+                            // code
+                            break;
+                        case 0x2C: // SRA H
+                            // code
+                            break;
+                        case 0x2D: // SRA L
+                            // code
+                            break;
+                        case 0x2F: // SRA A
+                            // code
+                            break;
+                        case 0x2E: // SRA (HL)
+                            // code
+                            break;
 
                     }
                     break;
@@ -70,6 +94,10 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public SRA()
+        {
         }
     }
 }

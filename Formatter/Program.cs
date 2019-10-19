@@ -16,7 +16,7 @@ namespace Z80.Core
 {
     public class {{classname}} : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -75,6 +75,10 @@ namespace Z80.Core
 
             return new ExecutionResult(new Flags(), 0);
         }
+
+        public {{classname}}()
+        {
+        }
     }
 }
 ";
@@ -130,7 +134,7 @@ namespace Z80.Core
                 }
 
                 code = code.Replace("{{unprefixed}}", unprefixed);
-                code = code.Replace("{{CB}}", unprefixed);
+                code = code.Replace("{{CB}}", CB);
                 code = code.Replace("{{ED}}", ED);
                 code = code.Replace("{{DD}}", DD);
                 code = code.Replace("{{FD}}", FD);

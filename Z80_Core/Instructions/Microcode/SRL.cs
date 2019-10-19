@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class SRL : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -23,6 +23,30 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
+                        case 0x38: // SRL B
+                            // code
+                            break;
+                        case 0x39: // SRL C
+                            // code
+                            break;
+                        case 0x3A: // SRL D
+                            // code
+                            break;
+                        case 0x3B: // SRL E
+                            // code
+                            break;
+                        case 0x3C: // SRL H
+                            // code
+                            break;
+                        case 0x3D: // SRL L
+                            // code
+                            break;
+                        case 0x3F: // SRL A
+                            // code
+                            break;
+                        case 0x3E: // SRL (HL)
+                            // code
+                            break;
 
                     }
                     break;
@@ -70,6 +94,10 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public SRL()
+        {
         }
     }
 }

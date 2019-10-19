@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class DEC : IInstructionImplementation
+    public class RR : IInstructionImplementation
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
@@ -16,40 +16,10 @@ namespace Z80.Core
                 case InstructionPrefix.Unprefixed:
                     switch (instruction.Opcode)
                     {
-                        case 0x05: // DEC B
+                        case 0x0F: // RRCA
                             // code
                             break;
-                        case 0x0B: // DEC BC
-                            // code
-                            break;
-                        case 0x0D: // DEC C
-                            // code
-                            break;
-                        case 0x15: // DEC D
-                            // code
-                            break;
-                        case 0x1B: // DEC DE
-                            // code
-                            break;
-                        case 0x1D: // DEC E
-                            // code
-                            break;
-                        case 0x25: // DEC H
-                            // code
-                            break;
-                        case 0x2B: // DEC HL
-                            // code
-                            break;
-                        case 0x2D: // DEC L
-                            // code
-                            break;
-                        case 0x35: // DEC (HL)
-                            // code
-                            break;
-                        case 0x3B: // DEC SP
-                            // code
-                            break;
-                        case 0x3D: // DEC A
+                        case 0x1F: // RRA
                             // code
                             break;
 
@@ -59,6 +29,54 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
+                        case 0x08: // RRC B
+                            // code
+                            break;
+                        case 0x09: // RRC C
+                            // code
+                            break;
+                        case 0x0A: // RRC D
+                            // code
+                            break;
+                        case 0x0B: // RRC E
+                            // code
+                            break;
+                        case 0x0C: // RRC H
+                            // code
+                            break;
+                        case 0x0D: // RRC L
+                            // code
+                            break;
+                        case 0x0F: // RRC A
+                            // code
+                            break;
+                        case 0x0E: // RRC (HL)
+                            // code
+                            break;
+                        case 0x18: // RR B
+                            // code
+                            break;
+                        case 0x19: // RR C
+                            // code
+                            break;
+                        case 0x1A: // RR D
+                            // code
+                            break;
+                        case 0x1B: // RR E
+                            // code
+                            break;
+                        case 0x1C: // RR H
+                            // code
+                            break;
+                        case 0x1D: // RR L
+                            // code
+                            break;
+                        case 0x1F: // RR A
+                            // code
+                            break;
+                        case 0x1E: // RR (HL)
+                            // code
+                            break;
 
                     }
                     break;
@@ -66,6 +84,9 @@ namespace Z80.Core
                 case InstructionPrefix.ED:
                     switch (instruction.Opcode)
                     {
+                        case 0x67: // RRD
+                            // code
+                            break;
 
                     }
                     break;
@@ -73,18 +94,6 @@ namespace Z80.Core
                 case InstructionPrefix.DD:
                     switch (instruction.Opcode)
                     {
-                        case 0x25: // DEC IXh
-                            // code
-                            break;
-                        case 0x2D: // DEC IXl
-                            // code
-                            break;
-                        case 0x2B: // DEC IX
-                            // code
-                            break;
-                        case 0x35: // DEC (IX+o)
-                            // code
-                            break;
 
                     }
                     break;
@@ -92,18 +101,6 @@ namespace Z80.Core
                 case InstructionPrefix.FD:
                     switch (instruction.Opcode)
                     {
-                        case 0x25: // DEC IYh
-                            // code
-                            break;
-                        case 0x2D: // DEC IYl
-                            // code
-                            break;
-                        case 0x2B: // DEC IY
-                            // code
-                            break;
-                        case 0x35: // DEC (IY+o)
-                            // code
-                            break;
 
                     }
                     break;
@@ -111,6 +108,12 @@ namespace Z80.Core
                 case InstructionPrefix.DDCB:
                     switch (instruction.Opcode)
                     {
+                        case 0x0E: // RRC (IX+o)
+                            // code
+                            break;
+                        case 0x1E: // RR (IX+o)
+                            // code
+                            break;
 
                     }
                     break;
@@ -118,6 +121,12 @@ namespace Z80.Core
                 case InstructionPrefix.FDCB:
                     switch (instruction.Opcode)
                     {
+                        case 0x0E: // RRC (IY+o)
+                            // code
+                            break;
+                        case 0x1E: // RR (IY+o)
+                            // code
+                            break;
 
                     }
                     break;
@@ -126,7 +135,7 @@ namespace Z80.Core
             return new ExecutionResult(new Flags(), 0);
         }
 
-        public DEC()
+        public RR()
         {
         }
     }

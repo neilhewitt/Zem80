@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class SLA : IInstructionImplementation
     {
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -23,6 +23,30 @@ namespace Z80.Core
                 case InstructionPrefix.CB:
                     switch (instruction.Opcode)
                     {
+                        case 0x20: // SLA B
+                            // code
+                            break;
+                        case 0x21: // SLA C
+                            // code
+                            break;
+                        case 0x22: // SLA D
+                            // code
+                            break;
+                        case 0x23: // SLA E
+                            // code
+                            break;
+                        case 0x24: // SLA H
+                            // code
+                            break;
+                        case 0x25: // SLA L
+                            // code
+                            break;
+                        case 0x27: // SLA A
+                            // code
+                            break;
+                        case 0x26: // SLA (HL)
+                            // code
+                            break;
 
                     }
                     break;
@@ -70,6 +94,10 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(new Flags(), 0);
+        }
+
+        public SLA()
+        {
         }
     }
 }
