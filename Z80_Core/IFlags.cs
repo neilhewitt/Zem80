@@ -5,7 +5,7 @@
         bool Carry { get; set; }
         bool Five { get; set; }
         bool HalfCarry { get; set; }
-        bool Parity { get; set; }
+        bool ParityOverflow { get; set; }
         bool Sign { get; set; }
         bool Subtract { get; set; }
         bool Three { get; set; }

@@ -13,7 +13,7 @@ namespace Z80.Core
         public bool Five { get { return GetBit(5); } set { SetBit(5, value); } }
         public bool HalfCarry { get { return GetBit(4); } set { SetBit(4, value); } }
         public bool Three { get { return GetBit(3); } set { SetBit(3, value); } }
-        public bool Parity { get { return GetBit(2); } set { SetBit(2, value); } }
+        public bool ParityOverflow { get { return GetBit(2); } set { SetBit(2, value); } }
         public bool Subtract { get { return GetBit(1); } set { SetBit(1, value); } }
         public bool Carry { get { return GetBit(0); } set { SetBit(0, value); } }
 

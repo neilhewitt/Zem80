@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
@@ -50,6 +51,19 @@ namespace Z80.Core
         {
             ByteBits bits = new ByteBits(input);
             return bits[bitIndex];
-        }        
+        } 
+        
+        public static byte CountBits(this byte input, bool state)
+        {
+            if (!state) input = (byte)~input;
+            byte bits = 0;
+            while (input > 0)
+            {
+                bits += (byte)(input & 1);
+                input >>= 1;
+            }
+
+            return bits;
+        }
     }
 }

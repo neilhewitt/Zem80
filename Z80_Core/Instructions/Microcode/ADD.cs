@@ -10,6 +10,41 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            Flags flags = new Flags();
+            IRegisters r = cpu.Registers;
+
+            byte readByte(ushort address)
+            {
+                return cpu.Memory.ReadByteAt(address);
+            }
+
+            byte readOffset(ushort address, byte offset)
+            {
+                return cpu.Memory.ReadByteAt((ushort)(address + offset));
+            }
+
+            byte addByte(byte value)
+            {
+                ushort result = (ushort)(cpu.Registers.A + value);
+                short signed = (short)result;
+                if (result == 0) flags.Zero = true;
+                if (result > 0xFF) flags.Carry = true;
+                if (signed < 0) flags.Sign = true;
+                if (signed > 0x7F || signed < -0x7F) flags.ParityOverflow = true;
+                if ((cpu.Registers.A & 0xF) + (((byte)result) & 0xF) > 0xF) flags.HalfCarry = true;
+
+                return (byte)result;
+            }
+
+            ushort addWord(ushort value)
+            {
+                flags = Flags.Copy(cpu.Registers.Flags); // must preserve existing values
+                uint result = (uint)(cpu.Registers.HL + value);
+                if (result > 0xFFFF) flags.Carry = true;
+                if ((cpu.Registers.A & 0x0FFF) + (((byte)result) & 0x0FFF) > 0x0FFF) flags.HalfCarry = true;
+
+                return (ushort)result;
+            }
 
             switch (instruction.Prefix)
             {
@@ -17,87 +52,72 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x09: // ADD HL,BC
-                            // code
+                            r.HL = addWord(r.BC);
                             break;
                         case 0x19: // ADD HL,DE
-                            // code
+                            r.HL = addWord(r.DE);
                             break;
                         case 0x29: // ADD HL,HL
-                            // code
+                            r.HL = addWord(r.HL);
                             break;
                         case 0x39: // ADD HL,SP
-                            // code
+                            r.HL = addWord(r.SP);
                             break;
                         case 0x80: // ADD A,B
-                            // code
+                            r.A = addByte(r.B);
                             break;
                         case 0x81: // ADD A,C
-                            // code
+                            r.A = addByte(r.C);
                             break;
                         case 0x82: // ADD A,D
-                            // code
+                            r.A = addByte(r.D);
                             break;
                         case 0x83: // ADD A,E
-                            // code
+                            r.A = addByte(r.E);
                             break;
                         case 0x84: // ADD A,H
-                            // code
+                            r.A = addByte(r.H);
                             break;
                         case 0x85: // ADD A,L
-                            // code
+                            r.A = addByte(r.L);
                             break;
                         case 0x87: // ADD A,A
-                            // code
+                            r.A = addByte(r.A);
                             break;
                         case 0x86: // ADD A,(HL)
-                            // code
+                            r.A = addByte(readByte(r.HL));
                             break;
                         case 0xC6: // ADD A,n
-                            // code
+                            r.A = addByte(data.Arguments[0]);
                             break;
-
                     }
                     break;
 
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
 
                 case InstructionPrefix.DD:
                     switch (instruction.Opcode)
                     {
                         case 0x09: // ADD IX,BC
-                            // code
+                            r.IX = addWord(r.BC);
                             break;
                         case 0x19: // ADD IX,DE
-                            // code
+                            r.IX = addWord(r.DE);
                             break;
                         case 0x29: // ADD IX,IX
-                            // code
+                            r.IX = addWord(r.IX);
                             break;
                         case 0x39: // ADD IX,SP
-                            // code
+                            r.IX = addWord(r.SP);
                             break;
                         case 0x84: // ADD A,IXh
-                            // code
+                            r.A = addByte(r.IXh);
                             break;
                         case 0x85: // ADD A,IXl
-                            // code
+                            r.A = addByte(r.IXl);
                             break;
                         case 0x86: // ADD A,(IX+o)
-                            // code
+                            r.A = addByte(readOffset(r.IX, data.Arguments[0]));
                             break;
-
                     }
                     break;
 
@@ -105,46 +125,31 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x09: // ADD IY,BC
-                            // code
+                            r.IY = addWord(r.BC);
                             break;
                         case 0x19: // ADD IY,DE
-                            // code
+                            r.IY = addWord(r.DE);
                             break;
                         case 0x29: // ADD IY,IY
-                            // code
+                            r.IY = addWord(r.IY);
                             break;
                         case 0x39: // ADD IY,SP
-                            // code
+                            r.IY = addWord(r.SP);
                             break;
                         case 0x84: // ADD A,IYh
-                            // code
+                            r.A = addByte(r.IYh);
                             break;
                         case 0x85: // ADD A,IYl
-                            // code
+                            r.A = addByte(r.IYl);
                             break;
                         case 0x86: // ADD A,(IY+o)
-                            // code
+                            r.A = addByte(readOffset(r.IY, data.Arguments[0]));
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
             }
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(flags, 0);
         }
 
         public ADD()

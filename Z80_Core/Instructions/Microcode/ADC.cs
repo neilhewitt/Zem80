@@ -10,6 +10,44 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            Flags flags = new Flags();
+            IRegisters r = cpu.Registers;
+
+            byte readByte(ushort address)
+            {
+                return cpu.Memory.ReadByteAt(address);
+            }
+
+            byte readOffset(ushort address, byte offset)
+            {
+                return cpu.Memory.ReadByteAt((ushort)(address + offset));
+            }
+
+            byte addByteWithCarry(byte value)
+            {
+                ushort result = (ushort)(cpu.Registers.A + value + (cpu.Registers.Flags.Carry ? 1 : 0));
+                short signed = (short)result;
+                if (result == 0) flags.Zero = true;
+                if (result > 0xFF) flags.Carry = true;
+                if (signed < 0) flags.Sign = true;
+                if (signed > 0x7F || signed < -0x7F) flags.ParityOverflow = true;
+                if ((cpu.Registers.A & 0xF) + (((byte)result) & 0xF) > 0xF) flags.HalfCarry = true;
+
+                return (byte)result;
+            }
+
+            ushort addWordWithCarry(ushort value)
+            {
+                uint result = (uint)(cpu.Registers.HL + value + (cpu.Registers.Flags.Carry ? 1 : 0));
+                int signed = (int)result;
+                if (result == 0) flags.Zero = true;
+                if (result > 0xFFFF) flags.Carry = true;
+                if (signed < 0) flags.Sign = true;
+                if (signed > 0x7FFF|| signed < -0x7FFF) flags.ParityOverflow = true;
+                if ((cpu.Registers.HL & 0x0FFF) + (((byte)result) & 0x0FFF) > 0x0FFF) flags.HalfCarry = true;
+
+                return (ushort)result;
+            }
 
             switch (instruction.Prefix)
             {
@@ -17,40 +55,32 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x88: // ADC A,B
-                            // code
+                            r.A = addByteWithCarry(r.B);
                             break;
                         case 0x89: // ADC A,C
-                            // code
+                            r.A = addByteWithCarry(r.C);
                             break;
                         case 0x8A: // ADC A,D
-                            // code
+                            r.A = addByteWithCarry(r.D);
                             break;
                         case 0x8B: // ADC A,E
-                            // code
+                            r.A = addByteWithCarry(r.E);
                             break;
                         case 0x8C: // ADC A,H
-                            // code
+                            r.A = addByteWithCarry(r.H);
                             break;
                         case 0x8D: // ADC A,L
-                            // code
+                            r.A = addByteWithCarry(r.L);
                             break;
                         case 0x8F: // ADC A,A
-                            // code
+                            r.A = addByteWithCarry(r.A);
                             break;
                         case 0x8E: // ADC A,(HL)
-                            // code
+                            r.A = addByteWithCarry(readByte(r.HL));
                             break;
                         case 0xCE: // ADC A,n
-                            // code
+                            r.A = addByteWithCarry(data.Arguments[0]);
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
 
@@ -58,18 +88,17 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x4A: // ADC HL,BC
-                            // code
+                            r.HL = addWordWithCarry(r.BC);
                             break;
                         case 0x5A: // ADC HL,DE
-                            // code
+                            r.HL = addWordWithCarry(r.DE);
                             break;
                         case 0x6A: // ADC HL,HL
-                            // code
+                            r.HL = addWordWithCarry(r.HL);
                             break;
                         case 0x7A: // ADC HL,SP
-                            // code
+                            r.HL = addWordWithCarry(r.SP);
                             break;
-
                     }
                     break;
 
@@ -77,15 +106,14 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x8C: // ADC A,IXh
-                            // code
+                            r.A = addByteWithCarry(r.IXh);
                             break;
                         case 0x8D: // ADC A,IXl
-                            // code
+                            r.A = addByteWithCarry(r.IXl);
                             break;
                         case 0x8E: // ADC A,(IX+o)
-                            // code
+                            r.A = addByteWithCarry(readOffset(r.IX, data.Arguments[0]));
                             break;
-
                     }
                     break;
 
@@ -93,34 +121,19 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x8C: // ADC A,IYh
-                            // code
+                            r.A = addByteWithCarry(r.IYh);
                             break;
                         case 0x8D: // ADC A,IYl
-                            // code
+                            r.A = addByteWithCarry(r.IYl);
                             break;
                         case 0x8E: // ADC A,(IY+o)
-                            // code
+                            r.A = addByteWithCarry(readOffset(r.IY, data.Arguments[0]));
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
             }
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(flags, 0);
         }
 
         public ADC()

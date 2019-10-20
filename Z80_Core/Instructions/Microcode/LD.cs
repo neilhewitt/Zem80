@@ -54,7 +54,7 @@ namespace Z80.Core
                 flags.Carry = r.Flags.Carry;
                 if (input == 0x00) flags.Zero = true;
                 if ((sbyte)input < 0) flags.Sign = true;
-                if (cpu.InterruptMode != InterruptMode.Zero) flags.Parity = true;
+                if (cpu.InterruptMode != InterruptMode.Zero) flags.ParityOverflow = true;
             }
 
             switch (instruction.Prefix)

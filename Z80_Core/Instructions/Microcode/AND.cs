@@ -10,6 +10,20 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            IRegisters r = cpu.Registers;
+            Flags flags = new Flags();
+
+            byte and(byte operand)
+            {
+                byte result = (byte)(r.A & operand);
+
+                if (result == 0x00) flags.Zero = true;
+                if (((sbyte)result) < 0) flags.Sign = true;
+                if (result.CountBits(true) % 2 == 0) flags.ParityOverflow = true;
+                flags.HalfCarry = true;
+
+                return result;
+            }
 
             switch (instruction.Prefix)
             {
@@ -17,46 +31,32 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xA0: // AND B
-                            // code
+                            r.A = and(r.B);
                             break;
                         case 0xA1: // AND C
-                            // code
+                            r.A = and(r.C);
                             break;
                         case 0xA2: // AND D
-                            // code
+                            r.A = and(r.D);
                             break;
                         case 0xA3: // AND E
-                            // code
+                            r.A = and(r.E);
                             break;
                         case 0xA4: // AND H
-                            // code
+                            r.A = and(r.H);
                             break;
                         case 0xA5: // AND L
-                            // code
+                            r.A = and(r.L);
                             break;
                         case 0xA7: // AND A
-                            // code
+                            r.A = and(r.A);
                             break;
                         case 0xA6: // AND (HL)
-                            // code
+                            r.A = and(cpu.Memory.ReadByteAt(r.HL));
                             break;
                         case 0xE6: // AND n
-                            // code
+                            r.A = and(data.Arguments[0]);
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
 
                     }
                     break;
@@ -65,15 +65,14 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xA4: // AND IXh
-                            // code
+                            r.A = and(r.IXh);
                             break;
                         case 0xA5: // AND IXl
-                            // code
+                            r.A = and(r.IXl);
                             break;
                         case 0xA6: // AND (IX+o)
-                            // code
+                            r.A = and(cpu.Memory.ReadByteAt((ushort)(r.IX + data.Arguments[0])));
                             break;
-
                     }
                     break;
 
@@ -81,34 +80,19 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xA4: // AND IYh
-                            // code
+                            r.A = and(r.IYh);
                             break;
                         case 0xA5: // AND IYl
-                            // code
+                            r.A = and(r.IYl);
                             break;
                         case 0xA6: // AND (IY+o)
-                            // code
+                            r.A = and(cpu.Memory.ReadByteAt((ushort)(r.IY + data.Arguments[0])));
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
             }
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(flags, 0);
         }
 
         public AND()
