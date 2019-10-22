@@ -17,7 +17,7 @@ namespace Z80.Core
             map.Map(ram);
             IMemory memory = new Memory(map);
 
-            Processor z80 = new Processor(registers, flags, memory, 4.00);
+            Processor z80 = new Processor(registers, flags, memory, (ushort)(memory.SizeInKilobytes * 1024), 4.00);
             return z80;
         }
     }

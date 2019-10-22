@@ -30,6 +30,12 @@ namespace Z80.Core
             return output;
         }
 
+        public static byte GetByteFromBits(this byte input, int startIndex, int numberOfBits)
+        {
+            ByteBits bits = new ByteBits(input);
+            return ((byte)0x00).SetBits(startIndex, bits.GetBits(startIndex, numberOfBits));
+        }
+
         public static byte SetBits(this byte input, int startIndex, params bool[] bitsToSet)
         {
             ByteBits bits = new ByteBits(input);

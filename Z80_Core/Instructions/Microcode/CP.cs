@@ -10,67 +10,53 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            IRegisters r = cpu.Registers;
+            Flags flags = new Flags();
+
+            void cp(byte value)
+            {
+                byte a = cpu.Registers.A;
+                byte b = value;
+                ushort result = (byte)(a - b); // note UNSIGNED!
+                if (result == 0x00) flags.Zero = true;
+                if (((sbyte)result) < 0) flags.Sign = true;
+                if ((a & 0xF) < (b & 0xF)) flags.HalfCarry = true;
+                if ((a > 0x80 && b > 0x80 && result > 0) || (a < 0x80 && b < 0x80 && result < 0)) flags.ParityOverflow = true;
+                if (result > 0xFF) flags.Carry = true;
+                flags.Subtract = true;
+            }
 
             switch (instruction.Prefix)
             {
                 case InstructionPrefix.Unprefixed:
                     switch (instruction.Opcode)
                     {
-                        case 0x2F: // CPL
-                            // code
-                            break;
                         case 0xB8: // CP B
-                            // code
+                            cp(r.B);
                             break;
                         case 0xB9: // CP C
-                            // code
+                            cp(r.C);
                             break;
                         case 0xBA: // CP D
-                            // code
+                            cp(r.D);
                             break;
                         case 0xBB: // CP E
-                            // code
+                            cp(r.E);
                             break;
                         case 0xBC: // CP H
-                            // code
+                            cp(r.H);
                             break;
                         case 0xBD: // CP L
-                            // code
+                            cp(r.L);
                             break;
                         case 0xBF: // CP A
-                            // code
+                            cp(r.A);
                             break;
                         case 0xBE: // CP (HL)
-                            // code
+                            cp(cpu.Memory.ReadByteAt(r.HL));
                             break;
                         case 0xFE: // CP n
-                            // code
-                            break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
-                        case 0xA1: // CPI
-                            // code
-                            break;
-                        case 0xA9: // CPD
-                            // code
-                            break;
-                        case 0xB1: // CPIR
-                            // code
-                            break;
-                        case 0xB9: // CPDR
-                            // code
+                            cp(data.Arguments[0]);
                             break;
 
                     }
@@ -80,13 +66,13 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xBC: // CP IXh
-                            // code
+                            cp(r.IXh);
                             break;
                         case 0xBD: // CP IXl
-                            // code
+                            cp(r.IXl);
                             break;
                         case 0xBE: // CP (IX+o)
-                            // code
+                            cp(cpu.Memory.ReadByteAt((uint)(r.IX + data.Arguments[0])));
                             break;
 
                     }
@@ -96,34 +82,19 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xBC: // CP IYh
-                            // code
+                            cp(r.IYh);
                             break;
                         case 0xBD: // CP IYl
-                            // code
+                            cp(r.IYl);
                             break;
                         case 0xBE: // CP (IY+o)
-                            // code
+                            cp(cpu.Memory.ReadByteAt((uint)(r.IY + data.Arguments[0])));
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
             }
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(flags, 0);
         }
 
         public CP()

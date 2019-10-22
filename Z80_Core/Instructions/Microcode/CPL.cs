@@ -8,65 +8,12 @@ namespace Z80.Core
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
-            Instruction instruction = package.Instruction;
-            InstructionData data = package.Data;
+            Flags flags = new Flags();
+            flags.HalfCarry = true;
+            flags.Subtract = true;
+            cpu.Registers.A ^= cpu.Registers.A;
 
-            switch (instruction.Prefix)
-            {
-                case InstructionPrefix.Unprefixed:
-                    switch (instruction.Opcode)
-                    {
-                        case 0x2F: // CPL
-                            // code
-                            break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.DD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-            }
-
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(flags, 0);
         }
 
         public CPL()

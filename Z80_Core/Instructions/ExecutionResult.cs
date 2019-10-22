@@ -8,11 +8,13 @@ namespace Z80.Core
     {
         public IFlags Flags { get; }
         public long CLRTicks { get; }
+        public bool PCWasSet { get; }
 
-        public ExecutionResult(IFlags flags, long ticks)
+        public ExecutionResult(IFlags flags, long ticks, bool pcWasSet = false)
         {
             Flags = flags;
             CLRTicks = ticks;
+            PCWasSet = pcWasSet;
         }
     }
 }

@@ -19,6 +19,18 @@ namespace Z80.Core
 
         public byte Value => _registers.F;
 
+        public void SetFrom(IFlags flags)
+        {
+            Carry = flags.Carry;
+            Five = flags.Five;
+            HalfCarry = flags.HalfCarry;
+            ParityOverflow = flags.ParityOverflow;
+            Sign = flags.Sign;
+            Subtract = flags.Subtract;
+            Three = flags.Three;
+            Zero = flags.Zero;
+        }
+
         private bool GetBit(int bitIndex)
         {
             return (_registers.F & (1 << bitIndex)) != 0;

@@ -51,6 +51,23 @@ namespace Z80.Core
 
         public RegisterFlags Flags { get; private set; }
 
+        public byte RegisterByIndex(RegisterIndex register)
+        {
+            if (register == RegisterIndex.A)
+            {
+                return _registers[0];
+            }
+            else
+            {
+                return _registers[(int)register + 2];
+            }
+        }
+
+        public byte RegisterByOpcode(byte opcode)
+        {
+            return RegisterByIndex((RegisterIndex)opcode.GetByteFromBits(0, 3));
+        }
+
         public void ExchangeAF()
         {
             _AFOffset = (byte)((_AFOffset == 0) ? 8 : 0);
@@ -69,17 +86,6 @@ namespace Z80.Core
         public void Clear()
         {
             _registers = new byte[26];
-        }
-
-        public bool AdvancePC(byte bytesToAdvance)
-        { 
-            if ((uint)(PC + bytesToAdvance) >= ushort.MaxValue) // PC overflow
-            {
-                return false;
-            }
-
-            PC += bytesToAdvance;
-            return true;
         }
 
         private ushort Get16BitValue(int registerIndex)

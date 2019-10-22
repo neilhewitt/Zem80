@@ -10,6 +10,16 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            IFlags flags = cpu.Registers.Flags;
+            bool pcWasSet = false;
+
+            void call()
+            {
+                cpu.Registers.PC += 3; // to allow for this instruction
+                cpu.Stack.Push(cpu.Registers.PC);
+                cpu.Registers.PC = data.ArgumentsAsWord;
+                pcWasSet = true;
+            }
 
             switch (instruction.Prefix)
             {
@@ -17,80 +27,38 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xC4: // CALL NZ,nn
-                            // code
+                            if (!flags.Zero) call();
                             break;
                         case 0xCC: // CALL Z,nn
-                            // code
+                            if (flags.Zero) call();
                             break;
                         case 0xCD: // CALL nn
-                            // code
+                            call();
                             break;
                         case 0xD4: // CALL NC,nn
-                            // code
+                            if (!flags.Carry) call();
                             break;
                         case 0xDC: // CALL C,nn
-                            // code
+                            if (flags.Carry) call();
                             break;
                         case 0xE4: // CALL PO,nn
-                            // code
+                            if (!flags.ParityOverflow) call();
                             break;
                         case 0xEC: // CALL PE,nn
-                            // code
+                            if (flags.ParityOverflow) call();
                             break;
                         case 0xF4: // CALL P,nn
-                            // code
+                            if (!flags.Sign) call();
                             break;
                         case 0xFC: // CALL M,nn
-                            // code
+                            if (flags.Sign) call();
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.DD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
 
                     }
                     break;
             }
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(new Flags(), 0, pcWasSet);
         }
 
         public CALL()

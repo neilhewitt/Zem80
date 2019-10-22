@@ -27,10 +27,12 @@
 
         RegisterFlags Flags { get; }
 
+        byte RegisterByIndex(RegisterIndex register);
+        byte RegisterByOpcode(byte opcode);
+
         void ExchangeAF();
         void ExchangeBCDEHL();
         Registers Snapshot();
         void Clear();
-        bool AdvancePC(byte bytesToAdvance);
     }
 }
