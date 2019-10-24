@@ -10,6 +10,29 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            IRegisters r = cpu.Registers;
+            byte offset = data.Arguments[0];
+            Flags flags = new Flags();
+
+            ushort incw(ushort value)
+            {
+                if (value < 0xFFFF) return (ushort)(value + 1);
+                return value;
+            }
+
+            byte inc(byte value)
+            {
+                flags.Carry = cpu.Registers.Flags.Carry;
+                ushort result = (ushort)(value + 1);
+                if (result == 0) flags.Zero = true;
+                if (((sbyte)result) < 0) flags.Sign = true;
+                if ((value & 0x0F) == 0x0F) flags.HalfCarry = true;
+                if (value == 0x7F) flags.ParityOverflow = true;
+                flags.Subtract = true;
+
+                if (value > 0) return (byte)(result);
+                return value;
+            }
 
             switch (instruction.Prefix)
             {
@@ -17,55 +40,41 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x03: // INC BC
-                            // code
+                            r.BC = incw(r.BC);
                             break;
                         case 0x04: // INC B
-                            // code
+                            r.B = inc(r.B);
                             break;
                         case 0x0C: // INC C
-                            // code
+                            r.C = inc(r.C);
                             break;
                         case 0x13: // INC DE
-                            // code
+                            r.DE = incw(r.DE);
                             break;
                         case 0x14: // INC D
-                            // code
+                            r.D = inc(r.D);
                             break;
                         case 0x1C: // INC E
-                            // code
+                            r.E = inc(r.E);
                             break;
                         case 0x23: // INC HL
-                            // code
+                            r.HL = incw(r.HL);
                             break;
                         case 0x24: // INC H
-                            // code
+                            r.H = inc(r.H);
                             break;
                         case 0x2C: // INC L
-                            // code
+                            r.L = inc(r.L);
                             break;
                         case 0x33: // INC SP
-                            // code
+                            r.SP = incw(r.SP);
                             break;
                         case 0x34: // INC (HL)
-                            // code
+                            cpu.Memory.WriteByteAt(r.HL, inc(cpu.Memory.ReadByteAt(r.HL)));
                             break;
                         case 0x3C: // INC A
-                            // code
+                            r.A = inc(r.A);
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
 
                     }
                     break;
@@ -74,16 +83,16 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x24: // INC IXh
-                            // code
+                            r.IXh = inc(r.IXh);
                             break;
                         case 0x2C: // INC IXl
-                            // code
+                            r.IXl = inc(r.IXl);
                             break;
                         case 0x23: // INC IX
-                            // code
+                            r.IX = incw(r.IX);
                             break;
                         case 0x34: // INC (IX+o)
-                            // code
+                            cpu.Memory.WriteByteAt((ushort)(r.IX + (sbyte)offset), inc(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)offset))));
                             break;
 
                     }
@@ -93,37 +102,22 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x24: // INC IYh
-                            // code
+                            r.IYh = inc(r.IYh);
                             break;
                         case 0x2C: // INC IYl
-                            // code
+                            r.IYl = inc(r.IYl);
                             break;
                         case 0x23: // INC IY
-                            // code
+                            r.IY = incw(r.IY);
                             break;
                         case 0x34: // INC (IY+o)
-                            // code
+                            cpu.Memory.WriteByteAt((ushort)(r.IY + (sbyte)offset), inc(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)offset))));
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
             }
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(flags, 0);
         }
 
         public INC()

@@ -10,6 +10,13 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            IFlags flags = cpu.Registers.Flags;
+            ushort address = data.ArgumentsAsWord;
+
+            void jp(ushort address)
+            {
+                cpu.Registers.PC = address;
+            }
 
             switch (instruction.Prefix)
             {
@@ -17,84 +24,35 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xC2: // JP NZ,nn
-                            // code
+                            if (!flags.Zero) jp(address);
                             break;
                         case 0xC3: // JP nn
-                            // code
+                            jp(address);
                             break;
                         case 0xCA: // JP Z,nn
-                            // code
+                            if (flags.Zero) jp(address);
                             break;
                         case 0xD2: // JP NC,nn
-                            // code
+                            if (!flags.Carry) jp(address);
                             break;
                         case 0xDA: // JP C,nn
-                            // code
+                            if (flags.Carry) jp(address);
                             break;
                         case 0xE2: // JP PO,nn
-                            // code
+                            if (!flags.ParityOverflow) jp(address);
                             break;
                         case 0xE9: // JP (HL)
-                            // code
+                            jp(cpu.Memory.ReadWordAt(cpu.Registers.HL));
                             break;
                         case 0xEA: // JP PE,nn
-                            // code
+                            if (flags.ParityOverflow) jp(address);
                             break;
                         case 0xF2: // JP P,nn
-                            // code
+                            if (!flags.Sign) jp(address);
                             break;
                         case 0xFA: // JP M,nn
-                            // code
+                            if (flags.Sign) jp(address);
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.DD:
-                    switch (instruction.Opcode)
-                    {
-                        case 0xE9: // JP (IX)
-                            // code
-                            break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.FD:
-                    switch (instruction.Opcode)
-                    {
-                        case 0xE9: // JP (IY)
-                            // code
-                            break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
             }

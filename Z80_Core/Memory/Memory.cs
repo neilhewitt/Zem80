@@ -8,31 +8,31 @@ namespace Z80.Core
     {
         private IMemoryMap _map;
 
-        public uint SizeInKilobytes => _map.SizeInKilobytes;
+        public ushort SizeInKilobytes => _map.SizeInKilobytes;
 
-        public byte ReadByteAt(uint address)
+        public byte ReadByteAt(ushort address)
         {
             IMemorySegment memory = _map.MemoryFor(address);
             return memory?.ReadByteAt(address) ?? 0; // default value if address is unallocated
         }
 
-        public byte[] ReadBytesAt(uint address, uint numberOfBytes)
+        public byte[] ReadBytesAt(ushort address, ushort numberOfBytes)
         {
             byte[] bytes = new byte[numberOfBytes];
-            for (uint i = 0; i < numberOfBytes; i++)
+            for (ushort i = 0; i < numberOfBytes; i++)
             {
-                bytes[i] = ReadByteAt(address + i);
+                bytes[i] = ReadByteAt((ushort)(address + i));
             }
             return bytes;
         }
 
-        public ushort ReadWordAt(uint address)
+        public ushort ReadWordAt(ushort address)
         {
             byte[] bytes = ReadBytesAt(address, 2);
             return (ushort)((bytes[1] * 256) + bytes[0]);
         }
 
-        public void WriteByteAt(uint address, byte value)
+        public void WriteByteAt(ushort address, byte value)
         {
             IMemorySegment memory = _map.MemoryFor(address);
             if (memory == null || memory.ReadOnly)
@@ -43,15 +43,15 @@ namespace Z80.Core
             memory.WriteByteAt(address, value);
         }
 
-        public void WriteBytesAt(uint address, params byte[] bytes)
+        public void WriteBytesAt(ushort address, params byte[] bytes)
         {
-            for (uint i = 0; i < bytes.Length; i++)
+            for (ushort i = 0; i < bytes.Length; i++)
             {
-                WriteByteAt(address + i, bytes[i]);
+                WriteByteAt((ushort)(address + i), bytes[i]);
             }
         }
 
-        public void WriteWordAt(uint address, ushort value)
+        public void WriteWordAt(ushort address, ushort value)
         {
             byte[] bytes = new byte[2];
             bytes[1] = (byte)(value / 256);

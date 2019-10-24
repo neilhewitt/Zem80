@@ -9,17 +9,17 @@ namespace Z80.Core
     {
         new public bool ReadOnly => true;
 
-        public override void WriteByteAt(uint address, byte value)
+        public override void WriteByteAt(ushort address, byte value)
         {
             throw new MemoryNotWritableException();
         }
 
-        public override void WriteWordAt(uint address, ushort value)
+        public override void WriteWordAt(ushort address, ushort value)
         {
             throw new MemoryNotWritableException();
         }
 
-        public ROM(uint startAddress, uint sizeInKilobytes)
+        public ROM(ushort startAddress, ushort sizeInKilobytes)
             : base(startAddress, sizeInKilobytes)
         {
         }

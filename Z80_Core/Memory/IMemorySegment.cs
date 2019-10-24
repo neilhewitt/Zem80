@@ -6,12 +6,12 @@ namespace Z80.Core
 {
     public interface IMemorySegment
     {
-        uint StartAddress { get; }
-        uint SizeInKilobytes { get; }
+        ushort StartAddress { get; }
+        ushort SizeInKilobytes { get; }
         bool ReadOnly { get; }
-        byte ReadByteAt(uint address);
-        ushort ReadWordAt(uint address);
-        void WriteByteAt(uint address, byte value);
-        void WriteWordAt(uint address, ushort value);
+        byte ReadByteAt(ushort address);
+        ushort ReadWordAt(ushort address);
+        void WriteByteAt(ushort address, byte value);
+        void WriteWordAt(ushort address, ushort value);
     }
 }

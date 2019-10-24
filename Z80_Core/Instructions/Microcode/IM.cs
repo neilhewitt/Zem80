@@ -13,60 +13,18 @@ namespace Z80.Core
 
             switch (instruction.Prefix)
             {
-                case InstructionPrefix.Unprefixed:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
                 case InstructionPrefix.ED:
                     switch (instruction.Opcode)
                     {
                         case 0x46: // IM 0
-                            // code
+                            cpu.SetInterruptMode(InterruptMode.Zero);
                             break;
                         case 0x56: // IM 1
-                            // code
+                            cpu.SetInterruptMode(InterruptMode.One);
                             break;
                         case 0x5E: // IM 2
-                            // code
+                            cpu.SetInterruptMode(InterruptMode.Two);
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
 
                     }
                     break;

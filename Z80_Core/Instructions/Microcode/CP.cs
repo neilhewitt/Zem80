@@ -17,10 +17,10 @@ namespace Z80.Core
             {
                 byte a = cpu.Registers.A;
                 byte b = value;
-                ushort result = (byte)(a - b); // note UNSIGNED!
+                ushort result = (ushort)(a - b); // note UNSIGNED!
                 if (result == 0x00) flags.Zero = true;
                 if (((sbyte)result) < 0) flags.Sign = true;
-                if ((a & 0xF) < (b & 0xF)) flags.HalfCarry = true;
+                if ((a & 0x0F) < (b & 0x0F)) flags.HalfCarry = true;
                 if ((a > 0x80 && b > 0x80 && result > 0) || (a < 0x80 && b < 0x80 && result < 0)) flags.ParityOverflow = true;
                 if (result > 0xFF) flags.Carry = true;
                 flags.Subtract = true;
@@ -72,7 +72,7 @@ namespace Z80.Core
                             cp(r.IXl);
                             break;
                         case 0xBE: // CP (IX+o)
-                            cp(cpu.Memory.ReadByteAt((uint)(r.IX + data.Arguments[0])));
+                            cp(cpu.Memory.ReadByteAt((ushort)(r.IX + data.Arguments[0])));
                             break;
 
                     }
@@ -88,7 +88,7 @@ namespace Z80.Core
                             cp(r.IYl);
                             break;
                         case 0xBE: // CP (IY+o)
-                            cp(cpu.Memory.ReadByteAt((uint)(r.IY + data.Arguments[0])));
+                            cp(cpu.Memory.ReadByteAt((ushort)(r.IY + data.Arguments[0])));
                             break;
                     }
                     break;

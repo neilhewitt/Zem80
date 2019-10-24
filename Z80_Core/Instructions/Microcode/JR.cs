@@ -10,6 +10,14 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            sbyte offset = (sbyte)data.Arguments[0];
+            IFlags flags = cpu.Registers.Flags;
+
+            void jr()
+            {
+                if (offset > 0) cpu.Registers.PC += (ushort)offset;
+                if (offset < 0) cpu.Registers.PC -= (ushort)offset;
+            }
 
             switch (instruction.Prefix)
             {
@@ -17,63 +25,20 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x18: // JR o
-                            // code
+                            jr();
                             break;
                         case 0x20: // JR NZ,o
-                            // code
+                            if (!flags.Zero) jr();
                             break;
                         case 0x28: // JR Z,o
-                            // code
+                            if (flags.Zero) jr();
                             break;
                         case 0x30: // JR NC,o
-                            // code
+                            if (!flags.Carry) jr();
                             break;
                         case 0x38: // JR C,o
-                            // code
+                            if (flags.Carry) jr();
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.DD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
             }

@@ -49,7 +49,7 @@ namespace Z80.Core
         // program counter
         public ushort PC { get { return Get16BitValue(24); } set { Set16BitValue(24, value); } } // program counter
 
-        public RegisterFlags Flags { get; private set; }
+        public IFlags Flags { get; private set; }
 
         public byte RegisterByIndex(RegisterIndex register)
         {
@@ -108,6 +108,7 @@ namespace Z80.Core
         public Registers()
         {
             _registers = new byte[26];
+            Flags = new RegisterFlags(this);
         }
 
         private Registers(byte[] registerValues)
@@ -119,6 +120,7 @@ namespace Z80.Core
             }
             
             _registers = registerValues;
+            Flags = new RegisterFlags(this);
         }
     }
 }

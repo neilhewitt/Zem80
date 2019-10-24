@@ -9,42 +9,42 @@ namespace Z80.Core
     {
         private byte[] _memory;
 
-        public uint StartAddress { get; private set; }
+        public ushort StartAddress { get; private set; }
 
-        public uint SizeInKilobytes { get; private set; }
+        public ushort SizeInKilobytes { get; private set; }
 
         public bool ReadOnly => false;
 
-        public byte ReadByteAt(uint address)
+        public byte ReadByteAt(ushort address)
         {
             Check(address);
             return _memory[address - StartAddress];
         }
 
-        public ushort ReadWordAt(uint address)
+        public ushort ReadWordAt(ushort address)
         {
             Check(address);
-            uint relativeAddress = address - StartAddress;
+            ushort relativeAddress = (ushort)(address - StartAddress);
             return (ushort)((_memory[relativeAddress + 1] * 256) + _memory[relativeAddress]); // always little-endian
         }
 
-        public virtual void WriteByteAt(uint address, byte value)
+        public virtual void WriteByteAt(ushort address, byte value)
         {
             Check(address);
             _memory[address - StartAddress] = value;
         }
 
-        public virtual void WriteWordAt(uint address, ushort value)
+        public virtual void WriteWordAt(ushort address, ushort value)
         {
             Check(address);
-            uint relativeAddress = address - StartAddress;
+            ushort relativeAddress = (ushort)(address - StartAddress);
             byte msb = (byte)(value / 256); // most significant byte (little-endian regardless of architecture)
             byte lsb = (byte)(value - msb); // least signifcant byte ("")
             _memory[relativeAddress] = lsb;
             _memory[relativeAddress + 1] = msb;
         }
 
-        private void Check(uint address)
+        private void Check(ushort address)
         {
             if (address < StartAddress || address >= (StartAddress + (SizeInKilobytes * 1024)))
             {
@@ -52,7 +52,7 @@ namespace Z80.Core
             }
         }
 
-        public RAM(uint startAddress, uint sizeInKilobytes)
+        public RAM(ushort startAddress, ushort sizeInKilobytes)
         {
             _memory = new byte[sizeInKilobytes * 1024];
             SizeInKilobytes = sizeInKilobytes;

@@ -10,63 +10,22 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            bool pcWasSet = true;
 
-            switch (instruction.Prefix)
+            if (cpu.Registers.B > 0)
             {
-                case InstructionPrefix.Unprefixed:
-                    switch (instruction.Opcode)
-                    {
-                        case 0x10: // DJNZ o
-                            // code
-                            break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.DD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
+                cpu.Registers.B--;
+                sbyte jump = (sbyte)(data.Arguments[0]);
+                if (jump > 0) cpu.Registers.PC += (ushort)jump;
+                if (jump < 0) cpu.Registers.PC -= (ushort)jump;
+                if (jump == 0) pcWasSet = false;
+            }
+            else
+            {
+                pcWasSet = false;
             }
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(new Flags(), 0, pcWasSet);
         }
 
         public DJNZ()

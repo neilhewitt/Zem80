@@ -10,6 +10,29 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            IRegisters r = cpu.Registers;
+            byte offset = data.Arguments[0];
+            Flags flags = new Flags();
+
+            ushort decw(ushort value)
+            {
+                if (value > 0) return (ushort)(value - 1);
+                return value;
+            }
+
+            byte dec(byte value)
+            {
+                flags.Carry = cpu.Registers.Flags.Carry;
+                ushort result = (ushort)(value - 1);
+                if (result == 0) flags.Zero = true;
+                if (((sbyte)result) < 0) flags.Sign = true;
+                if ((value & 0x0F) == 0x00) flags.HalfCarry = true;
+                if (value == 0x80) flags.ParityOverflow = true;
+                flags.Subtract = true;
+
+                if (value > 0) return (byte)(result);
+                return value;
+            }
 
             switch (instruction.Prefix)
             {
@@ -17,55 +40,41 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x05: // DEC B
-                            // code
+                            r.B = dec(r.B);
                             break;
                         case 0x0B: // DEC BC
-                            // code
+                            r.BC = decw(r.BC);
                             break;
                         case 0x0D: // DEC C
-                            // code
+                            r.C = dec(r.C);
                             break;
                         case 0x15: // DEC D
-                            // code
+                            r.D = dec(r.D);
                             break;
                         case 0x1B: // DEC DE
-                            // code
+                            r.DE = decw(r.DE);
                             break;
                         case 0x1D: // DEC E
-                            // code
+                            r.E = dec(r.E);
                             break;
                         case 0x25: // DEC H
-                            // code
+                            r.H = dec(r.H);
                             break;
                         case 0x2B: // DEC HL
-                            // code
+                            r.HL = decw(r.HL);
                             break;
                         case 0x2D: // DEC L
-                            // code
+                            r.L = dec(r.L);
                             break;
                         case 0x35: // DEC (HL)
-                            // code
+                            cpu.Memory.WriteByteAt(r.HL, dec(cpu.Memory.ReadByteAt(r.HL)));
                             break;
                         case 0x3B: // DEC SP
-                            // code
+                            r.SP = decw(r.SP);
                             break;
                         case 0x3D: // DEC A
-                            // code
+                            r.A = dec(r.A);
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
 
                     }
                     break;
@@ -74,16 +83,16 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x25: // DEC IXh
-                            // code
+                            r.IXh = dec(r.IXh);
                             break;
                         case 0x2D: // DEC IXl
-                            // code
+                            r.IXl = dec(r.IXl);
                             break;
                         case 0x2B: // DEC IX
-                            // code
+                            r.IX = decw(r.IX);
                             break;
                         case 0x35: // DEC (IX+o)
-                            // code
+                            cpu.Memory.WriteByteAt((ushort)(r.IX + (sbyte)offset), dec(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)offset))));
                             break;
 
                     }
@@ -93,37 +102,22 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x25: // DEC IYh
-                            // code
+                            r.IYh = dec(r.IYh);
                             break;
                         case 0x2D: // DEC IYl
-                            // code
+                            r.IYl = dec(r.IYl);
                             break;
                         case 0x2B: // DEC IY
-                            // code
+                            r.IY = decw(r.IY);
                             break;
                         case 0x35: // DEC (IY+o)
-                            // code
+                            cpu.Memory.WriteByteAt((ushort)(r.IY + (sbyte)offset), dec(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)offset))));
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
             }
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(flags, 0);
         }
 
         public DEC()

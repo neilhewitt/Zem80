@@ -9,7 +9,7 @@ namespace Z80.Core
         private IRegisters _registers;
         private IMemory _memory;
 
-        public uint StartAddress { get; private set; }
+        public ushort StartAddress { get; private set; }
 
         public void Push(ushort value)
         {
@@ -24,7 +24,7 @@ namespace Z80.Core
             return output;
         }
 
-        public Stack(Processor cpu, uint startAddress)
+        public Stack(Processor cpu, ushort startAddress)
         {
             StartAddress = startAddress;
             _registers = cpu.Registers;

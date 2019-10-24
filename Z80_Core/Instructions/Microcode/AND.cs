@@ -12,6 +12,7 @@ namespace Z80.Core
             InstructionData data = package.Data;
             IRegisters r = cpu.Registers;
             Flags flags = new Flags();
+            sbyte offset = (sbyte)data.Arguments[0];
 
             byte and(byte operand)
             {
@@ -71,7 +72,7 @@ namespace Z80.Core
                             r.A = and(r.IXl);
                             break;
                         case 0xA6: // AND (IX+o)
-                            r.A = and(cpu.Memory.ReadByteAt((ushort)(r.IX + data.Arguments[0])));
+                            r.A = and(cpu.Memory.ReadByteAt((ushort)(r.IX + offset)));
                             break;
                     }
                     break;
@@ -86,7 +87,7 @@ namespace Z80.Core
                             r.A = and(r.IYl);
                             break;
                         case 0xA6: // AND (IY+o)
-                            r.A = and(cpu.Memory.ReadByteAt((ushort)(r.IY + data.Arguments[0])));
+                            r.A = and(cpu.Memory.ReadByteAt((ushort)(r.IY + offset)));
                             break;
                     }
                     break;

@@ -10,6 +10,8 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            IRegisters r = cpu.Registers;
+            ushort swap;
 
             switch (instruction.Prefix)
             {
@@ -17,32 +19,18 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x08: // EX AF,AF'
-                            // code
-                            break;
-                        case 0xD9: // EXX
-                            // code
+                            r.ExchangeAF();
                             break;
                         case 0xE3: // EX (SP),HL
-                            // code
+                            swap = r.HL;
+                            r.HL = cpu.Memory.ReadWordAt(r.SP);
+                            cpu.Memory.WriteWordAt(r.SP, swap);
                             break;
                         case 0xEB: // EX DE,HL
-                            // code
+                            swap = r.DE;
+                            r.DE = r.HL;
+                            r.HL = swap;
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
 
@@ -50,9 +38,10 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xE3: // EX (SP),IX
-                            // code
+                            swap = r.IX;
+                            r.IX = cpu.Memory.ReadWordAt(r.SP);
+                            cpu.Memory.WriteWordAt(r.SP, swap);
                             break;
-
                     }
                     break;
 
@@ -60,23 +49,10 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xE3: // EX (SP),IY
-                            // code
+                            swap = r.IY;
+                            r.IY = cpu.Memory.ReadWordAt(r.SP);
+                            cpu.Memory.WriteWordAt(r.SP, swap);
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
             }

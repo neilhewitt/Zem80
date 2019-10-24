@@ -36,12 +36,12 @@ namespace Z80.Core
                 return (byte)result;
             }
 
-            ushort addWord(ushort value)
+            ushort addWord(ushort first, ushort second)
             {
                 flags = Flags.Copy(cpu.Registers.Flags); // must preserve existing values
-                uint result = (uint)(cpu.Registers.HL + value);
+                uint result = (uint)(first + second);
                 if (result > 0xFFFF) flags.Carry = true;
-                if ((cpu.Registers.A & 0x0FFF) + (((byte)result) & 0x0FFF) > 0x0FFF) flags.HalfCarry = true;
+                if ((first & 0x0FFF) + (((ushort)result) & 0x0FFF) > 0x0FFF) flags.HalfCarry = true;
 
                 return (ushort)result;
             }
@@ -52,16 +52,16 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x09: // ADD HL,BC
-                            r.HL = addWord(r.BC);
+                            r.HL = addWord(r.HL, r.BC);
                             break;
                         case 0x19: // ADD HL,DE
-                            r.HL = addWord(r.DE);
+                            r.HL = addWord(r.HL, r.DE);
                             break;
                         case 0x29: // ADD HL,HL
-                            r.HL = addWord(r.HL);
+                            r.HL = addWord(r.HL, r.HL);
                             break;
                         case 0x39: // ADD HL,SP
-                            r.HL = addWord(r.SP);
+                            r.HL = addWord(r.HL, r.SP);
                             break;
                         case 0x80: // ADD A,B
                             r.A = addByte(r.B);
@@ -98,16 +98,16 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x09: // ADD IX,BC
-                            r.IX = addWord(r.BC);
+                            r.IX = addWord(r.IX, r.BC);
                             break;
                         case 0x19: // ADD IX,DE
-                            r.IX = addWord(r.DE);
+                            r.IX = addWord(r.IX, r.DE);
                             break;
                         case 0x29: // ADD IX,IX
-                            r.IX = addWord(r.IX);
+                            r.IX = addWord(r.IX, r.IX);
                             break;
                         case 0x39: // ADD IX,SP
-                            r.IX = addWord(r.SP);
+                            r.IX = addWord(r.IX, r.SP);
                             break;
                         case 0x84: // ADD A,IXh
                             r.A = addByte(r.IXh);
@@ -125,16 +125,16 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x09: // ADD IY,BC
-                            r.IY = addWord(r.BC);
+                            r.IY = addWord(r.IY, r.BC);
                             break;
                         case 0x19: // ADD IY,DE
-                            r.IY = addWord(r.DE);
+                            r.IY = addWord(r.IY, r.DE);
                             break;
                         case 0x29: // ADD IY,IY
-                            r.IY = addWord(r.IY);
+                            r.IY = addWord(r.IY, r.IY);
                             break;
                         case 0x39: // ADD IY,SP
-                            r.IY = addWord(r.SP);
+                            r.IY = addWord(r.IY, r.SP);
                             break;
                         case 0x84: // ADD A,IYh
                             r.A = addByte(r.IYh);

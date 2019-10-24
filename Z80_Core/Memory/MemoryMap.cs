@@ -9,11 +9,11 @@ namespace Z80.Core
     {
         public const ushort PAGE_SIZE_IN_KILOBYTES = 1;
 
-        private Dictionary<uint, IMemorySegment> _segments = new Dictionary<uint, IMemorySegment>();
+        private Dictionary<ushort, IMemorySegment> _segments = new Dictionary<ushort, IMemorySegment>();
 
-        public uint SizeInKilobytes { get; private set; }
+        public ushort SizeInKilobytes { get; private set; }
 
-        public IMemorySegment MemoryFor(uint address)
+        public IMemorySegment MemoryFor(ushort address)
         {
             _segments.TryGetValue(PageFromAddress(address), out IMemorySegment segmentForPage);
             return segmentForPage;
@@ -21,25 +21,25 @@ namespace Z80.Core
 
         public void Map(IMemorySegment entry, bool overwriteMappedPages = false)
         {
-            uint startAddress = entry.StartAddress;
-            uint sizeInKilobytes = entry.SizeInKilobytes;
+            ushort startAddress = entry.StartAddress;
+            ushort sizeInKilobytes = entry.SizeInKilobytes;
 
             if (startAddress % 1024 > 0)
             {
                 throw new MemoryMapException("Start address must be on a page boundary (divisible by 1024).");
             }
 
-            uint startPage = PageFromAddress(startAddress);
-            uint endPage = startPage + sizeInKilobytes - 1;
+            ushort startPage = PageFromAddress(startAddress);
+            ushort endPage = (ushort)(startPage + sizeInKilobytes - 1);
 
             if (!overwriteMappedPages && _segments.Any(p => p.Key >= startPage && p.Key <= endPage))
             {
                 throw new MemoryMapException("Would overwrite existing mapped page/s. Specify overwriteMappedPages = true to enable masking the existing memory."); 
             }
 
-            for (uint i = startPage; i <= endPage; i++)
+            for (ushort i = startPage; i <= endPage; i++)
             {
-                uint address = AddressFromPage(i);
+                ushort address = AddressFromPage(i);
                 if (_segments.ContainsKey(i))
                 {
                     _segments[i] = entry;
@@ -51,18 +51,18 @@ namespace Z80.Core
             }
         }
 
-        private uint PageFromAddress(uint address)
+        private ushort PageFromAddress(ushort address)
         {
-            uint pageIndex = (uint)Math.Ceiling((double)address / (double)(PAGE_SIZE_IN_KILOBYTES * 1024));
+            ushort pageIndex = (ushort)Math.Ceiling((double)address / (double)(PAGE_SIZE_IN_KILOBYTES * 1024));
             return pageIndex;
         }
 
-        private uint AddressFromPage(uint pageNumber)
+        private ushort AddressFromPage(ushort pageNumber)
         {
-            return (uint)(pageNumber * PAGE_SIZE_IN_KILOBYTES);
+            return (ushort)(pageNumber * PAGE_SIZE_IN_KILOBYTES);
         }
 
-        public MemoryMap(uint sizeInKilobytes)
+        public MemoryMap(ushort sizeInKilobytes)
         {
             SizeInKilobytes = sizeInKilobytes;
         }

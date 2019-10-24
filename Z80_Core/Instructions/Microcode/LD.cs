@@ -31,7 +31,7 @@ namespace Z80.Core
 
             byte readOffset(ushort address, byte offset)
             {
-                return cpu.Memory.ReadByteAt((ushort)(address + offset));
+                return cpu.Memory.ReadByteAt((ushort)(address + (sbyte)offset));
             }
 
             void writeByte(ushort address, byte value)
@@ -46,7 +46,7 @@ namespace Z80.Core
 
             void writeOffset(ushort address, byte offset, byte value)
             {
-                cpu.Memory.WriteByteAt((ushort)(address + offset), value);
+                cpu.Memory.WriteByteAt((ushort)(address + (sbyte)offset), value);
             }
 
             void handleIRFlags(byte input)

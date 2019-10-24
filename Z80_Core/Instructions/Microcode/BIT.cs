@@ -17,7 +17,7 @@ namespace Z80.Core
             byte bitIndex = instruction.Opcode.GetByteFromBits(3, 3); // bit index is in bits 3-5
             byte value = prefix == InstructionPrefix.CB ? 
                 r.RegisterByOpcode(instruction.Opcode) : // BIT b, r
-                cpu.Memory.ReadByteAt((uint)((prefix == InstructionPrefix.DDCB ? r.IX : r.IY) + data.Arguments[0])); // bit b, (HL)
+                cpu.Memory.ReadByteAt((ushort)((prefix == InstructionPrefix.DDCB ? r.IX : r.IY) + data.Arguments[0])); // bit b, (HL)
 
             flags.Zero = !value.GetBit(bitIndex);
             flags.HalfCarry = true;

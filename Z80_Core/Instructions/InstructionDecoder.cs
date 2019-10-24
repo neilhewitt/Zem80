@@ -131,7 +131,7 @@ namespace Z80.Core
             return (RegisterIndex)opcode.RemoveBits(3, 5); // register is first 3 bits
         }
 
-        private uint GetBitIndex(byte opcode)
+        private byte GetBitIndex(byte opcode)
         {
             return opcode.RemoveBits(0, 3).RemoveBits(6, 2); // bitindex is bits 3-5
         }

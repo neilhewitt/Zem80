@@ -2,12 +2,12 @@
 {
     public interface IMemory
     {
-        uint SizeInKilobytes { get; }
-        byte ReadByteAt(uint address);
-        byte[] ReadBytesAt(uint address, uint numberOfBytes);
-        ushort ReadWordAt(uint address);
-        void WriteByteAt(uint address, byte value);
-        void WriteBytesAt(uint address, params byte[] bytes);
-        void WriteWordAt(uint address, ushort value);
+        ushort SizeInKilobytes { get; }
+        byte ReadByteAt(ushort address);
+        byte[] ReadBytesAt(ushort address, ushort numberOfBytes);
+        ushort ReadWordAt(ushort address);
+        void WriteByteAt(ushort address, byte value);
+        void WriteBytesAt(ushort address, params byte[] bytes);
+        void WriteWordAt(ushort address, ushort value);
     }
 }

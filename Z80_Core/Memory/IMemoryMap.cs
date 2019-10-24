@@ -2,9 +2,9 @@
 {
     public interface IMemoryMap
     {
-        uint SizeInKilobytes { get; }
+        ushort SizeInKilobytes { get; }
 
         void Map(IMemorySegment memory, bool overwriteMappedPages = false);
-        IMemorySegment MemoryFor(uint address);
+        IMemorySegment MemoryFor(ushort address);
     }
 }
