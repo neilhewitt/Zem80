@@ -10,6 +10,8 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            IRegisters r = cpu.Registers;
+            Stack s = cpu.Stack;
 
             switch (instruction.Prefix)
             {
@@ -17,31 +19,17 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xC1: // POP BC
-                            // code
+                            r.BC = s.Pop();
                             break;
                         case 0xD1: // POP DE
-                            // code
+                            r.DE = s.Pop();
                             break;
                         case 0xE1: // POP HL
-                            // code
+                            r.HL = s.Pop();
                             break;
                         case 0xF1: // POP AF
-                            // code
+                            r.AF = s.Pop();
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
 
                     }
                     break;
@@ -50,7 +38,7 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xE1: // POP IX
-                            // code
+                            r.IX = s.Pop();
                             break;
 
                     }
@@ -60,22 +48,8 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xE1: // POP IY
-                            // code
+                            r.IY = s.Pop();
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
 
                     }
                     break;

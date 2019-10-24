@@ -14,7 +14,7 @@ namespace Z80.Core
             Flags flags = new Flags();
             InstructionPrefix prefix = instruction.Prefix;
 
-            byte bitIndex = instruction.Opcode.GetByteFromBits(3, 3); // bit index is in bits 3-5
+            byte bitIndex = data.BitIndex.Value;
             byte value = prefix == InstructionPrefix.CB ? 
                 r.RegisterByOpcode(instruction.Opcode) : // BIT b, r
                 cpu.Memory.ReadByteAt((ushort)((prefix == InstructionPrefix.DDCB ? r.IX : r.IY) + data.Arguments[0])); // bit b, (HL)

@@ -10,63 +10,20 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            IRegisters r = cpu.Registers;
+            Flags flags = new Flags();
 
-            switch (instruction.Prefix)
-            {
-                case InstructionPrefix.Unprefixed:
-                    switch (instruction.Opcode)
-                    {
+            sbyte result = (sbyte)(0 - r.A);
+            if (result == 0x00) flags.Zero = true;
+            if (result < 0) flags.Sign = true;
+            if (((result & 0x0F) & 0x10) != 0x10) flags.HalfCarry = true;
+            if (r.A == 0x80) flags.ParityOverflow = true;
+            if (r.A != 0x00) flags.Carry = true;
+            flags.Subtract = true;
 
-                    }
-                    break;
+            r.A = (byte)result;
 
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
-                        case 0x44: // NEG
-                            // code
-                            break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-            }
-
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(flags, 0);
         }
 
         public NEG()

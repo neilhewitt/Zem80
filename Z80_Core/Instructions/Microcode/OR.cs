@@ -10,6 +10,16 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            Flags flags = new Flags();
+            IRegisters r = cpu.Registers;
+
+            void or(byte operand)
+            {
+                r.A = (byte)(r.A | operand);
+                if (((sbyte)r.A) < 0) flags.Sign = true;
+                if (r.A == 0) flags.Zero = true;
+                if (r.A.CountBits(true) % 2 == 0) flags.ParityOverflow = true;
+            }
 
             switch (instruction.Prefix)
             {
@@ -17,47 +27,32 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xB0: // OR B
-                            // code
+                            or(r.B);
                             break;
                         case 0xB1: // OR C
-                            // code
+                            or(r.C);
                             break;
                         case 0xB2: // OR D
-                            // code
+                            or(r.D);
                             break;
                         case 0xB3: // OR E
-                            // code
+                            or(r.E);
                             break;
                         case 0xB4: // OR H
-                            // code
+                            or(r.H);
                             break;
                         case 0xB5: // OR L
-                            // code
+                            or(r.L);
                             break;
                         case 0xB7: // OR A
-                            // code
+                            or(r.A);
                             break;
                         case 0xB6: // OR (HL)
-                            // code
+                            or(cpu.Memory.ReadByteAt(r.HL));
                             break;
                         case 0xF6: // OR n
-                            // code
+                            or(data.Arguments[0]);
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
 
@@ -65,15 +60,14 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xB4: // OR IXh
-                            // code
+                            or(r.IXh);
                             break;
                         case 0xB5: // OR IXl
-                            // code
+                            or(r.IXl);
                             break;
                         case 0xB6: // OR (IX+o)
-                            // code
+                            or(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)data.Arguments[0])));
                             break;
-
                     }
                     break;
 
@@ -81,34 +75,19 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xB4: // OR IYh
-                            // code
+                            or(r.IYh);
                             break;
                         case 0xB5: // OR IYl
-                            // code
+                            or(r.IYl);
                             break;
                         case 0xB6: // OR (IY+o)
-                            // code
+                            or(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)data.Arguments[0])));
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
             }
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(flags, 0);
         }
 
         public OR()

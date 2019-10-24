@@ -10,63 +10,21 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            Flags flags = new Flags();
+            IRegisters r = cpu.Registers;
 
-            switch (instruction.Prefix)
+            cpu.Memory.WriteByteAt(r.DE, cpu.Memory.ReadByteAt(r.HL));
+            r.HL++;
+            r.DE++;
+            r.BC--;
+
+            if (r.BC != 0)
             {
-                case InstructionPrefix.Unprefixed:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
-                        case 0xB0: // LDIR
-                            // code
-                            break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
+                flags.ParityOverflow = true;
+                r.PC -= 2;
             }
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(flags, 0);
         }
 
         public LDIR()

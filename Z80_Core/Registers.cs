@@ -22,7 +22,7 @@ namespace Z80.Core
         public byte L { get { return _registers[_BCDEHLOffset + 7]; } set { _registers[_BCDEHLOffset + 7] = value; } }
 
         // Registers as 16-bit pairs
-        public ushort AF { get { return Get16BitValue(_AFOffset); } } // cannot set value as 16-bit register due to flags, use LD A, x instead
+        public ushort AF { get { return Get16BitValue(_AFOffset); } set { Set16BitValue(_AFOffset, value); } }
         public ushort BC { get { return Get16BitValue(_BCDEHLOffset + 2); } set { Set16BitValue(_BCDEHLOffset + 2, value); } }
         public ushort DE { get { return Get16BitValue(_BCDEHLOffset + 4); } set { Set16BitValue(_BCDEHLOffset + 4, value); } }
         public ushort HL { get { return Get16BitValue(_BCDEHLOffset + 6); } set { Set16BitValue(_BCDEHLOffset + 6, value); } }
@@ -51,8 +51,14 @@ namespace Z80.Core
 
         public IFlags Flags { get; private set; }
 
-        public byte RegisterByIndex(RegisterIndex register)
+        public void SetFlags(IFlags flags)
         {
+            ((RegisterFlags)Flags).SetFrom(flags);
+        }
+
+        public byte RegisterByOpcode(byte opcode)
+        {
+            RegisterIndex register = (RegisterIndex)((byte)0x00).SetBits(0, opcode.GetBits(0, 3));
             if (register == RegisterIndex.A)
             {
                 return _registers[0];
@@ -61,11 +67,6 @@ namespace Z80.Core
             {
                 return _registers[(int)register + 2];
             }
-        }
-
-        public byte RegisterByOpcode(byte opcode)
-        {
-            return RegisterByIndex((RegisterIndex)opcode.GetByteFromBits(0, 3));
         }
 
         public void ExchangeAF()

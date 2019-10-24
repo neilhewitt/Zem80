@@ -10,63 +10,23 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            Flags flags = new Flags();
 
-            switch (instruction.Prefix)
-            {
-                case InstructionPrefix.Unprefixed:
-                    switch (instruction.Opcode)
-                    {
+            byte a = cpu.Registers.A;
+            byte b = cpu.Memory.ReadByteAt(cpu.Registers.HL);
+            ushort result = (ushort)(a - b);
+            cpu.Registers.HL--;
+            cpu.Registers.BC--;
 
-                    }
-                    break;
+            if (result < 0) flags.Sign = true;
+            if (result == 0) flags.Zero = true;
+            if ((a & 0xF) < (b & 0xF)) flags.HalfCarry = true;
+            if (cpu.Registers.BC == 0) flags.ParityOverflow = true;
+            flags.Subtract = true;
 
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
+            if (result != 0 && cpu.Registers.BC != 0) cpu.Registers.PC -= 2;
 
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
-                        case 0xB9: // CPDR
-                            // code
-                            break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-            }
-
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(flags, 0);
         }
 
         public CPDR()

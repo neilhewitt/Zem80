@@ -14,6 +14,7 @@ namespace Z80.Core
         public ushort AddressBus { get; private set; }
         public byte DataBus { get; private set; }
         public InterruptMode InterruptMode { get; private set; } = InterruptMode.Zero;
+        public bool InterruptsEnabled { get; private set; }
         public double SpeedInMhz { get; private set; }
 
         public event EventHandler<InstructionPackage> BeforeExecute;
@@ -41,6 +42,16 @@ namespace Z80.Core
             // handle interrupt stuff!
         }
 
+        internal void DisableInterrupts()
+        {
+            InterruptsEnabled = false;
+        }
+
+        internal void EnableInterrupts()
+        {
+            InterruptsEnabled = true;
+        }
+
         private void InstructionCycle()
         {
             try
@@ -50,7 +61,7 @@ namespace Z80.Core
                 BeforeExecute?.Invoke(this, package);
                 ExecutionResult result = package.Instruction.Implementation.Execute(this, package);
                 AfterExecute?.Invoke(this, result);
-                Registers.Flags.SetFrom(result.Flags);
+                Registers.SetFlags(result.Flags);
                 if (!result.PCWasSet) Registers.PC += package.Instruction.SizeInBytes;
             }
             catch

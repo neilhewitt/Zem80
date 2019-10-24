@@ -10,6 +10,16 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            Flags flags = new Flags();
+            IRegisters r = cpu.Registers;
+
+            void xor(byte operand)
+            {
+                r.A = (byte)(r.A ^ operand);
+                if (((sbyte)r.A) < 0) flags.Sign = true;
+                if (r.A == 0) flags.Zero = true;
+                if (r.A.CountBits(true) % 2 == 0) flags.ParityOverflow = true;
+            }
 
             switch (instruction.Prefix)
             {
@@ -17,47 +27,32 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xA8: // XOR B
-                            // code
+                            xor(r.B);
                             break;
                         case 0xA9: // XOR C
-                            // code
+                            xor(r.C);
                             break;
                         case 0xAA: // XOR D
-                            // code
+                            xor(r.D);
                             break;
                         case 0xAB: // XOR E
-                            // code
+                            xor(r.E);
                             break;
                         case 0xAC: // XOR H
-                            // code
+                            xor(r.H);
                             break;
                         case 0xAD: // XOR L
-                            // code
+                            xor(r.L);
                             break;
                         case 0xAF: // XOR A
-                            // code
+                            xor(r.A);
                             break;
                         case 0xAE: // XOR (HL)
-                            // code
+                            xor(cpu.Memory.ReadByteAt(r.HL));
                             break;
                         case 0xEE: // XOR n
-                            // code
+                            xor(data.Arguments[0]);
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
 
@@ -65,50 +60,34 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xAC: // XOR IXh
-                            // code
+                            xor(r.IXh);
                             break;
                         case 0xAD: // XOR IXl
-                            // code
+                            xor(r.IXl);
                             break;
                         case 0xAE: // XOR (IX+o)
-                            // code
+                            xor(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)data.Arguments[0])));
                             break;
-
                     }
                     break;
 
                 case InstructionPrefix.FD:
                     switch (instruction.Opcode)
                     {
-                        case 0xAC: // XOR IYh
-                            // code
+                        case 0xAC: // YOR IYh
+                            xor(r.IYh);
                             break;
-                        case 0xAD: // XOR IYl
-                            // code
+                        case 0xAD: // YOR IYl
+                            xor(r.IYl);
                             break;
-                        case 0xAE: // XOR (IY+o)
-                            // code
+                        case 0xAE: // YOR (IY+o)
+                            xor(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)data.Arguments[0])));
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
             }
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(flags, 0);
         }
 
         public XOR()

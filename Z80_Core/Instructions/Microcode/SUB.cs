@@ -10,6 +10,41 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            Flags flags = new Flags();
+            IRegisters r = cpu.Registers;
+
+            byte readByte(ushort address)
+            {
+                return cpu.Memory.ReadByteAt(address);
+            }
+
+            byte readOffset(ushort address, byte offset)
+            {
+                return cpu.Memory.ReadByteAt((ushort)(address + offset));
+            }
+
+            byte subByte(byte value)
+            {
+                ushort result = (ushort)(cpu.Registers.A - value);
+                short signed = (short)result;
+                if (result == 0) flags.Zero = true;
+                if (result > 0xFF) flags.Carry = true;
+                if (signed < 0) flags.Sign = true;
+                if (signed > 0x7F || signed < -0x7F) flags.ParityOverflow = true;
+                if ((cpu.Registers.A & 0xF) + (((byte)result) & 0xF) > 0xF) flags.HalfCarry = true;
+
+                return (byte)result;
+            }
+
+            ushort subWord(ushort first, ushort second)
+            {
+                flags = Flags.Copy(cpu.Registers.Flags); // must preserve existing values
+                uint result = (uint)(first - second);
+                if (result > 0xFFFF) flags.Carry = true;
+                if ((first & 0x0FFF) + (((ushort)result) & 0x0FFF) > 0x0FFF) flags.HalfCarry = true;
+
+                return (ushort)result;
+            }
 
             switch (instruction.Prefix)
             {
@@ -17,47 +52,32 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x90: // SUB B
-                            // code
+                            r.A = subByte(r.B);
                             break;
                         case 0x91: // SUB C
-                            // code
+                            r.A = subByte(r.C);
                             break;
                         case 0x92: // SUB D
-                            // code
+                            r.A = subByte(r.D);
                             break;
                         case 0x93: // SUB E
-                            // code
+                            r.A = subByte(r.E);
                             break;
                         case 0x94: // SUB H
-                            // code
+                            r.A = subByte(r.H);
                             break;
                         case 0x95: // SUB L
-                            // code
+                            r.A = subByte(r.L);
                             break;
                         case 0x97: // SUB A
-                            // code
+                            r.A = subByte(r.A);
                             break;
                         case 0x96: // SUB (HL)
-                            // code
+                            r.A = subByte(readByte(r.HL));
                             break;
                         case 0xD6: // SUB n
-                            // code
+                            r.A = subByte(data.Arguments[0]);
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
 
@@ -65,15 +85,14 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x94: // SUB IXh
-                            // code
+                            r.A = subByte(r.IXh);
                             break;
                         case 0x95: // SUB IXl
-                            // code
+                            r.A = subByte(r.IXl);
                             break;
                         case 0x96: // SUB (IX+o)
-                            // code
+                            r.A = subByte(readByte((ushort)(r.IX + (sbyte)data.Arguments[0])));
                             break;
-
                     }
                     break;
 
@@ -81,34 +100,19 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x94: // SUB IYh
-                            // code
+                            r.A = subByte(r.IYh);
                             break;
                         case 0x95: // SUB IYl
-                            // code
+                            r.A = subByte(r.IYl);
                             break;
                         case 0x96: // SUB (IY+o)
-                            // code
+                            r.A = subByte(readByte((ushort)(r.IY + (sbyte)data.Arguments[0])));
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
             }
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(flags, 0);
         }
 
         public SUB()

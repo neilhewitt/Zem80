@@ -53,7 +53,6 @@ namespace Z80.Core
                         case 0xFC: // CALL M,nn
                             if (flags.Sign) call();
                             break;
-
                     }
                     break;
             }

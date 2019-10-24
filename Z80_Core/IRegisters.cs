@@ -3,7 +3,7 @@
     public interface IRegisters
     {
         byte A { get; set; }
-        ushort AF { get; }
+        ushort AF { get; set; }
         byte B { get; set; }
         ushort BC { get; set; }
         byte C { get; set; }
@@ -25,11 +25,10 @@
         byte R { get; set; }
         ushort SP { get; set; }
 
-        RegisterFlags Flags { get; }
+        IFlags Flags { get; }
 
-        byte RegisterByIndex(RegisterIndex register);
+        void SetFlags(IFlags flags);
         byte RegisterByOpcode(byte opcode);
-
         void ExchangeAF();
         void ExchangeBCDEHL();
         Registers Snapshot();

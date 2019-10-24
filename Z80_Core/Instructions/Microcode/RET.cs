@@ -10,93 +10,52 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            IFlags flags = cpu.Registers.Flags;
+            bool pcWasSet = false;
+
+            void ret()
+            {
+                cpu.Registers.PC = cpu.Stack.Pop();
+                pcWasSet = true;
+            }
 
             switch (instruction.Prefix)
             {
                 case InstructionPrefix.Unprefixed:
                     switch (instruction.Opcode)
                     {
-                        case 0xC0: // RET NZ
-                            // code
+                        case 0xC4: // CALL NZ,nn
+                            if (!flags.Zero) ret();
                             break;
-                        case 0xC8: // RET Z
-                            // code
+                        case 0xCC: // CALL Z,nn
+                            if (flags.Zero) ret();
                             break;
-                        case 0xC9: // RET
-                            // code
+                        case 0xCD: // CALL nn
+                            ret();
                             break;
-                        case 0xD0: // RET NC
-                            // code
+                        case 0xD4: // CALL NC,nn
+                            if (!flags.Carry) ret();
                             break;
-                        case 0xD8: // RET C
-                            // code
+                        case 0xDC: // CALL C,nn
+                            if (flags.Carry) ret();
                             break;
-                        case 0xE0: // RET PO
-                            // code
+                        case 0xE4: // CALL PO,nn
+                            if (!flags.ParityOverflow) ret();
                             break;
-                        case 0xE8: // RET PE
-                            // code
+                        case 0xEC: // CALL PE,nn
+                            if (flags.ParityOverflow) ret();
                             break;
-                        case 0xF0: // RET P
-                            // code
+                        case 0xF4: // CALL P,nn
+                            if (!flags.Sign) ret();
                             break;
-                        case 0xF8: // RET M
-                            // code
+                        case 0xFC: // CALL M,nn
+                            if (flags.Sign) ret();
                             break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.CB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
-                        case 0x45: // RETN
-                            // code
-                            break;
-                        case 0x4D: // RETI
-                            // code
-                            break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FD:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.DDCB:
-                    switch (instruction.Opcode)
-                    {
-
-                    }
-                    break;
-
-                case InstructionPrefix.FDCB:
-                    switch (instruction.Opcode)
-                    {
-
                     }
                     break;
             }
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(new Flags(), 0, pcWasSet);
         }
 
         public RET()
