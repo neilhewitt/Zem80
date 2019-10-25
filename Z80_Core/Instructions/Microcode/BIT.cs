@@ -16,7 +16,7 @@ namespace Z80.Core
 
             byte bitIndex = data.BitIndex.Value;
             byte value = prefix == InstructionPrefix.CB ? 
-                r.RegisterByOpcode(instruction.Opcode) : // BIT b, r
+                r[data.RegisterIndex ?? RegisterIndex.None] : // BIT b, r
                 cpu.Memory.ReadByteAt((ushort)((prefix == InstructionPrefix.DDCB ? r.IX : r.IY) + data.Arguments[0])); // bit b, (HL)
 
             flags.Zero = !value.GetBit(bitIndex);

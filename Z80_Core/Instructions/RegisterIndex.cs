@@ -12,6 +12,7 @@ namespace Z80.Core
         E = 3,
         H = 4,
         L = 5,
+        None = 6,
         A = 7
     }
 }

@@ -2,6 +2,7 @@
 {
     public interface IRegisters
     {
+        byte this[RegisterIndex index] { get; set; }
         byte A { get; set; }
         ushort AF { get; set; }
         byte B { get; set; }
@@ -28,7 +29,6 @@
         IFlags Flags { get; }
 
         void SetFlags(IFlags flags);
-        byte RegisterByOpcode(byte opcode);
         void ExchangeAF();
         void ExchangeBCDEHL();
         Registers Snapshot();

@@ -11,6 +11,8 @@ namespace Z80.Core
         private byte _AFOffset = 0;
         private byte _BCDEHLOffset = 0;
 
+        public byte this[RegisterIndex index] { get { return GetRegisterByIndex(index); } set { SetRegisterByIndex(index, value); } }
+
         // 8-bit registers
         public byte A { get { return _registers[_AFOffset]; } set { _registers[_AFOffset] = value; } }
         public byte F { get { return _registers[_AFOffset + 1]; } set { _registers[_AFOffset + 1] = value; } } // flags register
@@ -55,20 +57,6 @@ namespace Z80.Core
         {
             ((RegisterFlags)Flags).SetFrom(flags);
         }
-
-        public byte RegisterByOpcode(byte opcode)
-        {
-            RegisterIndex register = (RegisterIndex)((byte)0x00).SetBits(0, opcode.GetBits(0, 3));
-            if (register == RegisterIndex.A)
-            {
-                return _registers[0];
-            }
-            else
-            {
-                return _registers[(int)register + 2];
-            }
-        }
-
         public void ExchangeAF()
         {
             _AFOffset = (byte)((_AFOffset == 0) ? 8 : 0);
@@ -87,6 +75,35 @@ namespace Z80.Core
         public void Clear()
         {
             _registers = new byte[26];
+        }
+
+        private byte GetRegisterByIndex(RegisterIndex index)
+        {
+            if (index == RegisterIndex.None) return 0xFF;
+
+            if (index == RegisterIndex.A)
+            {
+                return _registers[_AFOffset];
+            }
+            else
+            {
+                return _registers[_BCDEHLOffset + (int)index + 2];
+            }
+        }
+
+        private void SetRegisterByIndex(RegisterIndex index, byte value)
+        {
+            if (index != RegisterIndex.None)
+            {
+                if (index == RegisterIndex.A)
+                {
+                    _registers[_AFOffset] = value;
+                }
+                else
+                {
+                    _registers[_BCDEHLOffset + (int)index + 2] = value;
+                }
+            }
         }
 
         private ushort Get16BitValue(int registerIndex)
