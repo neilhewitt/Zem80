@@ -79,7 +79,7 @@ namespace Z80.Core
                             r.A = subc(rb(r.HL));
                             break;
                         case 0xDE: // SBC A,n
-                            r.A = subc(data.Arguments[0]);
+                            r.A = subc(data.Argument1);
                             break;
                     }
                     break;
@@ -112,7 +112,7 @@ namespace Z80.Core
                             r.A = subc(r.IXl);
                             break;
                         case 0x9E: // SBC A,(IX+o)
-                            r.A = subc(ro(r.IX, data.Arguments[0]));
+                            r.A = subc(ro(r.IX, data.Argument1));
                             break;
                     }
                     break;
@@ -127,7 +127,7 @@ namespace Z80.Core
                             r.A = subc(r.IYl);
                             break;
                         case 0x9E: // SBC A,(IY+o)
-                            r.A = subc(ro(r.IY, data.Arguments[0]));
+                            r.A = subc(ro(r.IY, data.Argument1));
                             break;
                     }
                     break;

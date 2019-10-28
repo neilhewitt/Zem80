@@ -51,7 +51,7 @@ namespace Z80.Core
                             xor(cpu.Memory.ReadByteAt(r.HL));
                             break;
                         case 0xEE: // XOR n
-                            xor(data.Arguments[0]);
+                            xor(data.Argument1);
                             break;
                     }
                     break;
@@ -66,7 +66,7 @@ namespace Z80.Core
                             xor(r.IXl);
                             break;
                         case 0xAE: // XOR (IX+o)
-                            xor(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)data.Arguments[0])));
+                            xor(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)data.Argument1)));
                             break;
                     }
                     break;
@@ -81,7 +81,7 @@ namespace Z80.Core
                             xor(r.IYl);
                             break;
                         case 0xAE: // YOR (IY+o)
-                            xor(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)data.Arguments[0])));
+                            xor(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)data.Argument1)));
                             break;
                     }
                     break;

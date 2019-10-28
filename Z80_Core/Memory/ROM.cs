@@ -14,11 +14,6 @@ namespace Z80.Core
             throw new MemoryNotWritableException();
         }
 
-        public override void WriteWordAt(ushort address, ushort value)
-        {
-            throw new MemoryNotWritableException();
-        }
-
         public ROM(ushort startAddress, ushort sizeInKilobytes)
             : base(startAddress, sizeInKilobytes)
         {

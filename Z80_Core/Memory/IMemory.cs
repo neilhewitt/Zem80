@@ -2,7 +2,7 @@
 {
     public interface IMemory
     {
-        ushort SizeInKilobytes { get; }
+        uint SizeInBytes { get; }
         byte ReadByteAt(ushort address);
         byte[] ReadBytesAt(ushort address, ushort numberOfBytes);
         ushort ReadWordAt(ushort address);

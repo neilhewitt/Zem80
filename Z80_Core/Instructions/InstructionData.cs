@@ -7,14 +7,14 @@ namespace Z80.Core
     public class InstructionData
     {
         public byte Opcode { get; set; }
-        public byte? Displacement { get; set; }
         public byte? BitIndex { get; set; }
         public RegisterIndex? RegisterIndex { get; set; }
         public bool DirectIX { get; set; }
         public bool DirectIY { get; set; }
         public bool IndexIX { get; set; }
         public bool IndexIY { get; set; }
-        public byte[] Arguments { get; set; } = new byte[0];
-        public ushort ArgumentsAsWord => (ushort)(((Arguments?[1] ?? 0) * 256) + Arguments?[0] ?? 0);
+        public byte Argument1 { get; set; }
+        public byte Argument2 { get; set; }
+        public ushort ArgumentsAsWord => (ushort)((Argument2 * 256) + Argument1);
     }
 }

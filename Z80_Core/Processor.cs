@@ -22,7 +22,6 @@ namespace Z80.Core
 
         public void Start()
         {
-            Registers.Clear();
             _running = true;
 
             while (_running)
@@ -56,15 +55,22 @@ namespace Z80.Core
         {
             try
             {
-                byte[] instruction = Memory.ReadBytesAt(Registers.PC, 4); // will succeed even if PC overflows - overflow bytes come back as 0x00
+                byte[] instruction = Memory.ReadBytesAt(Registers.PC, 4);
                 InstructionPackage package = _decoder.Decode(instruction, Registers.PC);
+                if (package == null) Stop(); // only happens if instruction buffer is short (memory overflow) and corrupt (not valid instruction)
+
                 BeforeExecute?.Invoke(this, package);
                 ExecutionResult result = package.Instruction.Implementation.Execute(this, package);
                 AfterExecute?.Invoke(this, result);
+                
                 Registers.SetFlags(result.Flags);
-                if (!result.PCWasSet) Registers.PC += package.Instruction.SizeInBytes;
+                if (!result.PCWasSet)
+                {
+                    if (Registers.PC + package.Instruction.SizeInBytes >= Memory.SizeInBytes) Stop(); // PC overflow... HALT here 
+                    Registers.PC += package.Instruction.SizeInBytes;
+                }
             }
-            catch
+            catch (Exception ex)
             {
                 Stop();
                 throw;

@@ -8,18 +8,21 @@ namespace Z80.Core
     {
         private IMemoryMap _map;
 
-        public ushort SizeInKilobytes => _map.SizeInKilobytes;
+        public uint SizeInBytes => _map.SizeInBytes;
 
         public byte ReadByteAt(ushort address)
         {
             IMemorySegment memory = _map.MemoryFor(address);
-            return memory?.ReadByteAt(address) ?? 0; // default value if address is unallocated
+            return memory?.ReadByteAt(address) ?? 0x00; // default value if address is unallocated
         }
 
         public byte[] ReadBytesAt(ushort address, ushort numberOfBytes)
         {
-            byte[] bytes = new byte[numberOfBytes];
-            for (ushort i = 0; i < numberOfBytes; i++)
+            uint availableBytes = numberOfBytes;
+            if (address + availableBytes >= SizeInBytes) availableBytes = SizeInBytes - address; // if this read overflows the end of memory, we can read only this many bytes
+
+            byte[] bytes = new byte[availableBytes];
+            for (ushort i = 0; i < availableBytes; i++)
             {
                 bytes[i] = ReadByteAt((ushort)(address + i));
             }

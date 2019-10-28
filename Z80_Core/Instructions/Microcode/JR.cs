@@ -10,7 +10,7 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            sbyte offset = (sbyte)data.Arguments[0];
+            sbyte offset = (sbyte)data.Argument1;
             IFlags flags = cpu.Registers.Flags;
 
             void jr()

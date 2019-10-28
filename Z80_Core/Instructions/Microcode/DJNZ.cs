@@ -15,7 +15,7 @@ namespace Z80.Core
             if (cpu.Registers.B > 0)
             {
                 cpu.Registers.B--;
-                sbyte jump = (sbyte)(data.Arguments[0]);
+                sbyte jump = (sbyte)(data.Argument1);
                 if (jump > 0) cpu.Registers.PC += (ushort)jump;
                 if (jump < 0) cpu.Registers.PC -= (ushort)jump;
                 if (jump == 0) pcWasSet = false;

@@ -79,7 +79,7 @@ namespace Z80.Core
                             r.A = addByteWithCarry(readByte(r.HL));
                             break;
                         case 0xCE: // ADC A,n
-                            r.A = addByteWithCarry(data.Arguments[0]);
+                            r.A = addByteWithCarry(data.Argument1);
                             break;
                     }
                     break;
@@ -112,7 +112,7 @@ namespace Z80.Core
                             r.A = addByteWithCarry(r.IXl);
                             break;
                         case 0x8E: // ADC A,(IX+o)
-                            r.A = addByteWithCarry(readOffset(r.IX, data.Arguments[0]));
+                            r.A = addByteWithCarry(readOffset(r.IX, data.Argument1));
                             break;
                     }
                     break;
@@ -127,7 +127,7 @@ namespace Z80.Core
                             r.A = addByteWithCarry(r.IYl);
                             break;
                         case 0x8E: // ADC A,(IY+o)
-                            r.A = addByteWithCarry(readOffset(r.IY, data.Arguments[0]));
+                            r.A = addByteWithCarry(readOffset(r.IY, data.Argument1));
                             break;
                     }
                     break;

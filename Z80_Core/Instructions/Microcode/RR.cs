@@ -12,7 +12,7 @@ namespace Z80.Core
             InstructionData data = package.Data;
             Flags flags = new Flags();
             IRegisters r = cpu.Registers;
-            sbyte offset = (sbyte)(data.Arguments?[0] ?? 0);
+            sbyte offset = (sbyte)(data.Argument1);
             RegisterIndex index = data.RegisterIndex ?? RegisterIndex.None;
             bool previousCarry = flags.Carry;
 

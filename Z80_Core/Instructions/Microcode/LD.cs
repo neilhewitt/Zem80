@@ -14,8 +14,8 @@ namespace Z80.Core
 
             // shortcuts to keep code size down
             IRegisters r = cpu.Registers;
-            byte arg0 = data.Arguments?[0] ?? 0;
-            byte arg1 = data.Arguments?[1] ?? 0;
+            byte arg0 = data.Argument1;
+            byte arg1 = data.Argument2;
             ushort argWord = data.ArgumentsAsWord;
 
             // local functions to keep code size down

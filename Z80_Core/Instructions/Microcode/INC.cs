@@ -11,7 +11,7 @@ namespace Z80.Core
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             IRegisters r = cpu.Registers;
-            byte offset = data.Arguments[0];
+            byte offset = data.Argument1;
             Flags flags = new Flags();
 
             ushort incw(ushort value)

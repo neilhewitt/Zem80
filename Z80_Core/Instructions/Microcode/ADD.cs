@@ -88,7 +88,7 @@ namespace Z80.Core
                             r.A = addByte(readByte(r.HL));
                             break;
                         case 0xC6: // ADD A,n
-                            r.A = addByte(data.Arguments[0]);
+                            r.A = addByte(data.Argument1);
                             break;
                     }
                     break;
@@ -116,7 +116,7 @@ namespace Z80.Core
                             r.A = addByte(r.IXl);
                             break;
                         case 0x86: // ADD A,(IX+o)
-                            r.A = addByte(readOffset(r.IX, data.Arguments[0]));
+                            r.A = addByte(readOffset(r.IX, data.Argument1));
                             break;
                     }
                     break;
@@ -143,7 +143,7 @@ namespace Z80.Core
                             r.A = addByte(r.IYl);
                             break;
                         case 0x86: // ADD A,(IY+o)
-                            r.A = addByte(readOffset(r.IY, data.Arguments[0]));
+                            r.A = addByte(readOffset(r.IY, data.Argument1));
                             break;
                     }
                     break;

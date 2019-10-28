@@ -108,7 +108,7 @@ namespace Z80.Core
 
         private ushort Get16BitValue(int registerIndex)
         {
-            return (ushort)((_registers[registerIndex + 1] * 256) + _registers[registerIndex]);
+            return (ushort)((_registers[registerIndex ] * 256) + _registers[registerIndex + 1]);
         }
 
         private void Set16BitValue(int registerIndex, ushort value)
@@ -119,8 +119,8 @@ namespace Z80.Core
             // but this code *could* be running on a big-endian architecture and the ushort value will come out
             // in reverse order... so set the bytes directly
 
-            _registers[registerIndex] = bytes[isLittleEndian ? 0 : 1]; 
-            _registers[registerIndex + 1] = bytes[isLittleEndian ? 1 : 0];
+            _registers[registerIndex] = bytes[isLittleEndian ? 1 : 0]; 
+            _registers[registerIndex + 1] = bytes[isLittleEndian ? 0 : 1];
         }
 
         public Registers()

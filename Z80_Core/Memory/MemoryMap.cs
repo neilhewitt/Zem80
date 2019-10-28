@@ -7,11 +7,11 @@ namespace Z80.Core
 {
     public class MemoryMap : IMemoryMap
     {
-        public const ushort PAGE_SIZE_IN_KILOBYTES = 1;
+        public const ushort PAGE_SIZE_IN_BYTES = 1024;
 
         private Dictionary<ushort, IMemorySegment> _segments = new Dictionary<ushort, IMemorySegment>();
 
-        public ushort SizeInKilobytes { get; private set; }
+        public uint SizeInBytes { get; private set; }
 
         public IMemorySegment MemoryFor(ushort address)
         {
@@ -22,15 +22,20 @@ namespace Z80.Core
         public void Map(IMemorySegment entry, bool overwriteMappedPages = false)
         {
             ushort startAddress = entry.StartAddress;
-            ushort sizeInKilobytes = entry.SizeInKilobytes;
+            uint size = entry.SizeInBytes;
 
             if (startAddress % 1024 > 0)
             {
                 throw new MemoryMapException("Start address must be on a page boundary (divisible by 1024).");
             }
 
+            if (startAddress + size > SizeInBytes)
+            {
+                throw new MemoryMapException("Block would overflow the memory space which is " + SizeInBytes + " bytes.");
+            }
+
             ushort startPage = PageFromAddress(startAddress);
-            ushort endPage = (ushort)(startPage + sizeInKilobytes - 1);
+            ushort endPage = (ushort)(startPage + (size / PAGE_SIZE_IN_BYTES) - 1);
 
             if (!overwriteMappedPages && _segments.Any(p => p.Key >= startPage && p.Key <= endPage))
             {
@@ -39,7 +44,6 @@ namespace Z80.Core
 
             for (ushort i = startPage; i <= endPage; i++)
             {
-                ushort address = AddressFromPage(i);
                 if (_segments.ContainsKey(i))
                 {
                     _segments[i] = entry;
@@ -53,18 +57,18 @@ namespace Z80.Core
 
         private ushort PageFromAddress(ushort address)
         {
-            ushort pageIndex = (ushort)Math.Ceiling((double)address / (double)(PAGE_SIZE_IN_KILOBYTES * 1024));
+            ushort pageIndex = (ushort)Math.Floor((double)address / (double)(PAGE_SIZE_IN_BYTES));
             return pageIndex;
         }
 
         private ushort AddressFromPage(ushort pageNumber)
         {
-            return (ushort)(pageNumber * PAGE_SIZE_IN_KILOBYTES);
+            return (ushort)(pageNumber * PAGE_SIZE_IN_BYTES);
         }
 
-        public MemoryMap(ushort sizeInKilobytes)
+        public MemoryMap(uint sizeInBytes)
         {
-            SizeInKilobytes = sizeInKilobytes;
+            SizeInBytes = sizeInBytes;
         }
     }
 }

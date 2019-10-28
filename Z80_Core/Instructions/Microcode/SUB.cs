@@ -76,7 +76,7 @@ namespace Z80.Core
                             r.A = subByte(readByte(r.HL));
                             break;
                         case 0xD6: // SUB n
-                            r.A = subByte(data.Arguments[0]);
+                            r.A = subByte(data.Argument1);
                             break;
                     }
                     break;
@@ -91,7 +91,7 @@ namespace Z80.Core
                             r.A = subByte(r.IXl);
                             break;
                         case 0x96: // SUB (IX+o)
-                            r.A = subByte(readByte((ushort)(r.IX + (sbyte)data.Arguments[0])));
+                            r.A = subByte(readByte((ushort)(r.IX + (sbyte)data.Argument1)));
                             break;
                     }
                     break;
@@ -106,7 +106,7 @@ namespace Z80.Core
                             r.A = subByte(r.IYl);
                             break;
                         case 0x96: // SUB (IY+o)
-                            r.A = subByte(readByte((ushort)(r.IY + (sbyte)data.Arguments[0])));
+                            r.A = subByte(readByte((ushort)(r.IY + (sbyte)data.Argument1)));
                             break;
                     }
                     break;
