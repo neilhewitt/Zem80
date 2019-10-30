@@ -9,5 +9,6 @@
         void WriteByteAt(ushort address, byte value);
         void WriteBytesAt(ushort address, params byte[] bytes);
         void WriteWordAt(ushort address, ushort value);
+        void Initialise(Processor cpu);
     }
 }

@@ -12,7 +12,7 @@ namespace Z80_Console
 
         static void Main(string[] args)
         {
-            Processor cpu = Bootstrapper.BuildProcessor();
+            Processor cpu = Bootstrapper.BuildDefault();
             _cpu = cpu;
             ushort address = 0;
 

@@ -9,7 +9,7 @@
             return 0;
         }
 
-        public void WriteByte()
+        public void WriteByte(byte output)
         {
             // TODO: make it work :-)
         }

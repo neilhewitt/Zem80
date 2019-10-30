@@ -11,7 +11,7 @@ namespace Z80.Core
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             IRegisters r = cpu.Registers;
-            Stack s = cpu.Stack;
+            IStack s = cpu.Stack;
 
             switch (instruction.Prefix)
             {

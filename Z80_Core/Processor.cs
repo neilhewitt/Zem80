@@ -110,6 +110,7 @@ namespace Z80.Core
             SpeedInMhz = speedInMHz;
 
             Registers.SP = stack.StartAddress;
+            Memory.Initialise(this); // creates circular reference that cannot be created at constructor-time
         }
     }
 }

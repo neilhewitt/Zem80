@@ -18,10 +18,11 @@ namespace Z80.Core
 
         public Ports()
         {
-            for (byte i = 0; i <= 255; i++)
+            _ports = new Dictionary<byte, IPort>();
+            for (int i = 0; i <= 255; i++)
             {
-                Port port = new Port(i);
-                _ports.Add(i, port);
+                Port port = new Port((byte)i);
+                _ports.Add((byte)i, port);
             }
         }
 

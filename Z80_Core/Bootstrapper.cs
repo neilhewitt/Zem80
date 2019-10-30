@@ -8,7 +8,7 @@ namespace Z80.Core
     {
         public const uint MAX_MEMORY_SIZE_IN_BYTES = 65536;
         
-        public static Processor BuildProcessor()
+        public static Processor BuildDefault()
         {
             IRegisters registers = new Registers();
             IMemoryMap map = new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES);
@@ -18,7 +18,7 @@ namespace Z80.Core
             IStack stack = new Stack(registers, memory, 65533); // 65533 == leave two bytes at stack top
             IPorts ports = new Ports();
 
-            Processor z80 = new Processor(registers, memory, stack, ports, 4.00); 
+            Processor z80 = new Processor(registers, memory, stack, ports, 4.00);
             return z80;
         }
     }
