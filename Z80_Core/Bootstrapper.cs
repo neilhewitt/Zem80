@@ -15,8 +15,10 @@ namespace Z80.Core
             RAM ram = new RAM(0, MAX_MEMORY_SIZE_IN_BYTES);
             map.Map(ram);
             IMemory memory = new Memory(map);
+            IStack stack = new Stack(registers, memory, 65533); // 65533 == leave two bytes at stack top
+            IPorts ports = new Ports();
 
-            Processor z80 = new Processor(registers, memory, 65533, 4.00); // 65533 == leave two bytes at stack top
+            Processor z80 = new Processor(registers, memory, stack, ports, 4.00); 
             return z80;
         }
     }

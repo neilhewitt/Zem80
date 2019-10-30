@@ -77,13 +77,13 @@ namespace Z80.Core
                     if (instruction.Modifier == ModifierType.IndexRegister) // +p / +q
                     {
                         data.RegisterIndex = GetRegisterIndex(opcode);
-                        data.DirectIX = (prefix == 0xDD && (data.RegisterIndex == RegisterIndex.H || data.RegisterIndex == RegisterIndex.L));
-                        data.DirectIY = (prefix == 0xFD && (data.RegisterIndex == RegisterIndex.H || data.RegisterIndex == RegisterIndex.L));
+                        data.DirectIX = (prefix == 0xDD && (data.RegisterIndex == RegisterIndex.H || data.RegisterIndex == RegisterIndex.L)); // IX substituted for HL
+                        data.DirectIY = (prefix == 0xFD && (data.RegisterIndex == RegisterIndex.H || data.RegisterIndex == RegisterIndex.L)); // IY substituted for HL
                     }
 
-                    if (instruction.Modifier == ModifierType.IndexRegisterHigh) // +8*p / +8*q
+                    if (instruction.Modifier == ModifierType.IndexRegisterHalf) // +8*p / +8*q
                     {
-                        data.RegisterIndex = GetRegisterIndex(opcode);
+                        data.RegisterIndex = GetRegisterIndex(opcode); // will be either H (representing IXh) or L (representing IXl)
                     }
 
                     if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
@@ -141,7 +141,7 @@ namespace Z80.Core
 
         private byte GetBitIndex(byte opcode)
         {
-            return opcode.RemoveBits(0, 3).RemoveBits(6, 2); // bitindex is bits 3-5
+            return opcode.GetByteFromBits(3, 3); // bitindex is bits 3-5
         }
 
         public InstructionDecoder()

@@ -25,7 +25,7 @@ namespace Z80.Core
 
             byte addByteWithCarry(byte value)
             {
-                ushort result = (ushort)(cpu.Registers.A + value + (cpu.Registers.Flags.Carry ? 1 : 0));
+                ushort result = (ushort)(cpu.Registers.A + value + (cpu.Registers.Flags.Carry ? 1 : 0)); 
                 short signed = (short)result;
                 if (result == 0) flags.Zero = true;
                 if (result > 0xFF) flags.Carry = true;
@@ -38,7 +38,7 @@ namespace Z80.Core
 
             ushort addWordWithCarry(ushort value)
             {
-                uint result = (uint)(cpu.Registers.HL + value + (cpu.Registers.Flags.Carry ? 1 : 0));
+                uint result = (uint)(cpu.Registers.HL + value + (cpu.Registers.Flags.Carry ? 1 : 0)); 
                 int signed = (int)result;
                 if (result == 0) flags.Zero = true;
                 if (result > 0xFFFF) flags.Carry = true;

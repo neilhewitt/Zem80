@@ -6,12 +6,18 @@ namespace Z80.Core
 {
     public class Memory : IMemory
     {
+        private const string NOT_INITIALISED = "Memory has not been initialised and cannot be read or written to.";
         private IMemoryMap _map;
+        private Processor _cpu;
+        private bool _initialised;
 
         public uint SizeInBytes => _map.SizeInBytes;
 
         public byte ReadByteAt(ushort address)
         {
+            if (!_initialised) throw new MemoryException(NOT_INITIALISED);
+            _cpu.SetAddressBus(address);
+
             IMemorySegment memory = _map.MemoryFor(address);
             return memory?.ReadByteAt(address) ?? 0x00; // default value if address is unallocated
         }
@@ -37,6 +43,9 @@ namespace Z80.Core
 
         public void WriteByteAt(ushort address, byte value)
         {
+            if (!_initialised) throw new MemoryException(NOT_INITIALISED);
+            _cpu.SetAddressBus(address);
+
             IMemorySegment memory = _map.MemoryFor(address);
             if (memory == null || memory.ReadOnly)
             {
@@ -61,6 +70,12 @@ namespace Z80.Core
             bytes[0] = (byte)(value % 256);
 
             WriteBytesAt(address, bytes);
+        }
+
+        public void Initialise(Processor cpu)
+        {
+            _cpu = cpu;
+            _initialised = true;
         }
 
         public Memory(IMemoryMap map)

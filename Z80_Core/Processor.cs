@@ -10,7 +10,8 @@ namespace Z80.Core
 
         public IRegisters Registers { get; private set; }
         public IMemory Memory { get; private set; }
-        public Stack Stack { get; private set; }
+        public IPorts Ports { get; private set; }
+        public IStack Stack { get; private set; }
         public ushort AddressBus { get; private set; }
         public byte DataBus { get; private set; }
         public InterruptMode InterruptMode { get; private set; } = InterruptMode.Zero;
@@ -41,14 +42,34 @@ namespace Z80.Core
             // handle interrupt stuff!
         }
 
-        internal void DisableInterrupts()
+        public void SetAddressBus(ushort value)
+        {
+            AddressBus = value;
+        }
+
+        public void SetAddressBus(byte low, byte high)
+        {
+            AddressBus = (ushort)((high * 256) + low);
+        }
+
+        public void SetDataBus(byte value)
+        {
+            DataBus = value;
+        }
+
+        public void DisableInterrupts()
         {
             InterruptsEnabled = false;
         }
 
-        internal void EnableInterrupts()
+        public void EnableInterrupts()
         {
             InterruptsEnabled = true;
+        }
+
+        public void HandleInterrupts()
+        {
+            // nothign to see here yet...
         }
 
         private void InstructionCycle()
@@ -72,18 +93,23 @@ namespace Z80.Core
             }
             catch (Exception ex)
             {
-                Stop();
                 throw;
+            }
+            finally
+            {
+                Stop(); // clean-up here
             }
         }
 
-        internal Processor(IRegisters registers, IMemory memory, ushort stackPointer, double speedInMHz)
+        internal Processor(IRegisters registers, IMemory memory, IStack stack, IPorts ports, double speedInMHz)
         {
             Registers = registers;
             Memory = memory;
-            Registers.SP = stackPointer;
-            Stack = new Stack(this, stackPointer);
+            Stack = stack;
+            Ports = ports;
             SpeedInMhz = speedInMHz;
+
+            Registers.SP = stack.StartAddress;
         }
     }
 }

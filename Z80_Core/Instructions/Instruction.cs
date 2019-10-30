@@ -557,10 +557,10 @@ namespace Z80.Core
                     },
                     { InstructionPrefix.DD, new Dictionary<byte, Instruction>() 
                         {
-                            { 0x24, new Instruction(InstructionPrefix.DD, 0x24, "INC IXh", ArgumentType.None, ArgumentType.None, ModifierType.IndexRegisterHigh, 2, 8, null) },
-                            { 0x2C, new Instruction(InstructionPrefix.DD, 0x2C, "INC IXl", ArgumentType.None, ArgumentType.None, ModifierType.IndexRegisterHigh, 2, 8, null) },
-                            { 0x25, new Instruction(InstructionPrefix.DD, 0x25, "DEC IXh", ArgumentType.None, ArgumentType.None, ModifierType.IndexRegisterHigh, 2, 8, null) },
-                            { 0x2D, new Instruction(InstructionPrefix.DD, 0x2D, "DEC IXl", ArgumentType.None, ArgumentType.None, ModifierType.IndexRegisterHigh, 2, 8, null) },
+                            { 0x24, new Instruction(InstructionPrefix.DD, 0x24, "INC IXh", ArgumentType.None, ArgumentType.None, ModifierType.IndexRegisterHalf, 2, 8, null) },
+                            { 0x2C, new Instruction(InstructionPrefix.DD, 0x2C, "INC IXl", ArgumentType.None, ArgumentType.None, ModifierType.IndexRegisterHalf, 2, 8, null) },
+                            { 0x25, new Instruction(InstructionPrefix.DD, 0x25, "DEC IXh", ArgumentType.None, ArgumentType.None, ModifierType.IndexRegisterHalf, 2, 8, null) },
+                            { 0x2D, new Instruction(InstructionPrefix.DD, 0x2D, "DEC IXl", ArgumentType.None, ArgumentType.None, ModifierType.IndexRegisterHalf, 2, 8, null) },
                             { 0x09, new Instruction(InstructionPrefix.DD, 0x09, "ADD IX,BC", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 15, null) },
                             { 0x19, new Instruction(InstructionPrefix.DD, 0x19, "ADD IX,DE", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 15, null) },
                             { 0x21, new Instruction(InstructionPrefix.DD, 0x21, "LD IX,nn", ArgumentType.ImmediateWord, ArgumentType.ImmediateWord, ModifierType.None, 4, 14, null) },
@@ -646,10 +646,10 @@ namespace Z80.Core
                     },
                     { InstructionPrefix.FD, new Dictionary<byte, Instruction>() 
                         {
-                            { 0x24, new Instruction(InstructionPrefix.FD, 0x24, "INC IYh", ArgumentType.None, ArgumentType.None, ModifierType.IndexRegisterHigh, 2, 8, null) },
-                            { 0x2C, new Instruction(InstructionPrefix.FD, 0x2C, "INC IYl", ArgumentType.None, ArgumentType.None, ModifierType.IndexRegisterHigh, 2, 8, null) },
-                            { 0x25, new Instruction(InstructionPrefix.FD, 0x25, "DEC IYh", ArgumentType.None, ArgumentType.None, ModifierType.IndexRegisterHigh, 2, 8, null) },
-                            { 0x2D, new Instruction(InstructionPrefix.FD, 0x2D, "DEC IYl", ArgumentType.None, ArgumentType.None, ModifierType.IndexRegisterHigh, 2, 8, null) },
+                            { 0x24, new Instruction(InstructionPrefix.FD, 0x24, "INC IYh", ArgumentType.None, ArgumentType.None, ModifierType.IndexRegisterHalf, 2, 8, null) },
+                            { 0x2C, new Instruction(InstructionPrefix.FD, 0x2C, "INC IYl", ArgumentType.None, ArgumentType.None, ModifierType.IndexRegisterHalf, 2, 8, null) },
+                            { 0x25, new Instruction(InstructionPrefix.FD, 0x25, "DEC IYh", ArgumentType.None, ArgumentType.None, ModifierType.IndexRegisterHalf, 2, 8, null) },
+                            { 0x2D, new Instruction(InstructionPrefix.FD, 0x2D, "DEC IYl", ArgumentType.None, ArgumentType.None, ModifierType.IndexRegisterHalf, 2, 8, null) },
                             { 0x09, new Instruction(InstructionPrefix.FD, 0x09, "ADD IY,BC", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 15, null) },
                             { 0x19, new Instruction(InstructionPrefix.FD, 0x19, "ADD IY,DE", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 15, null) },
                             { 0x21, new Instruction(InstructionPrefix.FD, 0x21, "LD IY,nn", ArgumentType.ImmediateWord, ArgumentType.ImmediateWord, ModifierType.None, 4, 14, null) },

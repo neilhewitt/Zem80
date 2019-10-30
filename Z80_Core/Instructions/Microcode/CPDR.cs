@@ -26,7 +26,7 @@ namespace Z80.Core
 
             if (result != 0 && cpu.Registers.BC != 0) cpu.Registers.PC -= 2;
 
-            return new ExecutionResult(flags, 0);
+            return new ExecutionResult(flags, 0, (result != 0 && cpu.Registers.BC != 0));
         }
 
         public CPDR()

@@ -24,7 +24,7 @@ namespace Z80.Core
                 r.PC -= 2;
             }
 
-            return new ExecutionResult(flags, 0);
+            return new ExecutionResult(flags, 0, r.BC != 0);
         }
 
         public LDIR()

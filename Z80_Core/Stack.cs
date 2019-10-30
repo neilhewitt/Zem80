@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class Stack
+    public class Stack : IStack
     {
         private IRegisters _registers;
         private IMemory _memory;
@@ -24,11 +24,11 @@ namespace Z80.Core
             return output;
         }
 
-        public Stack(Processor cpu, ushort startAddress)
+        public Stack(IRegisters registers, IMemory memory, ushort startAddress)
         {
             StartAddress = startAddress;
-            _registers = cpu.Registers;
-            _memory = cpu.Memory;
+            _registers = registers;
+            _memory = memory;
         }
     }
 }
