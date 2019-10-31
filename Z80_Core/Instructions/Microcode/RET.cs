@@ -24,31 +24,31 @@ namespace Z80.Core
                 case InstructionPrefix.Unprefixed:
                     switch (instruction.Opcode)
                     {
-                        case 0xC4: // CALL NZ,nn
+                        case 0xC0: // RET NZ,nn
                             if (!flags.Zero) ret();
                             break;
-                        case 0xCC: // CALL Z,nn
+                        case 0xC8: // RET Z,nn
                             if (flags.Zero) ret();
                             break;
-                        case 0xCD: // CALL nn
+                        case 0xC9: // RET nn
                             ret();
                             break;
-                        case 0xD4: // CALL NC,nn
+                        case 0xD0: // RET NC,nn
                             if (!flags.Carry) ret();
                             break;
-                        case 0xDC: // CALL C,nn
+                        case 0xD8: // RET C,nn
                             if (flags.Carry) ret();
                             break;
-                        case 0xE4: // CALL PO,nn
+                        case 0xE0: // RET PO,nn
                             if (!flags.ParityOverflow) ret();
                             break;
-                        case 0xEC: // CALL PE,nn
+                        case 0xE8: // RET PE,nn
                             if (flags.ParityOverflow) ret();
                             break;
-                        case 0xF4: // CALL P,nn
+                        case 0xF0: // RET P,nn
                             if (!flags.Sign) ret();
                             break;
-                        case 0xFC: // CALL M,nn
+                        case 0xF8: // RET M,nn
                             if (flags.Sign) ret();
                             break;
                     }

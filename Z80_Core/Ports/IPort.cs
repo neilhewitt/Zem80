@@ -1,4 +1,6 @@
-﻿namespace Z80.Core
+﻿using System;
+
+namespace Z80.Core
 {
     public interface IPort
     {
@@ -9,5 +11,6 @@
 
         void SignalRead();
         void SignalWrite();
+        void Connect(Func<byte> reader, Action<byte> writer, Action<PortSignal> signaller);
     }
 }
