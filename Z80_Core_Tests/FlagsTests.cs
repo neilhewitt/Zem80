@@ -17,7 +17,7 @@ namespace Z80.Core.Tests
         [TestCase("Five", 0xDF)]
         [TestCase("HalfCarry", 0xEF)]
         [TestCase("Three", 0xF7)]
-        [TestCase("Parity", 0xFB)]
+        [TestCase("ParityOverflow", 0xFB)]
         [TestCase("Subtract", 0xFD)]
         [TestCase("Carry", 0xFE)]
 

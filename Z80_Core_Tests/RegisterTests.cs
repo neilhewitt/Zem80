@@ -39,7 +39,7 @@ namespace Z80.Core.Tests
             registers.BC = TEST_VALUE;
             byte[] bytes = BitConverter.GetBytes(TEST_VALUE);
 
-            Assert.That(registers.BC == TEST_VALUE && registers.B == bytes[0] && registers.C == bytes[1]);
+            Assert.That(registers.BC == TEST_VALUE && registers.B == bytes[1] && registers.C == bytes[0]);
         }
 
         [Test]
