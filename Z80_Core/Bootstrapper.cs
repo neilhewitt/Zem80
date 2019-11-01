@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public static class Bootstrapper
     {
-        public const uint MAX_MEMORY_SIZE_IN_BYTES = 65536;
+        public const int MAX_MEMORY_SIZE_IN_BYTES = 65536;
         
         public static Processor BuildDefault()
         {
@@ -15,7 +15,7 @@ namespace Z80.Core
             RAM ram = new RAM(0, MAX_MEMORY_SIZE_IN_BYTES);
             map.Map(ram);
             IMemory memory = new Memory(map);
-            IStack stack = new Stack(registers, memory, 65533); // 65533 == leave two bytes at stack top
+            IStack stack = new Stack(registers, memory, (ushort)(MAX_MEMORY_SIZE_IN_BYTES - 2)); // leave two bytes at stack top
             IPorts ports = new Ports();
 
             Processor z80 = new Processor(registers, memory, stack, ports, 4.00);

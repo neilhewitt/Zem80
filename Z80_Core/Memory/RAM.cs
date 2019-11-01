@@ -11,7 +11,7 @@ namespace Z80.Core
 
         public ushort StartAddress { get; private set; }
 
-        public uint SizeInBytes { get; private set; }
+        public int SizeInBytes { get; private set; }
 
         public bool ReadOnly => false;
 
@@ -35,7 +35,7 @@ namespace Z80.Core
             }
         }
 
-        public RAM(ushort startAddress, uint sizeInBytes)
+        public RAM(ushort startAddress, int sizeInBytes)
         {
             _memory = new byte[sizeInBytes];
             SizeInBytes = sizeInBytes;

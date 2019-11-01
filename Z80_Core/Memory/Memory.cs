@@ -11,7 +11,7 @@ namespace Z80.Core
         private Processor _cpu;
         private bool _initialised;
 
-        public uint SizeInBytes => _map.SizeInBytes;
+        public int SizeInBytes => _map.SizeInBytes;
 
         public byte ReadByteAt(ushort address)
         {
@@ -24,11 +24,11 @@ namespace Z80.Core
 
         public byte[] ReadBytesAt(ushort address, ushort numberOfBytes)
         {
-            uint availableBytes = numberOfBytes;
+            int availableBytes = numberOfBytes;
             if (address + availableBytes >= SizeInBytes) availableBytes = SizeInBytes - address; // if this read overflows the end of memory, we can read only this many bytes
 
             byte[] bytes = new byte[availableBytes];
-            for (ushort i = 0; i < availableBytes; i++)
+            for (int i = 0; i < availableBytes; i++)
             {
                 bytes[i] = ReadByteAt((ushort)(address + i));
             }
