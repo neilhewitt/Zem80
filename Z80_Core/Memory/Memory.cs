@@ -49,7 +49,7 @@ namespace Z80.Core
             IMemorySegment memory = _map.MemoryFor(address);
             if (memory == null || memory.ReadOnly)
             {
-                throw new Exception("Readonly or unmapped"); // TODO: custom exception type
+                throw new MemoryNotPresentException("Readonly or unmapped");
             }
 
             memory.WriteByteAt(address, value);

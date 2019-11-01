@@ -15,9 +15,17 @@ namespace Z80.Core
             InstructionPrefix prefix = instruction.Prefix;
 
             byte bitIndex = data.BitIndex.Value;
-            byte value = prefix == InstructionPrefix.CB ? 
-                r[data.RegisterIndex ?? RegisterIndex.None] : // BIT b, r
-                cpu.Memory.ReadByteAt((ushort)((prefix == InstructionPrefix.DDCB ? r.IX : r.IY) + data.Argument1)); // BIT b, (HL)
+            byte value;
+            if (data.RegisterIndex.HasValue)
+            {
+                value = r[data.RegisterIndex ?? RegisterIndex.None]; // BIT b, r
+            }
+            else
+            {
+                ushort address = data.IndexIX ? r.IX : data.IndexIY ? r.IY : r.HL; // BIT b, (HL / IX+o / IY+o)
+                byte offset = (data.IndexIY || data.IndexIY) ? data.Argument1 : (byte)0;
+                value = cpu.Memory.ReadByteAt((ushort)(address + offset));
+            }
 
             flags.Zero = !value.GetBit(bitIndex);
             flags.HalfCarry = true;

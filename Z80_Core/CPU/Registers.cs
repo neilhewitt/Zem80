@@ -108,7 +108,7 @@ namespace Z80.Core
 
         private ushort Get16BitValue(int registerIndex)
         {
-            return (ushort)((_registers[registerIndex ] * 256) + _registers[registerIndex + 1]);
+            return (ushort)((_registers[registerIndex] * 256) + _registers[registerIndex + 1]);
         }
 
         private void Set16BitValue(int registerIndex, ushort value)

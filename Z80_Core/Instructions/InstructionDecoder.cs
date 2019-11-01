@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public partial class InstructionDecoder
+    public class InstructionDecoder
     {
         public InstructionPackage Decode(byte[] instructionBytes)
         {
