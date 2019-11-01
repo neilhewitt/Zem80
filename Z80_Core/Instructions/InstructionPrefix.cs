@@ -6,12 +6,12 @@ namespace Z80.Core
 {
     public enum InstructionPrefix
     {
-        Unprefixed,
-        CB,
-        ED,
-        DD,
-        FD,
-        DDCB,
-        FDCB
+        Unprefixed = 0x00,
+        CB = 0xCB,
+        ED = 0xED,
+        DD = 0xDD, 
+        FD = 0xFD,
+        DDCB = 0xDDCB,
+        FDCB = 0xFDCB
     }
 }

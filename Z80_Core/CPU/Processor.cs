@@ -11,6 +11,7 @@ namespace Z80.Core
         private bool _running;
         private bool _halted;
         private bool _pendingINT;
+        private Action _interruptCallback;
         private bool _pendingNMI;
         private Task _instructionCycle;
 
@@ -61,12 +62,15 @@ namespace Z80.Core
         public void SetInterruptMode(InterruptMode mode)
         {
             InterruptMode = mode;
-            // handle interrupt stuff!
         }
 
-        public void RaiseMaskableInterrupt()
+        public void RaiseInterrupt(Action callback)
         {
-            _pendingINT = true;
+            if (InterruptsEnabled)
+            {
+                _pendingINT = true;
+                _interruptCallback = callback;
+            }
         }
 
         public void RaiseNonMasktableInterrupt()
@@ -106,15 +110,11 @@ namespace Z80.Core
                 if (!_halted)
                 {
                     byte[] instruction = Memory.ReadBytesAt(Registers.PC, 4);
-                    InstructionPackage package = _decoder.Decode(instruction, Registers.PC);
+                    InstructionPackage package = _decoder.Decode(instruction);
                     if (package == null) Stop(); // only happens if instruction buffer is short (end of memory reached) and corrupt (not a valid instruction)
 
-                    BeforeExecute?.Invoke(this, package);
-                    ExecutionResult result = package.Instruction.Implementation.Execute(this, package);
-                    AfterExecute?.Invoke(this, result);
-
-                    Registers.SetFlags(result.Flags);
-                    if (!result.PCWasSet)
+                    ExecutionResult result = ExecuteInstructionPackage(package);
+                    if (!result.ProgramCounterUpdated)
                     {
                         if (Registers.PC + package.Instruction.SizeInBytes >= Memory.SizeInBytes) Stop(); // PC overflow
                         Registers.PC += package.Instruction.SizeInBytes;
@@ -129,7 +129,34 @@ namespace Z80.Core
 
                     if (_pendingINT && InterruptsEnabled)
                     {
-                        HandleINT();
+                        if (_interruptCallback == null && InterruptMode != InterruptMode.One)
+                        {
+                            throw new Z80Exception("Interrupt mode is " + InterruptMode.ToString() + " which requires a callback for reading data from the device. Callback was null.");
+                        }
+
+                        switch (InterruptMode)
+                        {
+                            case InterruptMode.Zero: // read instruction data from data bus in 1-4 cycles and execute resulting instruction - flags are set but PC is unaffected
+                                package = _decoder.DecodeInterrupt(() => { 
+                                    _interruptCallback(); // each time callback is called, device will set data bus with next instruction byte
+                                    return DataBus; 
+                                }); 
+                                ExecuteInstructionPackage(package); // instruction is *usually* RST which diverts execution, but can be any valid instruction
+                                break;
+
+                            case InterruptMode.One: // just redirect 0x0038 where interrupt handler must begin
+                                Stack.Push(Registers.PC);
+                                Registers.PC = 0x0038;
+                                break;
+
+                            case InterruptMode.Two: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
+                                if (_interruptCallback != null) _interruptCallback(); // device must populate data bus with low byte of address
+                                Stack.Push(Registers.PC);
+                                Registers.PC = (ushort)((Registers.I * 256) + DataBus);
+                                break;
+                        }
+
+                        _pendingINT = false;
                     }
 
                     Ticks++;
@@ -137,21 +164,14 @@ namespace Z80.Core
             }
         }
 
-        private void HandleINT()
+        private ExecutionResult ExecuteInstructionPackage(InstructionPackage package)
         {
-            switch (InterruptMode)
-            {
-                case InterruptMode.Zero:
-                    break;
+            BeforeExecute?.Invoke(this, package);
+            ExecutionResult result = package.Instruction.Implementation.Execute(this, package);
+            AfterExecute?.Invoke(this, result);
+            Registers.SetFlags(result.Flags);
 
-                case InterruptMode.One:
-                    break;
-
-                case InterruptMode.Two:
-                    break;
-            }
-
-            _pendingINT = false;
+            return result;
         }
 
         internal Processor(IRegisters registers, IMemory memory, IStack stack, IPorts ports, double speedInMHz)

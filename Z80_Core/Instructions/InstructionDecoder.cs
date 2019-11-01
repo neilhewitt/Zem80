@@ -8,7 +8,7 @@ namespace Z80.Core
 {
     public partial class InstructionDecoder
     {
-        public InstructionPackage Decode(byte[] instructionBytes, ushort address)
+        public InstructionPackage Decode(byte[] instructionBytes)
         {
             byte opcode = 0x00;
             InstructionData data = new InstructionData();
@@ -132,6 +132,45 @@ namespace Z80.Core
                 // all other exceptions will throw as normal.
                 return null;
             }
+        }
+
+        public InstructionPackage DecodeInterrupt(Func<byte> dataRead)
+        {
+            byte[] instructionBytes = new byte[4];
+            instructionBytes[0] = dataRead();
+
+            if (instructionBytes[0] == 0xCB || instructionBytes[0] == 0xDD || instructionBytes[0] == 0xED || instructionBytes[0] == 0xFD)
+            {
+                // we have a prefix... need the next byte
+                instructionBytes[1] = dataRead();
+
+                if (instructionBytes[0] == 0xCB && (instructionBytes[1] == 0xDD || instructionBytes[1] == 0xFD))
+                {
+                    // double-byte prefix - read next 2 bytes from device and decode (always 4 bytes)
+                    instructionBytes[2] = dataRead();
+                    instructionBytes[3] = dataRead();
+                }
+                else
+                {
+                    byte opcode = instructionBytes[1];
+                    Instruction instruction = Instruction.Find(instructionBytes[1], (InstructionPrefix)instructionBytes[2]);
+                    for (int i = 2; i < instruction.SizeInBytes; i++) // 2 - 4 bytes
+                    {
+                        instructionBytes[i] = dataRead();
+                    }
+                }
+            }
+            else
+            {
+                byte opcode = instructionBytes[0];
+                Instruction instruction = Instruction.Find(opcode, InstructionPrefix.Unprefixed);
+                for (int i = 1; i < instruction.SizeInBytes; i++) // 1 - 4 bytes
+                {
+                    instructionBytes[i] = dataRead();
+                }
+            }
+
+            return Decode(instructionBytes);
         }
 
         private RegisterIndex GetRegisterIndex(byte opcode)
