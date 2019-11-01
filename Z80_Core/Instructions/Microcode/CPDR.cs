@@ -14,7 +14,7 @@ namespace Z80.Core
 
             byte a = cpu.Registers.A;
             byte b = cpu.Memory.ReadByteAt(cpu.Registers.HL);
-            ushort result = (ushort)(a - b);
+            short result = (short)(a - b);
             cpu.Registers.HL--;
             cpu.Registers.BC--;
 
@@ -23,8 +23,6 @@ namespace Z80.Core
             if ((a & 0xF) < (b & 0xF)) flags.HalfCarry = true;
             if (cpu.Registers.BC == 0) flags.ParityOverflow = true;
             flags.Subtract = true;
-
-            if (result != 0 && cpu.Registers.BC != 0) cpu.Registers.PC -= 2;
 
             return new ExecutionResult(flags, 0, (result != 0 && cpu.Registers.BC != 0));
         }

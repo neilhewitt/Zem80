@@ -77,8 +77,8 @@ namespace Z80.Core
                     if (instruction.Modifier == ModifierType.IndexRegister) // +p / +q
                     {
                         data.RegisterIndex = GetRegisterIndex(opcode);
-                        data.DirectIX = (prefix == 0xDD && (data.RegisterIndex == RegisterIndex.H || data.RegisterIndex == RegisterIndex.L)); // IX substituted for HL
-                        data.DirectIY = (prefix == 0xFD && (data.RegisterIndex == RegisterIndex.H || data.RegisterIndex == RegisterIndex.L)); // IY substituted for HL
+                        data.DirectIX = (prefix == 0xDD && (data.RegisterIndex == RegisterIndex.IXh || data.RegisterIndex == RegisterIndex.IXl)); // IX substituted for HL
+                        data.DirectIY = (prefix == 0xFD && (data.RegisterIndex == RegisterIndex.IYh || data.RegisterIndex == RegisterIndex.IYl)); // IY substituted for HL
                     }
 
                     if (instruction.Modifier == ModifierType.IndexRegisterHalf) // +8*p / +8*q

@@ -26,12 +26,21 @@ namespace Z80_Console
             cpu.AfterExecute += OnAfterExecute;
 
             cpu.Start();
+            while (cpu.State != ProcessorState.Stopped)
+            {
+                var key = Console.ReadKey(true);
+                if (key.KeyChar == 'h') { cpu.Halt(); DisplayState(cpu, null); }
+                if (key.KeyChar == 'r') cpu.Resume();
+                if (key.KeyChar == 's') cpu.Stop();
+             }
         }
 
         private static void DisplayState(Processor cpu, InstructionPackage package)
         {
+            //Console.Clear();
             Console.SetCursorPosition(0, 0);
             IFlags flags = cpu.Registers.Flags;
+            Console.WriteLine("State: " + cpu.State.ToString().ToUpper() + ", Ticks: " + cpu.Ticks.ToString() + "                                           \r\n\r\n");
             string output = $"A: { Value(cpu.Registers.A, 10) } F: { Value(cpu.Registers.F, 10) } AF: { Value(cpu.Registers.AF, 10) }\r\n";
             output += $"B: { Value(cpu.Registers.B, 10) } C: { Value(cpu.Registers.C, 10) } BC: { Value(cpu.Registers.BC, 10) }\r\n";
             output += $"D: { Value(cpu.Registers.D, 10) } E: { Value(cpu.Registers.E, 10) } DE: { Value(cpu.Registers.DE, 10) }\r\n";
@@ -55,8 +64,10 @@ namespace Z80_Console
                 if (package.Instruction.Argument1 != ArgumentType.None) output += " (Arg1 = 0x" + package.Data.Argument1.ToHexString() + ")";
                 if (package.Instruction.Argument2 != ArgumentType.None) output += " (Arg2 = 0x" + package.Data.Argument2.ToHexString() + ")";
                 if (package.Instruction.Argument1 != ArgumentType.None && package.Instruction.Argument2 != ArgumentType.None) output += " (ArgWord = 0x" + package.Data.ArgumentsAsWord.ToString("X4") + ")";
-                Console.WriteLine(output);
+                if (package.Instruction.Argument1 == ArgumentType.None) output += "".PadRight(60, ' ');
             }
+
+            Console.WriteLine(output);
         }
 
         private static string Flag(bool flag)
@@ -77,20 +88,17 @@ namespace Z80_Console
         private static void OnAfterExecute(object sender, ExecutionResult e)
         {
             DisplayState(_cpu, _package);
-            Thread.Sleep(500);
+            Thread.Sleep(50);
             //Console.WriteLine("\r\n\r\nPress any key to move to next instruction.");
             //Console.ReadKey();
-            Console.Clear();
         }
 
         private static void OnBeforeExecute(object sender, InstructionPackage e)
         {
-            if (_first)
-            {
-                DisplayState(_cpu, null);
-                _first = false;
-            }
+            //DisplayState(_cpu, e);
             _package = e;
+            //Console.WriteLine("\r\n\r\nPress any key to execute instruction.");
+            //Console.ReadKey();
         }
     }
 }

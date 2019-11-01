@@ -17,9 +17,9 @@ namespace Z80.Core
             {
                 byte a = cpu.Registers.A;
                 byte b = value;
-                ushort result = (ushort)(a - b); // note UNSIGNED!
+                short result = (short)(a - b); // note signed short - contains overflow, caters for negative results
                 if (result == 0x00) flags.Zero = true;
-                if (((sbyte)result) < 0) flags.Sign = true;
+                if (result < 0) flags.Sign = true;
                 if ((a & 0x0F) < (b & 0x0F)) flags.HalfCarry = true;
                 if ((a > 0x80 && b > 0x80 && result > 0) || (a < 0x80 && b < 0x80 && result < 0)) flags.ParityOverflow = true;
                 if (result > 0xFF) flags.Carry = true;

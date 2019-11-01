@@ -6,13 +6,17 @@ namespace Z80.Core
 {
     public enum RegisterIndex
     {
+        None = 6,
         B = 0,
         C = 1,
         D = 2,
         E = 3,
         H = 4,
         L = 5,
-        None = 6,
-        A = 7
+        A = 7,
+        IXh = 4,
+        IXl = 5,
+        IYh = 4,
+        IYl = 5
     }
 }

@@ -18,11 +18,6 @@ namespace Z80.Core
                 return cpu.Memory.ReadByteAt(address);
             }
 
-            byte readOffset(ushort address, byte offset)
-            {
-                return cpu.Memory.ReadByteAt((ushort)(address + offset));
-            }
-
             byte subByte(byte value)
             {
                 ushort result = (ushort)(cpu.Registers.A - value);
@@ -34,16 +29,6 @@ namespace Z80.Core
                 if ((cpu.Registers.A & 0xF) + (((byte)result) & 0xF) > 0xF) flags.HalfCarry = true;
 
                 return (byte)result;
-            }
-
-            ushort subWord(ushort first, ushort second)
-            {
-                flags = Flags.Copy(cpu.Registers.Flags); // must preserve existing values
-                uint result = (uint)(first - second);
-                if (result > 0xFFFF) flags.Carry = true;
-                if ((first & 0x0FFF) + (((ushort)result) & 0x0FFF) > 0x0FFF) flags.HalfCarry = true;
-
-                return (ushort)result;
             }
 
             switch (instruction.Prefix)

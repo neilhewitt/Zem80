@@ -18,11 +18,7 @@ namespace Z80.Core
             r.DE--;
             r.BC--;
 
-            if (r.BC != 0)
-            {
-                flags.ParityOverflow = true;
-                r.PC -= 2;
-            }
+            if (r.BC != 0) flags.ParityOverflow = true;
 
             return new ExecutionResult(flags, 0, r.BC != 0);
         }

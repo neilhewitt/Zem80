@@ -206,7 +206,7 @@
 //	LD H,(IY+o)     	FD 66 o           	3       	19            
 //	LD H,n          	26 n              	2       	7             
 //	LD H,r          	60+r              	1       	4             
-//	LD HL,(nn)      	2A nn nn          	5       	16            
+//	LD HL,(nn)      	2A nn nn          	3       	16            
 //	LD HL,nn        	21 nn nn          	3       	10            
 //	LD I,A          	ED 47             	2       	9             
 //	LD IX,(nn)      	DD 2A nn nn       	4       	20            

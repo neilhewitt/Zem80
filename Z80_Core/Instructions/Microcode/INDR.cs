@@ -21,8 +21,6 @@ namespace Z80.Core
             r.HL--;
             r.B--;
 
-            if (r.B != 0) r.PC -= 2;
-
             flags.Zero = true;
             flags.Subtract = true;
 

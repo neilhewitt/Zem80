@@ -54,7 +54,7 @@ namespace Z80.Core
                             { 0x27, new Instruction(InstructionPrefix.Unprefixed, 0x27, "DAA", ArgumentType.None, ArgumentType.None, ModifierType.None, 1, 4, null) },
                             { 0x28, new Instruction(InstructionPrefix.Unprefixed, 0x28, "JR Z,o", ArgumentType.Displacement, ArgumentType.None, ModifierType.None, 2, 12, 7) },
                             { 0x29, new Instruction(InstructionPrefix.Unprefixed, 0x29, "ADD HL,HL", ArgumentType.None, ArgumentType.None, ModifierType.None, 1, 11, null) },
-                            { 0x2A, new Instruction(InstructionPrefix.Unprefixed, 0x2A, "LD HL,(nn)", ArgumentType.ImmediateWord, ArgumentType.ImmediateWord, ModifierType.None, 5, 16, null) },
+                            { 0x2A, new Instruction(InstructionPrefix.Unprefixed, 0x2A, "LD HL,(nn)", ArgumentType.ImmediateWord, ArgumentType.ImmediateWord, ModifierType.None, 3, 16, null) },
                             { 0x2B, new Instruction(InstructionPrefix.Unprefixed, 0x2B, "DEC HL", ArgumentType.None, ArgumentType.None, ModifierType.None, 1, 6, null) },
                             { 0x2C, new Instruction(InstructionPrefix.Unprefixed, 0x2C, "INC L", ArgumentType.None, ArgumentType.None, ModifierType.None, 1, 4, null) },
                             { 0x2D, new Instruction(InstructionPrefix.Unprefixed, 0x2D, "DEC L", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 4, null) },

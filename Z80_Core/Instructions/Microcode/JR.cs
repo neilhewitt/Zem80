@@ -12,11 +12,13 @@ namespace Z80.Core
             InstructionData data = package.Data;
             sbyte offset = (sbyte)data.Argument1;
             IFlags flags = cpu.Registers.Flags;
+            bool pcWasSet = false;
 
             void jr()
             {
-                if (offset > 0) cpu.Registers.PC += (ushort)offset;
-                if (offset < 0) cpu.Registers.PC -= (ushort)offset;
+                cpu.Registers.PC += 2; // include this instruction length
+                cpu.Registers.PC += (ushort)offset;
+                pcWasSet = true;
             }
 
             switch (instruction.Prefix)
@@ -43,7 +45,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(new Flags(), 0, pcWasSet);
         }
 
         public JR()

@@ -11,7 +11,7 @@ namespace Z80.Core
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
 
-            cpu.Stop(); // TODO: handle interrupt resume
+            cpu.Halt(); // TODO: handle interrupt resume
 
             return new ExecutionResult(new Flags(), 0);
         }

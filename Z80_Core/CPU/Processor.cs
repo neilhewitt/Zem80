@@ -1,11 +1,19 @@
 ﻿using System;
+using System.Threading.Tasks;
 using System.Timers;
 
 namespace Z80.Core
 {
     public class Processor
     {
+        private static object _padlock = new object();
+
         private bool _running;
+        private bool _halted;
+        private bool _pendingINT;
+        private bool _pendingNMI;
+        private Task _instructionCycle;
+
         private InstructionDecoder _decoder = new InstructionDecoder();
 
         public IRegisters Registers { get; private set; }
@@ -18,16 +26,20 @@ namespace Z80.Core
         public bool InterruptsEnabled { get; private set; }
         public double SpeedInMhz { get; private set; }
 
+        public long Ticks { get; private set; }
+        public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; // yay for tri-states!
+
         public event EventHandler<InstructionPackage> BeforeExecute;
         public event EventHandler<ExecutionResult> AfterExecute;
 
         public void Start()
         {
-            _running = true;
-
-            while (_running)
+            if (!_running)
             {
-                InstructionCycle();
+                _running = true;
+
+                _instructionCycle = new Task(InstructionCycle, TaskCreationOptions.None);
+                _instructionCycle.Start();
             }
         }
 
@@ -36,10 +48,30 @@ namespace Z80.Core
             _running = false;
         }
 
+        public void Halt()
+        {
+            _halted = true;
+        }
+
+        public void Resume()
+        {
+            _halted = false;
+        }
+
         public void SetInterruptMode(InterruptMode mode)
         {
             InterruptMode = mode;
             // handle interrupt stuff!
+        }
+
+        public void RaiseMaskableInterrupt()
+        {
+            _pendingINT = true;
+        }
+
+        public void RaiseNonMasktableInterrupt()
+        {
+            _pendingNMI = true;
         }
 
         public void SetAddressBus(ushort value)
@@ -67,38 +99,59 @@ namespace Z80.Core
             InterruptsEnabled = true;
         }
 
-        public void HandleInterrupts()
-        {
-            // nothign to see here yet...
-        }
-
         private void InstructionCycle()
         {
-            try
+            while (_running)
             {
-                byte[] instruction = Memory.ReadBytesAt(Registers.PC, 4);
-                InstructionPackage package = _decoder.Decode(instruction, Registers.PC);
-                if (package == null) Stop(); // only happens if instruction buffer is short (memory overflow) and corrupt (not valid instruction)
-
-                BeforeExecute?.Invoke(this, package);
-                ExecutionResult result = package.Instruction.Implementation.Execute(this, package);
-                AfterExecute?.Invoke(this, result);
-                
-                Registers.SetFlags(result.Flags);
-                if (!result.PCWasSet)
+                if (!_halted)
                 {
-                    if (Registers.PC + package.Instruction.SizeInBytes >= Memory.SizeInBytes) Stop(); // PC overflow... HALT here 
-                    Registers.PC += package.Instruction.SizeInBytes;
+                    byte[] instruction = Memory.ReadBytesAt(Registers.PC, 4);
+                    InstructionPackage package = _decoder.Decode(instruction, Registers.PC);
+                    if (package == null) Stop(); // only happens if instruction buffer is short (end of memory reached) and corrupt (not a valid instruction)
+
+                    BeforeExecute?.Invoke(this, package);
+                    ExecutionResult result = package.Instruction.Implementation.Execute(this, package);
+                    AfterExecute?.Invoke(this, result);
+
+                    Registers.SetFlags(result.Flags);
+                    if (!result.PCWasSet)
+                    {
+                        if (Registers.PC + package.Instruction.SizeInBytes >= Memory.SizeInBytes) Stop(); // PC overflow
+                        Registers.PC += package.Instruction.SizeInBytes;
+                    }
+
+                    if (_pendingNMI)
+                    {
+                        Stack.Push(Registers.PC);
+                        Registers.PC = 0x0066;
+                        _pendingNMI = false;
+                    }
+
+                    if (_pendingINT && InterruptsEnabled)
+                    {
+                        HandleINT();
+                    }
+
+                    Ticks++;
                 }
             }
-            catch (Exception ex)
+        }
+
+        private void HandleINT()
+        {
+            switch (InterruptMode)
             {
-                throw;
+                case InterruptMode.Zero:
+                    break;
+
+                case InterruptMode.One:
+                    break;
+
+                case InterruptMode.Two:
+                    break;
             }
-            finally
-            {
-                Stop(); // clean-up here
-            }
+
+            _pendingINT = false;
         }
 
         internal Processor(IRegisters registers, IMemory memory, IStack stack, IPorts ports, double speedInMHz)

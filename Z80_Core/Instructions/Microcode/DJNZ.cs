@@ -14,10 +14,10 @@ namespace Z80.Core
 
             if (cpu.Registers.B > 0)
             {
+                cpu.Registers.PC += 2; // include size of this instruction
                 cpu.Registers.B--;
-                sbyte jump = (sbyte)(data.Argument1);
-                if (jump > 0) cpu.Registers.PC += (ushort)jump;
-                if (jump < 0) cpu.Registers.PC -= (ushort)jump;
+                sbyte jump = (sbyte)data.Argument1; 
+                cpu.Registers.PC += (ushort)jump;
                 if (jump == 0) pcWasSet = false;
             }
             else

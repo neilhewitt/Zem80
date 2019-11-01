@@ -24,7 +24,6 @@ namespace Z80.Core
 
             flags.Zero = true;
             flags.Subtract = true;
-            if (r.B != 0) r.PC -= 2;
 
             return new ExecutionResult(flags, 0, (r.B != 0));
         }
