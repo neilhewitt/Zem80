@@ -9,7 +9,8 @@ namespace Z80.Core
         ushort StartAddress { get; }
         int SizeInBytes { get; }
         bool ReadOnly { get; }
-        byte ReadByteAt(ushort address);
-        void WriteByteAt(ushort address, byte value);
+        byte ReadByteAt(int offset);
+        void WriteByteAt(int offset, byte value);
+        void Clear();
     }
 }

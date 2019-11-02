@@ -15,21 +15,26 @@ namespace Z80.Core
 
         public bool ReadOnly => false;
 
-        public byte ReadByteAt(ushort address)
+        public byte ReadByteAt(int offset)
         {
-            Check(address);
-            return _memory[address - StartAddress];
+            Check(offset);
+            return _memory[offset];
         }
 
-        public virtual void WriteByteAt(ushort address, byte value)
+        public virtual void WriteByteAt(int offset, byte value)
         {
-            Check(address);
-            _memory[address - StartAddress] = value;
+            Check(offset);
+            _memory[offset] = value;
         }
 
-        private void Check(ushort address)
+        public void Clear()
         {
-            if (address < StartAddress || address >= (StartAddress + SizeInBytes))
+            _memory = new byte[SizeInBytes];
+        }
+
+        private void Check(int offset)
+        {
+            if (offset < 0 || offset >= SizeInBytes)
             {
                 throw new MemorySegmentException("Specified address is outside the scope of this segment.");
             }
@@ -38,8 +43,8 @@ namespace Z80.Core
         public RAM(ushort startAddress, int sizeInBytes)
         {
             _memory = new byte[sizeInBytes];
-            SizeInBytes = sizeInBytes;
             StartAddress = startAddress;
+            SizeInBytes = sizeInBytes;
 
             if (SizeInBytes > 65536)
             {

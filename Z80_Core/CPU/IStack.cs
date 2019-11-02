@@ -6,5 +6,6 @@
 
         ushort Pop();
         void Push(ushort value);
+        void Reset();
     }
 }

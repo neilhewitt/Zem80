@@ -18,8 +18,8 @@ namespace Z80.Core
             if (!_initialised) throw new MemoryException(NOT_INITIALISED);
             _cpu.SetAddressBus(address);
 
-            IMemorySegment memory = _map.MemoryFor(address);
-            return memory?.ReadByteAt(address) ?? 0x00; // default value if address is unallocated
+            IMemorySegment segment = _map.MemoryFor(address);
+            return segment?.ReadByteAt(address - segment.StartAddress) ?? 0x00; // default value if address is unallocated
         }
 
         public byte[] ReadBytesAt(ushort address, ushort numberOfBytes)
@@ -46,13 +46,13 @@ namespace Z80.Core
             if (!_initialised) throw new MemoryException(NOT_INITIALISED);
             _cpu.SetAddressBus(address);
 
-            IMemorySegment memory = _map.MemoryFor(address);
-            if (memory == null || memory.ReadOnly)
+            IMemorySegment segment = _map.MemoryFor(address);
+            if (segment == null || segment.ReadOnly)
             {
                 throw new MemoryNotPresentException("Readonly or unmapped");
             }
 
-            memory.WriteByteAt(address, value);
+            segment.WriteByteAt((address - segment.StartAddress), value);
         }
 
         public void WriteBytesAt(ushort address, params byte[] bytes)
@@ -76,6 +76,11 @@ namespace Z80.Core
         {
             _cpu = cpu;
             _initialised = true;
+        }
+
+        public void Clear()
+        {
+            _map.ClearAllWritableMemory();
         }
 
         public Memory(IMemoryMap map)

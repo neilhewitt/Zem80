@@ -17,13 +17,13 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x46: // IM 0
-                            cpu.SetInterruptMode(InterruptMode.Zero);
+                            cpu.SetInterruptMode(InterruptMode.IM0);
                             break;
                         case 0x56: // IM 1
-                            cpu.SetInterruptMode(InterruptMode.One);
+                            cpu.SetInterruptMode(InterruptMode.IM1);
                             break;
                         case 0x5E: // IM 2
-                            cpu.SetInterruptMode(InterruptMode.Two);
+                            cpu.SetInterruptMode(InterruptMode.IM2);
                             break;
 
                     }

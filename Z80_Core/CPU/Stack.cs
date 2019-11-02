@@ -24,10 +24,16 @@ namespace Z80.Core
             return output;
         }
 
+        public void Reset()
+        {
+            _registers.SP = StartAddress;
+        }
+
         public Stack(IRegisters registers, IMemory memory, ushort startAddress)
         {
             StartAddress = startAddress;
             _registers = registers;
+            _registers.SP = StartAddress;
             _memory = memory;
         }
     }

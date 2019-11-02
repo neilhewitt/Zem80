@@ -6,8 +6,8 @@ namespace Z80.Core
 {
     public enum InterruptMode
     { 
-        Zero,
-        One,
-        Two
+        IM0,
+        IM1,
+        IM2
     }
 }

@@ -23,7 +23,7 @@ namespace Z80.Core
         public IStack Stack { get; private set; }
         public ushort AddressBus { get; private set; }
         public byte DataBus { get; private set; }
-        public InterruptMode InterruptMode { get; private set; } = InterruptMode.Zero;
+        public InterruptMode InterruptMode { get; private set; } = InterruptMode.IM0;
         public bool InterruptsEnabled { get; private set; }
         public double SpeedInMhz { get; private set; }
 
@@ -47,6 +47,7 @@ namespace Z80.Core
         public void Stop()
         {
             _running = false;
+            _halted = false;
         }
 
         public void Halt()
@@ -57,6 +58,15 @@ namespace Z80.Core
         public void Resume()
         {
             _halted = false;
+        }
+
+        public void Reset(bool stopAfterReset = false)
+        {
+            Stop();
+            Memory.Clear();
+            Registers.Clear();
+            Stack.Reset();
+            if (!stopAfterReset) Start();
         }
 
         public void SetInterruptMode(InterruptMode mode)
@@ -131,28 +141,28 @@ namespace Z80.Core
 
                 if (_pendingINT && InterruptsEnabled)
                 {
-                    if (_interruptCallback == null && InterruptMode != InterruptMode.One)
+                    if (_interruptCallback == null && InterruptMode != InterruptMode.IM1)
                     {
                         throw new Z80Exception("Interrupt mode is " + InterruptMode.ToString() + " which requires a callback for reading data from the device. Callback was null.");
                     }
 
                     switch (InterruptMode)
                     {
-                        case InterruptMode.Zero: // read instruction data from data bus in 1-4 cycles and execute resulting instruction - flags are set but PC is unaffected
+                        case InterruptMode.IM0: // read instruction data from data bus in 1-4 cycles and execute resulting instruction - flags are set but PC is unaffected
                             InstructionPackage package = _decoder.DecodeInterrupt(() =>
-                            {
-                                _interruptCallback(); // each time callback is called, device will set data bus with next instruction byte
-                                return DataBus;
-                            });
+                                {
+                                    _interruptCallback(); // each time callback is called, device will set data bus with next instruction byte
+                                    return DataBus;
+                                });
                             ExecuteInstructionPackage(package); // instruction is *usually* RST which diverts execution, but can be any valid instruction
                             break;
 
-                        case InterruptMode.One: // just redirect 0x0038 where interrupt handler must begin
+                        case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
                             Stack.Push(Registers.PC);
                             Registers.PC = 0x0038;
                             break;
 
-                        case InterruptMode.Two: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
+                        case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
                             if (_interruptCallback != null) _interruptCallback(); // device must populate data bus with low byte of address
                             Stack.Push(Registers.PC);
                             Registers.PC = (ushort)((Registers.I * 256) + DataBus);
