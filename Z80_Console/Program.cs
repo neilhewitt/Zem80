@@ -32,6 +32,30 @@ namespace Z80_Console
             {
                 vm.Load(0, 0xDD, 0x21, 0x14, 0x00, 0xDD, 0x7E, 0x00, 0x0E, 0x00, 0xFE, 0x00, 0x28, 0x06, 0xD3, 0x00, 0xDD, 0x23, 0x18, 0xF1, 0x76, 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64, 0x00);
 
+                /* TEST PROGRAM
+                
+                    LD	    IX,Message
+                    
+                    GetChar:
+                    LD	    A,(IX+0)		
+
+                    CopyChar:
+                    LD      C,0
+                    CP      0
+                    JR      Z,TheEnd
+                    OUT     (0),A
+                    INC     IX
+                    JR      GetChar
+
+                    TheEnd:
+                    HALT    		
+
+                    Message:
+                    DB	"Hello World",0
+                    
+                 */
+
+
                 Console.ForegroundColor = ConsoleColor.Green;
 
                 vm.Start();
