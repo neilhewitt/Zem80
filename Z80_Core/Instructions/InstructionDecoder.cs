@@ -71,6 +71,9 @@ namespace Z80.Core
                 }
                 else if (prefix == 0xDD || prefix == 0xFD)
                 {
+                    // identical to unprefixed instruction with same opcode except IX (0xDD) or IY (0xFD) replaces HL
+                    // plus additional instructions unique to IX / IY including single-byte operations on high / low bytes of either
+
                     opcode = instructionBytes[1];
                     Instruction instruction = Instruction.Find(opcode, prefix == 0xDD ? InstructionPrefix.DD : InstructionPrefix.FD);
 
@@ -83,7 +86,7 @@ namespace Z80.Core
 
                     if (instruction.Modifier == ModifierType.IndexRegisterHalf) // +8*p / +8*q
                     {
-                        data.RegisterIndex = GetRegisterIndex(opcode); // will be either H (representing IXh) or L (representing IXl)
+                        data.RegisterIndex = GetRegisterIndex(opcode); 
                     }
 
                     if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
@@ -102,6 +105,8 @@ namespace Z80.Core
                 }
                 else
                 {
+                    // unprefixed instructions (can be 1-3 bytes only)
+
                     prefix = 0x00;
                     opcode = instructionBytes[0];
 
@@ -128,14 +133,16 @@ namespace Z80.Core
             }
             catch (IndexOutOfRangeException)
             {
-                // handle special case where instruction buffer is short / corrupt (eg read beyond end of memory) in which case, return null to the caller.
-                // all other exceptions will throw as normal.
+                // handle special case where instruction buffer is short / corrupt (read beyond end of memory) in which case, return null to the caller
+                // all other exceptions will throw as normal
                 return null;
             }
         }
 
         public InstructionPackage DecodeInterrupt(Func<byte> dataRead)
         {
+            if (dataRead == null) throw new Z80Exception("You must supply a valid delegate / Func<bool> to support reading device data.");
+
             byte[] instructionBytes = new byte[4];
             instructionBytes[0] = dataRead();
 
@@ -153,8 +160,8 @@ namespace Z80.Core
                 else
                 {
                     byte opcode = instructionBytes[1];
-                    Instruction instruction = Instruction.Find(instructionBytes[1], (InstructionPrefix)instructionBytes[2]);
-                    for (int i = 2; i < instruction.SizeInBytes; i++) // 2 - 4 bytes
+                    Instruction instruction = Instruction.Find(instructionBytes[0], (InstructionPrefix)instructionBytes[1]);
+                    for (int i = 2; i <= instruction.SizeInBytes; i++) // 2 - 4 bytes
                     {
                         instructionBytes[i] = dataRead();
                     }
@@ -164,7 +171,7 @@ namespace Z80.Core
             {
                 byte opcode = instructionBytes[0];
                 Instruction instruction = Instruction.Find(opcode, InstructionPrefix.Unprefixed);
-                for (int i = 1; i < instruction.SizeInBytes; i++) // 1 - 4 bytes
+                for (int i = 1; i <= instruction.SizeInBytes; i++) // 1 - 3 bytes
                 {
                     instructionBytes[i] = dataRead();
                 }

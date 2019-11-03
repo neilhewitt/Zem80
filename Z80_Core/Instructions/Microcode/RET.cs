@@ -55,7 +55,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(new Flags(), 0, pcWasSet);
+            return new ExecutionResult(package, new Flags(), !pcWasSet, pcWasSet);
         }
 
         public RET()

@@ -24,7 +24,7 @@ namespace Z80.Core
             if (cpu.Registers.BC != 0) flags.ParityOverflow = true;
             flags.Subtract = true;
 
-            return new ExecutionResult(flags, 0);
+            return new ExecutionResult(package, flags, false);
         }
 
         public CPI()

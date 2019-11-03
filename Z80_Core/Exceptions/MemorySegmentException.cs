@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 
 namespace Z80.Core
 {
-    public class MemorySegmentException : Z80Exception
+    public class MemorySegmentException : MemoryException
     {
         public MemorySegmentException()
         {

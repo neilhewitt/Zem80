@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 
 namespace Z80.Core
 {
-    public class MemoryNotWritableException : Z80Exception
+    public class MemoryNotWritableException : MemoryException
     {
         public MemoryNotWritableException()
         {

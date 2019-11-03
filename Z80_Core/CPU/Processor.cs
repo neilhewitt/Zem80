@@ -27,7 +27,8 @@ namespace Z80.Core
         public bool InterruptsEnabled { get; private set; }
         public double SpeedInMhz { get; private set; }
 
-        public long Ticks { get; private set; }
+        public long InstructionTicks { get; private set; }
+        public long ClockCycles { get; private set; }
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; // yay for tri-states!
 
         public event EventHandler<InstructionPackage> BeforeExecute;
@@ -129,6 +130,8 @@ namespace Z80.Core
                         if (Registers.PC + package.Instruction.SizeInBytes >= Memory.SizeInBytes) Stop(); // PC overflow
                         Registers.PC += package.Instruction.SizeInBytes;
                     }
+
+                    ClockCycles += result.ClockCycles;
                 }
 
                 if (_pendingNMI)
@@ -173,7 +176,7 @@ namespace Z80.Core
                     _halted = false;
                 }
 
-                Ticks++;
+                InstructionTicks++;
             }
         }
 

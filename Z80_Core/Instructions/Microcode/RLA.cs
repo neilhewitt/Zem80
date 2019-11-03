@@ -20,7 +20,7 @@ namespace Z80.Core
             flags.Carry = carry;
             r.A = value;
 
-            return new ExecutionResult(flags, 0);
+            return new ExecutionResult(package, flags, false);
         }
 
         public RLA()

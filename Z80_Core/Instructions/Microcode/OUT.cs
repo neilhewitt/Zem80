@@ -32,7 +32,7 @@ namespace Z80.Core
                 @out(r.C, RegisterIndex.B, data.RegisterIndex.Value);
             }
 
-            return new ExecutionResult(flags, 0);
+            return new ExecutionResult(package, flags, false);
         }
 
         public OUT()

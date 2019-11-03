@@ -8,7 +8,7 @@ namespace Z80.Core
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
-            return new ExecutionResult(new Flags() { Carry = true }, 0);
+            return new ExecutionResult(package, new Flags() { Carry = true }, false);
         }
 
         public SCF()

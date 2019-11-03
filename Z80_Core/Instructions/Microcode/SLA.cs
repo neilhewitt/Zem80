@@ -47,7 +47,7 @@ namespace Z80.Core
                 cpu.Memory.WriteByteAt(address, shifted);
             }
 
-            return new ExecutionResult(flags, 0);
+            return new ExecutionResult(package, flags, false);
         }
 
         public SLA()

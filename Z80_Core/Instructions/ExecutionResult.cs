@@ -7,13 +7,15 @@ namespace Z80.Core
     public class ExecutionResult
     {
         public IFlags Flags { get; }
-        public long CLRTicks { get; }
+        public byte ClockCycles { get; }
         public bool ProgramCounterUpdated { get; }
 
-        public ExecutionResult(IFlags flags, long ticks, bool pcWasSet = false)
+        public ExecutionResult(InstructionPackage package, IFlags flags, bool conditionTrue, bool pcWasSet = false)
         {
             Flags = flags;
-            CLRTicks = ticks;
+            ClockCycles = (byte)(conditionTrue ? 
+                package.Instruction.ClockCyclesConditional ?? package.Instruction.ClockCycles : 
+                package.Instruction.ClockCycles);
             ProgramCounterUpdated = pcWasSet;
         }
     }

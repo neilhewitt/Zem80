@@ -19,7 +19,7 @@ namespace Z80.Core
             if (flags.Carry) value = (byte)(value | 0x01);
             r.A = value;
 
-            return new ExecutionResult(flags, 0);
+            return new ExecutionResult(package, flags, false);
         }
 
         public RLCA()

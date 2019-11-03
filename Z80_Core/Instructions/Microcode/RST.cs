@@ -28,7 +28,7 @@ namespace Z80.Core
             cpu.Stack.Push(cpu.Registers.PC);
             cpu.Registers.PC = address;
 
-            return new ExecutionResult(new Flags(), 0, true);
+            return new ExecutionResult(package, new Flags(), false, true);
         }
 
         public RST()

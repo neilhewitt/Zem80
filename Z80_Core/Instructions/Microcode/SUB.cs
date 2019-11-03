@@ -97,7 +97,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(flags, 0);
+            return new ExecutionResult(package, flags, false);
         }
 
         public SUB()

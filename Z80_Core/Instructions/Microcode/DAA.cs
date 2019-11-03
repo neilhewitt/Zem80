@@ -12,7 +12,7 @@ namespace Z80.Core
             InstructionData data = package.Data;
 
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(package, new Flags(), false);
         }
 
         public DAA()

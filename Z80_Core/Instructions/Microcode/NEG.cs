@@ -23,7 +23,7 @@ namespace Z80.Core
 
             r.A = (byte)result;
 
-            return new ExecutionResult(flags, 0);
+            return new ExecutionResult(package, flags, false);
         }
 
         public NEG()

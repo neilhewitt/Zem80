@@ -25,7 +25,7 @@ namespace Z80.Core
             if (r.B == 0) flags.Zero = true;
             flags.Subtract = true;
 
-            return new ExecutionResult(flags, 0);
+            return new ExecutionResult(package, flags, false);
         }
 
         public OUTI()

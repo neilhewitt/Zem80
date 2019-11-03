@@ -30,7 +30,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(new Flags(), 0);
+            return new ExecutionResult(package, new Flags(), false);
         }
 
         public IM()

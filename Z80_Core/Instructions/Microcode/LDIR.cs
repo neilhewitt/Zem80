@@ -20,7 +20,7 @@ namespace Z80.Core
 
             if (r.BC != 0) flags.ParityOverflow = true;
 
-            return new ExecutionResult(flags, 0, r.BC != 0);
+            return new ExecutionResult(package, flags, (r.BC == 0), (r.BC != 0));
         }
 
         public LDIR()

@@ -35,7 +35,7 @@ namespace Z80.Core
                 if (input.CountBits(true) % 2 == 0) flags.ParityOverflow = true;
             }
 
-            return new ExecutionResult(flags, 0);
+            return new ExecutionResult(package, flags, false);
         }
 
         public IN()

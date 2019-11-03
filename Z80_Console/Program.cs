@@ -19,12 +19,6 @@ namespace Z80_Console
             //_cpu.BeforeExecute += OnBeforeExecute;
             //_cpu.AfterExecute += OnAfterExecute;
 
-            /*vm.Load(0, 0xDD, 0x21, 0x69, 0x00, 0xDD, 0x7E, 0x00, 0xE6, 0xFF, 0x20, 0x07, 0xDD, 0x21, 0x69, 0x00, 0xDD, 0x7E, 0x00, 0x16, 0x00, 0x5F, 0xCB, 0x13, 0xCB, 0x12, 0xCB,
-                0x13, 0xCB, 0x12, 0xCB, 0x13, 0xCB, 0x12, 0x2A, 0x36, 0x5C, 0x19, 0x11, 0x7F, 0x00, 0x01, 0x08, 0x00, 0xED, 0xB0, 0x0E, 0x08, 0xC5, 0x11, 0x7F, 0x00, 0x21, 0xFF, 0x50, 0x0E, 0x08, 0xEB, 0xCB,
-                0x26, 0xCB, 0x17, 0xEB, 0xCB, 0x2F, 0xCB, 0x16, 0xCB, 0x17, 0x06, 0x1F, 0x2B, 0xCB, 0x2F, 0xCB, 0x16, 0xCB, 0x17, 0x10, 0xF7, 0x13, 0xD5, 0x11, 0x1F, 0x01, 0x19, 0xD1, 0x0D, 0x20, 0xDF, 0x21,
-                0x00, 0x06, 0x2B, 0x7C, 0xB5, 0x20, 0xFB, 0xC1, 0x0D, 0x20, 0xCA, 0xDD, 0x23, 0x18, 0x9B, 0x20, 0x20, 0x20, 0x20, 0x20, 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64, 0x20,
-                0x20, 0x20, 0x20, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);*/
-
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Starting VM...\r\n");
 
@@ -34,16 +28,14 @@ namespace Z80_Console
 
                 /* TEST PROGRAM
                 
-                    LD	    IX,Message
+                    LD	    IX, Message
                     
                     GetChar:
-                    LD	    A,(IX+0)		
-
-                    CopyChar:
-                    LD      C,0
+                    LD	    A, (IX+0)		
                     CP      0
-                    JR      Z,TheEnd
-                    OUT     (0),A
+                    JR      Z, TheEnd
+                    LD      C, 0
+                    OUT     (0), A
                     INC     IX
                     JR      GetChar
 
@@ -51,10 +43,9 @@ namespace Z80_Console
                     HALT    		
 
                     Message:
-                    DB	"Hello World",0
+                    DB	"Hello World", 0
                     
                  */
-
 
                 Console.ForegroundColor = ConsoleColor.Green;
 
@@ -80,7 +71,7 @@ namespace Z80_Console
             Console.Clear();
             Console.SetCursorPosition(0, 0);
             IFlags flags = cpu.Registers.Flags;
-            Console.WriteLine("State: " + cpu.State.ToString().ToUpper() + ", Ticks: " + cpu.Ticks.ToString() + "                                           \r\n\r\n");
+            Console.WriteLine("State: " + cpu.State.ToString().ToUpper() + ", Ticks: " + cpu.InstructionTicks.ToString() + "                                           \r\n\r\n");
             string output = $"A: { Value(cpu.Registers.A, 10) } F: { Value(cpu.Registers.F, 10) } AF: { Value(cpu.Registers.AF, 10) }\r\n";
             output += $"B: { Value(cpu.Registers.B, 10) } C: { Value(cpu.Registers.C, 10) } BC: { Value(cpu.Registers.BC, 10) }\r\n";
             output += $"D: { Value(cpu.Registers.D, 10) } E: { Value(cpu.Registers.E, 10) } DE: { Value(cpu.Registers.DE, 10) }\r\n";

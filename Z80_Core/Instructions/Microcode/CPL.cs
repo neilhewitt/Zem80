@@ -13,7 +13,7 @@ namespace Z80.Core
             flags.Subtract = true;
             cpu.Registers.A ^= cpu.Registers.A;
 
-            return new ExecutionResult(flags, 0);
+            return new ExecutionResult(package, flags, false);
         }
 
         public CPL()
