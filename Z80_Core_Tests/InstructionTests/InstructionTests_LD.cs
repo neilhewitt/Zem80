@@ -17,6 +17,7 @@ namespace Z80.Core.Tests
         [TestCase(RegisterIndex.R, RegisterIndex.A)]
         public void LD_r_r(RegisterIndex register1, RegisterIndex register2)
         {
+            Registers[register2] = RandomByte();
             var result = Execute(mnemonic: $"LD {register1},{register2}", registerIndex: register2, bitIndex: (byte)register1);
             Assert.That(Registers[register1] == Registers[register2]);
         }
@@ -33,7 +34,10 @@ namespace Z80.Core.Tests
         [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
         public void LD_xHL_r(RegisterIndex register)
         {
+            Registers.HL = RandomWord();
+            Registers[register] = RandomByte();
             var result = Execute(mnemonic: $"LD (HL),{register}", registerIndex: register);
+            
             Assert.That(ByteAt(Registers.HL) == Registers[register]);
         }
 
@@ -41,22 +45,28 @@ namespace Z80.Core.Tests
         public void LD_xHL_n()
         {
             byte value = RandomByte();
+            Registers.HL = RandomWord();
             var result = Execute(mnemonic: $"LD (HL),n", arg1: value);
+            
             Assert.That(ByteAt(Registers.HL) == value);
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
         public void LD_r_xHL(RegisterIndex register)
         {
+            ushort address = Registers.HL = RandomWord();
+            WriteByteAt(Registers.HL, RandomByte());
             var result = Execute(mnemonic: $"LD {register},(HL)", registerIndex: register);
-
-            Assert.That(Registers[register] == ByteAt(Registers.HL));
+            
+            Assert.That(Registers[register] == ByteAt(address));
         }
 
         [TestCase(RegisterPairIndex.BC)]
         [TestCase(RegisterPairIndex.DE)]
         public void LD_A_xrr(RegisterPairIndex registerPair)
         {
+            Registers[registerPair] = RandomWord();
+            WriteByteAt(Registers[registerPair], RandomByte());
             var result = Execute(mnemonic: $"LD A,({registerPair})");
 
             Assert.That(Registers.A == ByteAt(Registers[registerPair]));
@@ -65,8 +75,9 @@ namespace Z80.Core.Tests
         [Test]
         public void LD_A_xnn()
         {
-            ushort address = RandomWord(0xFFFE);
-            var result = Execute(mnemonic: $"LD A,(nn)", arg1:address.HighByte(), arg2:address.LowByte());
+            ushort address = RandomWord();
+            WriteByteAt(address, RandomByte());
+            var result = Execute(mnemonic: $"LD A,(nn)", arg1:address.LowByte(), arg2:address.HighByte());
 
             Assert.That(Registers.A == ByteAt(address));
         }
@@ -75,6 +86,8 @@ namespace Z80.Core.Tests
         [TestCase(RegisterPairIndex.DE)]
         public void LD_xrr_A(RegisterPairIndex registerPair)
         {
+            Registers[registerPair] = RandomWord();
+            Registers.A = RandomByte();
             var result = Execute(mnemonic: $"LD ({registerPair}),A");
 
             Assert.That(ByteAt(Registers[registerPair]) == Registers.A);
@@ -84,6 +97,7 @@ namespace Z80.Core.Tests
         public void LD_xnn_A()
         {
             ushort address = RandomWord(0xFFFE);
+            Registers.A = RandomByte();
             var result = Execute(mnemonic: $"LD (nn),A", arg1: address.LowByte(), arg2: address.HighByte());
 
             Assert.That(ByteAt(address) == Registers.A);
@@ -93,6 +107,8 @@ namespace Z80.Core.Tests
         public void LD_r_xIndexOffset(RegisterIndex register, RegisterPairIndex indexRegister)
         {
             byte offset = RandomByte(0x7F);
+            Registers[indexRegister] = RandomWord();
+            WriteByteAt(Registers[indexRegister], RandomByte());
             var result = Execute(mnemonic: $"LD ({indexRegister}+o),{register}", arg1: offset, registerIndex: register);
             
             Assert.That(Registers[register] == ByteAt(indexRegister, offset));
@@ -102,6 +118,8 @@ namespace Z80.Core.Tests
         public void LD_xIndexOffset_r(RegisterIndex register, RegisterPairIndex indexRegister)
         {
             byte offset = RandomByte(0x7F);
+            Registers[indexRegister] = RandomWord();
+            Registers[register] = RandomByte();
             var result = Execute(mnemonic: $"LD ({indexRegister}+o),{register}", arg1:offset, registerIndex: register);
             
             Assert.That(ByteAt(indexRegister, offset) == Registers[register]);
@@ -112,6 +130,7 @@ namespace Z80.Core.Tests
         {
             byte value = RandomByte();
             byte offset = RandomByte(0x7F);
+            Registers[indexRegister] = RandomWord();
             var result = Execute(mnemonic: $"LD ({indexRegister}+o),n", arg1: offset, arg2: value);
             
             Assert.That(ByteAt(indexRegister, offset) == value);
@@ -131,7 +150,7 @@ namespace Z80.Core.Tests
         {
             ushort address = RandomWord(0xFFFE);
             ushort value = RandomWord();
-            _cpu.Memory.WriteWordAt(address, value);
+            WriteWordAt(address, value);
             var result = Execute(mnemonic: $"LD {registerPair},(nn)", arg1: address.LowByte(), arg2: address.HighByte());
 
             Assert.That(Registers[registerPair] == WordAt(address));
@@ -141,11 +160,10 @@ namespace Z80.Core.Tests
         public void LD_xnn_rr(RegisterPairIndex registerPair)
         {
             ushort address = RandomWord(0xFFFE);
-            ushort value = RandomWord();
-            Registers[registerPair] = value;
+            Registers[registerPair] = RandomWord();
             var result = Execute(mnemonic: $"LD (nn),{registerPair}", arg1: address.LowByte(), arg2: address.HighByte());
 
-            Assert.That(WordAt(address) == value);
+            Assert.That(WordAt(address) == Registers[registerPair]);
         }
 
         [TestCase(RegisterPairIndex.HL)]

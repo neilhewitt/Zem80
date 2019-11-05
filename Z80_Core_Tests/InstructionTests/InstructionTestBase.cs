@@ -75,5 +75,10 @@ namespace Z80.Core.Tests
         {
             _cpu.Memory.WriteByteAt(address, value);
         }
+
+        public void WriteWordAt(ushort address, ushort value)
+        {
+            _cpu.Memory.WriteWordAt(address, value);
+        }
     }
 }
