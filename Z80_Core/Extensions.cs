@@ -12,6 +12,16 @@ namespace Z80.Core
             return input.ToString("X2");
         }
 
+        public static byte LowByte(this ushort input)
+        {
+            return (byte)(input % 256);
+        }
+
+        public static byte HighByte(this ushort input)
+        {
+            return (byte)(input / 256);
+        }
+
         public static byte RemoveBits(this byte input, int startIndex, int numberOfBits)
         {
             ByteBits bits = new ByteBits(input);

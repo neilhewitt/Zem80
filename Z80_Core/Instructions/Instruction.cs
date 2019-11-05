@@ -819,6 +819,11 @@ namespace Z80.Core
             }
         }
 
+        public static Instruction FindByMnemonic(string mnemonic)
+        {
+            return _instructionSet.Values.SelectMany(x => x.Values).First(x => x.Mnemonic.StartsWith(mnemonic));
+        }
+
         public InstructionPrefix Prefix { get; private set; }
         public byte Opcode { get; private set; }
         public string Mnemonic { get; private set; }

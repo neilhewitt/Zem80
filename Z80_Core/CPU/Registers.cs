@@ -12,6 +12,8 @@ namespace Z80.Core
         private byte _BCDEHLOffset = 0;
 
         public byte this[RegisterIndex index] { get { return GetRegisterByIndex(index); } set { SetRegisterByIndex(index, value); } }
+        public ushort this[RegisterPairIndex index] { get { return GetRegisterPairByIndex(index); } set { SetRegisterPairByIndex(index, value); } }
+
 
         // 8-bit registers
         public byte A { get { return _registers[_AFOffset]; } set { _registers[_AFOffset] = value; } }
@@ -91,6 +93,20 @@ namespace Z80.Core
             }
         }
 
+        private ushort GetRegisterPairByIndex(RegisterPairIndex index)
+        {
+            if (index == RegisterPairIndex.None) return 0xFF;
+
+            if (index == RegisterPairIndex.AF)
+            {
+                return Get16BitValue(_AFOffset);
+            }
+            else
+            {
+                return Get16BitValue(_BCDEHLOffset + (int)index + 2);
+            }
+        }
+
         private void SetRegisterByIndex(RegisterIndex index, byte value)
         {
             if (index != RegisterIndex.None)
@@ -106,12 +122,27 @@ namespace Z80.Core
             }
         }
 
-        private ushort Get16BitValue(int registerIndex)
+        private void SetRegisterPairByIndex(RegisterPairIndex index, ushort value)
         {
-            return (ushort)((_registers[registerIndex] * 256) + _registers[registerIndex + 1]);
+            if (index != RegisterPairIndex.None)
+            {
+                if (index == RegisterPairIndex.AF)
+                {
+                    Set16BitValue(_AFOffset, value);
+                }
+                else
+                {
+                    Set16BitValue(_BCDEHLOffset + (int)index + 2, value);
+                }
+            }
         }
 
-        private void Set16BitValue(int registerIndex, ushort value)
+        private ushort Get16BitValue(int wordIndex)
+        {
+            return (ushort)((_registers[wordIndex] * 256) + _registers[wordIndex + 1]);
+        }
+
+        private void Set16BitValue(int wordIndex, ushort value)
         {
             byte[] bytes = BitConverter.GetBytes(value);
             bool isLittleEndian = BitConverter.IsLittleEndian;
@@ -119,8 +150,8 @@ namespace Z80.Core
             // but this code *could* be running on a big-endian architecture and the ushort value will come out
             // in reverse order... so set the bytes directly
 
-            _registers[registerIndex] = bytes[isLittleEndian ? 1 : 0]; 
-            _registers[registerIndex + 1] = bytes[isLittleEndian ? 0 : 1];
+            _registers[wordIndex] = bytes[isLittleEndian ? 1 : 0]; 
+            _registers[wordIndex + 1] = bytes[isLittleEndian ? 0 : 1];
         }
 
         public Registers()

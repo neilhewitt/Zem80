@@ -96,7 +96,7 @@ namespace Z80.Core
                             r.HL = argWord;
                             break;
                         case 0x22: // LD (nn),HL
-                            writeWord(r.HL, argWord);
+                            writeWord(argWord, r.HL);
                             break;
                         case 0x26: // LD H,n
                             r.H = arg0;

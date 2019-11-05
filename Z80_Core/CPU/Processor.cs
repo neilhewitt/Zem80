@@ -133,6 +133,10 @@ namespace Z80.Core
 
                     ClockCycles += result.ClockCycles;
                 }
+                else
+                {
+                    ClockCycles++; // while halted we should be running NOP continuously (but no Program Counter movement), so just add a cycle each time
+                }
 
                 if (_pendingNMI)
                 {
@@ -166,7 +170,7 @@ namespace Z80.Core
                             break;
 
                         case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
-                            if (_interruptCallback != null) _interruptCallback(); // device must populate data bus with low byte of address
+                            _interruptCallback(); // device must populate data bus with low byte of address
                             Stack.Push(Registers.PC);
                             Registers.PC = (ushort)((Registers.I * 256) + DataBus);
                             break;

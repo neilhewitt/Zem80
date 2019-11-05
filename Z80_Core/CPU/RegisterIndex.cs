@@ -14,9 +14,11 @@ namespace Z80.Core
         H = 4,
         L = 5,
         A = 7,
-        IXh = 4,
-        IXl = 5,
-        IYh = 4,
-        IYl = 5
+        IXh = 14,
+        IXl = 15,
+        IYh = 16,
+        IYl = 17,
+        I = 20,
+        R = 21
     }
 }

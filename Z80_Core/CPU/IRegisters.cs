@@ -3,6 +3,7 @@
     public interface IRegisters
     {
         byte this[RegisterIndex index] { get; set; }
+        ushort this[RegisterPairIndex index] { get;set; }
         byte A { get; set; }
         ushort AF { get; set; }
         byte B { get; set; }
