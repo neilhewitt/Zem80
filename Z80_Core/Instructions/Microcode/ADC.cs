@@ -25,8 +25,8 @@ namespace Z80.Core
 
             byte addByteWithCarry(byte value)
             {
-                ushort result = (ushort)(cpu.Registers.A + value + (cpu.Registers.Flags.Carry ? 1 : 0)); 
-                short signed = (short)result;
+                ushort result = (ushort)(cpu.Registers.A + value + (cpu.Registers.Flags.Carry ? 1 : 0));
+                sbyte signed = (sbyte)((byte)result);
                 if (result == 0) flags.Zero = true;
                 if (result > 0xFF) flags.Carry = true;
                 if (signed < 0) flags.Sign = true;
