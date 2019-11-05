@@ -3,9 +3,13 @@
 This folder contains the complete set of instruction tests for the Z80 instruction set. Note that a convention has been used to name the tests, as follows:
 
 r: a register
+
 n: an immediate byte
+
 rr: a register pair
+
 nn: an immediate word
+
 IndexOffset: either IX or IY as an index address plus a signed byte offset
 
 'x' before any value indicates the value should be treated as an address. So, for example:
