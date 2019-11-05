@@ -80,5 +80,16 @@ namespace Z80.Core.Tests
         {
             _cpu.Memory.WriteWordAt(address, value);
         }
+
+        public bool TestFlags(bool? sign = null, bool? carry = null, bool? halfCarry = null, bool? parityOverflow = null, bool? subtract = null, bool? zero = null)
+        {
+            IFlags f = Registers.Flags;
+            return (sign.HasValue ? f.Sign == sign : true &&
+                    carry.HasValue ? f.Carry == carry : true &&
+                    halfCarry.HasValue ? f.HalfCarry == halfCarry : true &&
+                    parityOverflow.HasValue ? f.ParityOverflow == parityOverflow : true &&
+                    subtract.HasValue ? f.Subtract == subtract : true &&
+                    zero.HasValue ? f.Zero == zero : true);
+        }
     }
 }
