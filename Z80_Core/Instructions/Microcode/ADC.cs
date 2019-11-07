@@ -18,19 +18,19 @@ namespace Z80.Core
                 return cpu.Memory.ReadByteAt(address);
             }
 
-            byte readOffset(ushort address, byte offset)
+            byte readOffset(ushort address, sbyte offset)
             {
-                return cpu.Memory.ReadByteAt((ushort)(address + (sbyte)offset));
+                return cpu.Memory.ReadByteAt((ushort)(address + offset));
             }
 
             byte addByteWithCarry(byte value)
             {
                 ushort result = (ushort)(cpu.Registers.A + value + (cpu.Registers.Flags.Carry ? 1 : 0));
-                sbyte signed = (sbyte)((byte)result);
+                short signed = (short)result;
                 if (result == 0) flags.Zero = true;
                 if (result > 0xFF) flags.Carry = true;
-                if (signed < 0) flags.Sign = true;
-                if (signed > 0x7F || signed < -0x7F) flags.ParityOverflow = true;
+                if ((sbyte)signed < 0) flags.Sign = true;
+                if (signed > 0x7F || signed < -0x80) flags.ParityOverflow = true;
                 if ((((cpu.Registers.A & 0x0F) + (((byte)result) & 0x0F)) > 0x0F)) flags.HalfCarry = true;
 
                 return (byte)result;
@@ -42,8 +42,8 @@ namespace Z80.Core
                 int signed = (int)result;
                 if (result == 0) flags.Zero = true;
                 if (result > 0xFFFF) flags.Carry = true;
-                if (signed < 0) flags.Sign = true;
-                if (signed > 0x7FFF|| signed < -0x7FFF) flags.ParityOverflow = true;
+                if ((short)signed < 0) flags.Sign = true;
+                if (signed > 0x7FFF|| signed < -0x8000) flags.ParityOverflow = true;
                 if ((cpu.Registers.HL & 0x0FFF) + (((byte)result) & 0x0FFF) > 0x0FFF) flags.HalfCarry = true;
 
                 return (ushort)result;
@@ -112,7 +112,7 @@ namespace Z80.Core
                             r.A = addByteWithCarry(r.IXl);
                             break;
                         case 0x8E: // ADC A,(IX+o)
-                            r.A = addByteWithCarry(readOffset(r.IX, data.Argument1));
+                            r.A = addByteWithCarry(readOffset(r.IX, (sbyte)data.Argument1));
                             break;
                     }
                     break;
@@ -127,7 +127,7 @@ namespace Z80.Core
                             r.A = addByteWithCarry(r.IYl);
                             break;
                         case 0x8E: // ADC A,(IY+o)
-                            r.A = addByteWithCarry(readOffset(r.IY, data.Argument1));
+                            r.A = addByteWithCarry(readOffset(r.IY, (sbyte)data.Argument1));
                             break;
                     }
                     break;

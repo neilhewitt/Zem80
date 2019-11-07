@@ -6,57 +6,54 @@ using System.Text;
 namespace Z80.Core.Tests
 {
     [TestFixture]
-    public class InstructionTests_ADC : InstructionTestBase
+    public class Instruction_ADD : InstructionTestBase
     {
         [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
-        public void ADC_r_r(RegisterIndex register)
+        public void ADD_r_r(RegisterIndex register)
         {
             byte initialValue = RandomByte();
-            byte addValue = register == RegisterIndex.A ? initialValue : RandomByte(); // if ADC A,A have to have the same two numbers
-            PresetFlags(carry: RandomByte() > 127); // simulate prior carry flag state which must be preserved
-            ushort addedValue = (ushort)(initialValue + addValue + (Flags.Carry ? 1 : 0));
+            byte addValue = register == RegisterIndex.A ? initialValue : RandomByte(); // if ADD A,A have to have the same two numbers
+            ushort addedValue = (ushort)(initialValue + addValue);
             bool flagCarry = addedValue > 255;
-            bool flagOverflow = ((sbyte)addedValue > 0x7F || (sbyte)addedValue < -0x80);
+            bool flagOverflow = ((short)addedValue > 0x7F || (short)addedValue < -0x80);
             bool flagZero = addedValue == 0;
             bool flagSign = ((sbyte)addedValue < 0);
 
             Registers.A = initialValue;
             Registers[register] = addValue;
 
-            var result = Execute($"ADC A,{register}", registerIndex: register);
+            var result = Execute($"ADD A,{register}", registerIndex: register);
 
             Assert.That(Registers.A == (byte)addedValue && TestFlags(carry: flagCarry, zero: flagZero, parityOverflow: flagOverflow, sign: flagSign));
         }
 
         [Test]
-        public void ADC_A_n()
+        public void ADD_A_n()
         {
             byte initialValue = RandomByte();
             byte addValue = RandomByte();
-            PresetFlags(carry: RandomByte() > 127);
-            ushort addedValue = (ushort)(initialValue + addValue + (Flags.Carry ? 1 : 0));
+            ushort addedValue = (ushort)(initialValue + addValue);
             bool flagCarry = addedValue > 255;
-            bool flagOverflow = ((sbyte)addedValue > 0x7F || (sbyte)addedValue < -0x80);
+            bool flagOverflow = ((short)addedValue > 0x7F || (short)addedValue < -0x80);
             bool flagZero = addedValue == 0;
             bool flagSign = ((sbyte)addedValue < 0);
 
             Registers.A = initialValue;
 
-            var result = Execute($"ADC A,n", arg1:addValue);
+            var result = Execute($"ADD A,n", arg1: addValue);
 
             Assert.That(Registers.A == (byte)addedValue && TestFlags(carry: flagCarry, zero: flagZero, parityOverflow: flagOverflow, sign: flagSign));
         }
 
         [Test]
-        public void ADC_A_xHL()
+        public void ADD_A_xHL()
         {
             byte initialValue = RandomByte();
             byte addValue = RandomByte();
             ushort address = RandomWord();
-            PresetFlags(carry: RandomByte() > 127);
-            ushort addedValue = (ushort)(initialValue + addValue + (Flags.Carry ? 1 : 0));
+            ushort addedValue = (ushort)(initialValue + addValue);
             bool flagCarry = addedValue > 255;
-            bool flagOverflow = ((sbyte)addedValue > 0x7F || (sbyte)addedValue < -0x80);
+            bool flagOverflow = ((short)addedValue > 0x7F || (short)addedValue < -0x80);
             bool flagZero = addedValue == 0;
             bool flagSign = ((sbyte)addedValue < 0);
 
@@ -64,22 +61,21 @@ namespace Z80.Core.Tests
             WriteByteAt(address, addValue);
             Registers.HL = address;
 
-            var result = Execute($"ADC A,(HL)");
+            var result = Execute($"ADD A,(HL)");
 
             Assert.That(Registers.A == (byte)addedValue && TestFlags(carry: flagCarry, zero: flagZero, parityOverflow: flagOverflow, sign: flagSign));
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetIndexRegisters")]
-        public void ADC_A_xIndexOffset(RegisterPairIndex registerPair)
+        public void ADD_A_xIndexOffset(RegisterPairIndex registerPair)
         {
-            byte offset = RandomByte();
-            byte initialValue = RandomByte();
-            byte addValue = RandomByte();
+            byte offset = 139;// RandomByte();
+            byte initialValue = 207;// RandomByte();
+            byte addValue = 146;// RandomByte();
             ushort address = RandomWord(0xF700);
-            PresetFlags(carry: RandomByte() > 127);
-            ushort addedValue = (ushort)(initialValue + addValue + (Flags.Carry ? 1 : 0));
+            ushort addedValue = (ushort)(initialValue + addValue);
             bool flagCarry = addedValue > 255;
-            bool flagOverflow = ((sbyte)addedValue > 0x7F || (sbyte)addedValue < -0x80);
+            bool flagOverflow = ((short)addedValue > 0x7F || (short)addedValue < -0x80);
             bool flagZero = addedValue == 0;
             bool flagSign = ((sbyte)addedValue < 0);
 
@@ -87,7 +83,7 @@ namespace Z80.Core.Tests
             WriteByteAt((ushort)(address + (sbyte)offset), addValue);
             Registers[registerPair] = address;
 
-            var result = Execute($"ADC A,({registerPair}+o)", arg1:offset);
+            var result = Execute($"ADD A,({registerPair}+o)", arg1: offset);
 
             Assert.That(Registers.A == (byte)addedValue && TestFlags(carry: flagCarry, zero: flagZero, parityOverflow: flagOverflow, sign: flagSign));
         }

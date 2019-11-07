@@ -11,6 +11,7 @@ namespace Z80.Core.Tests
         protected Random _random;
 
         public IRegisters Registers => _cpu.Registers;
+        public IFlags Flags => _cpu.Registers.Flags;
 
         [OneTimeSetUp]
         public void Setup()
@@ -56,7 +57,7 @@ namespace Z80.Core.Tests
             return (ushort)_random.Next(0x00, maxValue);
         }
 
-        public byte ByteAt(RegisterPairIndex indexRegister, byte offset)
+        public byte ByteAt(RegisterPairIndex indexRegister, sbyte offset)
         {
             return _cpu.Memory.ReadByteAt((ushort)(Registers[indexRegister] + offset));
         }
@@ -90,6 +91,16 @@ namespace Z80.Core.Tests
                     parityOverflow.HasValue ? f.ParityOverflow == parityOverflow : true &&
                     subtract.HasValue ? f.Subtract == subtract : true &&
                     zero.HasValue ? f.Zero == zero : true);
+        }
+
+        public void PresetFlags(bool? sign = null, bool? carry = null, bool? halfCarry = null, bool? parityOverflow = null, bool? subtract = null, bool? zero = null)
+        {
+            IFlags f = new Flags()
+            {
+                Sign = sign ?? false, Carry = carry ?? false, HalfCarry = halfCarry ?? false, ParityOverflow = parityOverflow ?? false, Subtract = subtract ?? false, Zero = zero ?? false 
+            };
+
+            _cpu.Registers.SetFlags(f);
         }
     }
 }

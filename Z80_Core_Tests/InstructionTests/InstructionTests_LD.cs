@@ -106,10 +106,10 @@ namespace Z80.Core.Tests
         [Test, TestCaseSource(typeof(TestCases), "GetRegisterAndIndexPairings")]
         public void LD_r_xIndexOffset(RegisterIndex register, RegisterPairIndex indexRegister)
         {
-            byte offset = RandomByte(0x7F);
+            sbyte offset = (sbyte)RandomByte();
             Registers[indexRegister] = RandomWord();
             WriteByteAt(Registers[indexRegister], RandomByte());
-            var result = Execute(mnemonic: $"LD ({indexRegister}+o),{register}", arg1: offset, registerIndex: register);
+            var result = Execute(mnemonic: $"LD ({indexRegister}+o),{register}", arg1: (byte)offset, registerIndex: register);
             
             Assert.That(Registers[register] == ByteAt(indexRegister, offset));
         }
@@ -117,10 +117,10 @@ namespace Z80.Core.Tests
         [Test, TestCaseSource(typeof(TestCases), "GetRegisterAndIndexPairings")]
         public void LD_xIndexOffset_r(RegisterIndex register, RegisterPairIndex indexRegister)
         {
-            byte offset = RandomByte(0x7F);
+            sbyte offset = (sbyte)RandomByte();
             Registers[indexRegister] = RandomWord();
             Registers[register] = RandomByte();
-            var result = Execute(mnemonic: $"LD ({indexRegister}+o),{register}", arg1:offset, registerIndex: register);
+            var result = Execute(mnemonic: $"LD ({indexRegister}+o),{register}", arg1: (byte)offset, registerIndex: register);
             
             Assert.That(ByteAt(indexRegister, offset) == Registers[register]);
         }
@@ -129,9 +129,9 @@ namespace Z80.Core.Tests
         public void LD_xIndexOffset_n(RegisterPairIndex indexRegister)
         {
             byte value = RandomByte();
-            byte offset = RandomByte(0x7F);
+            sbyte offset = (sbyte)RandomByte();
             Registers[indexRegister] = RandomWord();
-            var result = Execute(mnemonic: $"LD ({indexRegister}+o),n", arg1: offset, arg2: value);
+            var result = Execute(mnemonic: $"LD ({indexRegister}+o),n", arg1: (byte)offset, arg2: value);
             
             Assert.That(ByteAt(indexRegister, offset) == value);
         }

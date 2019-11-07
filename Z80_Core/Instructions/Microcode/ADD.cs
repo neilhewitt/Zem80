@@ -18,7 +18,7 @@ namespace Z80.Core
                 return cpu.Memory.ReadByteAt(address);
             }
 
-            byte readOffset(ushort address, byte offset)
+            byte readOffset(ushort address, sbyte offset)
             {
                 return cpu.Memory.ReadByteAt((ushort)(address + offset));
             }
@@ -29,8 +29,8 @@ namespace Z80.Core
                 short signed = (short)result;
                 if (result == 0) flags.Zero = true;
                 if (result > 0xFF) flags.Carry = true;
-                if (signed < 0) flags.Sign = true;
-                if (signed > 0x7F || signed < -0x7F) flags.ParityOverflow = true;
+                if ((sbyte)signed < 0) flags.Sign = true;
+                if (signed > 0x7F || signed < -0x80) flags.ParityOverflow = true;
                 if ((cpu.Registers.A & 0xF) + (((byte)result) & 0xF) > 0xF) flags.HalfCarry = true;
 
                 return (byte)result;
@@ -116,7 +116,7 @@ namespace Z80.Core
                             r.A = addByte(r.IXl);
                             break;
                         case 0x86: // ADD A,(IX+o)
-                            r.A = addByte(readOffset(r.IX, data.Argument1));
+                            r.A = addByte(readOffset(r.IX, (sbyte)data.Argument1));
                             break;
                     }
                     break;
@@ -143,7 +143,7 @@ namespace Z80.Core
                             r.A = addByte(r.IYl);
                             break;
                         case 0x86: // ADD A,(IY+o)
-                            r.A = addByte(readOffset(r.IY, data.Argument1));
+                            r.A = addByte(readOffset(r.IY, (sbyte)data.Argument1));
                             break;
                     }
                     break;

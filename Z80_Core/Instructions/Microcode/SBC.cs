@@ -29,7 +29,7 @@ namespace Z80.Core
                 short signed = (short)result;
                 if (result == 0) flags.Zero = true;
                 if (result > 0xFF) flags.Carry = true;
-                if (signed < 0) flags.Sign = true;
+                if ((sbyte)signed < 0) flags.Sign = true;
                 if (signed > 0x7F || signed < -0x7F) flags.ParityOverflow = true;
                 if ((((cpu.Registers.A & 0x0F) + (((byte)result) & 0x0F)) > 0x0F)) flags.HalfCarry = true;
 
@@ -42,7 +42,7 @@ namespace Z80.Core
                 int signed = (int)result;
                 if (result == 0) flags.Zero = true;
                 if (result > 0xFFFF) flags.Carry = true;
-                if (signed < 0) flags.Sign = true;
+                if ((short)signed < 0) flags.Sign = true;
                 if (signed > 0x7FFF || signed < -0x7FFF) flags.ParityOverflow = true;
                 if ((cpu.Registers.HL & 0x0FFF) + (((byte)result) & 0x0FFF) > 0x0FFF) flags.HalfCarry = true;
 

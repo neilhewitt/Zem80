@@ -23,7 +23,7 @@ namespace Z80.Core
             else
             {
                 ushort address = data.IndexIX ? r.IX : data.IndexIY ? r.IY : r.HL; // BIT b, (HL / IX+o / IY+o)
-                byte offset = (data.IndexIY || data.IndexIY) ? data.Argument1 : (byte)0;
+                sbyte offset = (data.IndexIY || data.IndexIY) ? (sbyte)data.Argument1 : (sbyte)0;
                 value = cpu.Memory.ReadByteAt((ushort)(address + offset));
             }
 
