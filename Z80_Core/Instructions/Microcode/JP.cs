@@ -12,10 +12,12 @@ namespace Z80.Core
             InstructionData data = package.Data;
             IFlags flags = cpu.Registers.Flags;
             ushort address = data.ArgumentsAsWord;
+            bool pcWasSet = false;
 
             void jp(ushort address)
             {
                 cpu.Registers.PC = address;
+                pcWasSet = true;
             }
 
             switch (instruction.Prefix)
@@ -57,7 +59,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(package, new Flags(), false);
+            return new ExecutionResult(package, new Flags(), false, pcWasSet);
         }
 
         public JP()

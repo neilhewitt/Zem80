@@ -6,7 +6,7 @@ using System.Text;
 namespace Z80.Core.Tests
 {
     [TestFixture]
-    public class Instruction_ADD : InstructionTestBase
+    public class InstructionTests_ADD : InstructionTestBase
     {
         [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
         public void ADD_r_r(RegisterIndex register)
