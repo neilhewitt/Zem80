@@ -837,7 +837,7 @@ namespace Z80.Core
             {
                 return _instructionSet[prefix][opcode];
             }
-            catch (KeyNotFoundException ex)
+            catch (KeyNotFoundException)
             {
                 throw new InstructionNotFoundException($"Instruction not found ({ prefix.ToString() }::{opcode}.");
             }
@@ -857,7 +857,7 @@ namespace Z80.Core
         public byte SizeInBytes { get; private set; }
         public byte ClockCycles { get; private set; }
         public byte? ClockCyclesConditional { get; private set; }
-        public IInstructionImplementation Implementation { get; private set; }
+        internal IInstructionImplementation Implementation { get; private set; }
 
         private Instruction(InstructionPrefix prefix, byte opcode, string mnemonic, ArgumentType argument1, ArgumentType argument2, ModifierType modifier, byte size, byte clockCycles, byte? clockCyclesConditional)
         {

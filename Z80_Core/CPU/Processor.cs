@@ -4,7 +4,7 @@ using System.Timers;
 
 namespace Z80.Core
 {
-    public class Processor
+    public class Processor : ITestProcessor
     {
         private static object _padlock = new object();
 
@@ -161,7 +161,7 @@ namespace Z80.Core
                                     _interruptCallback(); // each time callback is called, device will set data bus with next instruction byte
                                     return DataBus;
                                 });
-                            ExecuteInstructionPackage(package); // instruction is *usually* RST which diverts execution, but can be any valid instruction
+                            ExecutionResult result = ExecuteInstructionPackage(package); // instruction is *usually* RST which diverts execution, but can be any valid instruction
                             break;
 
                         case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
@@ -182,6 +182,11 @@ namespace Z80.Core
 
                 InstructionTicks++;
             }
+        }
+
+        ExecutionResult ITestProcessor.ExecuteDirect(Instruction instruction, InstructionData data)
+        {
+            return ExecuteInstructionPackage(new InstructionPackage(instruction, data));
         }
 
         private ExecutionResult ExecuteInstructionPackage(InstructionPackage package)

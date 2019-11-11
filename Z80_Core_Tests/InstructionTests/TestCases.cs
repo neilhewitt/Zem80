@@ -79,5 +79,17 @@ namespace Z80.Core.Tests
             // get the Index register names (for indexed operations)
             return new List<RegisterPairIndex>() { RegisterPairIndex.IX, RegisterPairIndex.IY };
         }
+
+        public static IEnumerable<(string, Func<IFlags>, Func<IFlags, bool>)> GetConditions()
+        {
+            yield return ("Z", () => new Flags() { Zero = true }, (IFlags flags) => flags.Zero);
+            yield return ("NZ", () => new Flags() { Zero = false }, (IFlags flags) => !flags.Zero);
+            yield return ("C", () => new Flags() { Carry = true }, (IFlags flags) => flags.Carry);
+            yield return ("NC", () => new Flags() { Carry = false }, (IFlags flags) => !flags.Carry);
+            yield return ("PE", () => new Flags() { ParityOverflow = true }, (IFlags flags) => flags.ParityOverflow);
+            yield return ("PO", () => new Flags() { ParityOverflow = false }, (IFlags flags) => !flags.ParityOverflow);
+            yield return ("M", () => new Flags() { Sign = true }, (IFlags flags) => flags.Sign);
+            yield return ("P", () => new Flags() { Sign = false }, (IFlags flags) => !flags.Sign);
+        }
     }
 }

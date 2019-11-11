@@ -7,7 +7,7 @@ namespace Z80.Core.Tests
 {
     public abstract class InstructionTestBase
     {
-        protected Processor _cpu;
+        protected ITestProcessor _cpu;
         protected Random _random;
 
         public IRegisters Registers => _cpu.Registers;
@@ -42,8 +42,7 @@ namespace Z80.Core.Tests
                 IndexIY = instruction.Mnemonic.Contains("(IY)")
             };
             
-            ExecutionResult result = instruction.Implementation.Execute(_cpu, new InstructionPackage(instruction, data));
-            Registers.SetFlags(result.Flags);
+            ExecutionResult result = _cpu.ExecuteDirect(instruction, data); // only available on ITestProcessor test/debug interface - sets flags but not PC
             return result;
         }
 
@@ -55,6 +54,11 @@ namespace Z80.Core.Tests
         public ushort RandomWord(ushort maxValue = 0xFFFF)
         {
             return (ushort)_random.Next(0x00, maxValue);
+        }
+
+        public bool RandomBool()
+        {
+            return (RandomByte(1) == 0);
         }
 
         public byte ByteAt(RegisterPairIndex indexRegister, sbyte offset)
