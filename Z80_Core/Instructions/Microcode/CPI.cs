@@ -16,7 +16,7 @@ namespace Z80.Core
             byte b = cpu.Memory.ReadByteAt(cpu.Registers.HL);
             short result = (short)(a - b);
             cpu.Registers.HL++;
-            cpu.Registers.BC++;
+            cpu.Registers.BC--;
 
             if (result < 0) flags.Sign = true;
             if (result == 0) flags.Zero = true;
