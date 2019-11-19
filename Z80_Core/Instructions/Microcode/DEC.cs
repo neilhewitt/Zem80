@@ -26,7 +26,7 @@ namespace Z80.Core
                 ushort result = (ushort)(value - 1);
                 if (result == 0) flags.Zero = true;
                 if (((sbyte)result) < 0) flags.Sign = true;
-                if ((value & 0x0F) == 0x00) flags.HalfCarry = true;
+                if ((result & 0x0F) == 0x00) flags.HalfCarry = true;
                 if (value == 0x80) flags.ParityOverflow = true;
                 flags.Subtract = true;
 

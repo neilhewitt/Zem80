@@ -845,7 +845,7 @@ namespace Z80.Core
 
         public static Instruction FindByMnemonic(string mnemonic)
         {
-            return _instructionSet.Values.SelectMany(x => x.Values).First(x => x.Mnemonic.StartsWith(mnemonic));
+            return _instructionSet.Values.SelectMany(x => x.Values).First(x => x.Mnemonic == (mnemonic));
         }
 
         public InstructionPrefix Prefix { get; private set; }
