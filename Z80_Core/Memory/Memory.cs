@@ -8,7 +8,7 @@ namespace Z80.Core
     {
         private const string NOT_INITIALISED = "Memory has not been initialised and cannot be read or written to.";
         private IMemoryMap _map;
-        private Processor _cpu;
+        private IProcessor _cpu;
         private bool _initialised;
 
         public int SizeInBytes => _map.SizeInBytes;
@@ -72,7 +72,7 @@ namespace Z80.Core
             WriteBytesAt(address, bytes);
         }
 
-        public void Initialise(Processor cpu)
+        public void Initialise(IProcessor cpu)
         {
             _cpu = cpu;
             _initialised = true;

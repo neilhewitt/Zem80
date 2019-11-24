@@ -7,7 +7,7 @@ namespace Z80.Core.Tests
 {
     public abstract class InstructionTestBase
     {
-        protected ITestProcessor _cpu;
+        protected IDebugProcessor _cpu;
         protected Random _random;
 
         public IRegisters Registers => _cpu.Registers;
@@ -16,7 +16,7 @@ namespace Z80.Core.Tests
         [OneTimeSetUp]
         public void Setup()
         {
-            _cpu = Bootstrapper.BuildDefault();
+            _cpu = Bootstrapper.BuildDebugCPU();
             _random = new Random(DateTime.Now.Millisecond);
         }
 

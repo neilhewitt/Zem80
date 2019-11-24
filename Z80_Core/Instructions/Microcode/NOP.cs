@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class NOP : IInstructionImplementation
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(IProcessor cpu, InstructionPackage package)
         {
             return new ExecutionResult(package, cpu.Registers.Flags, false);
         }

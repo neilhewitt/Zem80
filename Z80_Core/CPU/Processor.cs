@@ -4,7 +4,7 @@ using System.Timers;
 
 namespace Z80.Core
 {
-    public class Processor : ITestProcessor
+    public class Processor : IDebugProcessor, IProcessor
     {
         private static object _padlock = new object();
 
@@ -14,6 +14,12 @@ namespace Z80.Core
         private Action _interruptCallback;
         private bool _pendingNMI;
         private Task _instructionCycle;
+
+        private EventHandler<InstructionPackage> _beforeExecute;
+        private EventHandler<ExecutionResult> _afterExecute;
+        private EventHandler _beforeStart;
+        private EventHandler _onStop;
+        private EventHandler _onHalt;
 
         private InstructionDecoder _decoder = new InstructionDecoder();
 
@@ -31,17 +37,17 @@ namespace Z80.Core
         public long ClockCycles { get; private set; }
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; // yay for tri-states!
 
-        public event EventHandler<InstructionPackage> BeforeExecute;
-        public event EventHandler<ExecutionResult> AfterExecute;
-        public event EventHandler BeforeStart;
-        public event EventHandler OnStop;
-        public event EventHandler OnHalt;
+        event EventHandler<InstructionPackage> IDebugProcessor.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
+        event EventHandler<ExecutionResult> IDebugProcessor.AfterExecute { add { _afterExecute += value; } remove { _afterExecute -= value; } }
+        event EventHandler IDebugProcessor.BeforeStart { add { _beforeStart += value; } remove { _beforeStart -= value; } }
+        event EventHandler IDebugProcessor.OnStop { add { _onStop += value; } remove { _onStop -= value; } }
+        event EventHandler IDebugProcessor.OnHalt { add { _onHalt += value; } remove { _onHalt -= value; } }
 
         public void Start(bool synchronous = false)
         {
             if (!_running)
             {
-                BeforeStart?.Invoke(null, null);
+                _beforeStart?.Invoke(null, null);
                 _running = true;
 
                 if (!synchronous) // run the CPU on a thread and return to the calling code
@@ -60,13 +66,13 @@ namespace Z80.Core
         {
             _running = false;
             _halted = false;
-            OnStop?.Invoke(null, null);
+            _onStop?.Invoke(null, null);
         }
 
         public void Halt()
         {
             _halted = true;
-            OnHalt?.Invoke(null, null);
+            _onHalt?.Invoke(null, null);
         }
 
         public void Resume()
@@ -197,16 +203,16 @@ namespace Z80.Core
             }
         }
 
-        ExecutionResult ITestProcessor.ExecuteDirect(Instruction instruction, InstructionData data)
+        ExecutionResult IDebugProcessor.ExecuteDirect(Instruction instruction, InstructionData data)
         {
             return ExecuteInstructionPackage(new InstructionPackage(instruction, data));
         }
 
         private ExecutionResult ExecuteInstructionPackage(InstructionPackage package)
         {
-            BeforeExecute?.Invoke(this, package);
+            _beforeExecute?.Invoke(this, package);
             ExecutionResult result = package.Instruction.Implementation.Execute(this, package);
-            AfterExecute?.Invoke(this, result);
+            _afterExecute?.Invoke(this, result);
             if (result.Flags != null) Registers.SetFlags(result.Flags);
 
             return result;

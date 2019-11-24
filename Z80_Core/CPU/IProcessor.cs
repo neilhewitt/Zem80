@@ -2,7 +2,7 @@
 
 namespace Z80.Core
 {
-    public interface ITestProcessor
+    public interface IProcessor
     {
         ushort AddressBus { get; }
         long ClockCycles { get; }
@@ -17,12 +17,6 @@ namespace Z80.Core
         IStack Stack { get; }
         ProcessorState State { get; }
 
-        event EventHandler<ExecutionResult> AfterExecute;
-        event EventHandler<InstructionPackage> BeforeExecute;
-        event EventHandler BeforeStart;
-        event EventHandler OnStop;
-        event EventHandler OnHalt;
-
         void DisableInterrupts();
         void EnableInterrupts();
         void Halt();
@@ -36,6 +30,5 @@ namespace Z80.Core
         void SetInterruptMode(InterruptMode mode);
         void Start(bool synchronous = false);
         void Stop();
-        ExecutionResult ExecuteDirect(Instruction instruction, InstructionData data);
     }
 }

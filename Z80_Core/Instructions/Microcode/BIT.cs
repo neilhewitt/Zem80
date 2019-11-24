@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class BIT : IInstructionImplementation
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(IProcessor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;

@@ -8,7 +8,7 @@ namespace Z80.Core
     {
         public const int MAX_MEMORY_SIZE_IN_BYTES = 65536;
         
-        public static Processor BuildDefault()
+        public static IProcessor BuildDefaultCPU()
         {
             IRegisters registers = new Registers();
             IMemoryMap map = new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES);
@@ -20,6 +20,11 @@ namespace Z80.Core
 
             Processor z80 = new Processor(registers, memory, stack, ports, 4.00);
             return z80;
+        }
+
+        public static IDebugProcessor BuildDebugCPU()
+        {
+            return (IDebugProcessor)BuildDefaultCPU();
         }
     }
 }

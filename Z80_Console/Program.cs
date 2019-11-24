@@ -8,7 +8,7 @@ namespace Z80_Console
     class Program
     {
         private static InstructionPackage _package;
-        private static Processor _cpu;
+        private static IProcessor _cpu;
         private static bool _first = true;
 
         static void Main(string[] args)
@@ -66,7 +66,7 @@ namespace Z80_Console
             }
         }
 
-        private static void DisplayState(Processor cpu, InstructionPackage package)
+        private static void DisplayState(IProcessor cpu, InstructionPackage package)
         {
             Console.Clear();
             Console.SetCursorPosition(0, 0);

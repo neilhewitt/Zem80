@@ -7,9 +7,9 @@ namespace Z80.SimpleVM
 {
     public class VirtualMachine
     {
-        private Processor _cpu;
+        private IProcessor _cpu;
 
-        public Processor CPU => _cpu;
+        public IProcessor CPU => _cpu;
 
         public void Start()
         {
@@ -42,7 +42,7 @@ namespace Z80.SimpleVM
 
         public VirtualMachine()
         {
-            _cpu = Bootstrapper.BuildDefault();
+            _cpu = Bootstrapper.BuildDefaultCPU();
             _cpu.Ports[0].Connect(ReadByte, WriteByte, Signal);
         }
     }
