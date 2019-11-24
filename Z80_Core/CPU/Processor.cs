@@ -4,7 +4,7 @@ using System.Timers;
 
 namespace Z80.Core
 {
-    public class Processor : IDebugProcessor, IProcessor
+    public class Processor : IDebugProcessor
     {
         private static object _padlock = new object();
 
@@ -24,7 +24,7 @@ namespace Z80.Core
         private InstructionDecoder _decoder = new InstructionDecoder();
 
         public IRegisters Registers { get; private set; }
-        public IMemory Memory { get; private set; }
+        public Memory Memory { get; private set; }
         public IPorts Ports { get; private set; }
         public IStack Stack { get; private set; }
         public ushort AddressBus { get; private set; }
@@ -50,7 +50,7 @@ namespace Z80.Core
                 _beforeStart?.Invoke(null, null);
                 _running = true;
 
-                if (!synchronous) // run the CPU on a thread and return to the calling code
+                if (!synchronous) // run the CPU on a thread and return to the calling code immediately
                 {
                     _instructionCycle = new Task(InstructionCycle, TaskCreationOptions.None);
                     _instructionCycle.Start();
@@ -218,16 +218,18 @@ namespace Z80.Core
             return result;
         }
 
-        internal Processor(IRegisters registers, IMemory memory, IStack stack, IPorts ports, double speedInMHz)
+        internal Processor(IRegisters registers, IMemoryMap memoryMap, IStack stack, IPorts ports, double speedInMHz)
         {
             Registers = registers;
-            Memory = memory;
             Stack = stack;
             Ports = ports;
             SpeedInMhz = speedInMHz;
 
-            Registers.SP = stack.StartAddress;
+            Memory = new Memory(memoryMap);
             Memory.Initialise(this); // creates circular reference that cannot be created at constructor-time
+
+            Registers.SP = stack.StartAddress;
+            Stack.Initialise(this);
         }
     }
 }

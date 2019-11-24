@@ -8,13 +8,13 @@ namespace Z80_Console
     class Program
     {
         private static InstructionPackage _package;
-        private static IProcessor _cpu;
+        private static IDebugProcessor _cpu;
         private static bool _first = true;
 
         static void Main(string[] args)
         {
             VirtualMachine vm = new VirtualMachine();
-            _cpu = vm.CPU;
+            _cpu = (IDebugProcessor)vm.CPU;
 
             //_cpu.BeforeExecute += OnBeforeExecute;
             //_cpu.AfterExecute += OnAfterExecute;
@@ -66,7 +66,7 @@ namespace Z80_Console
             }
         }
 
-        private static void DisplayState(IProcessor cpu, InstructionPackage package)
+        private static void DisplayState(Processor cpu, InstructionPackage package)
         {
             Console.Clear();
             Console.SetCursorPosition(0, 0);

@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class CCF : IInstructionImplementation
     {
-        public ExecutionResult Execute(IProcessor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Flags flags = new Flags();
             flags.HalfCarry = cpu.Registers.Flags.HalfCarry;

@@ -839,13 +839,27 @@ namespace Z80.Core
             }
             catch (KeyNotFoundException)
             {
-                throw new InstructionNotFoundException($"Instruction not found ({ prefix.ToString() }::{opcode}.");
+                throw new InstructionNotFoundException($"Instruction not found ({ prefix.ToString() }::{opcode}.)");
             }
         }
 
         public static Instruction FindByMnemonic(string mnemonic)
         {
-            return _instructionSet.Values.SelectMany(x => x.Values).First(x => x.Mnemonic == (mnemonic));
+            try
+            {
+                return _instructionSet.Values.SelectMany(x => x.Values).Single(x => x.Mnemonic == (mnemonic));
+            }
+            catch (InvalidOperationException)
+            {
+                throw new InstructionNotFoundException($"Instruction not found ({mnemonic})");
+            }
+        }
+
+        public static void AddToInstructionSet(InstructionPrefix prefix, byte opcode, string mnemonic, ArgumentType argument1, ArgumentType argument2, ModifierType modifier, byte size, byte clockCycles,
+            byte? clockCyclesConditional, IInstructionImplementation implementation)
+        {
+            Instruction instruction = new Instruction(prefix, opcode, mnemonic, argument1, argument2, modifier, size, clockCycles, clockCyclesConditional, implementation);
+            _instructionSet[prefix].Add(opcode, instruction);
         }
 
         public InstructionPrefix Prefix { get; private set; }
@@ -859,7 +873,8 @@ namespace Z80.Core
         public byte? ClockCyclesConditional { get; private set; }
         internal IInstructionImplementation Implementation { get; private set; }
 
-        private Instruction(InstructionPrefix prefix, byte opcode, string mnemonic, ArgumentType argument1, ArgumentType argument2, ModifierType modifier, byte size, byte clockCycles, byte? clockCyclesConditional)
+        private Instruction(InstructionPrefix prefix, byte opcode, string mnemonic, ArgumentType argument1, ArgumentType argument2, ModifierType modifier, byte size, byte clockCycles, 
+            byte? clockCyclesConditional, IInstructionImplementation implementation = null)
         {
             Prefix = prefix;
             Opcode = opcode;
@@ -871,9 +886,16 @@ namespace Z80.Core
             ClockCycles = clockCycles;
             ClockCyclesConditional = clockCyclesConditional;
 
-            // this is expensive, but only done once at startup; binds the Instruction directly to the method instance implementing it
-            Type microcodeType = Assembly.GetExecutingAssembly().GetTypes().SingleOrDefault(x => x.Name == mnemonic.Split(' ')[0]);
-            Implementation = (IInstructionImplementation)Activator.CreateInstance(microcodeType);
+            if (implementation != null)
+            {
+                Implementation = implementation;
+            }
+            else
+            {
+                // this is expensive, but only done once at startup; binds the Instruction directly to the method instance implementing it
+                Type microcodeType = Assembly.GetExecutingAssembly().GetTypes().SingleOrDefault(x => x.Name == mnemonic.Split(' ')[0]);
+                Implementation = (IInstructionImplementation)Activator.CreateInstance(microcodeType);
+            }
         }
     }
 }

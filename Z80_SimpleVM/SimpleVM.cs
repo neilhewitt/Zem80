@@ -7,9 +7,9 @@ namespace Z80.SimpleVM
 {
     public class VirtualMachine
     {
-        private IProcessor _cpu;
+        private Processor _cpu;
 
-        public IProcessor CPU => _cpu;
+        public Processor CPU => _cpu;
 
         public void Start()
         {

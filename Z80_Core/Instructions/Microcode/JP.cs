@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class JP : IInstructionImplementation
     {
-        public ExecutionResult Execute(IProcessor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;

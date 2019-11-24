@@ -131,7 +131,7 @@ namespace Z80.Core
                     return new InstructionPackage(instruction, data);
                 }
             }
-            catch (IndexOutOfRangeException)
+            catch (InstructionNotFoundException)
             {
                 // handle special case where instruction buffer is short / corrupt (read beyond end of memory) in which case, return null to the caller
                 // all other exceptions will throw as normal

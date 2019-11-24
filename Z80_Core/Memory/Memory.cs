@@ -4,22 +4,22 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class Memory : IMemory
+    public class Memory
     {
-        private const string NOT_INITIALISED = "Memory has not been initialised and cannot be read or written to.";
         private IMemoryMap _map;
-        private IProcessor _cpu;
+        private Processor _cpu;
         private bool _initialised;
 
         public int SizeInBytes => _map.SizeInBytes;
 
         public byte ReadByteAt(ushort address)
         {
-            if (!_initialised) throw new MemoryException(NOT_INITIALISED);
+            if (!_initialised) throw new MemoryException();
             _cpu.SetAddressBus(address);
 
             IMemorySegment segment = _map.MemoryFor(address);
-            return segment?.ReadByteAt(address - segment.StartAddress) ?? 0x00; // default value if address is unallocated
+            _cpu.SetDataBus(segment?.ReadByteAt(address - segment.StartAddress) ?? 0x00); // default value if address is unallocated
+            return _cpu.DataBus;
         }
 
         public byte[] ReadBytesAt(ushort address, ushort numberOfBytes)
@@ -27,12 +27,12 @@ namespace Z80.Core
             int availableBytes = numberOfBytes;
             if (address + availableBytes >= SizeInBytes) availableBytes = SizeInBytes - address; // if this read overflows the end of memory, we can read only this many bytes
 
-            byte[] bytes = new byte[availableBytes];
+            byte[] bytes = new byte[numberOfBytes];
             for (int i = 0; i < availableBytes; i++)
             {
                 bytes[i] = ReadByteAt((ushort)(address + i));
             }
-            return bytes;
+            return bytes; // bytes beyond the available byte limit (if any) will be 0x00
         }
 
         public ushort ReadWordAt(ushort address)
@@ -43,7 +43,7 @@ namespace Z80.Core
 
         public void WriteByteAt(ushort address, byte value)
         {
-            if (!_initialised) throw new MemoryException(NOT_INITIALISED);
+            if (!_initialised) throw new MemoryException();
             _cpu.SetAddressBus(address);
 
             IMemorySegment segment = _map.MemoryFor(address);
@@ -52,6 +52,7 @@ namespace Z80.Core
                 throw new MemoryNotPresentException("Readonly or unmapped");
             }
 
+            _cpu.SetDataBus(value);
             segment.WriteByteAt((address - segment.StartAddress), value);
         }
 
@@ -72,7 +73,7 @@ namespace Z80.Core
             WriteBytesAt(address, bytes);
         }
 
-        public void Initialise(IProcessor cpu)
+        public void Initialise(Processor cpu)
         {
             _cpu = cpu;
             _initialised = true;
