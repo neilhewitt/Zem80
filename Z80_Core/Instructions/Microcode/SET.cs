@@ -31,7 +31,7 @@ namespace Z80.Core
                 cpu.Memory.WriteByteAt(address, cpu.Memory.ReadByteAt(address).SetBit(bitIndex, true));
             }
 
-            return new ExecutionResult(package, new Flags(), false);
+            return new ExecutionResult(package, cpu.Registers.Flags, false);
         }
 
         public SET()

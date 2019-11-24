@@ -57,7 +57,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(package, new Flags(), false, pcWasSet);
+            return new ExecutionResult(package, cpu.Registers.Flags, false, pcWasSet);
         }
 
         public CALL()

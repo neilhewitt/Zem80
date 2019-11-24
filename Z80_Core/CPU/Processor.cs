@@ -24,7 +24,7 @@ namespace Z80.Core
         public ushort AddressBus { get; private set; }
         public byte DataBus { get; private set; }
         public InterruptMode InterruptMode { get; private set; } = InterruptMode.IM0;
-        public bool InterruptsEnabled { get; private set; }
+        public bool InterruptsEnabled { get; private set; } = true;
         public double SpeedInMhz { get; private set; }
 
         public long InstructionTicks { get; private set; }
@@ -33,15 +33,26 @@ namespace Z80.Core
 
         public event EventHandler<InstructionPackage> BeforeExecute;
         public event EventHandler<ExecutionResult> AfterExecute;
+        public event EventHandler BeforeStart;
+        public event EventHandler OnStop;
+        public event EventHandler OnHalt;
 
-        public void Start()
+        public void Start(bool synchronous = false)
         {
             if (!_running)
             {
+                BeforeStart?.Invoke(null, null);
                 _running = true;
 
-                _instructionCycle = new Task(InstructionCycle, TaskCreationOptions.None);
-                _instructionCycle.Start();
+                if (!synchronous) // run the CPU on a thread and return to the calling code
+                {
+                    _instructionCycle = new Task(InstructionCycle, TaskCreationOptions.None);
+                    _instructionCycle.Start();
+                }
+                else
+                {
+                    InstructionCycle(); // run the CPU as a synchronous task until stopped
+                }
             }
         }
 
@@ -49,11 +60,13 @@ namespace Z80.Core
         {
             _running = false;
             _halted = false;
+            OnStop?.Invoke(null, null);
         }
 
         public void Halt()
         {
             _halted = true;
+            OnHalt?.Invoke(null, null);
         }
 
         public void Resume()
@@ -194,7 +207,7 @@ namespace Z80.Core
             BeforeExecute?.Invoke(this, package);
             ExecutionResult result = package.Instruction.Implementation.Execute(this, package);
             AfterExecute?.Invoke(this, result);
-            Registers.SetFlags(result.Flags);
+            if (result.Flags != null) Registers.SetFlags(result.Flags);
 
             return result;
         }

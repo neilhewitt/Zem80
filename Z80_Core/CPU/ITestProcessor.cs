@@ -19,6 +19,9 @@ namespace Z80.Core
 
         event EventHandler<ExecutionResult> AfterExecute;
         event EventHandler<InstructionPackage> BeforeExecute;
+        event EventHandler BeforeStart;
+        event EventHandler OnStop;
+        event EventHandler OnHalt;
 
         void DisableInterrupts();
         void EnableInterrupts();
@@ -31,7 +34,7 @@ namespace Z80.Core
         void SetAddressBus(ushort value);
         void SetDataBus(byte value);
         void SetInterruptMode(InterruptMode mode);
-        void Start();
+        void Start(bool synchronous = false);
         void Stop();
         ExecutionResult ExecuteDirect(Instruction instruction, InstructionData data);
     }

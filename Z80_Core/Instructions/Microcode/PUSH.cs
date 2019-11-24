@@ -52,7 +52,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(package, new Flags(), false);
+            return new ExecutionResult(package, cpu.Registers.Flags, false);
         }
 
         public PUSH()

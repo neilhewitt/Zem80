@@ -57,7 +57,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(package, new Flags(), false);
+            return new ExecutionResult(package, null, false);
         }
 
         public EX()

@@ -9,7 +9,7 @@ namespace Z80.Core
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             cpu.Registers.PC = cpu.Stack.Pop();
-            return new ExecutionResult(package, new Flags(), false, true);
+            return new ExecutionResult(package, cpu.Registers.Flags, false, true);
         }
 
         public RETI()

@@ -27,7 +27,7 @@ namespace Z80.Core
             if (a == 0) flags.Zero = true;
             if (a.CountBits(true) % 2 == 0) flags.ParityOverflow = true;
 
-            return new ExecutionResult(package, new Flags(), false);
+            return new ExecutionResult(package, cpu.Registers.Flags, false);
         }
 
         public RLD()

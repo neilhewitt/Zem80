@@ -9,7 +9,7 @@ namespace Z80.Core
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             cpu.DisableInterrupts();
-            return new ExecutionResult(package, new Flags(), false);
+            return new ExecutionResult(package, cpu.Registers.Flags, false);
         }
 
         public DI()
