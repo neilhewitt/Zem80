@@ -7,10 +7,10 @@ namespace Z80.Core
     public interface IMemorySegment
     {
         ushort StartAddress { get; }
-        int SizeInBytes { get; }
+        uint SizeInBytes { get; }
         bool ReadOnly { get; }
-        byte ReadByteAt(int offset);
-        void WriteByteAt(int offset, byte value);
+        byte ReadByteAt(ushort offset);
+        void WriteByteAt(ushort offset, byte value);
         void Clear();
     }
 }

@@ -25,10 +25,12 @@ namespace Z80.Core
 
             if (instruction.Prefix == InstructionPrefix.Unprefixed)
             {
+                // IN A,(n)
                 @in(data.Argument1, RegisterIndex.A, RegisterIndex.A);
             }
             else
             {
+                // IN r,(C)
                 byte input = @in(r.C, RegisterIndex.B, data.RegisterIndex.Value);
                 if ((sbyte)input < 0) flags.Sign = true;
                 if (input == 0) flags.Zero = true;

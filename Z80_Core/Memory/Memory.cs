@@ -18,7 +18,7 @@ namespace Z80.Core
             _cpu.SetAddressBus(address);
 
             IMemorySegment segment = _map.MemoryFor(address);
-            _cpu.SetDataBus(segment?.ReadByteAt(address - segment.StartAddress) ?? 0x00); // default value if address is unallocated
+            _cpu.SetDataBus(segment?.ReadByteAt((ushort)(address - segment.StartAddress)) ?? 0x00); // default value if address is unallocated
             return _cpu.DataBus;
         }
 
@@ -53,7 +53,7 @@ namespace Z80.Core
             }
 
             _cpu.SetDataBus(value);
-            segment.WriteByteAt((address - segment.StartAddress), value);
+            segment.WriteByteAt((ushort)(address - segment.StartAddress), value);
         }
 
         public void WriteBytesAt(ushort address, params byte[] bytes)

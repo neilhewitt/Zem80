@@ -22,7 +22,7 @@ namespace Z80.Core
 
         public void Map(IMemorySegment entry, ushort startAddress, bool overwriteMappedPages = false)
         {
-            int size = entry.SizeInBytes;
+            int size = (int)entry.SizeInBytes;
 
             if (startAddress % 1024 > 0)
             {
