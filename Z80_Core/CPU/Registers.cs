@@ -17,7 +17,7 @@ namespace Z80.Core
 
         // 8-bit registers
         public byte A { get { return _registers[_AFOffset]; } set { _registers[_AFOffset] = value; } }
-        public byte F { get { return _registers[_AFOffset + 1]; } set { _registers[_AFOffset + 1] = value; } } // flags register
+        public byte F { get { return _registers[_AFOffset + 1]; } set { _registers[_AFOffset + 1] = value; } } // flags register - shouldn't set F or AF directly, use Flags property instead
         public byte B { get { return _registers[_BCDEHLOffset + 2]; } set { _registers[_BCDEHLOffset + 2] = value; } }
         public byte C { get { return _registers[_BCDEHLOffset + 3]; } set { _registers[_BCDEHLOffset + 3] = value; } }
         public byte D { get { return _registers[_BCDEHLOffset + 4]; } set { _registers[_BCDEHLOffset + 4] = value; } }
@@ -137,12 +137,12 @@ namespace Z80.Core
             }
         }
 
-        private ushort Get16BitValue(int wordIndex)
+        private ushort Get16BitValue(int offset)
         {
-            return (ushort)((_registers[wordIndex] * 256) + _registers[wordIndex + 1]);
+            return (ushort)((_registers[offset] * 256) + _registers[offset + 1]);
         }
 
-        private void Set16BitValue(int wordIndex, ushort value)
+        private void Set16BitValue(int offset, ushort value)
         {
             byte[] bytes = BitConverter.GetBytes(value);
             bool isLittleEndian = BitConverter.IsLittleEndian;
@@ -150,8 +150,8 @@ namespace Z80.Core
             // but this code *could* be running on a big-endian architecture and the ushort value will come out
             // in reverse order... so set the bytes directly
 
-            _registers[wordIndex] = bytes[isLittleEndian ? 1 : 0]; 
-            _registers[wordIndex + 1] = bytes[isLittleEndian ? 0 : 1];
+            _registers[offset] = bytes[isLittleEndian ? 1 : 0]; 
+            _registers[offset + 1] = bytes[isLittleEndian ? 0 : 1];
         }
 
         public Registers()

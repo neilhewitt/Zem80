@@ -16,7 +16,7 @@ namespace Z80.Core
             void call()
             {
                 cpu.Registers.PC += 3; // to allow for this instruction
-                cpu.Stack.Push(cpu.Registers.PC);
+                cpu.Memory.Stack.Push(cpu.Registers.PC);
                 cpu.Registers.PC = data.ArgumentsAsWord;
                 pcWasSet = true;
             }

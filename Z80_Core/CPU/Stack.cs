@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class Stack : IStack
     {
-        private IRegisters _registers;
+        private Registers _registers;
         private Memory _memory;
         private bool _initialised;
 
@@ -40,7 +40,7 @@ namespace Z80.Core
             _initialised = true;
         }
 
-        public Stack(IRegisters registers, ushort startAddress)
+        public Stack(Registers registers, ushort startAddress)
         {
             StartAddress = startAddress;
             _registers = registers;

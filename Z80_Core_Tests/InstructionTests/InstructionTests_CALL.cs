@@ -17,7 +17,7 @@ namespace Z80.Core.Tests
 
             Execute("CALL nn", arg1: address.LowByte(), arg2: address.HighByte());
 
-            ushort checkPC = (ushort)(_cpu.Stack.Pop() - 3); // remove bytes for the CALL instruction itself
+            ushort checkPC = (ushort)(_cpu.Memory.Stack.Pop() - 3); // remove bytes for the CALL instruction itself
             ushort newPC = Registers.PC;
 
             Assert.That(checkPC == pc && newPC == address);
@@ -34,7 +34,7 @@ namespace Z80.Core.Tests
             Registers.SetFlags(flags);
             Execute($"CALL {conditions.condition},nn", arg1: address.LowByte(), arg2: address.HighByte());
 
-            ushort oldPC = (ushort)(_cpu.Stack.Pop() - 3); // remove bytes for the CALL instruction itself
+            ushort oldPC = (ushort)(_cpu.Memory.Stack.Pop() - 3); // remove bytes for the CALL instruction itself
             ushort newPC = Registers.PC;
 
             // if conditional CALL fails, then newPC != address

@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class RegisterFlags : IFlags
     {
-        private IRegisters _registers;
+        private Registers _registers;
 
         public bool Sign { get { return GetBit(7); } set { SetBit(7, value); } }
         public bool Zero { get { return GetBit(6); } set { SetBit(6, value); } }
@@ -47,7 +47,7 @@ namespace Z80.Core
             _registers.F = 0;
         }
 
-        public RegisterFlags(IRegisters registers)
+        public RegisterFlags(Registers registers)
         {
             _registers = registers;
         }

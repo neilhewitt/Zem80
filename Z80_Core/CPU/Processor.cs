@@ -26,7 +26,6 @@ namespace Z80.Core
         public IRegisters Registers { get; private set; }
         public Memory Memory { get; private set; }
         public IPorts Ports { get; private set; }
-        public IStack Stack { get; private set; }
         public ushort AddressBus { get; private set; }
         public byte DataBus { get; private set; }
         public InterruptMode InterruptMode { get; private set; } = InterruptMode.IM0;
@@ -37,6 +36,7 @@ namespace Z80.Core
         public long ClockCycles { get; private set; }
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; // yay for tri-states!
 
+        // why yes, you do have to do event handlers this way if you want them to be on the interface and not on the type... no idea why
         event EventHandler<InstructionPackage> IDebugProcessor.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
         event EventHandler<ExecutionResult> IDebugProcessor.AfterExecute { add { _afterExecute += value; } remove { _afterExecute -= value; } }
         event EventHandler IDebugProcessor.BeforeStart { add { _beforeStart += value; } remove { _beforeStart -= value; } }
@@ -85,7 +85,7 @@ namespace Z80.Core
             Stop();
             Memory.Clear();
             Registers.Clear();
-            Stack.Reset();
+            Memory.Stack.Reset();
             if (!stopAfterReset) Start();
         }
 
@@ -159,7 +159,7 @@ namespace Z80.Core
 
                 if (_pendingNMI)
                 {
-                    Stack.Push(Registers.PC);
+                    Memory.Stack.Push(Registers.PC);
                     Registers.PC = 0x0066;
                     _pendingNMI = false;
                     _halted = false;
@@ -169,7 +169,7 @@ namespace Z80.Core
                 {
                     if (_interruptCallback == null && InterruptMode != InterruptMode.IM1)
                     {
-                        throw new Z80Exception("Interrupt mode is " + InterruptMode.ToString() + " which requires a callback for reading data from the device. Callback was null.");
+                        throw new Z80Exception("Interrupt mode is " + InterruptMode.ToString() + " which requires a callback for reading data from the interrupting device. Callback was null.");
                     }
 
                     switch (InterruptMode)
@@ -184,13 +184,13 @@ namespace Z80.Core
                             break;
 
                         case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
-                            Stack.Push(Registers.PC);
+                            Memory.Stack.Push(Registers.PC);
                             Registers.PC = 0x0038;
                             break;
 
                         case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
                             _interruptCallback(); // device must populate data bus with low byte of address
-                            Stack.Push(Registers.PC);
+                            Memory.Stack.Push(Registers.PC);
                             Registers.PC = (ushort)((Registers.I * 256) + DataBus);
                             break;
                     }
@@ -221,15 +221,14 @@ namespace Z80.Core
         internal Processor(IRegisters registers, IMemoryMap memoryMap, IStack stack, IPorts ports, double speedInMHz)
         {
             Registers = registers;
-            Stack = stack;
             Ports = ports;
             SpeedInMhz = speedInMHz;
 
-            Memory = new Memory(memoryMap);
-            Memory.Initialise(this); // creates circular reference that cannot be created at constructor-time
+            Memory = new Memory(memoryMap, stack);
+            Memory.Initialise(this);
 
             Registers.SP = stack.StartAddress;
-            Stack.Initialise(this);
+            stack.Initialise(this);
         }
     }
 }

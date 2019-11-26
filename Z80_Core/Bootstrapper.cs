@@ -10,13 +10,11 @@ namespace Z80.Core
         
         public static Processor BuildDefaultCPU()
         {
-            IRegisters registers = new Registers();
-            IMemoryMap map = new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES);
-            RAM ram = new RAM(0, MAX_MEMORY_SIZE_IN_BYTES);
-            map.Map(ram, 0);
-            Memory memory = new Memory(map);
-            IStack stack = new Stack(registers, (ushort)(MAX_MEMORY_SIZE_IN_BYTES - 3)); // leave two bytes at stack top
-            IPorts ports = new Ports();
+            Registers registers = new Registers();
+            MemoryMap map = new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES);
+            map.Map(new RAM(0, MAX_MEMORY_SIZE_IN_BYTES), 0);
+            Stack stack = new Stack(registers, (ushort)(MAX_MEMORY_SIZE_IN_BYTES - 3)); // leave two bytes at stack top
+            Ports ports = new Ports();
 
             Processor z80 = new Processor(registers, map, stack, ports, 4.00);
             return z80;

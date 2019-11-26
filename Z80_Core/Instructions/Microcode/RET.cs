@@ -15,7 +15,7 @@ namespace Z80.Core
 
             void ret()
             {
-                cpu.Registers.PC = cpu.Stack.Pop();
+                cpu.Registers.PC = cpu.Memory.Stack.Pop();
                 pcWasSet = true;
             }
 

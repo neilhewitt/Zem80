@@ -22,7 +22,6 @@ namespace Z80.Core
         IPorts Ports { get; }
         IRegisters Registers { get; }
         double SpeedInMhz { get; }
-        IStack Stack { get; }
         ProcessorState State { get; }
 
         void DisableInterrupts();

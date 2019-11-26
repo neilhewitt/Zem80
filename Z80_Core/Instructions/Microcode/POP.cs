@@ -11,7 +11,7 @@ namespace Z80.Core
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             IRegisters r = cpu.Registers;
-            IStack s = cpu.Stack;
+            IStack s = cpu.Memory.Stack;
 
             switch (instruction.Prefix)
             {
@@ -28,7 +28,7 @@ namespace Z80.Core
                             r.HL = s.Pop();
                             break;
                         case 0xF1: // POP AF
-                            r.AF = s.Pop();
+                            
                             break;
 
                     }
