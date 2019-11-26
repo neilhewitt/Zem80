@@ -11,7 +11,6 @@ namespace Z80.Core
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             IRegisters r = cpu.Registers;
-            IStack s = cpu.Memory.Stack;
 
             switch (instruction.Prefix)
             {
@@ -19,16 +18,16 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xC1: // POP BC
-                            r.BC = s.Pop();
+                            cpu.Pop(RegisterPairIndex.BC);
                             break;
                         case 0xD1: // POP DE
-                            r.DE = s.Pop();
+                            cpu.Pop(RegisterPairIndex.DE);
                             break;
                         case 0xE1: // POP HL
-                            r.HL = s.Pop();
+                            cpu.Pop(RegisterPairIndex.HL);
                             break;
                         case 0xF1: // POP AF
-                            
+                            cpu.Pop(RegisterPairIndex.AF);
                             break;
 
                     }
@@ -38,7 +37,7 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xE1: // POP IX
-                            r.IX = s.Pop();
+                            cpu.Pop(RegisterPairIndex.IX);
                             break;
 
                     }
@@ -48,7 +47,7 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xE1: // POP IY
-                            r.IY = s.Pop();
+                            cpu.Pop(RegisterPairIndex.IY);
                             break;
 
                     }

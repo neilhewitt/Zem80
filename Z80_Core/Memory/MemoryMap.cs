@@ -13,6 +13,7 @@ namespace Z80.Core
         private List<IMemorySegment> _segments = new List<IMemorySegment>();
 
         public int SizeInBytes { get; private set; }
+        public ushort TopOfStack { get; private set; }
 
         public IMemorySegment MemoryFor(ushort address)
         {
@@ -58,6 +59,11 @@ namespace Z80.Core
                     _segmentMap.Add(i, entry);
                 }
             }
+        }
+
+        public void SetTopOfStack(ushort newTopOfStack)
+        {
+            TopOfStack = newTopOfStack;
         }
 
         public void ClearAllWritableMemory()

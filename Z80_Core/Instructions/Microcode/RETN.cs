@@ -8,7 +8,7 @@ namespace Z80.Core
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
-            cpu.Registers.PC = cpu.Memory.Stack.Pop();
+            cpu.Pop(RegisterPairIndex.PC);
             return new ExecutionResult(package, cpu.Registers.Flags, false, true);
         }
 

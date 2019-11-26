@@ -14,6 +14,7 @@ namespace Z80.Core
         private Action _interruptCallback;
         private bool _pendingNMI;
         private Task _instructionCycle;
+        private ushort _topOfStack;
 
         private EventHandler<InstructionPackage> _beforeExecute;
         private EventHandler<ExecutionResult> _afterExecute;
@@ -85,8 +86,26 @@ namespace Z80.Core
             Stop();
             Memory.Clear();
             Registers.Clear();
-            Memory.Stack.Reset();
+            Registers.SP = _topOfStack;
             if (!stopAfterReset) Start();
+        }
+
+        public void Push(ushort value)
+        {
+            Registers.SP -= 2;
+            Memory.WriteWordAt(Registers.SP, value);
+        }
+
+        public void Pop(RegisterPairIndex register)
+        {
+            ushort value = Memory.ReadWordAt(Registers.SP);
+            Registers.SP += 2;
+            Registers[register] = value;
+        }
+
+        public ushort Peek()
+        {
+            return Memory.ReadWordAt(Registers.SP);
         }
 
         public void SetInterruptMode(InterruptMode mode)
@@ -159,7 +178,7 @@ namespace Z80.Core
 
                 if (_pendingNMI)
                 {
-                    Memory.Stack.Push(Registers.PC);
+                    Push(Registers.PC);
                     Registers.PC = 0x0066;
                     _pendingNMI = false;
                     _halted = false;
@@ -184,13 +203,13 @@ namespace Z80.Core
                             break;
 
                         case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
-                            Memory.Stack.Push(Registers.PC);
+                            Push(Registers.PC);
                             Registers.PC = 0x0038;
                             break;
 
                         case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
                             _interruptCallback(); // device must populate data bus with low byte of address
-                            Memory.Stack.Push(Registers.PC);
+                            Push(Registers.PC);
                             Registers.PC = (ushort)((Registers.I * 256) + DataBus);
                             break;
                     }
@@ -218,17 +237,17 @@ namespace Z80.Core
             return result;
         }
 
-        internal Processor(IRegisters registers, IMemoryMap memoryMap, IStack stack, IPorts ports, double speedInMHz)
+        internal Processor(IRegisters registers, IMemoryMap memoryMap, IPorts ports, ushort topOfStackAddress, double speedInMHz)
         {
             Registers = registers;
             Ports = ports;
             SpeedInMhz = speedInMHz;
 
-            Memory = new Memory(memoryMap, stack);
+            Memory = new Memory(memoryMap);
             Memory.Initialise(this);
 
-            Registers.SP = stack.StartAddress;
-            stack.Initialise(this);
+            _topOfStack = topOfStackAddress;
+            Registers.SP = _topOfStack;
         }
     }
 }

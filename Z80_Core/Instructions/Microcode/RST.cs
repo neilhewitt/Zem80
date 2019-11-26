@@ -25,7 +25,7 @@ namespace Z80.Core
                    _ => 0x0000
             };
 
-            cpu.Memory.Stack.Push(cpu.Registers.PC);
+            cpu.Push(cpu.Registers.PC);
             cpu.Registers.PC = address;
 
             return new ExecutionResult(package, cpu.Registers.Flags, false, true);

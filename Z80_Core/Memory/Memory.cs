@@ -9,11 +9,9 @@ namespace Z80.Core
         private IMemoryMap _map;
         private Processor _cpu;
         private bool _initialised;
-        private IStack _stack;
 
         public int SizeInBytes => _map.SizeInBytes;
 
-        public IStack Stack => _stack;
 
         public byte ReadByteAt(ushort address)
         {
@@ -87,10 +85,9 @@ namespace Z80.Core
             _map.ClearAllWritableMemory();
         }
 
-        public Memory(IMemoryMap map, IStack stack)
+        public Memory(IMemoryMap map)
         {
             _map = map;
-            _stack = stack;
         }
     }
 }

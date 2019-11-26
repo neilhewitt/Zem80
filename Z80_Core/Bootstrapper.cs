@@ -13,10 +13,9 @@ namespace Z80.Core
             Registers registers = new Registers();
             MemoryMap map = new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES);
             map.Map(new RAM(0, MAX_MEMORY_SIZE_IN_BYTES), 0);
-            Stack stack = new Stack(registers, (ushort)(MAX_MEMORY_SIZE_IN_BYTES - 3)); // leave two bytes at stack top
             Ports ports = new Ports();
 
-            Processor z80 = new Processor(registers, map, stack, ports, 4.00);
+            Processor z80 = new Processor(registers, map, ports, MAX_MEMORY_SIZE_IN_BYTES - 3, 4.00);
             return z80;
         }
 
