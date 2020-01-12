@@ -39,6 +39,12 @@ namespace Z80.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool HalfCarry(this sbyte value)
+        {
+            return (((value & 0x0F) & 0x10) != 0x10);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool OverflowsWhenAdding(this byte first, byte second)
         {
             short result = (short)(first + second);

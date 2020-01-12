@@ -53,6 +53,7 @@ namespace Z80_Console
 
                 while (_cpu.State == ProcessorState.Running)
                 {
+                    //DisplayState(_cpu, null);
                     //var key = Console.ReadKey(true);
                     //if (key.KeyChar == 'h') { _cpu.Halt(); DisplayState(_cpu, null); }
                     //if (key.KeyChar == 'r') _cpu.Resume();
@@ -60,13 +61,13 @@ namespace Z80_Console
                 }
 
                 Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine("\r\n\r\nResetting VM...\r\n");
+                //Console.WriteLine("\r\n\r\nResetting VM...\r\n");
 
                 vm.Reset(true);
             }
         }
 
-        private static void DisplayState(Processor cpu, InstructionPackage package)
+        private static void DisplayState(IDebugProcessor cpu, InstructionPackage package)
         {
             Console.Clear();
             Console.SetCursorPosition(0, 0);

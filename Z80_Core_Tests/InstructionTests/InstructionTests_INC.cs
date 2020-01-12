@@ -14,7 +14,7 @@ namespace Z80.Core.Tests
         {
             bool carry = RandomByte() % 2 == 0; // simulate existing carry
             Registers.Flags.Carry = carry;
-            
+
             byte value = RandomByte();
             ushort result = (ushort)(value + 1);
             bool zero = result == 0;

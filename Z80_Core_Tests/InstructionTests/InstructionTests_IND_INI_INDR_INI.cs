@@ -42,16 +42,9 @@ namespace Z80.Core.Tests
                                                              (instruction == "INI" ? address + 1 : address - 1));
 
             // address is 1 byte offset from the data now, so put it back
-            if (instruction.StartsWith("INI"))
-            {
-                Registers.HL--;
-            }
-            else
-            {
-                Registers.HL++;
-            }
+            if (instruction.StartsWith("INI")) Registers.HL--; else Registers.HL++;
 
-            byte[] checkData = _cpu.Memory.ReadBytesAt(Registers.HL, count).Reverse().ToArray(); // reverse order in RAM vs input
+            byte[] checkData = _cpu.Memory.ReadBytesAt(Registers.HL, count).Reverse().ToArray(); // bytes are in reverse order in RAM vs input
 
             Assert.That(addressCorrect && Registers.B == 0 && data.SequenceEqual(checkData) &&
                 repeats ? TestFlags(zero: true, subtract: true) : true);

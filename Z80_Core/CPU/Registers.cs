@@ -51,7 +51,7 @@ namespace Z80.Core
         public byte R { get { return _registers[23]; } set { _registers[23] = value; } }
 
         // program counter
-        public ushort PC { get { return Get16BitValue(24); } set { Set16BitValue(24, value); } } // program counter
+        public ushort PC { get { return Get16BitValue(24); } set { Set16BitValue(24, value); } }
 
         public IFlags Flags { get; private set; }
 

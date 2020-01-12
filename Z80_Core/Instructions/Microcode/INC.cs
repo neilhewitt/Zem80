@@ -17,7 +17,7 @@ namespace Z80.Core
             ushort incw(ushort value)
             {
                 if (value < 0xFFFF) return (ushort)(value + 1);
-                return value;
+                return 0;
             }
 
             byte inc(byte value)
@@ -30,8 +30,8 @@ namespace Z80.Core
                 if (value == 0x7F) flags.ParityOverflow = true;
                 flags.Subtract = true;
 
-                if (value > 0) return (byte)(result);
-                return value;
+                if (result > 0xFF) result = 0;
+                return (byte)result;
             }
 
             switch (instruction.Prefix)
