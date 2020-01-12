@@ -14,10 +14,10 @@ namespace Z80.Core.Tests
         {
             PortSignal signal;
             byte data = RandomByte();
+
             Func<byte> reader = () => data;
-            Action<byte> writer = null;
             Action<PortSignal> signaller = (s) => { signal = s; };
-            _cpu.Ports[0].Connect(reader, writer, signaller);
+            _cpu.Ports[0].Connect(reader, null, signaller);
 
             string from = register == RegisterIndex.A ? "(n)" : "(C)";
             Execute($"IN {register},{from}", registerIndex:register);

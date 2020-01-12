@@ -17,13 +17,13 @@ namespace Z80.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte LowByte(this ushort input)
         {
-            return (byte)(input % 256);
+            return (byte)(input % 256); 
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte HighByte(this ushort input)
         {
-            return (byte)(input / 256);
+            return (byte)(input / 256); // note this will always be valid, even on big-endian architectures
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -39,7 +39,7 @@ namespace Z80.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool HalfCarry(this sbyte value)
+        public static bool HalfCarryWhenConvertingToByte(this sbyte value)
         {
             return (((value & 0x0F) & 0x10) != 0x10);
         }

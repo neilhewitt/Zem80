@@ -16,9 +16,14 @@ namespace Z80.SimpleVM
             _cpu.Start();
         }
 
+        public void Stop()
+        {
+            _cpu.Stop();
+        }
+
         public void Reset(bool stopAfterReset)
         {
-            _cpu.Reset(stopAfterReset);
+            _cpu.ResetAndClearMemory();
         }
 
         public void Load(ushort address, params byte[] code)

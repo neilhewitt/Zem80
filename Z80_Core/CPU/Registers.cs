@@ -146,9 +146,9 @@ namespace Z80.Core
         {
             byte[] bytes = BitConverter.GetBytes(value);
             bool isLittleEndian = BitConverter.IsLittleEndian;
-            // storage of register data is always in little-endian format (as the Z80 is little-endian, as is x86)
-            // but this code *could* be running on a big-endian architecture and the ushort value will come out
-            // in reverse order... so set the bytes directly
+            // storage of register data is always in little-endian format (as both the Z80 and x86 are little-endian)
+            // but .NET is portable so this code *could* be running on a big-endian architecture and the ushort value will come out
+            // in reverse order... so set the bytes directly (this is why we're using BitConverter here, because it knows the endian-ness)
 
             _registers[offset] = bytes[isLittleEndian ? 1 : 0]; 
             _registers[offset + 1] = bytes[isLittleEndian ? 0 : 1];

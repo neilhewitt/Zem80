@@ -10,9 +10,9 @@ namespace Z80.Core
 
         private bool _running;
         private bool _halted;
-        private bool _pendingINT;
+        private bool _pendingInterrupt;
         private Action _interruptCallback;
-        private bool _pendingNMI;
+        private bool _pendingNonMaskableInterrupt;
         private Task _instructionCycle;
         private ushort _topOfStack;
 
@@ -38,6 +38,7 @@ namespace Z80.Core
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; // yay for tri-states!
 
         // why yes, you do have to do event handlers this way if you want them to be on the interface and not on the type... no idea why
+        // (basically, automatic properties don't work as events when they are explicitly on the interface, so we use a backing variable... old-school style)
         event EventHandler<InstructionPackage> IDebugProcessor.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
         event EventHandler<ExecutionResult> IDebugProcessor.AfterExecute { add { _afterExecute += value; } remove { _afterExecute -= value; } }
         event EventHandler IDebugProcessor.BeforeStart { add { _beforeStart += value; } remove { _beforeStart -= value; } }
@@ -81,13 +82,13 @@ namespace Z80.Core
             _halted = false;
         }
 
-        public void Reset(bool stopAfterReset = false)
+        public void ResetAndClearMemory()
         {
-            Stop();
+            if (State != ProcessorState.Stopped) throw new Z80Exception("Cannot reset the processor unless it is stopped. Call Stop() first.");
+
             Memory.Clear();
             Registers.Clear();
             Registers.SP = _topOfStack;
-            if (!stopAfterReset) Start();
         }
 
         public void Push(ushort value)
@@ -117,14 +118,14 @@ namespace Z80.Core
         {
             if (InterruptsEnabled)
             {
-                _pendingINT = true;
+                _pendingInterrupt = true;
                 _interruptCallback = callback;
             }
         }
 
         public void RaiseNonMasktableInterrupt()
         {
-            _pendingNMI = true;
+            _pendingNonMaskableInterrupt = true;
         }
 
         public void SetAddressBus(ushort value)
@@ -176,15 +177,15 @@ namespace Z80.Core
                     ClockCycles++; // while halted we should be running NOP continuously (but no Program Counter movement), so just add a cycle each time
                 }
 
-                if (_pendingNMI)
+                if (_pendingNonMaskableInterrupt)
                 {
                     Push(Registers.PC);
                     Registers.PC = 0x0066;
-                    _pendingNMI = false;
+                    _pendingNonMaskableInterrupt = false;
                     _halted = false;
                 }
 
-                if (_pendingINT && InterruptsEnabled)
+                if (_pendingInterrupt && InterruptsEnabled)
                 {
                     if (_interruptCallback == null && InterruptMode != InterruptMode.IM1)
                     {
@@ -214,7 +215,7 @@ namespace Z80.Core
                             break;
                     }
 
-                    _pendingINT = false;
+                    _pendingInterrupt = false;
                     _halted = false;
                 }
 

@@ -29,7 +29,7 @@ namespace Z80.Core
         void Halt();
         void RaiseInterrupt(Action callback);
         void RaiseNonMasktableInterrupt();
-        void Reset(bool stopAfterReset = false);
+        void ResetAndClearMemory();
         void Resume();
         void Push(ushort value);
         void Pop(RegisterPairIndex register);

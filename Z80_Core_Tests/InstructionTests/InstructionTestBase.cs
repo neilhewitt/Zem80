@@ -23,7 +23,7 @@ namespace Z80.Core.Tests
         [SetUp]
         public void Init()
         {
-            _cpu.Reset(true); // clears RAM, registers etc between tests
+            _cpu.ResetAndClearMemory();
         }
 
         public ExecutionResult Execute(string mnemonic, byte? arg1 = null, byte? arg2 = null, byte? bitIndex = null, RegisterIndex? registerIndex = null)
