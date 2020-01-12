@@ -31,7 +31,7 @@ namespace Z80.Core.Tests
                 WriteByteAt((ushort)(startAddress + i), data[i]);
             }
 
-            // if LDDR, we start at the *end* of the block, so increae HL to suit
+            // if LDDR, we start at the *end* of the block, so increase HL to suit
             Registers.HL = (instruction == "LDDR" ? (ushort)(startAddress + count - 1) : startAddress);
             Registers.BC = count;
             Registers.DE = destinationAddress;
@@ -48,7 +48,7 @@ namespace Z80.Core.Tests
 
             byte[] checkData = _cpu.Memory.ReadBytesAt(startAddress, count).ToArray();
 
-            Assert.That(addressCorrect && Registers.B == 0 && data.SequenceEqual(checkData));
+            Assert.That(addressCorrect && Registers.BC == 0 && data.SequenceEqual(checkData));
         }
     }
 }

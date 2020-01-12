@@ -24,9 +24,7 @@ namespace Z80.Core.Tests
             bool parityOverflow = (byte)result == 0x80;
             bool carry = (byte)result != 0x00;
 
-            Assert.That(actual == result && TestFlags(
-                zero: zero, sign: sign, halfCarry: halfCarry, parityOverflow: parityOverflow, carry: carry
-                ));
+            Assert.That(actual == result && TestFlags(zero: zero, sign: sign, halfCarry: halfCarry, parityOverflow: parityOverflow, carry: carry));
         }
     }
 }
