@@ -17,3 +17,5 @@ Beyond this, I *may* attempt to write a ZX Spectrum VM hosting the Z80.
 25/09/19 - the project is in its infancy and I'm a long way from committing any usable code. Don't hold your breath :-)
 
 03/11/19 - basic framework of the emulator is in place. The emulator runs, executes instructions, and can successfully run some very basic test code. However: it's still a long way from being usable. There is currently no proper timing, I/O is something of a bodge, performance is actually slower than a Z80 at 4MHz in some cases (!), there are almost no unit tests, and most of the instructions have not been completely tested. Right now I am working on a unit test suite for the base emulator before I proceed with further development. 
+
+12/01/20 - still working on the test suite (it's going to be bigger than the microcode by a distance) and it will take a while as I've slowed down a lot due to starting a new job. But I will probably merge a version to master soon that passes basic tests.
