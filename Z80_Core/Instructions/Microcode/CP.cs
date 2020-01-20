@@ -19,7 +19,7 @@ namespace Z80.Core
                 byte b = value;
                 short result = (short)(a - b); // note signed short - contains overflow, caters for negative results
                 if (result == 0) flags.Zero = true;
-                if (result < 0) flags.Sign = true;
+                if ((sbyte)result < 0) flags.Sign = true;
                 if ((a & 0x0F) < (b & 0x0F)) flags.HalfCarry = true;
                 if (result > 0x7F || result < -0x80) flags.ParityOverflow = true;
                 if (result > 0xFF) flags.Carry = true;

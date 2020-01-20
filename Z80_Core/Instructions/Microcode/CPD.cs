@@ -18,7 +18,7 @@ namespace Z80.Core
             cpu.Registers.HL--;
             cpu.Registers.BC--;
 
-            if (result < 0) flags.Sign = true;
+            if ((sbyte)result < 0) flags.Sign = true;
             if (result == 0) flags.Zero = true;
             if ((a & 0x0F) < (b & 0x0F)) flags.HalfCarry = true;
             if (cpu.Registers.BC == 0) flags.ParityOverflow = true;

@@ -19,7 +19,7 @@ namespace Z80.Core.Tests
             short result = (short)(first - second);
 
             bool zero = (result == 0);
-            bool sign = (result < 0);
+            bool sign = ((sbyte)result < 0);
             bool halfCarry = first.HalfCarryWhenSubtracting(second);
             bool parityOverflow = byteCount == 1; // will become 0
             bool carry = (result > 0xFF);
@@ -45,7 +45,7 @@ namespace Z80.Core.Tests
             short result = (short)(first - second);
 
             bool zero = (result == 0);
-            bool sign = (result < 0);
+            bool sign = ((sbyte)result < 0);
             bool halfCarry = first.HalfCarryWhenSubtracting(second);
             bool parityOverflow = byteCount == 1; // will become 0
             bool carry = (result > 0xFF);
@@ -82,7 +82,7 @@ namespace Z80.Core.Tests
                 byte second = _cpu.Memory.ReadByteAt(Registers.HL);
                 short result = (short)(first - second);
                 zero = (result == 0);
-                sign = (result < 0);
+                sign = ((sbyte)result < 0);
                 halfCarry = first.HalfCarryWhenSubtracting(second);
 
                 ushort hl = Registers.HL;
@@ -118,7 +118,7 @@ namespace Z80.Core.Tests
                 byte second = _cpu.Memory.ReadByteAt(Registers.HL);
                 short result = (short)(first - second);
                 zero = (result == 0);
-                sign = (result < 0);
+                sign = ((sbyte)result < 0);
                 halfCarry = first.HalfCarryWhenSubtracting(second);
 
                 ushort hl = Registers.HL;

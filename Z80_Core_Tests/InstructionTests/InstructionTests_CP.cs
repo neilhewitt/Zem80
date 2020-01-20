@@ -17,7 +17,7 @@ namespace Z80.Core.Tests
             short result = (short)(first - second);
             
             bool zero = (result == 0);
-            bool sign = (result < 0);
+            bool sign = ((sbyte)result < 0);
             bool halfCarry = first.HalfCarryWhenSubtracting(second);
             bool parityOverflow = first.OverflowsWhenSubtracting(second);
             bool carry = (result > 0xFF);
@@ -37,7 +37,7 @@ namespace Z80.Core.Tests
             short result = (short)(first - second);
 
             bool zero = (result == 0);
-            bool sign = (result < 0);
+            bool sign = ((sbyte)result < 0);
             bool halfCarry = first.HalfCarryWhenSubtracting(second);
             bool parityOverflow = first.OverflowsWhenSubtracting(second);
             bool carry = (result > 0xFF);
@@ -57,7 +57,7 @@ namespace Z80.Core.Tests
             short result = (short)(first - second);
 
             bool zero = (result == 0);
-            bool sign = (result < 0);
+            bool sign = ((sbyte)result < 0);
             bool halfCarry = first.HalfCarryWhenSubtracting(second);
             bool parityOverflow = first.OverflowsWhenSubtracting(second);
             bool carry = (result > 0xFF);
@@ -80,7 +80,7 @@ namespace Z80.Core.Tests
             short result = (short)(first - second);
 
             bool zero = (result == 0);
-            bool sign = (result < 0);
+            bool sign = ((sbyte)result < 0);
             bool halfCarry = first.HalfCarryWhenSubtracting(second);
             bool parityOverflow = first.OverflowsWhenSubtracting(second);
             bool carry = (result > 0xFF);
