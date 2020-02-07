@@ -21,9 +21,11 @@ namespace Z80.SimpleVM
             _cpu.Stop();
         }
 
-        public void Reset(bool stopAfterReset)
+        public void Reset()
         {
+            _cpu.Stop();
             _cpu.ResetAndClearMemory();
+            _cpu.Start();
         }
 
         public void Load(ushort address, params byte[] code)
@@ -47,7 +49,7 @@ namespace Z80.SimpleVM
 
         public VirtualMachine()
         {
-            _cpu = Bootstrapper.BuildDefaultCPU();
+            _cpu = Bootstrapper.BuildCPU();
             _cpu.Ports[0].Connect(ReadByte, WriteByte, Signal);
         }
     }

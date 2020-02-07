@@ -4,13 +4,13 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class Memory
+    public class Memory : IMemory
     {
         private IMemoryMap _map;
         private Processor _cpu;
         private bool _initialised;
 
-        public int SizeInBytes => _map.SizeInBytes;
+        public uint SizeInBytes => _map.SizeInBytes;
 
 
         public byte ReadByteAt(ushort address)
@@ -25,7 +25,7 @@ namespace Z80.Core
 
         public byte[] ReadBytesAt(ushort address, ushort numberOfBytes)
         {
-            int availableBytes = numberOfBytes;
+            uint availableBytes = numberOfBytes;
             if (address + availableBytes >= SizeInBytes) availableBytes = SizeInBytes - address; // if this read overflows the end of memory, we can read only this many bytes
 
             byte[] bytes = new byte[numberOfBytes];
@@ -74,9 +74,10 @@ namespace Z80.Core
             WriteBytesAt(address, bytes);
         }
 
-        public void Initialise(Processor cpu)
+        public void Initialise(Processor cpu, IMemoryMap map)
         {
             _cpu = cpu;
+            _map = map;
             _initialised = true;
         }
 
@@ -85,9 +86,8 @@ namespace Z80.Core
             _map.ClearAllWritableMemory();
         }
 
-        public Memory(IMemoryMap map)
+        public Memory()
         {
-            _map = map;
         }
     }
 }

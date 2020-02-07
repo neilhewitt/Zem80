@@ -14,7 +14,7 @@ namespace Z80.Core.Tests
         [TestCase("OUTI")]
         [TestCase("OTDR")]
         [TestCase("OTIR")]
-        public void OTD_OTI_OTDR_OTIR(string instruction)
+        public void OUTD_OUTI_OTDR_OTIR(string instruction)
         {
             bool repeats = instruction == "OTIR" || instruction == "OTDR";
 

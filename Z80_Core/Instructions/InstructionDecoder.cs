@@ -28,13 +28,9 @@ namespace Z80.Core
 
                 if (prefix == 0xCB || ((prefix == 0xDD || prefix == 0xFD) && instructionBytes[1] == 0xCB))
                 {
-                    // extended instructions (including double-prefix 'DD CB' and 'FD CD')
-                    bool doubleBytePrefixed = prefix != 0xCB;
-                    opcode = doubleBytePrefixed ? instructionBytes[3] : instructionBytes[1];
-
-                    Instruction instruction = doubleBytePrefixed ?
-                        Instruction.Find(opcode, prefix == 0xDD ? InstructionPrefix.DDCB : InstructionPrefix.FDCB) :
-                        Instruction.Find(opcode, InstructionPrefix.CB);
+                    // extended instructions (including double-prefix 'DD CB' and 'FD CB')
+                    opcode = (prefix != 0xCB) ? instructionBytes[3] : instructionBytes[1];
+                    Instruction instruction = Instruction.Find(opcode, (InstructionPrefix)prefix);
 
                     if (instruction.Modifier == ModifierType.Register) // +r
                     {
@@ -75,7 +71,7 @@ namespace Z80.Core
                     // plus additional instructions unique to IX / IY including single-byte operations on high / low bytes of either
 
                     opcode = instructionBytes[1];
-                    Instruction instruction = Instruction.Find(opcode, prefix == 0xDD ? InstructionPrefix.DD : InstructionPrefix.FD);
+                    Instruction instruction = Instruction.Find(opcode, (InstructionPrefix)prefix);
 
                     if (instruction.Modifier == ModifierType.IndexRegister) // +p / +q
                     {
@@ -159,6 +155,8 @@ namespace Z80.Core
                 }
                 else
                 {
+                    // could be any size instruction between 2 and 4 bytes
+                    // find instruction and check size, then assemble instruction bytes from device
                     byte opcode = instructionBytes[1];
                     Instruction instruction = Instruction.Find(instructionBytes[0], (InstructionPrefix)instructionBytes[1]);
                     for (int i = 2; i <= instruction.SizeInBytes; i++) // 2 - 4 bytes
@@ -169,6 +167,8 @@ namespace Z80.Core
             }
             else
             {
+                // could be any size instruction between 1 and 3 bytes
+                // find instruction and check size, then assemble instruction bytes from device
                 byte opcode = instructionBytes[0];
                 Instruction instruction = Instruction.Find(opcode, InstructionPrefix.Unprefixed);
                 for (int i = 1; i <= instruction.SizeInBytes; i++) // 1 - 3 bytes

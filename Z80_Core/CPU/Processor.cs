@@ -24,8 +24,10 @@ namespace Z80.Core
 
         private InstructionDecoder _decoder = new InstructionDecoder();
 
+        public IDebugProcessor Debuggable => (IDebugProcessor)this;
+
         public IRegisters Registers { get; private set; }
-        public Memory Memory { get; private set; }
+        public IMemory Memory { get; private set; }
         public IPorts Ports { get; private set; }
         public ushort AddressBus { get; private set; }
         public byte DataBus { get; private set; }
@@ -238,14 +240,14 @@ namespace Z80.Core
             return result;
         }
 
-        internal Processor(IRegisters registers, IMemoryMap memoryMap, IPorts ports, ushort topOfStackAddress, double speedInMHz)
+        internal Processor(IRegisters registers, IMemoryMap map, IMemory memory, IPorts ports, ushort topOfStackAddress, double speedInMHz)
         {
             Registers = registers;
             Ports = ports;
             SpeedInMhz = speedInMHz;
 
-            Memory = new Memory(memoryMap);
-            Memory.Initialise(this);
+            Memory = memory;
+            Memory.Initialise(this, map);
 
             _topOfStack = topOfStackAddress;
             Registers.SP = _topOfStack;

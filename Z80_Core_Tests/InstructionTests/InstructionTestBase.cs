@@ -16,7 +16,7 @@ namespace Z80.Core.Tests
         [OneTimeSetUp]
         public void Setup()
         {
-            _cpu = Bootstrapper.BuildDebugCPU();
+            _cpu = Bootstrapper.BuildCPU().Debuggable;
             _random = new Random(DateTime.Now.Millisecond);
         }
 

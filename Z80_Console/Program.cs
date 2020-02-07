@@ -63,7 +63,8 @@ namespace Z80_Console
                 Console.ForegroundColor = ConsoleColor.White;
                 //Console.WriteLine("\r\n\r\nResetting VM...\r\n");
 
-                vm.Reset(true);
+                vm.Stop();
+                //vm.Reset();
             }
         }
 

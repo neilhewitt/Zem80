@@ -12,8 +12,7 @@ namespace Z80.Core
         private Dictionary<int, IMemorySegment> _segmentMap = new Dictionary<int, IMemorySegment>();
         private List<IMemorySegment> _segments = new List<IMemorySegment>();
 
-        public int SizeInBytes { get; private set; }
-        public ushort TopOfStack { get; private set; }
+        public uint SizeInBytes { get; private set; }
 
         public IMemorySegment MemoryFor(ushort address)
         {
@@ -61,11 +60,6 @@ namespace Z80.Core
             }
         }
 
-        public void SetTopOfStack(ushort newTopOfStack)
-        {
-            TopOfStack = newTopOfStack;
-        }
-
         public void ClearAllWritableMemory()
         {
             foreach(IMemorySegment segment in _segments)
@@ -85,9 +79,10 @@ namespace Z80.Core
             return pageNumber * PAGE_SIZE_IN_BYTES;
         }
 
-        public MemoryMap(int sizeInBytes)
+        public MemoryMap(uint sizeInBytes, bool autoMap = false)
         {
             SizeInBytes = sizeInBytes;
+            if (autoMap) Map(new RAM(0, sizeInBytes), 0); // maps a single block to the whole of memory space (you can map ROM in later)
         }
     }
 }

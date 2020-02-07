@@ -18,7 +18,7 @@ namespace Z80.Core
         long InstructionTicks { get; }
         InterruptMode InterruptMode { get; }
         bool InterruptsEnabled { get; }
-        Memory Memory { get; }
+        IMemory Memory { get; }
         IPorts Ports { get; }
         IRegisters Registers { get; }
         double SpeedInMhz { get; }

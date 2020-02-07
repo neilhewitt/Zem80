@@ -2,8 +2,7 @@
 {
     public interface IMemoryMap
     {
-        int SizeInBytes { get; }
-        ushort TopOfStack { get; }
+        uint SizeInBytes { get; }
 
         void Map(IMemorySegment memory, ushort startAddress, bool overwriteMappedPages = false);
         void ClearAllWritableMemory();
