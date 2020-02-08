@@ -19,7 +19,7 @@ namespace Z80.Core.Tests
 
             Execute($"PUSH { registerPair }");
 
-            Assert.That(WordAt(stackAddress) == value && Registers.SP == stackAddress - 2);
+            Assert.That(WordAt(Registers.SP) == value && Registers.SP == stackAddress - 2);
         }
     }
 }

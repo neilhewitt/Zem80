@@ -30,7 +30,7 @@ namespace Z80.Core.Tests
         public void EX_xSP_HL()
         {
             ushort stackWord = RandomWord();
-            _cpu.Push(stackWord);
+            WriteWordAt(Registers.SP, stackWord);
 
             ushort hlWord = RandomWord();
             Registers.HL = hlWord;
@@ -57,7 +57,7 @@ namespace Z80.Core.Tests
         public void EX_xSP_Index(RegisterPairIndex indexRegister)
         {
             ushort stackWord = RandomWord();
-            _cpu.Push(stackWord);
+            WriteWordAt(Registers.SP, stackWord);
 
             ushort indexWord = RandomWord();
             Registers[indexRegister] = indexWord;
