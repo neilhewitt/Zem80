@@ -10,8 +10,6 @@ namespace Z80.Core
         event EventHandler OnStop;
         event EventHandler OnHalt;
 
-        ExecutionResult ExecuteDirect(Instruction instruction, InstructionData data);
-
         ushort AddressBus { get; }
         long ClockCycles { get; }
         byte DataBus { get; }
@@ -40,6 +38,6 @@ namespace Z80.Core
         void SetInterruptMode(InterruptMode mode);
         void Start(bool synchronous = false);
         void Stop();
-
+        ExecutionResult Execute(InstructionPackage package);
     }
 }

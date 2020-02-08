@@ -95,8 +95,8 @@ namespace Z80.Core
 
         public void Push(ushort value)
         {
-            Registers.SP -= 2;
             Memory.WriteWordAt(Registers.SP, value);
+            Registers.SP -= 2;
         }
 
         public void Pop(RegisterPairIndex register)
@@ -155,6 +155,16 @@ namespace Z80.Core
             InterruptsEnabled = true;
         }
 
+        public ExecutionResult Execute(InstructionPackage package)
+        {
+            _beforeExecute?.Invoke(this, package);
+            ExecutionResult result = package.Instruction.Implementation.Execute(this, package);
+            _afterExecute?.Invoke(this, result);
+            if (result.Flags != null) Registers.SetFlags(result.Flags);
+
+            return result;
+        }
+
         private void InstructionCycle()
         {
             while (_running)
@@ -165,7 +175,7 @@ namespace Z80.Core
                     InstructionPackage package = _decoder.Decode(instruction);
                     if (package == null) Stop(); // only happens if instruction buffer is short (end of memory reached) and corrupt (not a valid instruction)
 
-                    ExecutionResult result = ExecuteInstructionPackage(package);
+                    ExecutionResult result = Execute(package);
                     if (!result.ProgramCounterUpdated)
                     {
                         if (Registers.PC + package.Instruction.SizeInBytes >= Memory.SizeInBytes) Stop(); // PC overflow
@@ -202,7 +212,7 @@ namespace Z80.Core
                                     _interruptCallback(); // each time callback is called, device will set data bus with next instruction byte
                                     return DataBus;
                                 });
-                            ExecutionResult result = ExecuteInstructionPackage(package); // instruction is *usually* RST which diverts execution, but can be any valid instruction
+                            ExecutionResult result = Execute(package); // instruction is *usually* RST which diverts execution, but can be any valid instruction
                             break;
 
                         case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
@@ -223,21 +233,6 @@ namespace Z80.Core
 
                 InstructionTicks++;
             }
-        }
-
-        ExecutionResult IDebugProcessor.ExecuteDirect(Instruction instruction, InstructionData data)
-        {
-            return ExecuteInstructionPackage(new InstructionPackage(instruction, data));
-        }
-
-        private ExecutionResult ExecuteInstructionPackage(InstructionPackage package)
-        {
-            _beforeExecute?.Invoke(this, package);
-            ExecutionResult result = package.Instruction.Implementation.Execute(this, package);
-            _afterExecute?.Invoke(this, result);
-            if (result.Flags != null) Registers.SetFlags(result.Flags);
-
-            return result;
         }
 
         internal Processor(IRegisters registers, IMemoryMap map, IMemory memory, IPorts ports, ushort topOfStackAddress, double speedInMHz)

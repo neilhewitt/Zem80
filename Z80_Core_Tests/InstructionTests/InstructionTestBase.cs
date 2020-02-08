@@ -42,7 +42,7 @@ namespace Z80.Core.Tests
                 IndexIY = instruction.Mnemonic.Contains("(IY)")
             };
             
-            ExecutionResult result = _cpu.ExecuteDirect(instruction, data); // only available on ITestProcessor test/debug interface - sets flags but not PC
+            ExecutionResult result = _cpu.Execute(new InstructionPackage(instruction, data)); // only available on IDebugProcessor debug interface - sets flags but does not advance PC
             return result;
         }
 
