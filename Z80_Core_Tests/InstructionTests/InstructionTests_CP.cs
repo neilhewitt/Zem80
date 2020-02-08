@@ -10,10 +10,10 @@ namespace Z80.Core.Tests
     public class InstructionTests_CP : InstructionTestBase
     {
         [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
-        public void CP_r(RegisterIndex register)
+        public void CP_r(Register register)
         {
             byte first = RandomByte();
-            byte second = (register == RegisterIndex.A) ? first : RandomByte();
+            byte second = (register == Register.A) ? first : RandomByte();
             short result = (short)(first - second);
             
             bool zero = (result == 0);
@@ -71,7 +71,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetIndexRegisters")]
-        public void CP_xIndexOffset(RegisterPairIndex registerPair)
+        public void CP_xIndexOffset(RegisterPair registerPair)
         {
             byte first = RandomByte();
             byte second = RandomByte();

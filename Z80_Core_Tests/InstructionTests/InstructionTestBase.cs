@@ -26,7 +26,7 @@ namespace Z80.Core.Tests
             _cpu.ResetAndClearMemory();
         }
 
-        public ExecutionResult Execute(string mnemonic, byte? arg1 = null, byte? arg2 = null, byte? bitIndex = null, RegisterIndex? registerIndex = null)
+        public ExecutionResult Execute(string mnemonic, byte? arg1 = null, byte? arg2 = null, byte? bitIndex = null, Register? registerIndex = null)
         {
             Instruction instruction = Instruction.FindByMnemonic(mnemonic);
             InstructionData data = new InstructionData()
@@ -35,7 +35,7 @@ namespace Z80.Core.Tests
                 Argument1 = arg1 ?? 0,
                 Argument2 = arg2 ?? 0,
                 BitIndex = bitIndex ?? 0,
-                RegisterIndex = registerIndex ?? RegisterIndex.None,
+                Register = registerIndex ?? Register.None,
                 DirectIX = instruction.Mnemonic.Contains("IX") && !instruction.Mnemonic.Contains("(IX)"),
                 DirectIY = instruction.Mnemonic.Contains("IY") && !instruction.Mnemonic.Contains("(IY)"),
                 IndexIX = instruction.Mnemonic.Contains("(IX)"),
@@ -61,7 +61,7 @@ namespace Z80.Core.Tests
             return (RandomByte(1) == 0);
         }
 
-        public byte ByteAt(RegisterPairIndex indexRegister, sbyte offset)
+        public byte ByteAt(RegisterPair indexRegister, sbyte offset)
         {
             return _cpu.Memory.ReadByteAt((ushort)(Registers[indexRegister] + offset));
         }

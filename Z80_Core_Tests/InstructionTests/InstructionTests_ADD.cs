@@ -9,10 +9,10 @@ namespace Z80.Core.Tests
     public class InstructionTests_ADD : InstructionTestBase
     {
         [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
-        public void ADD_r_r(RegisterIndex register)
+        public void ADD_r_r(Register register)
         {
             byte initialValue = RandomByte();
-            byte addValue = register == RegisterIndex.A ? initialValue : RandomByte(); // if ADD A,A have to have the same two numbers
+            byte addValue = register == Register.A ? initialValue : RandomByte(); // if ADD A,A have to have the same two numbers
             ushort addedValue = (ushort)(initialValue + addValue);
             bool flagCarry = addedValue > 255;
             bool flagOverflow = ((short)addedValue > 0x7F || (short)addedValue < -0x80);
@@ -67,7 +67,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetIndexRegisters")]
-        public void ADD_A_xIndexOffset(RegisterPairIndex registerPair)
+        public void ADD_A_xIndexOffset(RegisterPair registerPair)
         {
             byte offset = 139;// RandomByte();
             byte initialValue = 207;// RandomByte();

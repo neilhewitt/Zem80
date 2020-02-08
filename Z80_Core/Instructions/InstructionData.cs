@@ -8,7 +8,7 @@ namespace Z80.Core
     {
         public byte Opcode { get; set; }
         public byte? BitIndex { get; set; }
-        public RegisterIndex? RegisterIndex { get; set; }
+        public Register? Register { get; set; }
         public bool DirectIX { get; set; }
         public bool DirectIY { get; set; }
         public bool IndexIX { get; set; }

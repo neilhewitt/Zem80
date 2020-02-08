@@ -34,7 +34,7 @@ namespace Z80.Core
 
                     if (instruction.Modifier == ModifierType.Register) // +r
                     {
-                        data.RegisterIndex = GetRegisterIndex(opcode);
+                        data.Register = GetRegisterIndex(opcode);
                     }
 
                     if (instruction.Modifier == ModifierType.Bit) // +8*b
@@ -75,14 +75,14 @@ namespace Z80.Core
 
                     if (instruction.Modifier == ModifierType.IndexRegister) // +p / +q
                     {
-                        data.RegisterIndex = GetRegisterIndex(opcode);
-                        data.DirectIX = (prefix == 0xDD && (data.RegisterIndex == RegisterIndex.IXh || data.RegisterIndex == RegisterIndex.IXl)); // IX substituted for HL
-                        data.DirectIY = (prefix == 0xFD && (data.RegisterIndex == RegisterIndex.IYh || data.RegisterIndex == RegisterIndex.IYl)); // IY substituted for HL
+                        data.Register = GetRegisterIndex(opcode);
+                        data.DirectIX = (prefix == 0xDD && (data.Register == Register.IXh || data.Register == Register.IXl)); // IX substituted for HL
+                        data.DirectIY = (prefix == 0xFD && (data.Register == Register.IYh || data.Register == Register.IYl)); // IY substituted for HL
                     }
 
                     if (instruction.Modifier == ModifierType.IndexRegisterHalf) // +8*p / +8*q
                     {
-                        data.RegisterIndex = GetRegisterIndex(opcode); 
+                        data.Register = GetRegisterIndex(opcode); 
                     }
 
                     if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
@@ -110,7 +110,7 @@ namespace Z80.Core
 
                     if (instruction.Modifier == ModifierType.Register) // +r
                     {
-                        data.RegisterIndex = GetRegisterIndex(opcode);
+                        data.Register = GetRegisterIndex(opcode);
                     }
 
                     if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
@@ -180,9 +180,9 @@ namespace Z80.Core
             return Decode(instructionBytes);
         }
 
-        private RegisterIndex GetRegisterIndex(byte opcode)
+        private Register GetRegisterIndex(byte opcode)
         {
-            return (RegisterIndex)opcode.RemoveBits(3, 5); // register is first 3 bits
+            return (Register)opcode.RemoveBits(3, 5); // register is first 3 bits
         }
 
         private byte GetBitIndex(byte opcode)

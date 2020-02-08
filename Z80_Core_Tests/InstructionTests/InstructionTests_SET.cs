@@ -10,7 +10,7 @@ namespace Z80.Core.Tests
     public class InstructionTests_SET : InstructionTestBase
     {
         [Test, TestCaseSource(typeof(TestCases), "GetRegistersAndBits")]
-        public void SET_r(RegisterIndex register, int bitIndex)
+        public void SET_r(Register register, int bitIndex)
         {
             IFlags currentFlags = Flags;
             byte initialValue = RandomByte();
@@ -38,7 +38,7 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        public void SET_xIndexOffset([Values(RegisterPairIndex.IX, RegisterPairIndex.IY)] RegisterPairIndex registerPair, [Range(0, 6)] byte bitIndex)
+        public void SET_xIndexOffset([Values(RegisterPair.IX, RegisterPair.IY)] RegisterPair registerPair, [Range(0, 6)] byte bitIndex)
         {
             IFlags currentFlags = Flags;
             byte initialValue = RandomByte();

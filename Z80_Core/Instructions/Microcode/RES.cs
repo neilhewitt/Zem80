@@ -13,11 +13,11 @@ namespace Z80.Core
             IRegisters r = cpu.Registers;
             byte bitIndex = data.BitIndex ?? 0xFF;
             sbyte offset = (sbyte)(data.Argument1);
-            RegisterIndex index = data.RegisterIndex ?? RegisterIndex.None;
+            Register register = data.Register ?? Register.None;
 
-            if (index != RegisterIndex.None)
+            if (register != Register.None)
             {
-                r[index] = r[index].SetBit(bitIndex, false);
+                r[register] = r[register].SetBit(bitIndex, false);
             }
             else
             {

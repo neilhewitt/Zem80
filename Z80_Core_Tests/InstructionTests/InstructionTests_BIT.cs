@@ -9,7 +9,7 @@ namespace Z80.Core.Tests
     public class InstructionTests_BIT : InstructionTestBase
     {
         [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
-        public void BIT_b_r(RegisterIndex register)
+        public void BIT_b_r(Register register)
         {
             byte bitIndex = RandomByte(7);
             byte value = RandomByte();
@@ -37,7 +37,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetIndexRegisters")]
-        public void BIT_b_xIndexOffset(RegisterPairIndex registerPair)
+        public void BIT_b_xIndexOffset(RegisterPair registerPair)
         {
             byte bitIndex = RandomByte(7);
             byte value = RandomByte();

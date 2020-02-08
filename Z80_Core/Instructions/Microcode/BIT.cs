@@ -16,9 +16,9 @@ namespace Z80.Core
 
             byte bitIndex = data.BitIndex.Value;
             byte value;
-            if (data.RegisterIndex.HasValue)
+            if (data.Register.HasValue)
             {
-                value = r[data.RegisterIndex ?? RegisterIndex.None]; // BIT b, r
+                value = r[data.Register ?? Register.None]; // BIT b, r
             }
             else
             {

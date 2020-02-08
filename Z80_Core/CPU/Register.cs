@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public enum RegisterIndex
+    public enum Register
     {
         None = 6,
         B = 0,

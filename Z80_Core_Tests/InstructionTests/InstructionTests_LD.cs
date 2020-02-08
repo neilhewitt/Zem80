@@ -11,11 +11,11 @@ namespace Z80.Core.Tests
     public class InstructionTests_LD : InstructionTestBase
     {
         [Test, TestCaseSource(typeof(TestCases), "GetRegisterPairings")]
-        [TestCase(RegisterIndex.A, RegisterIndex.I)]
-        [TestCase(RegisterIndex.A, RegisterIndex.R)]
-        [TestCase(RegisterIndex.I, RegisterIndex.A)]
-        [TestCase(RegisterIndex.R, RegisterIndex.A)]
-        public void LD_r_r(RegisterIndex register1, RegisterIndex register2)
+        [TestCase(Register.A, Register.I)]
+        [TestCase(Register.A, Register.R)]
+        [TestCase(Register.I, Register.A)]
+        [TestCase(Register.R, Register.A)]
+        public void LD_r_r(Register register1, Register register2)
         {
             Registers[register2] = RandomByte();
             var result = Execute(mnemonic: $"LD {register1},{register2}", registerIndex: register2, bitIndex: (byte)register1);
@@ -23,7 +23,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
-        public void LD_r_n(RegisterIndex register)
+        public void LD_r_n(Register register)
         {
             byte value = RandomByte();
             var result = Execute(mnemonic: $"LD {register},n", arg1: value, registerIndex: register);
@@ -32,7 +32,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
-        public void LD_xHL_r(RegisterIndex register)
+        public void LD_xHL_r(Register register)
         {
             Registers.HL = RandomWord();
             Registers[register] = RandomByte();
@@ -52,7 +52,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
-        public void LD_r_xHL(RegisterIndex register)
+        public void LD_r_xHL(Register register)
         {
             ushort address = Registers.HL = RandomWord();
             WriteByteAt(Registers.HL, RandomByte());
@@ -61,9 +61,9 @@ namespace Z80.Core.Tests
             Assert.That(Registers[register] == ByteAt(address));
         }
 
-        [TestCase(RegisterPairIndex.BC)]
-        [TestCase(RegisterPairIndex.DE)]
-        public void LD_A_xrr(RegisterPairIndex registerPair)
+        [TestCase(RegisterPair.BC)]
+        [TestCase(RegisterPair.DE)]
+        public void LD_A_xrr(RegisterPair registerPair)
         {
             Registers[registerPair] = RandomWord();
             WriteByteAt(Registers[registerPair], RandomByte());
@@ -82,9 +82,9 @@ namespace Z80.Core.Tests
             Assert.That(Registers.A == ByteAt(address));
         }
 
-        [TestCase(RegisterPairIndex.BC)]
-        [TestCase(RegisterPairIndex.DE)]
-        public void LD_xrr_A(RegisterPairIndex registerPair)
+        [TestCase(RegisterPair.BC)]
+        [TestCase(RegisterPair.DE)]
+        public void LD_xrr_A(RegisterPair registerPair)
         {
             Registers[registerPair] = RandomWord();
             Registers.A = RandomByte();
@@ -104,7 +104,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetRegisterAndIndexPairings")]
-        public void LD_r_xIndexOffset(RegisterIndex register, RegisterPairIndex indexRegister)
+        public void LD_r_xIndexOffset(Register register, RegisterPair indexRegister)
         {
             sbyte offset = (sbyte)RandomByte();
             Registers[indexRegister] = RandomWord();
@@ -115,7 +115,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetRegisterAndIndexPairings")]
-        public void LD_xIndexOffset_r(RegisterIndex register, RegisterPairIndex indexRegister)
+        public void LD_xIndexOffset_r(Register register, RegisterPair indexRegister)
         {
             sbyte offset = (sbyte)RandomByte();
             Registers[indexRegister] = RandomWord();
@@ -126,7 +126,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetIndexRegisters")]
-        public void LD_xIndexOffset_n(RegisterPairIndex indexRegister)
+        public void LD_xIndexOffset_n(RegisterPair indexRegister)
         {
             byte value = RandomByte();
             sbyte offset = (sbyte)RandomByte();
@@ -137,7 +137,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetRegisterPairs")]
-        public void LD_rr_nn(RegisterPairIndex registerPair)
+        public void LD_rr_nn(RegisterPair registerPair)
         {
             ushort value = RandomWord();
             var result = Execute(mnemonic: $"LD {registerPair},nn", arg1:value.LowByte(), arg2:value.HighByte());
@@ -146,7 +146,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetRegisterPairs")]
-        public void LD_rr_xnn(RegisterPairIndex registerPair)
+        public void LD_rr_xnn(RegisterPair registerPair)
         {
             ushort address = RandomWord(0xFFFE);
             ushort value = RandomWord();
@@ -157,7 +157,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetRegisterPairs")]
-        public void LD_xnn_rr(RegisterPairIndex registerPair)
+        public void LD_xnn_rr(RegisterPair registerPair)
         {
             ushort address = RandomWord(0xFFFE);
             Registers[registerPair] = RandomWord();
@@ -166,10 +166,10 @@ namespace Z80.Core.Tests
             Assert.That(WordAt(address) == Registers[registerPair]);
         }
 
-        [TestCase(RegisterPairIndex.HL)]
-        [TestCase(RegisterPairIndex.IX)]
-        [TestCase(RegisterPairIndex.IY)]
-        public void LD_SP_rr(RegisterPairIndex registerPair)
+        [TestCase(RegisterPair.HL)]
+        [TestCase(RegisterPair.IX)]
+        [TestCase(RegisterPair.IY)]
+        public void LD_SP_rr(RegisterPair registerPair)
         {
             var result = Execute(mnemonic: $"LD SP,{registerPair}");
             Assert.That(Registers.SP == Registers[registerPair]);

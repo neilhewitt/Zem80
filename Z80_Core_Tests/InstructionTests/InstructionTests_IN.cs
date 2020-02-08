@@ -10,7 +10,7 @@ namespace Z80.Core.Tests
     public class InstructionTests_IN : InstructionTestBase
     {
         [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
-        public void IN_r_xnC(RegisterIndex register)
+        public void IN_r_xnC(Register register)
         {
             PortSignal signal;
             byte data = RandomByte();
@@ -19,10 +19,10 @@ namespace Z80.Core.Tests
             Action<PortSignal> signaller = (s) => { signal = s; };
             _cpu.Ports[0].Connect(reader, null, signaller);
 
-            string from = register == RegisterIndex.A ? "(n)" : "(C)";
+            string from = register == Register.A ? "(n)" : "(C)";
             Execute($"IN {register},{from}", registerIndex:register);
 
-            if (register == RegisterIndex.A)
+            if (register == Register.A)
             {
                 Assert.That(Registers.A == data);
             }

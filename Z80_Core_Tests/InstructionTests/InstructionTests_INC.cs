@@ -10,7 +10,7 @@ namespace Z80.Core.Tests
     public class InstructionTests_INC : InstructionTestBase
     {
         [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
-        public void INC_r(RegisterIndex register)
+        public void INC_r(Register register)
         {
             bool carry = RandomByte() % 2 == 0; // simulate existing carry
             Registers.Flags.Carry = carry;

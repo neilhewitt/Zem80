@@ -9,10 +9,10 @@ namespace Z80.Core.Tests
     public class InstructionTests_ADC : InstructionTestBase
     {
         [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
-        public void ADC_r_r(RegisterIndex register)
+        public void ADC_r_r(Register register)
         {
             byte initialValue = RandomByte();
-            byte addValue = register == RegisterIndex.A ? initialValue : RandomByte(); // if ADC A,A have to have the same two numbers
+            byte addValue = register == Register.A ? initialValue : RandomByte(); // if ADC A,A have to have the same two numbers
             PresetFlags(carry: RandomByte() > 127); // simulate prior carry flag state which must be preserved
             ushort addedValue = (ushort)(initialValue + addValue + (Flags.Carry ? 1 : 0));
             bool flagCarry = addedValue > 255;
@@ -70,7 +70,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetIndexRegisters")]
-        public void ADC_A_xIndexOffset(RegisterPairIndex registerPair)
+        public void ADC_A_xIndexOffset(RegisterPair registerPair)
         {
             byte offset = RandomByte();
             byte initialValue = RandomByte();

@@ -1,6 +1,6 @@
 ﻿namespace Z80.Core
 {
-    public enum RegisterPairIndex
+    public enum RegisterPair
     {
         None = 6,
         AF = 7,

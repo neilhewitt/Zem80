@@ -6,45 +6,45 @@ namespace Z80.Core.Tests
 {
     public static class TestCases
     {
-        public static IEnumerable<RegisterPairIndex> GetRegisterPairs()
+        public static IEnumerable<RegisterPair> GetRegisterPairs()
         {
             // get all register pairs that are assignable with LD
-            return new List<RegisterPairIndex>()
+            return new List<RegisterPair>()
             {
-                RegisterPairIndex.BC,
-                RegisterPairIndex.DE,
-                RegisterPairIndex.HL,
-                RegisterPairIndex.IX,
-                RegisterPairIndex.IY,
-                RegisterPairIndex.SP
+                RegisterPair.BC,
+                RegisterPair.DE,
+                RegisterPair.HL,
+                RegisterPair.IX,
+                RegisterPair.IY,
+                RegisterPair.SP
             };
         }
 
-        public static IEnumerable<RegisterPairIndex> GetRegisterPairs_PUSH_POP() // special case
+        public static IEnumerable<RegisterPair> GetRegisterPairs_PUSH_POP() // special case
         {
             // get all register pairs that can be PUSHed or POPped
-            return new List<RegisterPairIndex>()
+            return new List<RegisterPair>()
             {
-                RegisterPairIndex.AF,
-                RegisterPairIndex.BC,
-                RegisterPairIndex.DE,
-                RegisterPairIndex.HL,
-                RegisterPairIndex.IX,
-                RegisterPairIndex.IY
+                RegisterPair.AF,
+                RegisterPair.BC,
+                RegisterPair.DE,
+                RegisterPair.HL,
+                RegisterPair.IX,
+                RegisterPair.IY
             };
         }
 
 
-        public static IEnumerable<RegisterIndex> GetRegisters()
+        public static IEnumerable<Register> GetRegisters()
         {
             // generate a list of registers excluding F (note 6 == RegisterIndex.None and has to be omitted)
-            IList<RegisterIndex> cases = new System.Collections.Generic.List<RegisterIndex>();
+            IList<Register> cases = new System.Collections.Generic.List<Register>();
             for (int i = 0; i <= 7; i++)
             {
-                RegisterIndex index = (RegisterIndex)i;
+                Register register = (Register)i;
                 if (i != 6)
                 {
-                    cases.Add(index);
+                    cases.Add(register);
                 }
             }
 
@@ -60,7 +60,7 @@ namespace Z80.Core.Tests
             {
                 if (i != 6)
                 {
-                    RegisterIndex register = (RegisterIndex)i;
+                    Register register = (Register)i;
                     for (int j = 0; j <= 6; j++)
                     {
                         cases.Add(new object[] { register, j });
@@ -78,10 +78,10 @@ namespace Z80.Core.Tests
             IList<object[]> cases = new System.Collections.Generic.List<object[]>();
             for (int i = 0; i <= 7; i++)
             {
-                RegisterIndex left = (RegisterIndex)i;
+                Register left = (Register)i;
                 for (int j = 0; j <= 7; j++)
                 {
-                    RegisterIndex right = (RegisterIndex)j;
+                    Register right = (Register)j;
                     if (i != 6 && j != 6)
                     {
                         cases.Add(new object[] { left, right });
@@ -98,21 +98,21 @@ namespace Z80.Core.Tests
             IList<object[]> cases = new System.Collections.Generic.List<object[]>();
             for (int i = 0; i <= 7; i++)
             {
-                RegisterIndex index = (RegisterIndex)i;
+                Register register = (Register)i;
                 if (i != 6)
                 {
-                    cases.Add(new object[] { index, RegisterPairIndex.IX });
-                    cases.Add(new object[] { index, RegisterPairIndex.IY });
+                    cases.Add(new object[] { register, RegisterPair.IX });
+                    cases.Add(new object[] { register, RegisterPair.IY });
                 }
             }
 
             return cases;
         }
 
-        public static IEnumerable<RegisterPairIndex> GetIndexRegisters()
+        public static IEnumerable<RegisterPair> GetIndexRegisters()
         {
             // get the Index register names (for indexed operations)
-            return new List<RegisterPairIndex>() { RegisterPairIndex.IX, RegisterPairIndex.IY };
+            return new List<RegisterPair>() { RegisterPair.IX, RegisterPair.IY };
         }
 
         public static IEnumerable<(string, Func<IFlags>, Func<IFlags, bool>)> GetConditions()

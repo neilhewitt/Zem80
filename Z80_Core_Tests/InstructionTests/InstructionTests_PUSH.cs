@@ -11,7 +11,7 @@ namespace Z80.Core.Tests
     {
         [Test]
         [TestCaseSource(typeof(TestCases), "GetRegisterPairs_PUSH_POP")]
-        public void PUSH_rr(RegisterPairIndex registerPair)
+        public void PUSH_rr(RegisterPair registerPair)
         {
             ushort value = RandomWord();
             ushort stackAddress = Registers.SP;

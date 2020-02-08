@@ -10,9 +10,9 @@ namespace Z80.Core.Tests
     public class InstructionTests_DEC : InstructionTestBase
     {
         [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
-        [TestCase(RegisterIndex.IXh)]
-        [TestCase(RegisterIndex.IXl)]
-        public void DEC_r(RegisterIndex register)
+        [TestCase(Register.IXh)]
+        [TestCase(Register.IXl)]
+        public void DEC_r(Register register)
         {
             byte value = RandomByte();
             Registers[register] = value;
@@ -34,7 +34,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetRegisterPairs")]
-        public void DEC_rr(RegisterPairIndex registerPair)
+        public void DEC_rr(RegisterPair registerPair)
         {
             ushort value = RandomWord();
             Registers[registerPair] = value;
@@ -70,7 +70,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetIndexRegisters")]
-        public void DEC_xIndexOffset(RegisterPairIndex indexRegister)
+        public void DEC_xIndexOffset(RegisterPair indexRegister)
         {
             ushort address = RandomWord();
             byte value = RandomByte();

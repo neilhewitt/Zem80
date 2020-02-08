@@ -29,8 +29,8 @@ namespace Z80.Core
         void RaiseNonMasktableInterrupt();
         void ResetAndClearMemory();
         void Resume();
-        void Push(RegisterPairIndex register);
-        void Pop(RegisterPairIndex register);
+        void Push(RegisterPair register);
+        void Pop(RegisterPair register);
         ushort Peek();
         void SetAddressBus(byte low, byte high);
         void SetAddressBus(ushort value);

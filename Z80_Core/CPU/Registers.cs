@@ -11,8 +11,8 @@ namespace Z80.Core
         private byte _AFOffset = 0;
         private byte _BCDEHLOffset = 0;
 
-        public byte this[RegisterIndex index] { get { return GetRegisterByIndex(index); } set { SetRegisterByIndex(index, value); } }
-        public ushort this[RegisterPairIndex index] { get { return GetRegisterPairByIndex(index); } set { SetRegisterPairByIndex(index, value); } }
+        public byte this[Register register] { get { return GetRegister(register); } set { SetRegister(register, value); } }
+        public ushort this[RegisterPair registerPair] { get { return GetRegisterPair(registerPair); } set { SetRegisterPair(registerPair, value); } }
 
 
         // 8-bit registers
@@ -79,11 +79,11 @@ namespace Z80.Core
             _registers = new byte[26];
         }
 
-        private byte GetRegisterByIndex(RegisterIndex index)
+        private byte GetRegister(Register index)
         {
-            if (index == RegisterIndex.None) return 0xFF;
+            if (index == Register.None) return 0xFF;
 
-            if (index == RegisterIndex.A)
+            if (index == Register.A)
             {
                 return _registers[_AFOffset];
             }
@@ -93,11 +93,11 @@ namespace Z80.Core
             }
         }
 
-        private ushort GetRegisterPairByIndex(RegisterPairIndex index)
+        private ushort GetRegisterPair(RegisterPair index)
         {
-            if (index == RegisterPairIndex.None) return 0xFF;
+            if (index == RegisterPair.None) return 0xFF;
 
-            if (index == RegisterPairIndex.AF)
+            if (index == RegisterPair.AF)
             {
                 return Get16BitValue(_AFOffset);
             }
@@ -107,32 +107,32 @@ namespace Z80.Core
             }
         }
 
-        private void SetRegisterByIndex(RegisterIndex index, byte value)
+        private void SetRegister(Register register, byte value)
         {
-            if (index != RegisterIndex.None)
+            if (register != Register.None)
             {
-                if (index == RegisterIndex.A)
+                if (register == Register.A)
                 {
                     _registers[_AFOffset] = value;
                 }
                 else
                 {
-                    _registers[_BCDEHLOffset + (int)index + 2] = value;
+                    _registers[_BCDEHLOffset + (int)register + 2] = value;
                 }
             }
         }
 
-        private void SetRegisterPairByIndex(RegisterPairIndex index, ushort value)
+        private void SetRegisterPair(RegisterPair registerPair, ushort value)
         {
-            if (index != RegisterPairIndex.None)
+            if (registerPair != RegisterPair.None)
             {
-                if (index == RegisterPairIndex.AF)
+                if (registerPair == RegisterPair.AF)
                 {
                     Set16BitValue(_AFOffset, value);
                 }
                 else
                 {
-                    Set16BitValue(_BCDEHLOffset + (int)index + 2, value);
+                    Set16BitValue(_BCDEHLOffset + (int)registerPair + 2, value);
                 }
             }
         }

@@ -10,14 +10,14 @@ namespace Z80.Core.Tests
     public class InstructionTests_OR : InstructionTestBase
     {
         [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
-        [TestCase(RegisterIndex.IXh)]
-        [TestCase(RegisterIndex.IXl)]
-        [TestCase(RegisterIndex.IYh)]
-        [TestCase(RegisterIndex.IYl)]
-        public void OR_r(RegisterIndex register)
+        [TestCase(Register.IXh)]
+        [TestCase(Register.IXl)]
+        [TestCase(Register.IYh)]
+        [TestCase(Register.IYl)]
+        public void OR_r(Register register)
         {
             byte first = RandomByte();
-            byte second = (register == RegisterIndex.A) ? first : RandomByte();
+            byte second = (register == Register.A) ? first : RandomByte();
             short result = (short)(first | second);
 
             bool zero = (result == 0);
@@ -72,7 +72,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetIndexRegisters")]
-        public void OR_xIndexOffset(RegisterPairIndex registerPair)
+        public void OR_xIndexOffset(RegisterPair registerPair)
         {
             byte first = RandomByte();
             byte second = RandomByte();

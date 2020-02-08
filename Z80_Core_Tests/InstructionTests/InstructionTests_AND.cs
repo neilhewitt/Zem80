@@ -9,10 +9,10 @@ namespace Z80.Core.Tests
     public class InstructionTests_AND : InstructionTestBase
     {
         [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
-        public void AND_r(RegisterIndex register)
+        public void AND_r(Register register)
         {
             byte first = RandomByte();
-            byte second = register == RegisterIndex.A ? first : RandomByte(); // if AND A, use first byte only
+            byte second = register == Register.A ? first : RandomByte(); // if AND A, use first byte only
             byte result = (byte)(first & second); 
 
             bool sign = ((sbyte)result < 0);
@@ -67,7 +67,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetIndexRegisters")]
-        public void AND_xIndexOffset(RegisterPairIndex registerPair)
+        public void AND_xIndexOffset(RegisterPair registerPair)
         {
             byte first = RandomByte();
             byte second = RandomByte();

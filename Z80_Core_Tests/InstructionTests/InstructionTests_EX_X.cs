@@ -54,7 +54,7 @@ namespace Z80.Core.Tests
         }
 
         [Test, TestCaseSource(typeof(TestCases), "GetIndexRegisters")]
-        public void EX_xSP_Index(RegisterPairIndex indexRegister)
+        public void EX_xSP_Index(RegisterPair indexRegister)
         {
             ushort stackWord = RandomWord();
             WriteWordAt(Registers.SP, stackWord);
