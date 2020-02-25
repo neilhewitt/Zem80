@@ -10,12 +10,12 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            IFlags flags = cpu.Registers.Flags;
+            Flags flags = cpu.Registers.Flags;
             bool pcWasSet = false;
 
             void ret()
             {
-                cpu.Pop(RegisterPair.PC);
+                cpu.Pop(RegisterPairName.PC);
                 pcWasSet = true;
             }
 
@@ -24,31 +24,31 @@ namespace Z80.Core
                 case InstructionPrefix.Unprefixed:
                     switch (instruction.Opcode)
                     {
-                        case 0xC0: // RET NZ,nn
+                        case 0xC0: // RET NZ
                             if (!flags.Zero) ret();
                             break;
-                        case 0xC8: // RET Z,nn
+                        case 0xC8: // RET Z
                             if (flags.Zero) ret();
                             break;
-                        case 0xC9: // RET nn
+                        case 0xC9: // RET
                             ret();
                             break;
-                        case 0xD0: // RET NC,nn
+                        case 0xD0: // RET NC
                             if (!flags.Carry) ret();
                             break;
-                        case 0xD8: // RET C,nn
+                        case 0xD8: // RET C
                             if (flags.Carry) ret();
                             break;
-                        case 0xE0: // RET PO,nn
+                        case 0xE0: // RET PO
                             if (!flags.ParityOverflow) ret();
                             break;
-                        case 0xE8: // RET PE,nn
+                        case 0xE8: // RET PE
                             if (flags.ParityOverflow) ret();
                             break;
-                        case 0xF0: // RET P,nn
+                        case 0xF0: // RET P
                             if (!flags.Sign) ret();
                             break;
-                        case 0xF8: // RET M,nn
+                        case 0xF8: // RET M
                             if (flags.Sign) ret();
                             break;
                     }

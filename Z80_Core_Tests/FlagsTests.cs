@@ -24,8 +24,8 @@ namespace Z80.Core.Tests
         public void CanSetAndReadFlag(string flagName, byte initialFlagsValue)
         {
             Registers registers = new Registers();
-            registers.F = initialFlagsValue; // all flags set except <flagName>
-            RegisterFlags flags = new RegisterFlags(registers);
+            registers.Flags.Set(initialFlagsValue);
+            Flags flags = registers.Flags;
             
             var property = flags.GetType().GetProperty(flagName);
             var getter = property.GetMethod;

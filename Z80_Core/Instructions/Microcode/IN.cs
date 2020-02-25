@@ -10,10 +10,10 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            IFlags flags = new Flags();
+            Flags flags = new Flags();
             IRegisters r = cpu.Registers;
 
-            byte @in(byte portNumber, Register fromRegister, Register toRegister)
+            byte @in(byte portNumber, RegisterName fromRegister, RegisterName toRegister)
             {
                 IPort port = cpu.Ports[portNumber];
                 cpu.SetAddressBus(portNumber, r[fromRegister]);
@@ -26,12 +26,12 @@ namespace Z80.Core
             if (instruction.Prefix == InstructionPrefix.Unprefixed)
             {
                 // IN A,(n)
-                @in(data.Argument1, Register.A, Register.A);
+                @in(data.Argument1, RegisterName.A, RegisterName.A);
             }
             else
             {
                 // IN r,(C)
-                byte input = @in(r.C, Register.B, data.Register.Value);
+                byte input = @in(r.C, RegisterName.B, data.Register.Value);
                 if ((sbyte)input < 0) flags.Sign = true;
                 if (input == 0) flags.Zero = true;
                 if (input.CountBits(true) % 2 == 0) flags.ParityOverflow = true;

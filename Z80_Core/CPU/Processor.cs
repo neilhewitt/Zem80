@@ -93,14 +93,14 @@ namespace Z80.Core
             Registers.SP = _topOfStack;
         }
 
-        public void Push(RegisterPair register)
+        public void Push(RegisterPairName register)
         {
             ushort value = Registers[register];
             Registers.SP -= 2;
             Memory.WriteWordAt(Registers.SP, value);
         }
 
-        public void Pop(RegisterPair register)
+        public void Pop(RegisterPairName register)
         {
             ushort value = Memory.ReadWordAt(Registers.SP);
             Registers.SP += 2;
@@ -161,7 +161,7 @@ namespace Z80.Core
             _beforeExecute?.Invoke(this, package);
             ExecutionResult result = package.Instruction.Implementation.Execute(this, package);
             _afterExecute?.Invoke(this, result);
-            if (result.Flags != null) Registers.SetFlags(result.Flags);
+            if (result.Flags != null) Registers.Flags.Set(result.Flags.Value);
 
             return result;
         }
@@ -192,7 +192,7 @@ namespace Z80.Core
 
                 if (_pendingNonMaskableInterrupt)
                 {
-                    Push(RegisterPair.PC);
+                    Push(RegisterPairName.PC);
                     Registers.PC = 0x0066;
                     _pendingNonMaskableInterrupt = false;
                     _halted = false;
@@ -217,13 +217,13 @@ namespace Z80.Core
                             break;
 
                         case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
-                            Push(RegisterPair.PC);
+                            Push(RegisterPairName.PC);
                             Registers.PC = 0x0038;
                             break;
 
                         case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
                             _interruptCallback(); // device must populate data bus with low byte of address
-                            Push(RegisterPair.PC);
+                            Push(RegisterPairName.PC);
                             Registers.PC = (ushort)((Registers.I * 256) + DataBus);
                             break;
                     }

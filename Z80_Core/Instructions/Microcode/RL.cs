@@ -10,28 +10,19 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            IFlags flags = cpu.Registers.Flags;
+            Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
+
             sbyte offset = (sbyte)(data.Argument1);
-            Register register = data.Register ?? Register.None;
+            RegisterName register = data.Register ?? RegisterName.None;
             bool previousCarry = flags.Carry;
 
-            byte setFlags(byte original, byte shifted)
-            {
-                flags.Carry = (original & 0x80) == 0x80;
-                if (((sbyte)shifted) < 0) flags.Sign = true;
-                if (shifted == 0) flags.Zero = true;
-                if (shifted.CountBits(true) % 2 == 0) flags.ParityOverflow = true;
-                if (previousCarry) shifted = (byte)(shifted & 0x01);
-                return shifted;
-            }
-
             byte original, shifted;
-            if (register != Register.None)
+            if (register != RegisterName.None)
             {
                 original = r[register];
                 shifted = (byte)(original << 1);
-                shifted = setFlags(original, shifted);
+                shifted = flagsAndCarry(original, shifted);
                 r[register] = shifted;
             }
             else
@@ -45,8 +36,18 @@ namespace Z80.Core
                 };
                 original = cpu.Memory.ReadByteAt(address);
                 shifted = (byte)(original << 1);
-                shifted = setFlags(original, shifted);
+                shifted = flagsAndCarry(original, shifted);
                 cpu.Memory.WriteByteAt(address, shifted);
+            }
+
+            byte flagsAndCarry(byte original, byte shifted)
+            {
+                shifted = shifted.SetBit(0, previousCarry);
+                flags.Carry = (original & 0x80) == 0x80;
+                if (((sbyte)shifted) < 0) flags.Sign = true;
+                if (shifted == 0) flags.Zero = true;
+                if (shifted.CountBits(true) % 2 == 0) flags.ParityOverflow = true;
+                return shifted;
             }
 
             return new ExecutionResult(package, flags, false);

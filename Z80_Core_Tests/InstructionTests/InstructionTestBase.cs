@@ -1,32 +1,33 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Z80.Core.Tests
 {
     public abstract class InstructionTestBase
     {
-        protected IDebugProcessor _cpu;
         protected Random _random;
 
-        public IRegisters Registers => _cpu.Registers;
-        public IFlags Flags => _cpu.Registers.Flags;
+        public IDebugProcessor CPU { get; private set; }
+        public IRegisters Registers => CPU.Registers;
+        public Flags Flags => CPU.Registers.Flags;
 
         [OneTimeSetUp]
         public void Setup()
         {
-            _cpu = Bootstrapper.BuildCPU().Debuggable;
+            CPU = Bootstrapper.BuildCPU().Debuggable;
             _random = new Random(DateTime.Now.Millisecond);
         }
 
         [SetUp]
         public void Init()
         {
-            _cpu.ResetAndClearMemory();
+            CPU.ResetAndClearMemory();
         }
 
-        public ExecutionResult Execute(string mnemonic, byte? arg1 = null, byte? arg2 = null, byte? bitIndex = null, Register? registerIndex = null)
+        public ExecutionResult ExecuteInstruction(string mnemonic, byte? arg1 = null, byte? arg2 = null, byte? bitIndex = null/*, RegisterName? register = null*/)
         {
             Instruction instruction = Instruction.FindByMnemonic(mnemonic);
             InstructionData data = new InstructionData()
@@ -34,15 +35,15 @@ namespace Z80.Core.Tests
                 Opcode = instruction.Opcode,
                 Argument1 = arg1 ?? 0,
                 Argument2 = arg2 ?? 0,
-                BitIndex = bitIndex ?? 0,
-                Register = registerIndex ?? Register.None,
+                BitIndex = instruction.BitIndex ?? 0,
+                Register = instruction.OperandRegister,
                 DirectIX = instruction.Mnemonic.Contains("IX") && !instruction.Mnemonic.Contains("(IX)"),
                 DirectIY = instruction.Mnemonic.Contains("IY") && !instruction.Mnemonic.Contains("(IY)"),
                 IndexIX = instruction.Mnemonic.Contains("(IX)"),
                 IndexIY = instruction.Mnemonic.Contains("(IY)")
             };
             
-            ExecutionResult result = _cpu.Execute(new InstructionPackage(instruction, data)); // only available on IDebugProcessor debug interface - sets flags but does not advance PC
+            ExecutionResult result = CPU.Execute(new InstructionPackage(instruction, data)); // only available on IDebugProcessor debug interface - sets flags but does not advance PC
             return result;
         }
 
@@ -61,34 +62,46 @@ namespace Z80.Core.Tests
             return (RandomByte(1) == 0);
         }
 
-        public byte ByteAt(RegisterPair indexRegister, sbyte offset)
+        public RegisterName RandomRegister()
         {
-            return _cpu.Memory.ReadByteAt((ushort)(Registers[indexRegister] + offset));
+            int random = _random.Next(0, 7);
+            if (random == 6) return RandomRegister();
+            return (RegisterName)random;
         }
 
-        public byte ByteAt(ushort address)
+        public byte ReadByteAtIndexAndOffset(RegisterPairName indexRegister, sbyte offset)
         {
-            return _cpu.Memory.ReadByteAt(address);
+            return CPU.Memory.ReadByteAt((ushort)(Registers[indexRegister] + offset));
         }
 
-        public ushort WordAt(ushort address)
+        public byte ReadByteAt(ushort address)
         {
-            return _cpu.Memory.ReadWordAt(address);
+            return CPU.Memory.ReadByteAt(address);
+        }
+
+        public ushort ReadWordAt(ushort address)
+        {
+            return CPU.Memory.ReadWordAt(address);
         }
 
         public void WriteByteAt(ushort address, byte value)
         {
-            _cpu.Memory.WriteByteAt(address, value);
+            CPU.Memory.WriteByteAt(address, value);
+        }
+
+        public void WriteByteAtIndexAndOffset(RegisterPairName indexRegister, sbyte offset, byte value)
+        {
+            CPU.Memory.WriteByteAt((ushort)(Registers[indexRegister] + offset), value);
         }
 
         public void WriteWordAt(ushort address, ushort value)
         {
-            _cpu.Memory.WriteWordAt(address, value);
+            CPU.Memory.WriteWordAt(address, value);
         }
 
-        public bool TestFlags(bool? sign = null, bool? carry = null, bool? halfCarry = null, bool? parityOverflow = null, bool? subtract = null, bool? zero = null)
+        public bool CompareWithCPUFlags(bool? sign = null, bool? carry = null, bool? halfCarry = null, bool? parityOverflow = null, bool? subtract = null, bool? zero = null)
         {
-            IFlags f = Registers.Flags;
+            Flags f = Registers.Flags;
             return (sign.HasValue ? f.Sign == sign : true &&
                     carry.HasValue ? f.Carry == carry : true &&
                     halfCarry.HasValue ? f.HalfCarry == halfCarry : true &&
@@ -97,14 +110,33 @@ namespace Z80.Core.Tests
                     zero.HasValue ? f.Zero == zero : true);
         }
 
+        public bool CompareWithCPUFlags(Flags flags)
+        {
+            if (flags != null)
+            {
+                return flags.Value == CPU.Registers.Flags.Value;
+            }
+
+            return false;
+        }
+
         public void PresetFlags(bool? sign = null, bool? carry = null, bool? halfCarry = null, bool? parityOverflow = null, bool? subtract = null, bool? zero = null)
         {
-            IFlags f = new Flags()
+            Flags f = new Flags()
             {
                 Sign = sign ?? false, Carry = carry ?? false, HalfCarry = halfCarry ?? false, ParityOverflow = parityOverflow ?? false, Subtract = subtract ?? false, Zero = zero ?? false 
             };
 
-            _cpu.Registers.SetFlags(f);
+            CPU.Registers.Flags.Set(f.Value);
+        }
+
+        public byte[] RandomBytes(int size)
+        {
+            return Enumerable.Range(0, size).Select(x => RandomByte()).ToArray();
         }
     }
+
+
+    public enum WriteDirection { Incrementing, Decrementing }
+    public enum WriteRepeats { Repeating, NotRepeating }
 }

@@ -12,15 +12,18 @@ namespace Z80.Core
             InstructionData data = package.Data;
             Flags flags = new Flags();
 
-            byte hl = cpu.Memory.ReadByteAt(cpu.Registers.HL);
+            byte xHL = cpu.Memory.ReadByteAt(cpu.Registers.HL);
             byte a = cpu.Registers.A;
 
-            bool[] aBits = a.GetBits(0, 4); // store low-order bits of A
-            a = a.SetBits(0, hl.GetBits(0, 4)); // low-order bits of (HL) to low-order bits of A
-            hl = hl.SetBits(0, hl.GetBits(4, 4)); // high-order bits of (HL) to low-order bits of (HL)
-            hl = hl.SetBits(4, aBits); // stored low-order bits of A to high-order bits of (HL)
+            // result = (HL) = LO: high-order bits of (HL) + HI: low-order bits of A
+            // A = LO: low-order bits of (HL) + HI: high-order bits of A
 
-            cpu.Memory.WriteByteAt(cpu.Registers.HL, hl);
+            bool[] lowA = a.GetLowNybble();
+            a = a.SetLowNybble(xHL.GetLowNybble());
+            xHL = xHL.SetLowNybble(xHL.GetHighNybble());
+            xHL = xHL.SetHighNybble(lowA);
+
+            cpu.Memory.WriteByteAt(cpu.Registers.HL, xHL);
             cpu.Registers.A = a;
 
             if ((sbyte)a < 0) flags.Sign = true;

@@ -13,7 +13,7 @@ namespace Z80.Core
             Flags flags = new Flags();
             IRegisters r = cpu.Registers;
             sbyte offset = (sbyte)(data.Argument1);
-            Register register = data.Register ?? Register.None;
+            RegisterName register = data.Register ?? RegisterName.None;
 
             byte setFlags(byte original, byte shifted)
             {
@@ -25,7 +25,7 @@ namespace Z80.Core
             }
 
             byte original, shifted;
-            if (register != Register.None)
+            if (register != RegisterName.None)
             {
                 original = r[register];
                 shifted = (byte)(original << 1);

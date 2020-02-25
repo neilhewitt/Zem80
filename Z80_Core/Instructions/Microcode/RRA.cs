@@ -10,13 +10,13 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            IFlags flags = cpu.Registers.Flags;
+            Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
 
             byte value = r.A;
-            bool carry = ((byte)(value & 0x01) == 0x01);
+            bool carry = value.GetBit(0);
             value = (byte)(value >> 1);
-            if (flags.Carry) value = (byte)(value | 0x80);
+            value = value.SetBit(7, flags.Carry);
             flags.Carry = carry;
             r.A = value;
 

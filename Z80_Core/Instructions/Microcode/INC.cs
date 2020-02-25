@@ -24,7 +24,7 @@ namespace Z80.Core
             {
                 flags.Carry = cpu.Registers.Flags.Carry;
                 ushort result = (ushort)(value + 1);
-                if (result == 0) flags.Zero = true;
+                if ((byte)result == 0) flags.Zero = true;
                 if (((sbyte)result) < 0) flags.Sign = true;
                 if ((value & 0x0F) == 0x0F) flags.HalfCarry = true;
                 if (value == 0x7F) flags.ParityOverflow = true;

@@ -10,7 +10,7 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            IFlags flags = new Flags();
+            Flags flags = new Flags();
             IRegisters r = cpu.Registers;
 
             IPort port = cpu.Ports[r.C];

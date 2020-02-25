@@ -11,7 +11,7 @@ namespace Z80.Core
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             sbyte offset = (sbyte)data.Argument1;
-            IFlags flags = cpu.Registers.Flags;
+            Flags flags = cpu.Registers.Flags;
             bool pcWasSet = false;
 
             void jr()

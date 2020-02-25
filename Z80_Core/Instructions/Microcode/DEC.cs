@@ -16,8 +16,7 @@ namespace Z80.Core
 
             ushort decw(ushort value)
             {
-                if (value > 0) return (ushort)(value - 1);
-                return value;
+                return (ushort)(value - 1);
             }
 
             byte dec(byte value)
@@ -30,8 +29,7 @@ namespace Z80.Core
                 if (value == 0x80) flags.ParityOverflow = true;
                 flags.Subtract = true;
 
-                if (value > 0) return (byte)(result);
-                return value;
+                return (byte)result;
             }
 
             switch (instruction.Prefix)

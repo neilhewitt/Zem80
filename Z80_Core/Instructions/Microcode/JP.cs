@@ -10,7 +10,7 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            IFlags flags = cpu.Registers.Flags;
+            Flags flags = cpu.Registers.Flags;
             ushort address = data.ArgumentsAsWord;
             bool pcWasSet = false;
 

@@ -18,7 +18,7 @@ namespace Z80.Core
             byte value;
             if (data.Register.HasValue)
             {
-                value = r[data.Register ?? Register.None]; // BIT b, r
+                value = r[data.Register ?? RegisterName.None]; // BIT b, r
             }
             else
             {

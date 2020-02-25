@@ -11,7 +11,7 @@ namespace Z80.Core
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             IRegisters r = cpu.Registers;
-            IFlags flags = r.Flags;
+            Flags flags = r.Flags;
             Flags newFlags = new Flags();
             byte A = r.A;
 

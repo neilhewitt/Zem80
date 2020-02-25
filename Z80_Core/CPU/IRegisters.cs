@@ -2,8 +2,8 @@
 {
     public interface IRegisters
     {
-        byte this[Register register] { get; set; }
-        ushort this[RegisterPair registerPair] { get;set; }
+        byte this[RegisterName register] { get; set; }
+        ushort this[RegisterPairName registerPair] { get;set; }
         byte A { get; set; }
         ushort AF { get; set; }
         byte B { get; set; }
@@ -12,7 +12,7 @@
         byte D { get; set; }
         ushort DE { get; set; }
         byte E { get; set; }
-        byte F { get; set; }
+        byte F { get; }
         byte H { get; set; }
         ushort HL { get; set; }
         byte I { get; set; }
@@ -27,9 +27,9 @@
         byte R { get; set; }
         ushort SP { get; set; }
 
-        IFlags Flags { get; }
+        Flags Flags { get; }
 
-        void SetFlags(IFlags flags);
+        //void SetFlags(byte flags);
         void ExchangeAF();
         void ExchangeBCDEHL();
         Registers Snapshot();

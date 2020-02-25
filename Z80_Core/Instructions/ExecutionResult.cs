@@ -7,11 +7,11 @@ namespace Z80.Core
     public class ExecutionResult
     {
         public Instruction Instruction { get; }
-        public IFlags Flags { get; }
+        public Flags Flags { get; }
         public byte ClockCycles { get; }
         public bool ProgramCounterUpdated { get; }
 
-        public ExecutionResult(InstructionPackage package, IFlags flags, bool conditionTrue, bool pcWasSet = false)
+        public ExecutionResult(InstructionPackage package, Flags flags, bool conditionTrue, bool pcWasSet = false)
         {
             Instruction = package.Instruction;
             Flags = flags;

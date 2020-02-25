@@ -52,7 +52,7 @@ namespace Z80.Core
         public override string ToString()
         {
             string bits = "";
-            for(int i = 0; i < 8; i++)
+            for(int i = 7; i >= 0; i--)
             {
                 bits += _bits[i] ? "1" : "0";
             }

@@ -31,17 +31,17 @@ namespace Z80.Core
                 if (result > 0xFF) flags.Carry = true;
                 if ((sbyte)signed < 0) flags.Sign = true;
                 if (signed > 0x7F || signed < -0x80) flags.ParityOverflow = true;
-                if ((cpu.Registers.A & 0x0F) + (((byte)result) & 0x0F) > 0x0F) flags.HalfCarry = true;
+                if (r.A.HalfCarryWhenAdding((byte)value)) flags.HalfCarry = true;
 
                 return (byte)result;
             }
 
             ushort addWord(ushort first, ushort second)
             {
-                flags = Flags.Copy(cpu.Registers.Flags); // must preserve existing values
+                flags = new Flags(cpu.Registers.Flags.Value); // must preserve existing values
                 uint result = (uint)(first + second);
                 if (result > 0xFFFF) flags.Carry = true;
-                if ((first & 0x0FFF) + (((ushort)result) & 0x0FFF) > 0x0FFF) flags.HalfCarry = true;
+                if (first.HalfCarryWhenAdding((ushort)second)) flags.HalfCarry = true;
 
                 return (ushort)result;
             }

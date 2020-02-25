@@ -10,10 +10,10 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            IFlags flags = new Flags();
+            Flags flags = new Flags();
             IRegisters r = cpu.Registers;
 
-            void @out(byte portNumber, Register addressRegister, Register dataRegister)
+            void @out(byte portNumber, RegisterName addressRegister, RegisterName dataRegister)
             {
                 IPort port = cpu.Ports[portNumber];
                 byte output = r[dataRegister];
@@ -25,11 +25,11 @@ namespace Z80.Core
 
             if (instruction.Prefix == InstructionPrefix.Unprefixed)
             {
-                @out(data.Argument1, Register.A, Register.A);
+                @out(data.Argument1, RegisterName.A, RegisterName.A);
             }
             else
             {
-                @out(r.C, Register.B, data.Register.Value);
+                @out(r.C, RegisterName.B, data.Register.Value);
             }
 
             return new ExecutionResult(package, flags, false);

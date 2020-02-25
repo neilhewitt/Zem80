@@ -20,8 +20,8 @@ namespace Z80.Core
                 short result = (short)(a - b); // note signed short - contains overflow, caters for negative results
                 if (result == 0) flags.Zero = true;
                 if ((sbyte)result < 0) flags.Sign = true;
-                if ((a & 0x0F) < (b & 0x0F)) flags.HalfCarry = true;
-                if (result > 0x7F || result < -0x80) flags.ParityOverflow = true;
+                if (a.HalfCarryWhenSubtracting(b)) flags.HalfCarry = true;
+                if (a.OverflowsWhenSubtracting(b)) flags.ParityOverflow = true;
                 if (result > 0xFF) flags.Carry = true;
                 flags.Subtract = true;
             }
@@ -72,7 +72,7 @@ namespace Z80.Core
                             cp(r.IXl);
                             break;
                         case 0xBE: // CP (IX+o)
-                            cp(cpu.Memory.ReadByteAt((ushort)(r.IX + data.Argument1)));
+                            cp(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)data.Argument1)));
                             break;
 
                     }
@@ -88,7 +88,7 @@ namespace Z80.Core
                             cp(r.IYl);
                             break;
                         case 0xBE: // CP (IY+o)
-                            cp(cpu.Memory.ReadByteAt((ushort)(r.IY + data.Argument1)));
+                            cp(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)data.Argument1)));
                             break;
                     }
                     break;

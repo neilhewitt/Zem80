@@ -11,13 +11,13 @@ namespace Z80.Core
         private byte _AFOffset = 0;
         private byte _BCDEHLOffset = 0;
 
-        public byte this[Register register] { get { return GetRegister(register); } set { SetRegister(register, value); } }
-        public ushort this[RegisterPair registerPair] { get { return GetRegisterPair(registerPair); } set { SetRegisterPair(registerPair, value); } }
+        public byte this[RegisterName register] { get { return GetRegister(register); } set { SetRegister(register, value); } }
+        public ushort this[RegisterPairName registerPair] { get { return GetRegisterPair(registerPair); } set { SetRegisterPair(registerPair, value); } }
 
 
         // 8-bit registers
         public byte A { get { return _registers[_AFOffset]; } set { _registers[_AFOffset] = value; } }
-        public byte F { get { return _registers[_AFOffset + 1]; } set { _registers[_AFOffset + 1] = value; } } // flags register - shouldn't set F or AF directly, use Flags property instead
+        public byte F { get { return _registers[_AFOffset + 1]; } private set { _registers[_AFOffset + 1] = value; } } // flags register - shouldn't set F or AF directly, use Flags property instead
         public byte B { get { return _registers[_BCDEHLOffset + 2]; } set { _registers[_BCDEHLOffset + 2] = value; } }
         public byte C { get { return _registers[_BCDEHLOffset + 3]; } set { _registers[_BCDEHLOffset + 3] = value; } }
         public byte D { get { return _registers[_BCDEHLOffset + 4]; } set { _registers[_BCDEHLOffset + 4] = value; } }
@@ -53,12 +53,13 @@ namespace Z80.Core
         // program counter
         public ushort PC { get { return Get16BitValue(24); } set { Set16BitValue(24, value); } }
 
-        public IFlags Flags { get; private set; }
+        public Flags Flags { get; private set; }
 
-        public void SetFlags(IFlags flags)
-        {
-            ((RegisterFlags)Flags).SetFrom(flags);
-        }
+        //public void SetFlags(byte flags)
+        //{
+        //    Flags.SetFrom(flags);
+        //}
+
         public void ExchangeAF()
         {
             _AFOffset = (byte)((_AFOffset == 0) ? 8 : 0);
@@ -79,11 +80,11 @@ namespace Z80.Core
             _registers = new byte[26];
         }
 
-        private byte GetRegister(Register index)
+        private byte GetRegister(RegisterName index)
         {
-            if (index == Register.None) return 0xFF;
+            if (index == RegisterName.None) return 0xFF;
 
-            if (index == Register.A)
+            if (index == RegisterName.A)
             {
                 return _registers[_AFOffset];
             }
@@ -93,11 +94,11 @@ namespace Z80.Core
             }
         }
 
-        private ushort GetRegisterPair(RegisterPair index)
+        private ushort GetRegisterPair(RegisterPairName index)
         {
-            if (index == RegisterPair.None) return 0xFF;
+            if (index == RegisterPairName.None) return 0xFF;
 
-            if (index == RegisterPair.AF)
+            if (index == RegisterPairName.AF)
             {
                 return Get16BitValue(_AFOffset);
             }
@@ -107,11 +108,11 @@ namespace Z80.Core
             }
         }
 
-        private void SetRegister(Register register, byte value)
+        private void SetRegister(RegisterName register, byte value)
         {
-            if (register != Register.None)
+            if (register != RegisterName.None)
             {
-                if (register == Register.A)
+                if (register == RegisterName.A)
                 {
                     _registers[_AFOffset] = value;
                 }
@@ -122,11 +123,11 @@ namespace Z80.Core
             }
         }
 
-        private void SetRegisterPair(RegisterPair registerPair, ushort value)
+        private void SetRegisterPair(RegisterPairName registerPair, ushort value)
         {
-            if (registerPair != RegisterPair.None)
+            if (registerPair != RegisterPairName.None)
             {
-                if (registerPair == RegisterPair.AF)
+                if (registerPair == RegisterPairName.AF)
                 {
                     Set16BitValue(_AFOffset, value);
                 }
@@ -157,7 +158,10 @@ namespace Z80.Core
         public Registers()
         {
             _registers = new byte[26];
-            Flags = new RegisterFlags(this);
+            Flags = new Flags(
+                getter: () => _registers[_AFOffset + 1], 
+                setter: (value) => _registers[_AFOffset + 1] = value
+                );
         }
 
         private Registers(byte[] registerValues)
@@ -169,7 +173,10 @@ namespace Z80.Core
             }
             
             _registers = registerValues;
-            Flags = new RegisterFlags(this);
+            Flags = new Flags(
+                getter: () => _registers[_AFOffset + 1], 
+                setter: (value) => _registers[_AFOffset + 1] = value
+                );
         }
     }
 }

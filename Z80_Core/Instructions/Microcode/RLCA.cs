@@ -14,9 +14,9 @@ namespace Z80.Core
             IRegisters r = cpu.Registers;
 
             byte value = r.A;
-            flags.Carry = (value & 0x80) == 0x80;
+            flags.Carry = value.GetBit(7);
             value = (byte)(value << 1);
-            if (flags.Carry) value = (byte)(value | 0x01);
+            value = value.SetBit(0, flags.Carry);
             r.A = value;
 
             return new ExecutionResult(package, flags, false);

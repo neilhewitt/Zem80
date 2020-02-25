@@ -72,7 +72,7 @@ namespace Z80_Console
         {
             Console.Clear();
             Console.SetCursorPosition(0, 0);
-            IFlags flags = cpu.Registers.Flags;
+            Flags flags = cpu.Registers.Flags;
             Console.WriteLine("State: " + cpu.State.ToString().ToUpper() + ", Ticks: " + cpu.InstructionTicks.ToString() + "                                           \r\n\r\n");
             string output = $"A: { Value(cpu.Registers.A, 10) } F: { Value(cpu.Registers.F, 10) } AF: { Value(cpu.Registers.AF, 10) }\r\n";
             output += $"B: { Value(cpu.Registers.B, 10) } C: { Value(cpu.Registers.C, 10) } BC: { Value(cpu.Registers.BC, 10) }\r\n";

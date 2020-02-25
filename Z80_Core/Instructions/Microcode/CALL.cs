@@ -10,13 +10,13 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            IFlags flags = cpu.Registers.Flags;
+            Flags flags = cpu.Registers.Flags;
             bool pcWasSet = false;
 
             void call()
             {
                 cpu.Registers.PC += 3; // to allow for this instruction
-                cpu.Push(RegisterPair.PC);
+                cpu.Push(RegisterPairName.PC);
                 cpu.Registers.PC = data.ArgumentsAsWord;
                 pcWasSet = true;
             }

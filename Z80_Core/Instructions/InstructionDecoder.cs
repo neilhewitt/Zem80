@@ -76,8 +76,8 @@ namespace Z80.Core
                     if (instruction.Modifier == ModifierType.IndexRegister) // +p / +q
                     {
                         data.Register = GetRegisterIndex(opcode);
-                        data.DirectIX = (prefix == 0xDD && (data.Register == Register.IXh || data.Register == Register.IXl)); // IX substituted for HL
-                        data.DirectIY = (prefix == 0xFD && (data.Register == Register.IYh || data.Register == Register.IYl)); // IY substituted for HL
+                        data.DirectIX = (prefix == 0xDD && (data.Register == RegisterName.IXh || data.Register == RegisterName.IXl)); // IX substituted for HL
+                        data.DirectIY = (prefix == 0xFD && (data.Register == RegisterName.IYh || data.Register == RegisterName.IYl)); // IY substituted for HL
                     }
 
                     if (instruction.Modifier == ModifierType.IndexRegisterHalf) // +8*p / +8*q
@@ -180,9 +180,9 @@ namespace Z80.Core
             return Decode(instructionBytes);
         }
 
-        private Register GetRegisterIndex(byte opcode)
+        private RegisterName GetRegisterIndex(byte opcode)
         {
-            return (Register)opcode.RemoveBits(3, 5); // register is first 3 bits
+            return (RegisterName)opcode.RemoveBits(3, 5); // register is first 3 bits
         }
 
         private byte GetBitIndex(byte opcode)

@@ -871,7 +871,19 @@ namespace Z80.Core
         public byte SizeInBytes { get; private set; }
         public byte ClockCycles { get; private set; }
         public byte? ClockCyclesConditional { get; private set; }
+        public byte? BitIndex { get; private set; }
+        public RegisterName OperandRegister { get; private set; }
         internal IInstructionImplementation Implementation { get; private set; }
+
+        private RegisterName GetOperandRegisterName(byte opcode)
+        {
+            return (RegisterName)opcode.RemoveBits(3, 5); // register is first 3 bits
+        }
+
+        private byte GetOperandBitIndex(byte opcode)
+        {
+            return opcode.GetByteFromBits(3, 3); // bitindex is bits 3-5
+        }
 
         private Instruction(InstructionPrefix prefix, byte opcode, string mnemonic, ArgumentType argument1, ArgumentType argument2, ModifierType modifier, byte size, byte clockCycles, 
             byte? clockCyclesConditional, IInstructionImplementation implementation = null)
@@ -885,6 +897,16 @@ namespace Z80.Core
             SizeInBytes = size;
             ClockCycles = clockCycles;
             ClockCyclesConditional = clockCyclesConditional;
+            BitIndex = Modifier switch
+            {
+                ModifierType.Bit | ModifierType.BitAndRegister => opcode.GetByteFromBits(3, 3), 
+                _ => null
+            };
+            OperandRegister = Modifier switch
+            {
+                ModifierType.Bit | ModifierType.None => RegisterName.None,
+                _ => (RegisterName)opcode.RemoveBits(3, 5)
+            };
 
             if (implementation != null)
             {

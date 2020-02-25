@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,42 +7,42 @@ namespace Z80.Core.Tests
 {
     public static class TestCases
     {
-        public static IEnumerable<RegisterPair> GetRegisterPairs()
+        public static IEnumerable<RegisterPairName> GetRegisterPairs()
         {
             // get all register pairs that are assignable with LD
-            return new List<RegisterPair>()
+            return new List<RegisterPairName>()
             {
-                RegisterPair.BC,
-                RegisterPair.DE,
-                RegisterPair.HL,
-                RegisterPair.IX,
-                RegisterPair.IY,
-                RegisterPair.SP
+                RegisterPairName.BC,
+                RegisterPairName.DE,
+                RegisterPairName.HL,
+                RegisterPairName.IX,
+                RegisterPairName.IY,
+                RegisterPairName.SP
             };
         }
 
-        public static IEnumerable<RegisterPair> GetRegisterPairs_PUSH_POP() // special case
+        public static IEnumerable<RegisterPairName> GetRegisterPairs_PUSH_POP() // special case
         {
             // get all register pairs that can be PUSHed or POPped
-            return new List<RegisterPair>()
+            return new List<RegisterPairName>()
             {
-                RegisterPair.AF,
-                RegisterPair.BC,
-                RegisterPair.DE,
-                RegisterPair.HL,
-                RegisterPair.IX,
-                RegisterPair.IY
+                RegisterPairName.AF,
+                RegisterPairName.BC,
+                RegisterPairName.DE,
+                RegisterPairName.HL,
+                RegisterPairName.IX,
+                RegisterPairName.IY
             };
         }
 
 
-        public static IEnumerable<Register> GetRegisters()
+        public static IEnumerable<RegisterName> GetRegisters()
         {
             // generate a list of registers excluding F (note 6 == RegisterIndex.None and has to be omitted)
-            IList<Register> cases = new System.Collections.Generic.List<Register>();
+            IList<RegisterName> cases = new System.Collections.Generic.List<RegisterName>();
             for (int i = 0; i <= 7; i++)
             {
-                Register register = (Register)i;
+                RegisterName register = (RegisterName)i;
                 if (i != 6)
                 {
                     cases.Add(register);
@@ -50,6 +51,8 @@ namespace Z80.Core.Tests
 
             return cases;
         }
+
+        public static IEnumerable<RegisterName> Plus(this IEnumerable<RegisterName> registers, RegisterName name) => registers.Append(name);
 
         public static IEnumerable<object[]> GetRegistersAndBits()
         {
@@ -60,7 +63,7 @@ namespace Z80.Core.Tests
             {
                 if (i != 6)
                 {
-                    Register register = (Register)i;
+                    RegisterName register = (RegisterName)i;
                     for (int j = 0; j <= 6; j++)
                     {
                         cases.Add(new object[] { register, j });
@@ -78,10 +81,10 @@ namespace Z80.Core.Tests
             IList<object[]> cases = new System.Collections.Generic.List<object[]>();
             for (int i = 0; i <= 7; i++)
             {
-                Register left = (Register)i;
+                RegisterName left = (RegisterName)i;
                 for (int j = 0; j <= 7; j++)
                 {
-                    Register right = (Register)j;
+                    RegisterName right = (RegisterName)j;
                     if (i != 6 && j != 6)
                     {
                         cases.Add(new object[] { left, right });
@@ -98,41 +101,41 @@ namespace Z80.Core.Tests
             IList<object[]> cases = new System.Collections.Generic.List<object[]>();
             for (int i = 0; i <= 7; i++)
             {
-                Register register = (Register)i;
+                RegisterName register = (RegisterName)i;
                 if (i != 6)
                 {
-                    cases.Add(new object[] { register, RegisterPair.IX });
-                    cases.Add(new object[] { register, RegisterPair.IY });
+                    cases.Add(new object[] { register, RegisterPairName.IX });
+                    cases.Add(new object[] { register, RegisterPairName.IY });
                 }
             }
 
             return cases;
         }
 
-        public static IEnumerable<RegisterPair> GetIndexRegisters()
+        public static IEnumerable<RegisterPairName> GetIndexRegisters()
         {
             // get the Index register names (for indexed operations)
-            return new List<RegisterPair>() { RegisterPair.IX, RegisterPair.IY };
+            return new List<RegisterPairName>() { RegisterPairName.IX, RegisterPairName.IY };
         }
 
-        public static IEnumerable<(string, Func<IFlags>, Func<IFlags, bool>)> GetConditions()
+        public static IEnumerable<(string, Func<Flags>, Func<Flags, bool>)> GetConditions()
         {
-            yield return ("Z", () => new Flags() { Zero = true }, (IFlags flags) => flags.Zero);
-            yield return ("NZ", () => new Flags() { Zero = false }, (IFlags flags) => !flags.Zero);
-            yield return ("C", () => new Flags() { Carry = true }, (IFlags flags) => flags.Carry);
-            yield return ("NC", () => new Flags() { Carry = false }, (IFlags flags) => !flags.Carry);
-            yield return ("PE", () => new Flags() { ParityOverflow = true }, (IFlags flags) => flags.ParityOverflow);
-            yield return ("PO", () => new Flags() { ParityOverflow = false }, (IFlags flags) => !flags.ParityOverflow);
-            yield return ("M", () => new Flags() { Sign = true }, (IFlags flags) => flags.Sign);
-            yield return ("P", () => new Flags() { Sign = false }, (IFlags flags) => !flags.Sign);
+            yield return ("Z", () => new Flags() { Zero = true }, (Flags flags) => flags.Zero);
+            yield return ("NZ", () => new Flags() { Zero = false }, (Flags flags) => !flags.Zero);
+            yield return ("C", () => new Flags() { Carry = true }, (Flags flags) => flags.Carry);
+            yield return ("NC", () => new Flags() { Carry = false }, (Flags flags) => !flags.Carry);
+            yield return ("PE", () => new Flags() { ParityOverflow = true }, (Flags flags) => flags.ParityOverflow);
+            yield return ("PO", () => new Flags() { ParityOverflow = false }, (Flags flags) => !flags.ParityOverflow);
+            yield return ("M", () => new Flags() { Sign = true }, (Flags flags) => flags.Sign);
+            yield return ("P", () => new Flags() { Sign = false }, (Flags flags) => !flags.Sign);
         }
 
-        public static IEnumerable<(string, Func<IFlags>, Func<IFlags, bool>)> GetZeroAndCarryConditions()
+        public static IEnumerable<(string, Func<Flags>, Func<Flags, bool>)> GetZeroAndCarryConditions()
         {
-            yield return ("Z", () => new Flags() { Zero = true }, (IFlags flags) => flags.Zero);
-            yield return ("NZ", () => new Flags() { Zero = false }, (IFlags flags) => !flags.Zero);
-            yield return ("C", () => new Flags() { Carry = true }, (IFlags flags) => flags.Carry);
-            yield return ("NC", () => new Flags() { Carry = false }, (IFlags flags) => !flags.Carry);
+            yield return ("Z", () => new Flags() { Zero = true }, (Flags flags) => flags.Zero);
+            yield return ("NZ", () => new Flags() { Zero = false }, (Flags flags) => !flags.Zero);
+            yield return ("C", () => new Flags() { Carry = true }, (Flags flags) => flags.Carry);
+            yield return ("NC", () => new Flags() { Carry = false }, (Flags flags) => !flags.Carry);
         }
     }
 }

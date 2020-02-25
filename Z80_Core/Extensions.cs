@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -12,6 +13,12 @@ namespace Z80.Core
         public static string ToHexString(this byte input)
         {
             return input.ToString("X2");
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string ToBinaryString(this byte input)
+        {
+            return new ByteBits(input).ToString();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -29,7 +36,13 @@ namespace Z80.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HalfCarryWhenAdding(this byte first, byte second)
         {
-            return ((first & 0x0F) + (second & 0x0F) & 0x10) == 0x10;
+            return ((first & 0x0F) + (second & 0x0F)) > 0x0F;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool HalfCarryWhenAdding(this ushort first, ushort second)
+        {
+            return ((first & 0x0FFF) + (second & 0x0FFF)) > 0x0FFF;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -79,6 +92,32 @@ namespace Z80.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool[] GetHighNybble(this byte input)
+        {
+            return input.GetBits(4, 4);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool[] GetLowNybble(this byte input)
+        {
+            return input.GetBits(0, 4);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static byte SetHighNybble(this byte input, bool[] bits)
+        {
+            if (bits.Length != 4) throw new IndexOutOfRangeException();
+            return input.SetBits(4, bits);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static byte SetLowNybble(this byte input, bool[] bits)
+        {
+            if (bits.Length != 4) throw new IndexOutOfRangeException();
+            return input.SetBits(0, bits);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte GetByteFromBits(this byte input, int startIndex, int numberOfBits)
         {
             ByteBits bits = new ByteBits(input);
@@ -99,16 +138,17 @@ namespace Z80.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte SetBit(this byte input, int bitIndex, bool state)
         {
-            ByteBits bits = new ByteBits(input);
-            bits[bitIndex] = state;
-            return bits.Value;
+            return state switch
+            {
+                true => (byte)(input | (1 << bitIndex)),
+                false => (byte)(input | (0 << bitIndex))
+            };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool GetBit(this byte input, int bitIndex)
         {
-            ByteBits bits = new ByteBits(input);
-            return bits[bitIndex];
+            return (input & (1 << bitIndex)) != 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -123,6 +163,11 @@ namespace Z80.Core
             }
 
             return bits;
+        }
+
+        public static string ToBinaryString(this bool[] input)
+        {
+            return String.Join("", input.Reverse().Select(x => x ? "1" : "0"));
         }
     }
 }
