@@ -53,7 +53,7 @@ namespace Z80.Core.Tests
         {
             byte expected = ((byte)(input << 1)).SetBit(0, carry);
 
-            ushort address = RandomWord();
+            ushort address = 0x5000;;
             WriteByteAt(address, input);
             Registers.HL = address;
             Flags.Carry = carry;
@@ -71,7 +71,7 @@ namespace Z80.Core.Tests
         {
             byte expected = ((byte)(input >> 1)).SetBit(7, carry);
 
-            ushort address = RandomWord();
+            ushort address = 0x5000;;
             WriteByteAt(address, input);
             Registers.HL = address;
             Flags.Carry = carry;
@@ -90,7 +90,7 @@ namespace Z80.Core.Tests
             byte value = 0x7F;
             byte expected = ((byte)(value << 1)).SetBit(0, carry);
 
-            ushort address = RandomWord();
+            ushort address = 0x5000;;
             WriteByteAt((ushort)(address + offset), value);
             Registers[indexRegister] = address;
             Flags.Carry = carry;
@@ -109,7 +109,7 @@ namespace Z80.Core.Tests
             byte value = 0x7F;
             byte expected = ((byte)(value >> 1)).SetBit(7, carry);
 
-            ushort address = RandomWord();
+            ushort address = 0x5000;;
             WriteByteAt((ushort)(address + offset), value);
             Registers[indexRegister] = address;
             Flags.Carry = carry;

@@ -96,7 +96,7 @@ namespace Z80.Core.Tests
         [Test]
         public void LD_xnn_A()
         {
-            ushort address = RandomWord(0xFFFE);
+            ushort address = 0x5000;
             Registers.A = 0x7F;
             ExecutionResult executionResult = ExecuteInstruction(mnemonic: $"LD (nn),A", arg1: address.LowByte(), arg2: address.HighByte());
 
@@ -148,7 +148,7 @@ namespace Z80.Core.Tests
         [Test, TestCaseSource(typeof(LD_TestCases), "GetRegisterPairs")]
         public void LD_rr_xnn(RegisterPairName registerPair)
         {
-            ushort address = RandomWord(0xFFFE);
+            ushort address = 0x2000;
             ushort value = 0x5000;
             WriteWordAt(address, value);
             ExecutionResult executionResult = ExecuteInstruction(mnemonic: $"LD {registerPair},(nn)", arg1: address.LowByte(), arg2: address.HighByte());
@@ -159,7 +159,7 @@ namespace Z80.Core.Tests
         [Test, TestCaseSource(typeof(LD_TestCases), "GetRegisterPairs")]
         public void LD_xnn_rr(RegisterPairName registerPair)
         {
-            ushort address = RandomWord(0xFFFE);
+            ushort address = 0x2000;
             Registers[registerPair] = 0x5000;
             ExecutionResult executionResult = ExecuteInstruction(mnemonic: $"LD (nn),{registerPair}", arg1: address.LowByte(), arg2: address.HighByte());
 

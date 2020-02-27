@@ -19,7 +19,7 @@ namespace Z80.Core.Tests
                 RegisterPairName.IY
             )] RegisterPairName registerPair)
         {
-            ushort value = RandomWord();
+            ushort value = 0x5000;;
             ushort stackAddress = Registers.SP;
             Registers[registerPair] = value; 
 

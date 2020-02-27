@@ -12,7 +12,7 @@ namespace Z80.Core.Tests
         [Test]
         public void NEG()
         {
-            byte value = RandomByte();
+            byte value = 0x7F;
             Registers.A = value;
             ExecutionResult executionResult = ExecuteInstruction("NEG");
 

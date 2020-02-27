@@ -11,7 +11,7 @@ namespace Z80.Core.Tests
         [Test]
         public void BIT_b_r([Values(0, 1, 2, 3, 4, 5, 7)] RegisterName register, [Range(0, 6)] int bitIndex)
         {
-            byte value = RandomByte();
+            byte value = 0x7F;
             bool zeroFlagExpected = value.GetBit(bitIndex) == false;
 
             Registers[register] = value;
@@ -28,8 +28,8 @@ namespace Z80.Core.Tests
         [Test]
         public void BIT_b_xHL([Range(0, 6)] int bitIndex)
         {
-            byte value = RandomByte();
-            ushort address = RandomWord();
+            byte value = 0x7F;
+            ushort address = 0x5000;
             bool zeroFlagExpected = value.GetBit(bitIndex) == false;
 
             WriteByteAt(address, value);
@@ -45,12 +45,10 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        public void BIT_b_xIndexOffset([Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName registerPair)
+        public void BIT_b_xIndexOffset([Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName registerPair, [Range(0, 6)] int bitIndex, [Values(0, 127, -127)] sbyte offset)
         {
-            byte bitIndex = RandomByte(7);
-            byte value = RandomByte();
-            sbyte offset = (sbyte)RandomByte();
-            ushort address = RandomWord();
+            byte value = 0x7F;
+            ushort address = 0x5000;
             bool zeroFlagExpected = value.GetBit(bitIndex) == false;
 
             WriteByteAt((ushort)(address + offset), value);

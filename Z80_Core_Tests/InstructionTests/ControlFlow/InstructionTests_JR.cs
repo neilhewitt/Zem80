@@ -28,10 +28,9 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        public void JR_o()
+        public void JR_o([Values(0, 127, -127)] sbyte jump)
         {
-            sbyte jump = (sbyte)RandomByte();
-            Registers.PC = RandomWord();
+            Registers.PC = 0x5000;
             ushort address = Registers.PC;
 
             ExecutionResult executionResult = ExecuteInstruction($"JR o", arg1: (byte)jump);

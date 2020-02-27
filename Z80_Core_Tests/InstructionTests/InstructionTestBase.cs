@@ -40,28 +40,6 @@ namespace Z80.Core.Tests
             return result;
         }
 
-        public byte RandomByte(byte maxValue = 0xFF)
-        {
-            return (byte)_random.Next(0x00, maxValue);
-        }
-
-        public ushort RandomWord(ushort maxValue = 0xFFFF)
-        {
-            return (ushort)_random.Next(0x00, maxValue);
-        }
-
-        public bool RandomBool()
-        {
-            return (RandomByte(1) == 0);
-        }
-
-        public RegisterName RandomRegister()
-        {
-            int random = _random.Next(0, 7);
-            if (random == 6) return RandomRegister();
-            return (RegisterName)random;
-        }
-
         public byte ReadByteAtIndexAndOffset(RegisterPairName indexRegister, sbyte offset)
         {
             return CPU.Memory.ReadByteAt((ushort)(Registers[indexRegister] + offset));
@@ -92,40 +70,9 @@ namespace Z80.Core.Tests
             CPU.Memory.WriteWordAt(address, value);
         }
 
-        public bool CompareWithCPUFlags(bool? sign = null, bool? carry = null, bool? halfCarry = null, bool? parityOverflow = null, bool? subtract = null, bool? zero = null)
-        {
-            Flags f = Registers.Flags;
-            return (sign.HasValue ? f.Sign == sign : true &&
-                    carry.HasValue ? f.Carry == carry : true &&
-                    halfCarry.HasValue ? f.HalfCarry == halfCarry : true &&
-                    parityOverflow.HasValue ? f.ParityOverflow == parityOverflow : true &&
-                    subtract.HasValue ? f.Subtract == subtract : true &&
-                    zero.HasValue ? f.Zero == zero : true);
-        }
-
-        public bool CompareWithCPUFlags(Flags flags)
-        {
-            if (flags != null)
-            {
-                return flags.Value == CPU.Registers.Flags.Value;
-            }
-
-            return false;
-        }
-
-        public void PresetFlags(bool? sign = null, bool? carry = null, bool? halfCarry = null, bool? parityOverflow = null, bool? subtract = null, bool? zero = null)
-        {
-            Flags f = new Flags()
-            {
-                Sign = sign ?? false, Carry = carry ?? false, HalfCarry = halfCarry ?? false, ParityOverflow = parityOverflow ?? false, Subtract = subtract ?? false, Zero = zero ?? false 
-            };
-
-            CPU.Registers.Flags.Set(f.Value);
-        }
-
         public byte[] RandomBytes(int size)
         {
-            return Enumerable.Range(0, size).Select(x => RandomByte()).ToArray();
+            return Enumerable.Range(0, size).Select(x => (byte)_random.Next(0x00, 0xFF)).ToArray();
         }
     }
 

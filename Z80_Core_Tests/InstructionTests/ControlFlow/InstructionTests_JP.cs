@@ -34,8 +34,8 @@ namespace Z80.Core.Tests
         [Test]
         public void JP_nn()
         {
-            ushort address = RandomWord();
-            Registers.PC = RandomWord();
+            ushort address = 0x5000;;
+            Registers.PC = 0x5000;;
 
             ExecutionResult executionResult = ExecuteInstruction($"JP nn", arg1: address.LowByte(), arg2: address.HighByte());
             ushort newPC = Registers.PC;
