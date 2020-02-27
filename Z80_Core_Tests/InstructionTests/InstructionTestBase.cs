@@ -27,7 +27,7 @@ namespace Z80.Core.Tests
             CPU.ResetAndClearMemory();
         }
 
-        public ExecutionResult ExecuteInstruction(string mnemonic, byte? arg1 = null, byte? arg2 = null, byte? bitIndex = null/*, RegisterName? register = null*/)
+        public ExecutionResult ExecuteInstruction(string mnemonic, byte? arg1 = null, byte? arg2 = null)
         {
             Instruction instruction = Instruction.FindByMnemonic(mnemonic);
             InstructionData data = new InstructionData()

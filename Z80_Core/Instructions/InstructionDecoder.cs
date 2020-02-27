@@ -147,16 +147,6 @@ namespace Z80.Core
             return Decode(instructionBytes);
         }
 
-        private RegisterName GetRegisterIndex(byte opcode)
-        {
-            return (RegisterName)opcode.GetByteFromBits(0, 3); // register is first 3 bits
-        }
-
-        private byte GetBitIndex(byte opcode)
-        {
-            return opcode.GetByteFromBits(3, 3); // bitindex is bits 3-5
-        }
-
         public InstructionDecoder()
         { }
     }

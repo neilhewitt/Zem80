@@ -12,7 +12,6 @@ namespace Z80.Core
 
         public uint SizeInBytes => _map.SizeInBytes;
 
-
         public byte ReadByteAt(ushort address)
         {
             if (!_initialised) throw new MemoryException();

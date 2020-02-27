@@ -18,7 +18,7 @@ namespace Z80.Core.Tests
             byte resetValue = initialValue.SetBit(bitIndex, false);
             
             Registers.B = initialValue;
-            ExecutionResult executionResult = ExecuteInstruction($"RES { bitIndex },B", bitIndex:bitIndex);
+            ExecutionResult executionResult = ExecuteInstruction($"RES { bitIndex },B");
 
             Assert.That(Registers.B, Is.EqualTo(resetValue));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(initialFlags)); // flags should be preserved
@@ -34,7 +34,7 @@ namespace Z80.Core.Tests
             Registers.HL = 0x5000;
             WriteByteAt(Registers.HL, initialValue);
 
-            ExecutionResult executionResult = ExecuteInstruction($"RES { bitIndex },(HL)", bitIndex: (byte)bitIndex);
+            ExecutionResult executionResult = ExecuteInstruction($"RES { bitIndex },(HL)");
 
             Assert.That(ReadByteAt(Registers.HL), Is.EqualTo(resetValue));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(initialFlags)); 
@@ -52,7 +52,7 @@ namespace Z80.Core.Tests
             Registers[registerPair] = address;
             WriteByteAt((ushort)(address + offset), initialValue);
 
-            ExecutionResult executionResult = ExecuteInstruction($"RES { bitIndex },({ registerPair }+o)", bitIndex:(byte)bitIndex, arg1:(byte)offset);
+            ExecutionResult executionResult = ExecuteInstruction($"RES { bitIndex },({ registerPair }+o)", arg1:(byte)offset);
 
             Assert.That(ReadByteAtIndexAndOffset(registerPair, offset), Is.EqualTo(resetValue));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(initialFlags));
