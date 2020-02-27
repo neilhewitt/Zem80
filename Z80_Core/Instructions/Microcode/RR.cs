@@ -43,7 +43,7 @@ namespace Z80.Core
             byte setFlags(byte original, byte shifted)
             {
                 shifted = shifted.SetBit(7, previousCarry);
-                flags.Carry = (original & 0x01) == 0x01;
+                flags.Carry = original.GetBit(0);
                 if (((sbyte)shifted) < 0) flags.Sign = true;
                 if (shifted == 0) flags.Zero = true;
                 if (shifted.CountBits(true) % 2 == 0) flags.ParityOverflow = true;

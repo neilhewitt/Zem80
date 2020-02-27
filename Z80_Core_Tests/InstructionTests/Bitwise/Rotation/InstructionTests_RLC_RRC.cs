@@ -19,35 +19,35 @@ namespace Z80.Core.Tests
             return flags;
         }
 
-        [Test, TestCaseSource(typeof(LD_TestCases), "GetRegisters")]
-        public void RLC_r(RegisterName register)
+        [Test]
+        public void RLC_A()
         {
             byte value = 0x7F;
             byte expected = (byte)(value << 1);
-            Registers[register] = value;
+            Registers.A = value;
             expected = expected.SetBit(0, value.GetBit(7));
 
-            ExecutionResult executionResult = ExecuteInstruction($"RLC { register }");
+            ExecutionResult executionResult = ExecuteInstruction($"RLC A");
 
             Flags expectedFlags = GetExpectedFlags(value, expected, expected.GetBit(0));
 
-            Assert.That(Registers[register], Is.EqualTo(expected));
+            Assert.That(Registers.A, Is.EqualTo(expected));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
         }
 
-        [Test, TestCaseSource(typeof(LD_TestCases), "GetRegisters")]
-        public void RRC_r(RegisterName register)
+        [Test]
+        public void RRC_B()
         {
             byte value = 0x7F;
             byte expected = (byte)(value >> 1);
-            Registers[register] = value;
+            Registers.B = value;
             expected = expected.SetBit(7, value.GetBit(0));
 
-            ExecutionResult executionResult = ExecuteInstruction($"RRC { register }");
+            ExecutionResult executionResult = ExecuteInstruction($"RRC B");
 
             Flags expectedFlags =  GetExpectedFlags(value, expected, expected.GetBit(7));
 
-            Assert.That(Registers[register], Is.EqualTo(expected));
+            Assert.That(Registers.B, Is.EqualTo(expected));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
         }
 

@@ -23,7 +23,7 @@ namespace Z80.Core.Tests
         [Test]
         public void RL_A([Values(0x00, 0x7F, 0xFF)] byte input, [Values(true, false)] bool carry)
         {
-            Registers.Flags.Carry = carry;
+            Flags.Carry = carry;
             Registers.A = input; // single branch of code, no need to test all registers
 
             ExecutionResult executionResult = ExecuteInstruction($"RL A");
@@ -37,7 +37,7 @@ namespace Z80.Core.Tests
         [Test]
         public void RR_B([Values(0x00, 0x7F, 0xFF)] byte input, [Values(true, false)] bool carry)
         {
-            Registers.Flags.Carry = carry;
+            Flags.Carry = carry;
             Registers.B = input;
 
             ExecutionResult executionResult = ExecuteInstruction($"RR B");
@@ -49,94 +49,77 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        public void RL_xHL([Values(true, false)] bool carry)
+        public void RL_xHL([Values(0x00, 0x7F, 0xFF)] byte input, [Values(true, false)] bool carry)
         {
-            Flags flags = Registers.Flags;
-            flags.Carry = carry;
-            byte value = RandomByte(0xE0);
-            byte expected = ((byte)(value << 1)).SetBit(0, flags.Carry);
+            byte expected = ((byte)(input << 1)).SetBit(0, carry);
 
             ushort address = RandomWord();
-            WriteByteAt(address, value);
+            WriteByteAt(address, input);
             Registers.HL = address;
+            Flags.Carry = carry;
 
             ExecutionResult executionResult = ExecuteInstruction($"RL (HL)");
 
-            flags = GetExpectedFlags(value, expected, 7);
+            Flags expectedFlags = GetExpectedFlags(input, expected, 7);
 
-            Assert.That(
-                ReadByteAt(address) == expected &&
-                CompareWithCPUFlags(flags)
-                );
+            Assert.That(ReadByteAt(address), Is.EqualTo(expected));
+            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
         }
 
         [Test]
-        public void RR_xHL([Values(true, false)] bool carry)
+        public void RR_xHL([Values(0x00, 0x7F, 0xFF)] byte input, [Values(true, false)] bool carry)
         {
-            Flags flags = Registers.Flags;
-            flags.Carry = carry;
-            byte value = RandomByte(0xE0);
-            byte expected = ((byte)(value >> 1)).SetBit(7, flags.Carry);
+            byte expected = ((byte)(input >> 1)).SetBit(7, carry);
 
             ushort address = RandomWord();
-            WriteByteAt(address, value);
+            WriteByteAt(address, input);
             Registers.HL = address;
+            Flags.Carry = carry;
 
             ExecutionResult executionResult = ExecuteInstruction($"RR (HL)");
 
-            flags = GetExpectedFlags(value, expected, 0);
+            Flags expectedFlags = GetExpectedFlags(input, expected, 0);
 
-            Assert.That(
-                ReadByteAt(address) == expected &&
-                CompareWithCPUFlags(flags)
-                );
+            Assert.That(ReadByteAt(address), Is.EqualTo(expected));
+            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
         }
 
-        [Test, TestCaseSource(typeof(LD_TestCases), "GetIndexRegisters")]
-        public void RL_xIndexOffset(RegisterPairName indexRegister)
+        [Test]
+        public void RL_xIndexOffset([Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName indexRegister, [Values(127, -128)] sbyte offset, [Values(true, false)] bool carry)
         {
-            Flags flags = Registers.Flags;
-            flags.Carry = indexRegister == RegisterPairName.IX;
-            byte value = RandomByte(0xE0);
-            byte expected = ((byte)(value << 1)).SetBit(0, flags.Carry);
+            byte value = 0x7F;
+            byte expected = ((byte)(value << 1)).SetBit(0, carry);
 
             ushort address = RandomWord();
-            sbyte offset = (sbyte)RandomByte();
             WriteByteAt((ushort)(address + offset), value);
             Registers[indexRegister] = address;
+            Flags.Carry = carry;
 
             ExecutionResult executionResult = ExecuteInstruction($"RL ({ indexRegister }+o)", arg1: (byte)offset);
 
-            flags = GetExpectedFlags(value, expected, 7);
+            Flags expectedFlags = GetExpectedFlags(value, expected, 7);
 
-            Assert.That(
-                ReadByteAt((ushort)(address + offset)) == expected &&
-                CompareWithCPUFlags(flags)
-                );
+            Assert.That(ReadByteAtIndexAndOffset(indexRegister, offset), Is.EqualTo(expected));
+            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
         }
 
-        [Test, TestCaseSource(typeof(LD_TestCases), "GetIndexRegisters")]
-        public void RR_xIndexOffset(RegisterPairName indexRegister)
+        [Test]
+        public void RR_xIndexOffset([Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName indexRegister, [Values(127, -128)] sbyte offset, [Values(true, false)] bool carry)
         {
-            Flags flags = Registers.Flags;
-            flags.Carry = indexRegister == RegisterPairName.IY;
-            byte value = RandomByte(0xE0);
-            byte expected = ((byte)(value >> 1)).SetBit(7, flags.Carry);
+            byte value = 0x7F;
+            byte expected = ((byte)(value >> 1)).SetBit(7, carry);
 
             ushort address = RandomWord();
-            sbyte offset = (sbyte)RandomByte();
-
             WriteByteAt((ushort)(address + offset), value);
             Registers[indexRegister] = address;
+            Flags.Carry = carry;
 
             ExecutionResult executionResult = ExecuteInstruction($"RR ({ indexRegister }+o)", arg1: (byte)offset);
 
-            flags = GetExpectedFlags(value, expected, 0);
+            Flags expectedFlags = GetExpectedFlags(value, expected, 0);
 
-            Assert.That(
-                ReadByteAt((ushort)(address + offset)) == expected &&
-                CompareWithCPUFlags(flags)
-                );
+            Assert.That(ReadByteAtIndexAndOffset(indexRegister, offset), Is.EqualTo(expected));
+            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
         }
     }
 }
