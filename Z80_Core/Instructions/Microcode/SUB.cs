@@ -23,10 +23,10 @@ namespace Z80.Core
                 ushort result = (ushort)(cpu.Registers.A - value);
                 short signed = (short)result;
                 if (result == 0) flags.Zero = true;
-                if (result > 0xFF) flags.Carry = true;
+                if (result < 0x00) flags.Carry = true;
                 if ((sbyte)signed < 0) flags.Sign = true;
-                if (signed > 0x7F || signed < -0x7F) flags.ParityOverflow = true;
-                if (cpu.Registers.A.HalfCarryWhenAdding((byte)result)) flags.HalfCarry = true;
+                if (signed > 0x7F || signed < -0x80) flags.ParityOverflow = true;
+                if (cpu.Registers.A.HalfCarryWhenSubtracting((byte)result)) flags.HalfCarry = true;
 
                 return (byte)result;
             }

@@ -7,11 +7,11 @@ using Z80.Core;
 namespace Z80.Core.Tests
 {
     [TestFixture]
-    public class InstructionTests_OR : InstructionTestBase
+    public class InstructionTests_XOR : InstructionTestBase
     {
         private (byte expectedResult, Flags expectedFlags) GetExpectedResultAndFlags(byte first, byte second)
         {
-            short result = (short)(first | second);
+            short result = (short)(first ^ second);
             Flags flags = new Flags();
 
             flags.Zero = (result == 0);
@@ -34,14 +34,14 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        public void OR_r()
+        public void XOR_r()
         {
             byte first = 0x7F;
             byte second = 0x33;
 
             Registers.A = first;
             Registers.B = second;
-            ExecutionResult executionResult = ExecuteInstruction($"OR B"); // if one register works, they all do
+            ExecutionResult executionResult = ExecuteInstruction($"XOR B"); // if one register works, they all do
             (short expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(first, second);
 
             Assert.That(Registers.A, Is.EqualTo(expectedResult));
@@ -49,13 +49,13 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        public void OR_n()
+        public void XOR_n()
         {
             byte first = 0x7F;
             byte second = 0x33;
 
             Registers.A = first;
-            ExecutionResult executionResult = ExecuteInstruction($"OR n", arg1: second);
+            ExecutionResult executionResult = ExecuteInstruction($"XOR n", arg1: second);
             (short expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(first, second);
 
             Assert.That(Registers.A, Is.EqualTo(expectedResult));
@@ -63,7 +63,7 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        public void OR_xHL()
+        public void XOR_xHL()
         {
             byte first = 0x7F;
             byte second = 0x33;
@@ -72,15 +72,15 @@ namespace Z80.Core.Tests
             Registers.HL = 0x5000;
             WriteByteAt(Registers.HL, second);
 
-            ExecutionResult executionResult = ExecuteInstruction($"OR (HL)"); 
+            ExecutionResult executionResult = ExecuteInstruction($"XOR (HL)"); 
             (short expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(first, second);
 
-            Assert.That(ReadByteAt(Registers.HL), Is.EqualTo(expectedResult));
+            Assert.That(Registers.A, Is.EqualTo(expectedResult));
             Assert.That(CheckFlags(expectedFlags, executionResult.Flags), Is.True); ;
         }
 
         [Test]
-        public void OR_xIndexOffset([Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName registerPair, [Values(127, -128)] sbyte offset)
+        public void XOR_xIndexOffset([Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName registerPair, [Values(127, -128)] sbyte offset)
         {
             byte first = 0x7F;
             byte second = 0x33;
@@ -89,10 +89,10 @@ namespace Z80.Core.Tests
             Registers[registerPair] = 0x5000;
             WriteByteAtIndexAndOffset(registerPair, offset, second);
 
-            ExecutionResult executionResult = ExecuteInstruction($"OR ({ registerPair }+o)", arg1: (byte)offset);
+            ExecutionResult executionResult = ExecuteInstruction($"XOR ({ registerPair }+o)", arg1: (byte)offset);
             (short expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(first, second);
 
-            Assert.That(ReadByteAtIndexAndOffset(registerPair, offset), Is.EqualTo(expectedResult));
+            Assert.That(Registers.A, Is.EqualTo(expectedResult));
             Assert.That(CheckFlags(expectedFlags, executionResult.Flags), Is.True); ;
         }
     }

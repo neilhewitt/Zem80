@@ -12,18 +12,7 @@ namespace Z80.Core
             InstructionData data = package.Data;
 
             byte t_index = instruction.Opcode.GetByteFromBits(3, 3);
-            ushort address = t_index switch
-            {
-                0x00 => 0x0000,
-                0x01 => 0x0008,
-                0x02 => 0x0010,
-                0x03 => 0x0018,
-                0x04 => 0x0020,
-                0x05 => 0x0028,
-                0x06 => 0x0030,
-                0x07 => 0x0038,
-                   _ => 0x0000
-            };
+            ushort address = (ushort)(t_index * 8);
 
             cpu.Push(RegisterPairName.PC);
             cpu.Registers.PC = address;
