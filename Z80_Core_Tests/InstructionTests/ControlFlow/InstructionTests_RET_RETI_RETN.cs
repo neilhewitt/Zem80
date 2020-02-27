@@ -12,37 +12,37 @@ namespace Z80.Core.Tests
         [Test]
         public void RET()
         {
-            ushort address = RandomWord(32768);
+            ushort address = 0x2000;
             Registers.HL = address;
             CPU.Push(RegisterPairName.HL);
 
             ExecutionResult executionResult = ExecuteInstruction("RET");
 
-            Assert.That(Registers.PC == address);
+            Assert.That(Registers.PC, Is.EqualTo(address));
         }
 
         [Test]
         public void RETI()
         {
-            ushort address = RandomWord(32768);
+            ushort address = 0x2000;
             Registers.HL = address;
             CPU.Push(RegisterPairName.HL);
 
             ExecutionResult executionResult = ExecuteInstruction("RETI");
 
-            Assert.That(Registers.PC == address);
+            Assert.That(Registers.PC, Is.EqualTo(address));
         }
 
         [Test]
         public void RETN()
         {
-            ushort address = RandomWord(32768);
+            ushort address = 0x2000;
             Registers.HL = address;
             CPU.Push(RegisterPairName.HL);
 
             ExecutionResult executionResult = ExecuteInstruction("RETN");
 
-            Assert.That(Registers.PC == address);
+            Assert.That(Registers.PC, Is.EqualTo(address));
         }
 
         [TestCase(ConditionFlagName.Z)]
@@ -55,7 +55,7 @@ namespace Z80.Core.Tests
         [TestCase(ConditionFlagName.P)]
         public void RET(ConditionFlagName condition)
         {
-            ushort address = RandomWord(32768);
+            ushort address = 0x2000;
             Registers.HL = address;
             CPU.Push(RegisterPairName.HL);
 

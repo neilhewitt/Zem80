@@ -23,8 +23,6 @@ namespace Z80.Core
                 }
 
                 byte prefix = instructionBytes[0];
-                data.IndexIX = prefix == 0xDD;
-                data.IndexIY = prefix == 0xFD;
 
                 if (prefix == 0xCB || ((prefix == 0xDD || prefix == 0xFD) && instructionBytes[1] == 0xCB))
                 {
@@ -32,22 +30,11 @@ namespace Z80.Core
                     opcode = (prefix != 0xCB) ? instructionBytes[3] : instructionBytes[1];
                     Instruction instruction = Instruction.Find(opcode, (InstructionPrefix)prefix);
 
-                    if (instruction.Modifier == ModifierType.Register) // +r
-                    {
-                        data.Register = GetRegisterIndex(opcode);
-                    }
-
-                    if (instruction.Modifier == ModifierType.Bit) // +8*b
-                    {
-                        data.BitIndex = GetBitIndex(opcode);
-                    }
-
                     if (instruction.Argument1 == ArgumentType.Displacement)
                     {
                         data.Argument1 = instructionBytes[2];
                     }
 
-                    data.Opcode = opcode;
                     return new InstructionPackage(instruction, data);
                 }
                 else if (prefix == 0xED)
@@ -62,7 +49,6 @@ namespace Z80.Core
                         data.Argument2 = instructionBytes[3];
                     }
 
-                    data.Opcode = opcode;
                     return new InstructionPackage(instruction, data);
                 }
                 else if (prefix == 0xDD || prefix == 0xFD)
@@ -72,18 +58,6 @@ namespace Z80.Core
 
                     opcode = instructionBytes[1];
                     Instruction instruction = Instruction.Find(opcode, (InstructionPrefix)prefix);
-
-                    if (instruction.Modifier == ModifierType.IndexRegister) // +p / +q
-                    {
-                        data.Register = GetRegisterIndex(opcode);
-                        data.DirectIX = (prefix == 0xDD && (data.Register == RegisterName.IXh || data.Register == RegisterName.IXl)); // IX substituted for HL
-                        data.DirectIY = (prefix == 0xFD && (data.Register == RegisterName.IYh || data.Register == RegisterName.IYl)); // IY substituted for HL
-                    }
-
-                    if (instruction.Modifier == ModifierType.IndexRegisterHalf) // +8*p / +8*q
-                    {
-                        data.Register = GetRegisterIndex(opcode); 
-                    }
 
                     if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
                     {
@@ -95,7 +69,6 @@ namespace Z80.Core
                         data.Argument2 = instructionBytes[3];
                     }
 
-                    data.Opcode = opcode;
                     return new InstructionPackage(instruction, data);
 
                 }
@@ -108,11 +81,6 @@ namespace Z80.Core
 
                     Instruction instruction = Instruction.Find(opcode, InstructionPrefix.Unprefixed);
 
-                    if (instruction.Modifier == ModifierType.Register) // +r
-                    {
-                        data.Register = GetRegisterIndex(opcode);
-                    }
-
                     if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
                     {
                         data.Argument1 = instructionBytes[1];
@@ -123,7 +91,6 @@ namespace Z80.Core
                         data.Argument2 = instructionBytes[2];
                     }
 
-                    data.Opcode = opcode;
                     return new InstructionPackage(instruction, data);
                 }
             }
@@ -182,7 +149,7 @@ namespace Z80.Core
 
         private RegisterName GetRegisterIndex(byte opcode)
         {
-            return (RegisterName)opcode.RemoveBits(3, 5); // register is first 3 bits
+            return (RegisterName)opcode.GetByteFromBits(0, 3); // register is first 3 bits
         }
 
         private byte GetBitIndex(byte opcode)

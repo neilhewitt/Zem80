@@ -520,7 +520,7 @@ namespace Z80.Core
                     },
                     { InstructionPrefix.ED, new Dictionary<byte, Instruction>() 
                         {
-                            { 0x40, new Instruction(InstructionPrefix.ED, 0x40, "IN B,(C)", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 12, null) },
+                            { 0x40, new Instruction(InstructionPrefix.ED, 0x40, "IN B,(C)", ArgumentType.None, ArgumentType.None, ModifierType.InputRegister, 2, 12, null) },
                             { 0x41, new Instruction(InstructionPrefix.ED, 0x41, "OUT (C),B", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 12, null) },
                             { 0x42, new Instruction(InstructionPrefix.ED, 0x42, "SBC HL,BC", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 15, null) },
                             { 0x43, new Instruction(InstructionPrefix.ED, 0x43, "LD (nn),BC", ArgumentType.ImmediateWord, ArgumentType.ImmediateWord, ModifierType.None, 4, 20, null) },
@@ -528,36 +528,36 @@ namespace Z80.Core
                             { 0x45, new Instruction(InstructionPrefix.ED, 0x45, "RETN", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 14, null) },
                             { 0x46, new Instruction(InstructionPrefix.ED, 0x46, "IM 0", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 8, null) },
                             { 0x47, new Instruction(InstructionPrefix.ED, 0x47, "LD I,A", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 9, null) },
-                            { 0x48, new Instruction(InstructionPrefix.ED, 0x48, "IN C,(C)", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 12, null) },
+                            { 0x48, new Instruction(InstructionPrefix.ED, 0x48, "IN C,(C)", ArgumentType.None, ArgumentType.None, ModifierType.InputRegister, 2, 12, null) },
                             { 0x49, new Instruction(InstructionPrefix.ED, 0x49, "OUT (C),C", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 12, null) },
                             { 0x4A, new Instruction(InstructionPrefix.ED, 0x4A, "ADC HL,BC", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 15, null) },
                             { 0x4B, new Instruction(InstructionPrefix.ED, 0x4B, "LD BC,(nn)", ArgumentType.ImmediateWord, ArgumentType.ImmediateWord, ModifierType.None, 4, 20, null) },
                             { 0x4D, new Instruction(InstructionPrefix.ED, 0x4D, "RETI", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 14, null) },
                             { 0x4F, new Instruction(InstructionPrefix.ED, 0x4F, "LD R,A", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 9, null) },
-                            { 0x50, new Instruction(InstructionPrefix.ED, 0x50, "IN D,(C)", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 12, null) },
+                            { 0x50, new Instruction(InstructionPrefix.ED, 0x50, "IN D,(C)", ArgumentType.None, ArgumentType.None, ModifierType.InputRegister, 2, 12, null) },
                             { 0x51, new Instruction(InstructionPrefix.ED, 0x51, "OUT (C),D", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 12, null) },
                             { 0x52, new Instruction(InstructionPrefix.ED, 0x52, "SBC HL,DE", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 15, null) },
                             { 0x53, new Instruction(InstructionPrefix.ED, 0x53, "LD (nn),DE", ArgumentType.ImmediateWord, ArgumentType.ImmediateWord, ModifierType.None, 4, 20, null) },
                             { 0x56, new Instruction(InstructionPrefix.ED, 0x56, "IM 1", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 8, null) },
                             { 0x57, new Instruction(InstructionPrefix.ED, 0x57, "LD A,I", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 9, null) },
-                            { 0x58, new Instruction(InstructionPrefix.ED, 0x58, "IN E,(C)", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 12, null) },
+                            { 0x58, new Instruction(InstructionPrefix.ED, 0x58, "IN E,(C)", ArgumentType.None, ArgumentType.None, ModifierType.InputRegister, 2, 12, null) },
                             { 0x59, new Instruction(InstructionPrefix.ED, 0x59, "OUT (C),E", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 12, null) },
                             { 0x5A, new Instruction(InstructionPrefix.ED, 0x5A, "ADC HL,DE", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 15, null) },
                             { 0x5B, new Instruction(InstructionPrefix.ED, 0x5B, "LD DE,(nn)", ArgumentType.ImmediateWord, ArgumentType.ImmediateWord, ModifierType.None, 4, 20, null) },
                             { 0x5E, new Instruction(InstructionPrefix.ED, 0x5E, "IM 2", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 8, null) },
                             { 0x5F, new Instruction(InstructionPrefix.ED, 0x5F, "LD A,R", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 9, null) },
-                            { 0x60, new Instruction(InstructionPrefix.ED, 0x60, "IN H,(C)", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 12, null) },
+                            { 0x60, new Instruction(InstructionPrefix.ED, 0x60, "IN H,(C)", ArgumentType.None, ArgumentType.None, ModifierType.InputRegister, 2, 12, null) },
                             { 0x61, new Instruction(InstructionPrefix.ED, 0x61, "OUT (C),H", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 12, null) },
                             { 0x62, new Instruction(InstructionPrefix.ED, 0x62, "SBC HL,HL", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 15, null) },
                             { 0x67, new Instruction(InstructionPrefix.ED, 0x67, "RRD", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 18, null) },
-                            { 0x68, new Instruction(InstructionPrefix.ED, 0x68, "IN L,(C)", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 12, null) },
+                            { 0x68, new Instruction(InstructionPrefix.ED, 0x68, "IN L,(C)", ArgumentType.None, ArgumentType.None, ModifierType.InputRegister, 2, 12, null) },
                             { 0x69, new Instruction(InstructionPrefix.ED, 0x69, "OUT (C),L", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 12, null) },
                             { 0x6A, new Instruction(InstructionPrefix.ED, 0x6A, "ADC HL,HL", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 15, null) },
                             { 0x6F, new Instruction(InstructionPrefix.ED, 0x6F, "RLD", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 18, null) },
-                            { 0x70, new Instruction(InstructionPrefix.ED, 0x70, "IN F,(C)", ArgumentType.None, ArgumentType.None, ModifierType.None, 3, 12, null) },
+                            { 0x70, new Instruction(InstructionPrefix.ED, 0x70, "IN F,(C)", ArgumentType.None, ArgumentType.None, ModifierType.InputRegister, 3, 12, null) },
                             { 0x72, new Instruction(InstructionPrefix.ED, 0x72, "SBC HL,SP", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 15, null) },
                             { 0x73, new Instruction(InstructionPrefix.ED, 0x73, "LD (nn),SP", ArgumentType.ImmediateWord, ArgumentType.ImmediateWord, ModifierType.None, 4, 20, null) },
-                            { 0x78, new Instruction(InstructionPrefix.ED, 0x78, "IN A,(C)", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 12, null) },
+                            { 0x78, new Instruction(InstructionPrefix.ED, 0x78, "IN A,(C)", ArgumentType.None, ArgumentType.None, ModifierType.InputRegister, 2, 12, null) },
                             { 0x79, new Instruction(InstructionPrefix.ED, 0x79, "OUT (C),A", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 12, null) },
                             { 0x7A, new Instruction(InstructionPrefix.ED, 0x7A, "ADC HL,SP", ArgumentType.None, ArgumentType.None, ModifierType.None, 2, 15, null) },
                             { 0x7B, new Instruction(InstructionPrefix.ED, 0x7B, "LD SP,(nn)", ArgumentType.ImmediateWord, ArgumentType.ImmediateWord, ModifierType.None, 4, 20, null) },
@@ -873,17 +873,9 @@ namespace Z80.Core
         public byte? ClockCyclesConditional { get; private set; }
         public byte? BitIndex { get; private set; }
         public RegisterName OperandRegister { get; private set; }
+        public bool IndexIX => Prefix == InstructionPrefix.DDCB;
+        public bool IndexIY => Prefix == InstructionPrefix.FDCB;
         internal IInstructionImplementation Implementation { get; private set; }
-
-        private RegisterName GetOperandRegisterName(byte opcode)
-        {
-            return (RegisterName)opcode.RemoveBits(3, 5); // register is first 3 bits
-        }
-
-        private byte GetOperandBitIndex(byte opcode)
-        {
-            return opcode.GetByteFromBits(3, 3); // bitindex is bits 3-5
-        }
 
         private Instruction(InstructionPrefix prefix, byte opcode, string mnemonic, ArgumentType argument1, ArgumentType argument2, ModifierType modifier, byte size, byte clockCycles, 
             byte? clockCyclesConditional, IInstructionImplementation implementation = null)
@@ -899,13 +891,16 @@ namespace Z80.Core
             ClockCyclesConditional = clockCyclesConditional;
             BitIndex = Modifier switch
             {
-                ModifierType.Bit | ModifierType.BitAndRegister => opcode.GetByteFromBits(3, 3), 
+                ModifierType.Bit => opcode.GetByteFromBits(3, 3),
+                ModifierType.BitAndRegister => opcode.GetByteFromBits(3, 3), 
                 _ => null
             };
             OperandRegister = Modifier switch
             {
-                ModifierType.Bit | ModifierType.None => RegisterName.None,
-                _ => (RegisterName)opcode.RemoveBits(3, 5)
+                ModifierType.Bit => RegisterName.None,
+                ModifierType.None => RegisterName.None,
+                ModifierType.InputRegister => (RegisterName)opcode.GetByteFromBits(3, 3),
+                _ => (RegisterName)opcode.GetByteFromBits(0, 3)
             };
 
             if (implementation != null)

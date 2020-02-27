@@ -32,15 +32,8 @@ namespace Z80.Core.Tests
             Instruction instruction = Instruction.FindByMnemonic(mnemonic);
             InstructionData data = new InstructionData()
             {
-                Opcode = instruction.Opcode,
                 Argument1 = arg1 ?? 0,
-                Argument2 = arg2 ?? 0,
-                BitIndex = instruction.BitIndex ?? 0,
-                Register = instruction.OperandRegister,
-                DirectIX = instruction.Mnemonic.Contains("IX") && !instruction.Mnemonic.Contains("(IX)"),
-                DirectIY = instruction.Mnemonic.Contains("IY") && !instruction.Mnemonic.Contains("(IY)"),
-                IndexIX = instruction.Mnemonic.Contains("(IX)"),
-                IndexIY = instruction.Mnemonic.Contains("(IY)")
+                Argument2 = arg2 ?? 0
             };
             
             ExecutionResult result = CPU.Execute(new InstructionPackage(instruction, data)); // only available on IDebugProcessor debug interface - sets flags but does not advance PC

@@ -121,7 +121,7 @@ namespace Z80.Core
         public static byte GetByteFromBits(this byte input, int startIndex, int numberOfBits)
         {
             ByteBits bits = new ByteBits(input);
-            return ((byte)0x00).SetBits(startIndex, bits.GetBits(startIndex, numberOfBits));
+            return ((byte)0x00).SetBits(0, bits.GetBits(startIndex, numberOfBits));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

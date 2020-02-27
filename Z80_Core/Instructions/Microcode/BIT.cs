@@ -14,16 +14,16 @@ namespace Z80.Core
             Flags flags = new Flags();
             InstructionPrefix prefix = instruction.Prefix;
 
-            byte bitIndex = data.BitIndex.Value;
+            byte bitIndex = instruction.BitIndex.Value;
             byte value;
-            if (data.Register.HasValue)
+            if (instruction.OperandRegister != RegisterName.None)
             {
-                value = r[data.Register ?? RegisterName.None]; // BIT b, r
+                value = r[instruction.OperandRegister]; // BIT b, r
             }
             else
             {
-                ushort address = data.IndexIX ? r.IX : data.IndexIY ? r.IY : r.HL; // BIT b, (HL / IX+o / IY+o)
-                sbyte offset = (data.IndexIY || data.IndexIY) ? (sbyte)data.Argument1 : (sbyte)0;
+                ushort address = instruction.IndexIX ? r.IX : instruction.IndexIY ? r.IY : r.HL; // BIT b, (HL / IX+o / IY+o)
+                sbyte offset = (instruction.IndexIY || instruction.IndexIY) ? (sbyte)data.Argument1 : (sbyte)0;
                 value = cpu.Memory.ReadByteAt((ushort)(address + offset));
             }
 

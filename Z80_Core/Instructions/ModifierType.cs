@@ -4,6 +4,7 @@
     {
         None,
         Register,
+        InputRegister,
         Bit,
         BitAndRegister,
         IndexRegister,

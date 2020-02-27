@@ -10,7 +10,7 @@ namespace Z80.Core.Tests
     [TestFixture]
     public class InstructionTests_LD : InstructionTestBase
     {
-        [Test, TestCaseSource(typeof(TestCases), "GetRegisterPairings")]
+        [Test, TestCaseSource(typeof(LD_TestCases), "GetRegisterPairings")]
         [TestCase(RegisterName.A, RegisterName.I)]
         [TestCase(RegisterName.A, RegisterName.R)]
         [TestCase(RegisterName.I, RegisterName.A)]
@@ -22,7 +22,7 @@ namespace Z80.Core.Tests
             Assert.That(Registers[register1], Is.EqualTo(Registers[register2]));
         }
 
-        [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
+        [Test, TestCaseSource(typeof(LD_TestCases), "GetRegisters")]
         public void LD_r_n(RegisterName register)
         {
             byte value = 0x7F;
@@ -31,7 +31,7 @@ namespace Z80.Core.Tests
             Assert.That(Registers[register] == value);
         }
 
-        [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
+        [Test, TestCaseSource(typeof(LD_TestCases), "GetRegisters")]
         public void LD_xHL_r(RegisterName register)
         {
             Registers.HL = 0x5000;
@@ -51,7 +51,7 @@ namespace Z80.Core.Tests
             Assert.That(ReadByteAt(Registers.HL), Is.EqualTo(value));
         }
 
-        [Test, TestCaseSource(typeof(TestCases), "GetRegisters")]
+        [Test, TestCaseSource(typeof(LD_TestCases), "GetRegisters")]
         public void LD_r_xHL(RegisterName register)
         {
             ushort address = Registers.HL = 0x5000;
@@ -103,7 +103,7 @@ namespace Z80.Core.Tests
             Assert.That(ReadByteAt(address), Is.EqualTo(Registers.A));
         }
 
-        [Test, TestCaseSource(typeof(TestCases), "GetRegisterAndIndexPairings")]
+        [Test, TestCaseSource(typeof(LD_TestCases), "GetRegisterAndIndexPairings")]
         public void LD_r_xIndexOffset(RegisterName register, RegisterPairName indexRegister)
         {
             sbyte offset = (sbyte)0x7F;
@@ -114,7 +114,7 @@ namespace Z80.Core.Tests
             Assert.That(Registers[register], Is.EqualTo(ReadByteAtIndexAndOffset(indexRegister, offset)));
         }
 
-        [Test, TestCaseSource(typeof(TestCases), "GetRegisterAndIndexPairings")]
+        [Test, TestCaseSource(typeof(LD_TestCases), "GetRegisterAndIndexPairings")]
         public void LD_xIndexOffset_r(RegisterName register, RegisterPairName indexRegister)
         {
             sbyte offset = (sbyte)0x7F;
@@ -125,7 +125,7 @@ namespace Z80.Core.Tests
             Assert.That(ReadByteAtIndexAndOffset(indexRegister, offset), Is.EqualTo(Registers[register]));
         }
 
-        [Test, TestCaseSource(typeof(TestCases), "GetIndexRegisters")]
+        [Test, TestCaseSource(typeof(LD_TestCases), "GetIndexRegisters")]
         public void LD_xIndexOffset_n(RegisterPairName indexRegister)
         {
             byte value = 0x7F;
@@ -136,7 +136,7 @@ namespace Z80.Core.Tests
             Assert.That(ReadByteAtIndexAndOffset(indexRegister, offset), Is.EqualTo(value));
         }
 
-        [Test, TestCaseSource(typeof(TestCases), "GetRegisterPairs")]
+        [Test, TestCaseSource(typeof(LD_TestCases), "GetRegisterPairs")]
         public void LD_rr_nn(RegisterPairName registerPair)
         {
             ushort value = 0x5000;
@@ -145,7 +145,7 @@ namespace Z80.Core.Tests
             Assert.That(Registers[registerPair], Is.EqualTo(value));
         }
 
-        [Test, TestCaseSource(typeof(TestCases), "GetRegisterPairs")]
+        [Test, TestCaseSource(typeof(LD_TestCases), "GetRegisterPairs")]
         public void LD_rr_xnn(RegisterPairName registerPair)
         {
             ushort address = RandomWord(0xFFFE);
@@ -156,7 +156,7 @@ namespace Z80.Core.Tests
             Assert.That(Registers[registerPair], Is.EqualTo(ReadWordAt(address)));
         }
 
-        [Test, TestCaseSource(typeof(TestCases), "GetRegisterPairs")]
+        [Test, TestCaseSource(typeof(LD_TestCases), "GetRegisterPairs")]
         public void LD_xnn_rr(RegisterPairName registerPair)
         {
             ushort address = RandomWord(0xFFFE);

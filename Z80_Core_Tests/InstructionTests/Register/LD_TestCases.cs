@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Z80.Core.Tests
 {
-    public static class TestCases
+    public static class LD_TestCases
     {
         public static IEnumerable<RegisterPairName> GetRegisterPairs()
         {

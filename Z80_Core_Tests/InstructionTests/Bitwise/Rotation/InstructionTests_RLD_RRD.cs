@@ -21,7 +21,8 @@ namespace Z80.Core.Tests
 
             ExecutionResult executionResult = ExecuteInstruction("RLD");
 
-            Assert.That(Registers.A == 0x73 && ReadByteAt(Registers.HL) == 0x1A);
+            Assert.That(Registers.A, Is.EqualTo(0x73));
+            Assert.That(ReadByteAt(Registers.HL), Is.EqualTo(0x1A));
         }
 
         [Test]
@@ -36,7 +37,8 @@ namespace Z80.Core.Tests
 
             ExecutionResult executionResult = ExecuteInstruction("RRD");
 
-            Assert.That(Registers.A == 0x80 && ReadByteAt(Registers.HL) == 0x42);
+            Assert.That(Registers.A, Is.EqualTo(0x80));
+            Assert.That(ReadByteAt(Registers.HL), Is.EqualTo(0x42));
         }
     }
 }

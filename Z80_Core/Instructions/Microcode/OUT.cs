@@ -29,7 +29,7 @@ namespace Z80.Core
             }
             else
             {
-                @out(r.C, RegisterName.B, data.Register.Value);
+                @out(r.C, RegisterName.B, instruction.OperandRegister);
             }
 
             return new ExecutionResult(package, flags, false);

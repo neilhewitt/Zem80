@@ -11,9 +11,9 @@ namespace Z80.Core
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             IRegisters r = cpu.Registers;
-            byte bitIndex = data.BitIndex ?? 0xFF;
+            byte bitIndex = instruction.BitIndex ?? 0xFF;
             sbyte offset = (sbyte)(data.Argument1);
-            RegisterName register = data.Register ?? RegisterName.None;
+            RegisterName register = instruction.OperandRegister;
 
             if (register != RegisterName.None)
             {
@@ -28,7 +28,9 @@ namespace Z80.Core
                     InstructionPrefix.FDCB => (ushort)(r.IY + offset),
                     _ => (ushort)0xFFFF
                 };
-                cpu.Memory.WriteByteAt(address, cpu.Memory.ReadByteAt(address).SetBit(bitIndex, true));
+                byte value = cpu.Memory.ReadByteAt(address);
+                value = value.SetBit(bitIndex, true);
+                cpu.Memory.WriteByteAt(address, value);
             }
 
             return new ExecutionResult(package, cpu.Registers.Flags, false);

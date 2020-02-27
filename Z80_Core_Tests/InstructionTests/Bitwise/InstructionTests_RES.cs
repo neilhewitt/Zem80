@@ -9,49 +9,53 @@ namespace Z80.Core.Tests
     [TestFixture]
     public class InstructionTests_RES : InstructionTestBase
     {
-        [Test, TestCaseSource(typeof(TestCases), "GetRegistersAndBits")]
-        public void RES_r(RegisterName register, int bitIndex)
+        [Test]
+        public void RES_r()
         {
-            Flags currentFlags = Flags;
-            byte initialValue = RandomByte();
+            Flags initialFlags = Flags;
+            byte initialValue = 0xFF;
+            byte bitIndex = 6;
             byte resetValue = initialValue.SetBit(bitIndex, false);
             
-            Registers[register] = initialValue;
-            ExecutionResult executionResult = ExecuteInstruction($"RES { bitIndex },{ register }", bitIndex:(byte)bitIndex);
+            Registers.B = initialValue;
+            ExecutionResult executionResult = ExecuteInstruction($"RES { bitIndex },B", bitIndex:bitIndex);
 
-            Assert.That(Registers[register] == resetValue && Flags.Equals(currentFlags)); // flags should be preserved
+            Assert.That(Registers.B, Is.EqualTo(resetValue));
+            Assert.That(CPU.Registers.Flags, Is.EqualTo(initialFlags)); // flags should be preserved
         }
 
         [Test]
-        public void RES_xHL([Range(0, 6)] byte bitIndex)
+        public void RES_xHL()
         {
-            Flags currentFlags = Flags;
-            byte initialValue = RandomByte();
+            Flags initialFlags = Flags;
+            byte initialValue = 0xFF;
+            byte bitIndex = 5;
             byte resetValue = initialValue.SetBit(bitIndex, false);
-            Registers.HL = RandomWord();
+            Registers.HL = 0x5000;
             WriteByteAt(Registers.HL, initialValue);
 
             ExecutionResult executionResult = ExecuteInstruction($"RES { bitIndex },(HL)", bitIndex: (byte)bitIndex);
 
-
-            Assert.That(ReadByteAt(Registers.HL) == resetValue && Flags.Equals(currentFlags)); // flags should be preserved
+            Assert.That(ReadByteAt(Registers.HL), Is.EqualTo(resetValue));
+            Assert.That(CPU.Registers.Flags, Is.EqualTo(initialFlags)); 
         }
 
         [Test]
-        public void RES_xIndexOffset([Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName registerPair, [Range(0, 6)] byte bitIndex)
+        public void RES_xIndexOffset([Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName registerPair, [Values(0x7F, -0x80)] sbyte offset)
         {
-            Flags currentFlags = Flags;
-            byte initialValue = RandomByte();
+            Flags initialFlags = Flags;
+            byte initialValue = 0xFF;
+            byte bitIndex = 4;
             byte resetValue = initialValue.SetBit(bitIndex, false);
-            ushort address = RandomWord();
-            sbyte offset = (sbyte)RandomByte();
+            ushort address = 0x5000;
 
             Registers[registerPair] = address;
             WriteByteAt((ushort)(address + offset), initialValue);
 
             ExecutionResult executionResult = ExecuteInstruction($"RES { bitIndex },({ registerPair }+o)", bitIndex:(byte)bitIndex, arg1:(byte)offset);
 
-            Assert.That(ReadByteAt((ushort)(address + offset)) == resetValue && Flags.Equals(currentFlags)); // flags should be preserved
+            Assert.That(ReadByteAtIndexAndOffset(registerPair, offset), Is.EqualTo(resetValue));
+            Assert.That(CPU.Registers.Flags, Is.EqualTo(initialFlags));
         }
     }
 }
