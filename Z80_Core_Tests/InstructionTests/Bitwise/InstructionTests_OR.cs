@@ -75,7 +75,7 @@ namespace Z80.Core.Tests
             ExecutionResult executionResult = ExecuteInstruction($"OR (HL)"); 
             (short expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(first, second);
 
-            Assert.That(ReadByteAt(Registers.HL), Is.EqualTo(expectedResult));
+            Assert.That(Registers.A, Is.EqualTo(expectedResult));
             Assert.That(CheckFlags(expectedFlags, executionResult.Flags), Is.True); ;
         }
 
@@ -92,7 +92,7 @@ namespace Z80.Core.Tests
             ExecutionResult executionResult = ExecuteInstruction($"OR ({ registerPair }+o)", arg1: (byte)offset);
             (short expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(first, second);
 
-            Assert.That(ReadByteAtIndexAndOffset(registerPair, offset), Is.EqualTo(expectedResult));
+            Assert.That(Registers.A, Is.EqualTo(expectedResult));
             Assert.That(CheckFlags(expectedFlags, executionResult.Flags), Is.True); ;
         }
     }

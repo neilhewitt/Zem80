@@ -17,7 +17,7 @@ namespace Z80.Core
 
         // 8-bit registers
         public byte A { get { return _registers[_AFOffset]; } set { _registers[_AFOffset] = value; } }
-        public byte F { get { return _registers[_AFOffset + 1]; } private set { _registers[_AFOffset + 1] = value; } } // flags register - shouldn't set F or AF directly, use Flags property instead
+        public byte F { get { return _registers[_AFOffset + 1]; } set { _registers[_AFOffset + 1] = value; } } // flags register - shouldn't set F or AF directly, use Flags property instead
         public byte B { get { return _registers[_BCDEHLOffset + 2]; } set { _registers[_BCDEHLOffset + 2] = value; } }
         public byte C { get { return _registers[_BCDEHLOffset + 3]; } set { _registers[_BCDEHLOffset + 3] = value; } }
         public byte D { get { return _registers[_BCDEHLOffset + 4]; } set { _registers[_BCDEHLOffset + 4] = value; } }

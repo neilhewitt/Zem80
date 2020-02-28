@@ -26,12 +26,11 @@ namespace Z80.Core
             byte subc(byte value)
             {
                 if (cpu.Registers.Flags.Carry) value--;
-                ushort result = (ushort)(cpu.Registers.A - value);
-                short signed = (short)result;
+                int result = cpu.Registers.A - value;
                 if (result == 0) flags.Zero = true;
                 if (result > 0xFF) flags.Carry = true;
-                if ((sbyte)signed < 0) flags.Sign = true;
-                if (signed > 0x7F || signed < -0x7F) flags.ParityOverflow = true;
+                if ((sbyte)result < 0) flags.Sign = true;
+                if (result > 0x7F || result < -0x7F) flags.ParityOverflow = true;
                 if (cpu.Registers.A.HalfCarryWhenAdding(value)) flags.HalfCarry = true;
 
                 return (byte)result;
@@ -40,12 +39,11 @@ namespace Z80.Core
             ushort subwc(ushort value)
             {
                 if (cpu.Registers.Flags.Carry) value--;
-                uint result = (uint)(cpu.Registers.HL - value);
-                int signed = (int)result;
+                int result = cpu.Registers.HL - value;
                 if (result == 0) flags.Zero = true;
                 if (result > 0xFFFF) flags.Carry = true;
-                if ((short)signed < 0) flags.Sign = true;
-                if (signed > 0x7FFF || signed < -0x7FFF) flags.ParityOverflow = true;
+                if ((short)result < 0) flags.Sign = true;
+                if (result > 0x7FFF || result < -0x7FFF) flags.ParityOverflow = true;
                 if (cpu.Registers.HL.HalfCarryWhenAdding(value)) flags.HalfCarry = true;
 
                 return (ushort)result;

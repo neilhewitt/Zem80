@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Z80.Core;
 
@@ -7,13 +8,21 @@ namespace Z80.SimpleVM
 {
     public class VirtualMachine
     {
+        private Action<char> _output;
         private Processor _cpu;
 
         public Processor CPU => _cpu;
 
-        public void Start()
+        public void Start(ushort address = 0x0000, bool runSyncronous = false, Action<char> outputChar = null)
         {
-            _cpu.Start();
+            if (outputChar != null) _output = outputChar;
+            
+            _cpu.Start(runSyncronous, address);
+        }
+
+        private void VirtualMachine_AfterExecute(object sender, ExecutionResult e)
+        {
+            throw new NotImplementedException();
         }
 
         public void Stop()
@@ -28,6 +37,11 @@ namespace Z80.SimpleVM
             _cpu.Start();
         }
 
+        public void Load(ushort address, string path)
+        {
+            _cpu.Memory.WriteBytesAt(address, File.ReadAllBytes(path));
+        }
+
         public void Load(ushort address, params byte[] code)
         {
             _cpu.Memory.WriteBytesAt(address, code);
@@ -40,7 +54,8 @@ namespace Z80.SimpleVM
 
         private void WriteByte(byte input)
         {
-            Console.Write(Convert.ToChar(input));
+            if (_output != null) _output(Convert.ToChar(input)); 
+            else Console.Write(Convert.ToChar(input));
         }
 
         private void Signal(PortSignal signal)

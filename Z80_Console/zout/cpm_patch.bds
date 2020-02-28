@@ -1,0 +1,66 @@
+binary-debuggable-source
+0000 0000 f cpm_patch.z80
+0005 0005 s 			.org 5h
+0005 0005 d 79
+0005 0005 s 			ld a,c
+0006 0006 d fe02
+0006 0006 s 			cp 2h
+0008 0008 d 2805
+0008 0008 s 			jr z,charout
+000a 000a d fe09
+000a 000a s 			cp 9h
+000c 000c d 2805
+000c 000c s 			jr z,strout
+000e 000e s gohome:		
+000e 000e d c9
+000e 000e s 			ret
+000f 000f s charout:	
+000f 000f d 7b
+000f 000f s 			ld a,e
+0010 0010 d d300
+0010 0010 s 			out (0),a
+0012 0012 d c9
+0012 0012 s 			ret
+0013 0013 s strout:		
+0013 0013 d e5
+0013 0013 s 			push hl
+0014 0014 d d5
+0014 0014 s 			push de
+0015 0015 d e1
+0015 0015 s 			pop hl
+0016 0016 s loop:		
+0016 0016 d 7e
+0016 0016 s 			ld a,(hl)
+0017 0017 d fe24
+0017 0017 s 			cp 24h
+0019 0019 d 280d
+0019 0019 s 			jr z,theend
+001b 001b d d300
+001b 001b s 			out (0),a
+001d 001d d 2c
+001d 001d s 			inc l
+001e 001e d 7d
+001e 001e s 			ld a,l
+001f 001f d feff
+001f 001f s 			cp 0ffh
+0021 0021 d 2003
+0021 0021 s 			jr nz,notzero
+0023 0023 d 2e00
+0023 0023 s 			ld l,0
+0025 0025 d 24
+0025 0025 s 			inc h
+0026 0026 s notzero:	
+0026 0026 d 18ee
+0026 0026 s 			jr loop
+0028 0028 s theend:		
+0028 0028 d e1
+0028 0028 s 			pop hl
+0029 0029 d c9
+0029 0029 s 			ret
+002a 002a s         
+0016 a loop
+0028 a theend
+000e a gohome
+0013 a strout
+000f a charout
+0026 a notzero

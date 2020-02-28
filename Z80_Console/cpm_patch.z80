@@ -1,0 +1,33 @@
+			.org 5h
+			ld a,c
+			cp 2h
+			jr z,charout
+			cp 9h
+			jr z,strout
+gohome:		
+			ret
+charout:	
+			ld a,e
+			out (0),a
+			ret
+strout:		
+			push hl
+			push de
+			pop hl
+loop:		
+			ld a,(hl)
+			cp 24h
+			jr z,theend
+			out (0),a
+			inc l
+			ld a,l
+			cp 0ffh
+			jr nz,notzero
+			ld l,0
+			inc h
+notzero:	
+			jr loop
+theend:		
+			pop hl
+			ret
+        

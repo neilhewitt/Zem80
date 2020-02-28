@@ -27,13 +27,12 @@ namespace Z80.Core
             {
                 byte accumulator = cpu.Registers.A;
                 if (cpu.Registers.Flags.Carry) value++;
-                ushort result = (ushort)(accumulator + value);
-                short signed = (short)result;
+                int result = accumulator + value;
 
                 if (result == 0) flags.Zero = true;
                 if (result > 0xFF) flags.Carry = true;
-                if ((sbyte)signed < 0) flags.Sign = true;
-                if (signed > 0x7F || signed < -0x80) flags.ParityOverflow = true;
+                if ((sbyte)result < 0) flags.Sign = true;
+                if (result > 0x7F || result < -0x80) flags.ParityOverflow = true;
                 if (accumulator.HalfCarryWhenAdding(value)) flags.HalfCarry = true;
 
                 return (byte)result;
@@ -43,13 +42,12 @@ namespace Z80.Core
             {
                 ushort hl = cpu.Registers.HL;
                 if (cpu.Registers.Flags.Carry) value++;
-                uint result = (uint)(hl + value); 
-                int signed = (int)result;
+                int result = hl + value;
 
                 if (result == 0) flags.Zero = true;
                 if (result > 0xFFFF) flags.Carry = true;
-                if ((short)signed < 0) flags.Sign = true;
-                if (signed > 0x7FFF || signed < -0x8000) flags.ParityOverflow = true;
+                if ((short)result < 0) flags.Sign = true;
+                if (result > 0x7FFF || result < -0x8000) flags.ParityOverflow = true;
                 if (hl.HalfCarryWhenAdding(value)) flags.HalfCarry = true;
 
                 return (ushort)result;

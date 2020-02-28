@@ -36,13 +36,13 @@ namespace Z80.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HalfCarryWhenAdding(this byte first, byte second)
         {
-            return ((first & 0x0F) + (second & 0x0F)) > 0x0F;
+            return (((first & 0x0F) + (second & 0x0F)) & 0x10) == 0x10;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HalfCarryWhenAdding(this ushort first, ushort second)
         {
-            return ((first & 0x0FFF) + (second & 0x0FFF)) > 0x0FFF;
+            return (((first & 0x0FFF) + (second & 0x0FFF)) & 0x1000) == 0x1000;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

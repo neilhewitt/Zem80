@@ -9,7 +9,7 @@ namespace Z80.Core
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
-            InstructionData data = package.Data;
+            InstructionData data = package.Data;   
             IRegisters r = cpu.Registers;
 
             switch (instruction.Prefix)

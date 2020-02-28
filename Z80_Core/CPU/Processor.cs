@@ -47,11 +47,12 @@ namespace Z80.Core
         event EventHandler IDebugProcessor.OnStop { add { _onStop += value; } remove { _onStop -= value; } }
         event EventHandler IDebugProcessor.OnHalt { add { _onHalt += value; } remove { _onHalt -= value; } }
 
-        public void Start(bool synchronous = false)
+        public void Start(bool synchronous = false, ushort address = 0x0000)
         {
             if (!_running)
             {
                 _beforeStart?.Invoke(null, null);
+                Registers.PC = address;
                 _running = true;
 
                 if (!synchronous) // run the CPU on a thread and return to the calling code immediately

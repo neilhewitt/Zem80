@@ -36,7 +36,7 @@ namespace Z80.Core
         void SetAddressBus(ushort value);
         void SetDataBus(byte value);
         void SetInterruptMode(InterruptMode mode);
-        void Start(bool synchronous = false);
+        void Start(bool synchronous = false, ushort address = 0x0000);
         void Stop();
         ExecutionResult Execute(InstructionPackage package);
     }
