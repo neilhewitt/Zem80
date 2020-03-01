@@ -9,15 +9,15 @@ namespace Z80.Core.Tests
     [TestFixture]
     public class InstructionTests_JP : InstructionTestBase
     {
-        [TestCase(ConditionFlagName.Z)]
-        [TestCase(ConditionFlagName.NZ)]
-        [TestCase(ConditionFlagName.C)]
-        [TestCase(ConditionFlagName.NC)]
-        [TestCase(ConditionFlagName.PE)]
-        [TestCase(ConditionFlagName.PO)]
-        [TestCase(ConditionFlagName.M)]
-        [TestCase(ConditionFlagName.P)]
-        public void JP_cc_nn(ConditionFlagName condition)
+        [TestCase(Condition.Z)]
+        [TestCase(Condition.NZ)]
+        [TestCase(Condition.C)]
+        [TestCase(Condition.NC)]
+        [TestCase(Condition.PE)]
+        [TestCase(Condition.PO)]
+        [TestCase(Condition.M)]
+        [TestCase(Condition.P)]
+        public void JP_cc_nn(Condition condition)
         {
             ushort address = 0x5000;
             Registers.PC = 0x8000;

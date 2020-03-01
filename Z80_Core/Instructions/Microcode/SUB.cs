@@ -4,13 +4,13 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class SUB : IInstructionImplementation
+    public class SUB : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Flags flags = new Flags();
+            Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
 
             byte readByte(ushort address)
@@ -20,13 +20,8 @@ namespace Z80.Core
 
             byte subByte(byte value)
             {
-                ushort result = (ushort)(cpu.Registers.A - value);
-                short signed = (short)result;
-                if (result == 0) flags.Zero = true;
-                if (result < 0x00) flags.Carry = true;
-                if ((sbyte)signed < 0) flags.Sign = true;
-                if (signed > 0x7F || signed < -0x80) flags.ParityOverflow = true;
-                if (cpu.Registers.A.HalfCarryWhenSubtracting((byte)result)) flags.HalfCarry = true;
+                int result = cpu.Registers.A - value;
+                FlagHelper.SetFlagsFromArithmeticOperation(flags, cpu.Registers.A, value, result, true);
 
                 return (byte)result;
             }

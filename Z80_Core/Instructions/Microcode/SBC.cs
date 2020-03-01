@@ -4,13 +4,13 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class SBC : IInstructionImplementation
+    public class SBC : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Flags flags = new Flags();
+            Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
 
             byte rb(ushort address)
@@ -27,12 +27,7 @@ namespace Z80.Core
             {
                 if (cpu.Registers.Flags.Carry) value--;
                 int result = cpu.Registers.A - value;
-                if (result == 0) flags.Zero = true;
-                if (result > 0xFF) flags.Carry = true;
-                if ((sbyte)result < 0) flags.Sign = true;
-                if (result > 0x7F || result < -0x7F) flags.ParityOverflow = true;
-                if (cpu.Registers.A.HalfCarryWhenAdding(value)) flags.HalfCarry = true;
-
+                FlagHelper.SetFlagsFromArithmeticOperation(flags, cpu.Registers.A, value, result, true);
                 return (byte)result;
             }
 
@@ -40,12 +35,7 @@ namespace Z80.Core
             {
                 if (cpu.Registers.Flags.Carry) value--;
                 int result = cpu.Registers.HL - value;
-                if (result == 0) flags.Zero = true;
-                if (result > 0xFFFF) flags.Carry = true;
-                if ((short)result < 0) flags.Sign = true;
-                if (result > 0x7FFF || result < -0x7FFF) flags.ParityOverflow = true;
-                if (cpu.Registers.HL.HalfCarryWhenAdding(value)) flags.HalfCarry = true;
-
+                FlagHelper.SetFlagsFromArithmeticOperation(flags, cpu.Registers.HL, value, result, true);
                 return (ushort)result;
             }
 

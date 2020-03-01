@@ -4,25 +4,22 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class CPIR : IInstructionImplementation
+    public class CPIR : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Flags flags = new Flags();
+            Flags flags = cpu.Registers.Flags;
 
             byte a = cpu.Registers.A;
             byte b = cpu.Memory.ReadByteAt(cpu.Registers.HL);
-            short result = (short)(a - b);
+            int result = a - b;
             cpu.Registers.HL++;
             cpu.Registers.BC--;
 
-            if ((sbyte)result < 0) flags.Sign = true;
-            if (result == 0) flags.Zero = true;
-            if (a.HalfCarryWhenSubtracting(b)) flags.HalfCarry = true;
-            if (cpu.Registers.BC != 0) flags.ParityOverflow = true;
-            flags.Subtract = true;
+            FlagHelper.SetFlagsFromArithmeticOperation(flags, a, b, result, true);
+            flags.ParityOverflow = (cpu.Registers.BC - 1 != 0);
 
             return new ExecutionResult(package, flags, (result == 0 || cpu.Registers.BC == 0), (result != 0 && cpu.Registers.BC != 0));
         }

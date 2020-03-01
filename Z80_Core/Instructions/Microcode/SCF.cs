@@ -4,11 +4,15 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class SCF : IInstructionImplementation
+    public class SCF : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
-            return new ExecutionResult(package, new Flags() { Carry = true }, false);
+            Flags flags = cpu.Registers.Flags;
+            flags.Carry = true;
+            flags.HalfCarry = false;
+            flags.Subtract = false;
+            return new ExecutionResult(package, flags, false);
         }
 
         public SCF()

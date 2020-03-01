@@ -24,15 +24,15 @@ namespace Z80.Core.Tests
             Assert.That(finalPCAddress, Is.EqualTo(expectedPCAddress));
         }
 
-        [TestCase(ConditionFlagName.Z)]
-        [TestCase(ConditionFlagName.NZ)]
-        [TestCase(ConditionFlagName.C)]
-        [TestCase(ConditionFlagName.NC)]
-        [TestCase(ConditionFlagName.PE)]
-        [TestCase(ConditionFlagName.PO)]
-        [TestCase(ConditionFlagName.M)]
-        [TestCase(ConditionFlagName.P)]
-        public void CALL_cc_nn(ConditionFlagName condition)
+        [TestCase(Condition.Z)]
+        [TestCase(Condition.NZ)]
+        [TestCase(Condition.C)]
+        [TestCase(Condition.NC)]
+        [TestCase(Condition.PE)]
+        [TestCase(Condition.PO)]
+        [TestCase(Condition.M)]
+        [TestCase(Condition.P)]
+        public void CALL_cc_nn(Condition condition)
         {
             ushort expectedPCAddress = 0x3000;
             ushort originalPCAddress = 0x5000;

@@ -4,14 +4,14 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class AND : IInstructionImplementation
+    public class AND : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             IRegisters r = cpu.Registers;
-            Flags flags = new Flags();
+            Flags flags = cpu.Registers.Flags;
             sbyte offset = (sbyte)data.Argument1;
 
             byte and(byte operand)

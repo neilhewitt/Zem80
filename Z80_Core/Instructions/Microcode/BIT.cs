@@ -4,14 +4,14 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class BIT : IInstructionImplementation
+    public class BIT : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             IRegisters r = cpu.Registers;
-            Flags flags = new Flags();
+            Flags flags = cpu.Registers.Flags;
             InstructionPrefix prefix = instruction.Prefix;
 
             byte bitIndex = instruction.BitIndex.Value;
@@ -27,9 +27,9 @@ namespace Z80.Core
                 value = cpu.Memory.ReadByteAt((ushort)(address + offset));
             }
 
-            flags.Zero = !value.GetBit(bitIndex);
+            flags.Zero = value.GetBit(bitIndex) == false;
             flags.HalfCarry = true;
-            flags.Carry = r.Flags.Carry;
+            flags.Subtract = false;
 
             return new ExecutionResult(package, flags, false);
         }

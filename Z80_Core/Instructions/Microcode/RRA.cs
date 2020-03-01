@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class RRA : IInstructionImplementation
+    public class RRA : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
@@ -17,6 +17,8 @@ namespace Z80.Core
             bool carry = value.GetBit(0);
             value = (byte)(value >> 1);
             value = value.SetBit(7, flags.Carry);
+            flags.HalfCarry = false;
+            flags.Subtract = false;
             flags.Carry = carry;
             r.A = value;
 

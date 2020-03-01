@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class RL : IInstructionImplementation
+    public class RL : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
@@ -43,10 +43,10 @@ namespace Z80.Core
             byte flagsAndCarry(byte original, byte shifted)
             {
                 shifted = shifted.SetBit(0, previousCarry);
-                flags.Carry = original.GetBit(7);
-                if (((sbyte)shifted) < 0) flags.Sign = true;
-                if (shifted == 0) flags.Zero = true;
-                if (shifted.CountBits(true) % 2 == 0) flags.ParityOverflow = true;
+                FlagHelper.SetFlagsFromLogicalOperation(flags, original, 0x00, shifted, original.GetBit(7),
+                    new Flag[] { Flag.HalfCarry, Flag.Subtract });
+                flags.HalfCarry = false;
+                flags.Subtract = false;
                 return shifted;
             }
 

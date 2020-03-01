@@ -4,19 +4,21 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class RLCA : IInstructionImplementation
+    public class RLCA : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Flags flags = new Flags();
+            Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
 
             byte value = r.A;
             flags.Carry = value.GetBit(7);
             value = (byte)(value << 1);
             value = value.SetBit(0, flags.Carry);
+            flags.HalfCarry = false;
+            flags.Subtract = false;
             r.A = value;
 
             return new ExecutionResult(package, flags, false);

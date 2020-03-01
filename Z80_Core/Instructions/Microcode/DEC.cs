@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class DEC : IInstructionImplementation
+    public class DEC : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
@@ -12,7 +12,7 @@ namespace Z80.Core
             InstructionData data = package.Data;
             IRegisters r = cpu.Registers;
             byte offset = data.Argument1;
-            Flags flags = new Flags();
+            Flags flags = cpu.Registers.Flags;
 
             ushort decw(ushort value)
             {
@@ -21,14 +21,9 @@ namespace Z80.Core
 
             byte dec(byte value)
             {
-                flags.Carry = cpu.Registers.Flags.Carry;
-                ushort result = (ushort)(value - 1);
-                if (result == 0) flags.Zero = true;
-                if (((sbyte)result) < 0) flags.Sign = true;
-                if ((result & 0x0F) == 0x00) flags.HalfCarry = true;
-                if (value == 0x80) flags.ParityOverflow = true;
-                flags.Subtract = true;
-
+                int result = value - 1;
+                sbyte subtract = -1;
+                FlagHelper.SetFlagsFromArithmeticOperation(flags, value, (byte)subtract, result, true);
                 return (byte)result;
             }
 

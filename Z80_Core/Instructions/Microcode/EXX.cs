@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class EXX : IInstructionImplementation
+    public class EXX : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {

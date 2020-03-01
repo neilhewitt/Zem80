@@ -9,11 +9,11 @@ namespace Z80.Core.Tests
     [TestFixture]
     public class InstructionTests_JR : InstructionTestBase
     {
-        [TestCase(ConditionFlagName.Z)]
-        [TestCase(ConditionFlagName.NZ)]
-        [TestCase(ConditionFlagName.C)]
-        [TestCase(ConditionFlagName.NC)]
-        public void JR_cc_o(ConditionFlagName condition)
+        [TestCase(Condition.Z)]
+        [TestCase(Condition.NZ)]
+        [TestCase(Condition.C)]
+        [TestCase(Condition.NC)]
+        public void JR_cc_o(Condition condition)
         {
             sbyte jump = 0x7F;
             Registers.PC = 0x5000;

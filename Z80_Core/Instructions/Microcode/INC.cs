@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class INC : IInstructionImplementation
+    public class INC : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
@@ -12,7 +12,7 @@ namespace Z80.Core
             InstructionData data = package.Data;
             IRegisters r = cpu.Registers;
             byte offset = data.Argument1;
-            Flags flags = new Flags();
+            Flags flags = cpu.Registers.Flags;
 
             ushort incw(ushort value)
             {
@@ -22,14 +22,8 @@ namespace Z80.Core
 
             byte inc(byte value)
             {
-                flags.Carry = cpu.Registers.Flags.Carry;
                 ushort result = (ushort)(value + 1);
-                if ((byte)result == 0) flags.Zero = true;
-                if (((sbyte)result) < 0) flags.Sign = true;
-                if ((value & 0x0F) == 0x0F) flags.HalfCarry = true;
-                if (value == 0x7F) flags.ParityOverflow = true;
-                flags.Subtract = true;
-
+                FlagHelper.SetFlagsFromArithmeticOperation(flags, value, 1, result, true);
                 if (result > 0xFF) result = 0;
                 return (byte)result;
             }

@@ -4,13 +4,13 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class ADD : IInstructionImplementation
+    public class ADD : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Flags flags = new Flags();
+            Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
 
             byte readByte(ushort address)
@@ -25,24 +25,16 @@ namespace Z80.Core
 
             byte addByte(byte value)
             {
-                ushort result = (ushort)(cpu.Registers.A + value);
-                short signed = (short)result;
-                if (result == 0) flags.Zero = true;
-                if (result > 0xFF) flags.Carry = true;
-                if ((sbyte)signed < 0) flags.Sign = true;
-                if (signed > 0x7F || signed < -0x80) flags.ParityOverflow = true;
-                if (r.A.HalfCarryWhenAdding((byte)value)) flags.HalfCarry = true;
-
+                int result = cpu.Registers.A + value;
+                FlagHelper.SetFlagsFromArithmeticOperation(flags, cpu.Registers.A, value, result);
                 return (byte)result;
             }
 
             ushort addWord(ushort first, ushort second)
             {
-                flags = new Flags(cpu.Registers.Flags.Value); // must preserve existing values
-                uint result = (uint)(first + second);
-                if (result > 0xFFFF) flags.Carry = true;
-                if (first.HalfCarryWhenAdding((ushort)second)) flags.HalfCarry = true;
-
+                int result = first + second;
+                FlagHelper.SetFlagsFromArithmeticOperation(flags, first, second, result, false,
+                    new Flag[] { Flag.Sign, Flag.Zero, Flag.ParityOverflow });
                 return (ushort)result;
             }
 

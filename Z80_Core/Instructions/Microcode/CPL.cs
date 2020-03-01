@@ -4,11 +4,11 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class CPL : IInstructionImplementation
+    public class CPL : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
-            Flags flags = new Flags();
+            Flags flags = cpu.Registers.Flags;
             flags.HalfCarry = true;
             flags.Subtract = true;
             cpu.Registers.A ^= cpu.Registers.A;

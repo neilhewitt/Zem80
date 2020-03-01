@@ -11,15 +11,9 @@ namespace Z80.Core.Tests
     {
         private Flags GetExpectedFlags(byte input, byte compare)
         {
-            short result = (short)(input - compare);
-
             Flags flags = new Flags();
-            flags.Zero = (result == 0);
-            flags.Sign = ((sbyte)result < 0);
-            flags.HalfCarry = input.HalfCarryWhenSubtracting(compare);
-            flags.ParityOverflow = input.OverflowsWhenSubtracting(compare);
-            flags.Carry = (result > 0xFF);
-            flags.Subtract = true;
+            int result = input - compare;
+            FlagHelper.SetFlagsFromArithmeticOperation(flags, input, compare, result, true);
 
             return flags;
         }

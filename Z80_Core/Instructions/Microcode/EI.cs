@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class EI : IInstructionImplementation
+    public class EI : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {

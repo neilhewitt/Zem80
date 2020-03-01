@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 
@@ -15,6 +16,7 @@ namespace Z80.Core
         private bool _pendingNonMaskableInterrupt;
         private Task _instructionCycle;
         private ushort _topOfStack;
+        private bool _synchronous;
 
         private EventHandler<InstructionPackage> _beforeExecute;
         private EventHandler<ExecutionResult> _afterExecute;
@@ -62,6 +64,7 @@ namespace Z80.Core
                 }
                 else
                 {
+                    _synchronous = true;
                     InstructionCycle(); // run the CPU as a synchronous task until stopped
                 }
             }
@@ -175,7 +178,12 @@ namespace Z80.Core
                 {
                     byte[] instruction = Memory.ReadBytesAt(Registers.PC, 4);
                     InstructionPackage package = _decoder.Decode(instruction);
-                    if (package == null) Stop(); // only happens if instruction buffer is short (end of memory reached) and corrupt (not a valid instruction)
+                    if (package == null)
+                    {
+                        Stop(); // only happens if instruction buffer is short (end of memory reached) and corrupt (not a valid instruction)
+                        if (_synchronous) return;
+                        else Thread.CurrentThread.Abort();
+                    }
 
                     ExecutionResult result = Execute(package);
                     if (!result.ProgramCounterUpdated)

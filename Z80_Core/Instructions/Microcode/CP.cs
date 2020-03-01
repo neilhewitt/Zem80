@@ -4,26 +4,19 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class CP : IInstructionImplementation
+    public class CP : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             IRegisters r = cpu.Registers;
-            Flags flags = new Flags();
+            Flags flags = cpu.Registers.Flags;
 
             void cp(byte value)
             {
-                byte a = cpu.Registers.A;
-                byte b = value;
-                short result = (short)(a - b); // note signed short - contains overflow, caters for negative results
-                if (result == 0) flags.Zero = true;
-                if ((sbyte)result < 0) flags.Sign = true;
-                if (a.HalfCarryWhenSubtracting(b)) flags.HalfCarry = true;
-                if (a.OverflowsWhenSubtracting(b)) flags.ParityOverflow = true;
-                if (result > 0xFF) flags.Carry = true;
-                flags.Subtract = true;
+                int result = cpu.Registers.A - value;
+                FlagHelper.SetFlagsFromArithmeticOperation(flags, cpu.Registers.A, value, result, true);
             }
 
             switch (instruction.Prefix)

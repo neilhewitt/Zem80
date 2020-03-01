@@ -45,15 +45,15 @@ namespace Z80.Core.Tests
             Assert.That(Registers.PC, Is.EqualTo(address));
         }
 
-        [TestCase(ConditionFlagName.Z)]
-        [TestCase(ConditionFlagName.NZ)]
-        [TestCase(ConditionFlagName.C)]
-        [TestCase(ConditionFlagName.NC)]
-        [TestCase(ConditionFlagName.PE)]
-        [TestCase(ConditionFlagName.PO)]
-        [TestCase(ConditionFlagName.M)]
-        [TestCase(ConditionFlagName.P)]
-        public void RET(ConditionFlagName condition)
+        [TestCase(Condition.Z)]
+        [TestCase(Condition.NZ)]
+        [TestCase(Condition.C)]
+        [TestCase(Condition.NC)]
+        [TestCase(Condition.PE)]
+        [TestCase(Condition.PO)]
+        [TestCase(Condition.M)]
+        [TestCase(Condition.P)]
+        public void RET(Condition condition)
         {
             ushort address = 0x2000;
             Registers.HL = address;

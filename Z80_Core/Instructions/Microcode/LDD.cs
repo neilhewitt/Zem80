@@ -4,13 +4,13 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class LDD : IInstructionImplementation
+    public class LDD : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Flags flags = new Flags();
+            Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
 
             cpu.Memory.WriteByteAt(r.DE, cpu.Memory.ReadByteAt(r.HL));
@@ -18,7 +18,9 @@ namespace Z80.Core
             r.DE--;
             r.BC--;
 
-            if (r.BC != 0) flags.ParityOverflow = true;
+            flags.HalfCarry = false;
+            flags.ParityOverflow = (r.BC != 0);
+            flags.Subtract = false;
 
             return new ExecutionResult(package, flags, false);
         }

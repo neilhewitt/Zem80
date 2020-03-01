@@ -4,13 +4,13 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class INDR : IInstructionImplementation
+    public class INDR : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Flags flags = new Flags();
+            Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
 
             IPort port = cpu.Ports[r.C];
@@ -21,6 +21,7 @@ namespace Z80.Core
             r.HL--;
             r.B--;
 
+            flags.Sign = false;
             flags.Zero = true;
             flags.Subtract = true;
 

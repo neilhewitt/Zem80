@@ -4,23 +4,24 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class SRA : IInstructionImplementation
+    public class SRA : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Flags flags = new Flags();
+            Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
             sbyte offset = (sbyte)(data.Argument1);
             RegisterName register = instruction.OperandRegister;
 
             byte setFlags(byte original, byte shifted)
             {
-                flags.Carry = (original & 0x01) == 0x01;
-                if (((sbyte)shifted) < 0) flags.Sign = true;
-                if (shifted == 0) flags.Zero = true;
-                if (shifted.CountBits(true) % 2 == 0) flags.ParityOverflow = true;
+                FlagHelper.SetFlagsFromLogicalOperation(flags, original, 0x00, shifted,
+                    original.GetBit(0),
+                    new Flag[] { Flag.HalfCarry, Flag.Subtract });
+                flags.HalfCarry = false;
+                flags.Subtract = false;
                 return shifted;
             }
 

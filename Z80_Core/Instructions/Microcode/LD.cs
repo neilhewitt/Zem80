@@ -4,13 +4,13 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class LD : IInstructionImplementation
+    public class LD : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Flags flags = new Flags(); // all LD instructions affect *no* flags unless I or R is read or set (see handleIRFlags() below)
+            Flags flags = cpu.Registers.Flags;
 
             // shortcuts to keep code size down
             IRegisters r = cpu.Registers;
@@ -51,10 +51,9 @@ namespace Z80.Core
 
             void handleIRFlags(byte input)
             {
-                flags.Carry = r.Flags.Carry;
-                if (input == 0x00) flags.Zero = true;
-                if ((sbyte)input < 0) flags.Sign = true;
-                if (cpu.InterruptMode != InterruptMode.IM0) flags.ParityOverflow = true;
+                flags.Zero = (input == 0x00);
+                flags.Sign = ((sbyte)input < 0);
+                flags.ParityOverflow = (cpu.InterruptMode != InterruptMode.IM0);
             }
 
             switch (instruction.Prefix)

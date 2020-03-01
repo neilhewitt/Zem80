@@ -2,7 +2,7 @@
 
 namespace Z80.Core
 {
-    public interface IInstructionImplementation
+    public interface IMicrocode
     {
         ExecutionResult Execute(Processor cpu, InstructionPackage package);
     }

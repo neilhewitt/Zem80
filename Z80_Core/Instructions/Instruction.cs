@@ -856,7 +856,7 @@ namespace Z80.Core
         }
 
         public static void AddToInstructionSet(InstructionPrefix prefix, byte opcode, string mnemonic, ArgumentType argument1, ArgumentType argument2, ModifierType modifier, byte size, byte clockCycles,
-            byte? clockCyclesConditional, IInstructionImplementation implementation)
+            byte? clockCyclesConditional, IMicrocode implementation)
         {
             Instruction instruction = new Instruction(prefix, opcode, mnemonic, argument1, argument2, modifier, size, clockCycles, clockCyclesConditional, implementation);
             _instructionSet[prefix].Add(opcode, instruction);
@@ -875,10 +875,10 @@ namespace Z80.Core
         public RegisterName OperandRegister { get; private set; }
         public bool IndexIX => Prefix == InstructionPrefix.DDCB;
         public bool IndexIY => Prefix == InstructionPrefix.FDCB;
-        internal IInstructionImplementation Implementation { get; private set; }
+        internal IMicrocode Implementation { get; private set; }
 
         private Instruction(InstructionPrefix prefix, byte opcode, string mnemonic, ArgumentType argument1, ArgumentType argument2, ModifierType modifier, byte size, byte clockCycles, 
-            byte? clockCyclesConditional, IInstructionImplementation implementation = null)
+            byte? clockCyclesConditional, IMicrocode implementation = null)
         {
             Prefix = prefix;
             Opcode = opcode;
@@ -911,7 +911,7 @@ namespace Z80.Core
             {
                 // this is expensive, but only done once at startup; binds the Instruction directly to the method instance implementing it
                 Type microcodeType = Assembly.GetExecutingAssembly().GetTypes().SingleOrDefault(x => x.Name == mnemonic.Split(' ')[0]);
-                Implementation = (IInstructionImplementation)Activator.CreateInstance(microcodeType);
+                Implementation = (IMicrocode)Activator.CreateInstance(microcodeType);
             }
         }
     }

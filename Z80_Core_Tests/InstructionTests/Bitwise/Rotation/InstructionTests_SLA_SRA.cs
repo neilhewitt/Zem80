@@ -12,10 +12,10 @@ namespace Z80.Core.Tests
         private Flags GetExpectedFlags(byte original, byte expected, bool carry)
         {
             Flags flags = new Flags();
-            flags.Carry = carry;
-            if (((sbyte)expected) < 0) flags.Sign = true;
-            if (expected == 0) flags.Zero = true;
-            if (expected.CountBits(true) % 2 == 0) flags.ParityOverflow = true;
+            FlagHelper.SetFlagsFromLogicalOperation(flags, original, 0x00, expected, carry,
+                new Flag[] { Flag.HalfCarry, Flag.Subtract });
+            flags.HalfCarry = false;
+            flags.Subtract = false;
             return flags;
         }
 

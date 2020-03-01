@@ -17,6 +17,8 @@ namespace Z80.Core.Tests
             bool carry = value.GetBit(7);
             Registers.A = value;
             Registers.Flags.Carry = carry;
+            Registers.Flags.HalfCarry = false;
+            Registers.Flags.Subtract = false;
 
             ExecutionResult executionResult = ExecuteInstruction("RLCA");
 
@@ -32,6 +34,8 @@ namespace Z80.Core.Tests
             bool carry = value.GetBit(0);
             Registers.A = value;
             Registers.Flags.Carry = carry;
+            Registers.Flags.HalfCarry = false;
+            Registers.Flags.Subtract = false;
 
             ExecutionResult executionResult = ExecuteInstruction("RRCA");
 

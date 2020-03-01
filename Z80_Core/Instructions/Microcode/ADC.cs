@@ -4,13 +4,13 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class ADC : IInstructionImplementation
+    public class ADC : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Flags flags = new Flags();
+            Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
 
             byte readByte(ushort address)
@@ -25,31 +25,17 @@ namespace Z80.Core
 
             byte addByteWithCarry(byte value)
             {
-                byte accumulator = cpu.Registers.A;
-                if (cpu.Registers.Flags.Carry) value++;
-                int result = accumulator + value;
-
-                if (result == 0) flags.Zero = true;
-                if (result > 0xFF) flags.Carry = true;
-                if ((sbyte)result < 0) flags.Sign = true;
-                if (result > 0x7F || result < -0x80) flags.ParityOverflow = true;
-                if (accumulator.HalfCarryWhenAdding(value)) flags.HalfCarry = true;
-
+                if (flags.Carry) value++;
+                int result = cpu.Registers.A + value;
+                FlagHelper.SetFlagsFromArithmeticOperation(flags, cpu.Registers.A, value, result);
                 return (byte)result;
             }
 
             ushort addWordWithCarry(ushort value)
             {
-                ushort hl = cpu.Registers.HL;
                 if (cpu.Registers.Flags.Carry) value++;
-                int result = hl + value;
-
-                if (result == 0) flags.Zero = true;
-                if (result > 0xFFFF) flags.Carry = true;
-                if ((short)result < 0) flags.Sign = true;
-                if (result > 0x7FFF || result < -0x8000) flags.ParityOverflow = true;
-                if (hl.HalfCarryWhenAdding(value)) flags.HalfCarry = true;
-
+                int result = cpu.Registers.HL + value;
+                FlagHelper.SetFlagsFromArithmeticOperation(flags, cpu.Registers.HL, value, result);
                 return (ushort)result;
             }
 

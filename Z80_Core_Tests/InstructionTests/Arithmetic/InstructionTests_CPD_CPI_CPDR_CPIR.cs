@@ -11,15 +11,10 @@ namespace Z80.Core.Tests
     {
         private Flags GetExpectedFlags(byte input, byte compareTo, ushort byteCount)
         {
-            short result = (short)(input - compareTo);
-
             Flags flags = new Flags();
-            flags.Zero = (result == 0);
-            flags.Sign = ((sbyte)result < 0);
-            flags.HalfCarry = input.HalfCarryWhenSubtracting(compareTo);
-            flags.ParityOverflow = (byteCount - 1) != 0;
-            flags.Carry = (result > 0xFF);
-            flags.Subtract = true;
+            int result = input - compareTo;
+            FlagHelper.SetFlagsFromArithmeticOperation(flags, input, compareTo, result, true);
+            flags.ParityOverflow = (byteCount - 2 != 0);
 
             return flags;
         }
@@ -37,9 +32,9 @@ namespace Z80.Core.Tests
             Registers.HL = address;
             Registers.BC = byteCount;
             WriteByteAt(Registers.HL, compareTo);
-
-            ExecutionResult executionResult = ExecuteInstruction($"CPD");
+            
             Flags expectedFlags = GetExpectedFlags(input, compareTo, byteCount);
+            ExecutionResult executionResult = ExecuteInstruction($"CPD");
 
             Assert.That(Registers.HL, Is.EqualTo(address - 1));
             Assert.That(Registers.BC, Is.EqualTo(byteCount - 1));
@@ -60,8 +55,8 @@ namespace Z80.Core.Tests
             Registers.BC = byteCount;
             WriteByteAt(Registers.HL, compareTo);
 
-            ExecutionResult executionResult = ExecuteInstruction($"CPI");
             Flags expectedFlags = GetExpectedFlags(input, compareTo, byteCount);
+            ExecutionResult executionResult = ExecuteInstruction($"CPI");
 
             Assert.That(Registers.HL, Is.EqualTo(address + 1));
             Assert.That(Registers.BC, Is.EqualTo(byteCount - 1));
@@ -87,13 +82,17 @@ namespace Z80.Core.Tests
             CPU.Memory.WriteBytesAt((ushort)(address - byteCount), buffer);
 
             // loop until either BC == 0 or comparison is true (Flags.Zero is true)
+            Flags expectedFlags = new Flags();
             while (Registers.Flags.Zero == false && Registers.BC > 0)
             {
+                // note we need to call GetExpected flags *before* Execute Instruction, because
+                // otherwise at BC == 2 -> 1, this will trigger invalid flag evaluation
+                expectedFlags = GetExpectedFlags(Registers.A, ReadByteAt(Registers.HL), Registers.BC);
                 ExecutionResult executionResult = ExecuteInstruction($"CPDR");
-                Flags expectedFlags = GetExpectedFlags(Registers.A, ReadByteAt(Registers.HL), Registers.BC);
 
                 Assert.That(Registers.HL, Is.EqualTo(address - 1));
                 Assert.That(Registers.BC, Is.EqualTo(byteCount - 1));
+                Assert.That(Registers.Flags, Is.EqualTo(expectedFlags));
 
                 address--;
                 byteCount--;
@@ -103,12 +102,12 @@ namespace Z80.Core.Tests
             if (inputValueIsInMemory)
             {
                 // should be found, Flags.Zero must be true
-                Assert.That(Registers.Flags.Zero, Is.True);
+                Assert.That(Registers.Flags.Zero, Is.EqualTo(expectedFlags.Zero));
             }
             else
             {
                 // should not be found and BC should have gone to zero
-                Assert.That(Registers.Flags.ParityOverflow, Is.False);
+                Assert.That(Registers.Flags.ParityOverflow, Is.EqualTo(expectedFlags.ParityOverflow));
                 Assert.That(Registers.BC, Is.EqualTo(0));
             }
         }
@@ -132,13 +131,15 @@ namespace Z80.Core.Tests
             CPU.Memory.WriteBytesAt(address, buffer);
 
             // loop until either BC == 0 or comparison is true (Flags.Zero is true)
+            Flags expectedFlags = new Flags();
             while (Registers.Flags.Zero == false && Registers.BC > 0)
             {
+                expectedFlags = GetExpectedFlags(Registers.A, ReadByteAt(Registers.HL), Registers.BC);
                 ExecutionResult executionResult = ExecuteInstruction($"CPIR");
-                Flags expectedFlags = GetExpectedFlags(Registers.A, ReadByteAt(Registers.HL), Registers.BC);
 
                 Assert.That(Registers.HL, Is.EqualTo(address + 1));
                 Assert.That(Registers.BC, Is.EqualTo(byteCount - 1));
+                Assert.That(Registers.Flags, Is.EqualTo(expectedFlags));
 
                 address++;
                 byteCount--;
@@ -148,12 +149,12 @@ namespace Z80.Core.Tests
             if (inputValueIsInMemory)
             {
                 // should be found, Flags.Zero must be true
-                Assert.That(Registers.Flags.Zero, Is.True);
+                Assert.That(Registers.Flags.Zero, Is.EqualTo(expectedFlags.Zero));
             }
             else
             {
                 // should not be found and BC should have gone to zero
-                Assert.That(Registers.Flags.ParityOverflow, Is.False);
+                Assert.That(Registers.Flags.ParityOverflow, Is.EqualTo(expectedFlags.ParityOverflow));
                 Assert.That(Registers.BC, Is.EqualTo(0));
             }
         }

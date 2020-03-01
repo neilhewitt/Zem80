@@ -4,9 +4,14 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public enum ConditionFlagName
+    public enum Condition
     {
         Z, NZ, C, NC, PO, PE, M, P
+    }
+
+    public enum Flag
+    {
+        Sign, Zero, Five, HalfCarry, Three, ParityOverflow, Subtract, Carry
     }
 
     public class Flags
@@ -31,33 +36,33 @@ namespace Z80.Core
             _set_flags(flags);
         }
 
-        public void SetFromCondition(ConditionFlagName condition)
+        public void SetFromCondition(Condition condition)
         {
             switch (condition)
             {
-                case ConditionFlagName.Z: Zero = true; break;
-                case ConditionFlagName.NZ: Zero = false; break;
-                case ConditionFlagName.C: Carry = true; break;
-                case ConditionFlagName.NC: Carry = false; break;
-                case ConditionFlagName.PE: ParityOverflow = true; break;
-                case ConditionFlagName.PO: ParityOverflow = false; break;
-                case ConditionFlagName.M: Sign = true; break;
-                case ConditionFlagName.P: Sign = false; break;
+                case Condition.Z: Zero = true; break;
+                case Condition.NZ: Zero = false; break;
+                case Condition.C: Carry = true; break;
+                case Condition.NC: Carry = false; break;
+                case Condition.PE: ParityOverflow = true; break;
+                case Condition.PO: ParityOverflow = false; break;
+                case Condition.M: Sign = true; break;
+                case Condition.P: Sign = false; break;
             }
         }
 
-        public bool SatisfyCondition(ConditionFlagName condition)
+        public bool SatisfyCondition(Condition condition)
         {
             return condition switch
             {
-                ConditionFlagName.Z => Zero,
-                ConditionFlagName.NZ => !Zero,
-                ConditionFlagName.C => Carry,
-                ConditionFlagName.NC => !Carry,
-                ConditionFlagName.PE => ParityOverflow,
-                ConditionFlagName.PO => !ParityOverflow,
-                ConditionFlagName.M => Sign,
-                ConditionFlagName.P => !Sign,
+                Condition.Z => Zero,
+                Condition.NZ => !Zero,
+                Condition.C => Carry,
+                Condition.NC => !Carry,
+                Condition.PE => ParityOverflow,
+                Condition.PO => !ParityOverflow,
+                Condition.M => Sign,
+                Condition.P => !Sign,
                 _ => false
             };
         }

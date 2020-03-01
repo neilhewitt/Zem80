@@ -4,15 +4,14 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class DAA : IInstructionImplementation
+    public class DAA : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
-            Flags flags = r.Flags;
-            Flags newFlags = new Flags();
             byte A = r.A;
 
             // test low 4 bits - if > 9 in BCD or HalfCarry is set, adjust +/- 0x06
@@ -24,30 +23,30 @@ namespace Z80.Core
             // test high 4 bits - if > 9 in BDC or Carry is set, adjust +/- 0x60
             if (flags.Carry || (A > 0x99))
             {
-                newFlags.Carry = true;
+                flags.Carry = true;
                 A += (byte)((flags.Subtract) ? 0xA0 : 0x60);
             }
 
-            newFlags.Zero = A == 0;
-            newFlags.Sign = (A & (1 << 7)) != 0; // test bit 7
-            newFlags.ParityOverflow = A % 2 == 0; // test even parity
+            flags.Zero = A == 0;
+            flags.Sign = (A & (1 << 7)) != 0; // test bit 7
+            flags.ParityOverflow = A % 2 == 0; // test even parity
 
             if (flags.Subtract && !flags.HalfCarry)
             {
-                newFlags.HalfCarry = false;
+                flags.HalfCarry = false;
             }
             else if (flags.Subtract && flags.HalfCarry)
             {
-                newFlags.HalfCarry = (((A & 0x0F)) < 0x06);
+                flags.HalfCarry = ((A & 0x0F) < 0x06);
             }
             else
             {
-                newFlags.HalfCarry = (((A & 0x0F)) >= 0x0A);
+                flags.HalfCarry = ((A & 0x0F) >= 0x0A);
             }
 
             r.A = A;
 
-            return new ExecutionResult(package, newFlags, false);
+            return new ExecutionResult(package, flags, false);
         }
 
         public DAA()

@@ -4,21 +4,20 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class XOR : IInstructionImplementation
+    public class XOR : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Flags flags = new Flags();
+            Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
 
             void xor(byte operand)
             {
-                r.A = (byte)(r.A ^ operand);
-                if (((sbyte)r.A) < 0) flags.Sign = true;
-                if (r.A == 0) flags.Zero = true;
-                if (r.A.CountBits(true) % 2 == 0) flags.ParityOverflow = true;
+                int result = (byte)(r.A ^ operand);
+                FlagHelper.SetFlagsFromLogicalOperation(flags, r.A, operand, result);
+                r.A = (byte)result;
             }
 
             switch (instruction.Prefix)

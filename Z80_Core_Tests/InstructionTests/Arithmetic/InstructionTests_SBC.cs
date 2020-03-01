@@ -13,14 +13,9 @@ namespace Z80.Core.Tests
             Flags flags = new Flags();
             if (carry) subtract--;
 
-            ushort result = (ushort)(value - subtract);
-            short signedResult = (short)result;
-
-            flags.Carry = result > 0xFF;
-            flags.ParityOverflow = (signedResult > 0x7F || signedResult < -0x80);
-            flags.Zero = result == 0;
-            flags.Sign = ((sbyte)signedResult < 0);
-            flags.HalfCarry = value.HalfCarryWhenAdding(subtract);
+            int result = value - subtract;
+            FlagHelper.SetFlagsFromArithmeticOperation(flags, value, subtract, result, true);
+            flags.Subtract = true;
 
             return ((byte)result, flags);
         }
@@ -30,14 +25,9 @@ namespace Z80.Core.Tests
             Flags flags = new Flags();
             if (carry) subtract--;
 
-            uint result = (uint)(value - subtract);
-            int signedResult = (int)result;
-
-            flags.Carry = result > 0xFFFF;
-            flags.ParityOverflow = (signedResult > 0x7FFF || signedResult < -0x8000);
-            flags.Zero = result == 0;
-            flags.Sign = ((short)signedResult < 0);
-            flags.HalfCarry = value.HalfCarryWhenAdding(subtract);
+            int result = value - subtract;
+            FlagHelper.SetFlagsFromArithmeticOperation(flags, value, subtract, result, true);
+            flags.Subtract = true;
 
             return ((ushort)result, flags);
         }
