@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class RLC : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -42,8 +42,7 @@ namespace Z80.Core
 
             byte setFlags(byte original, byte shifted)
             {
-                FlagHelper.SetFlagsFromLogicalOperation(flags, original, 0x00, shifted, shifted.GetBit(0),
-                    new Flag[] { Flag.HalfCarry, Flag.Subtract });
+                flags = FlagLookup.FlagsFromBitwiseOperation(original, BitwiseOperation.RotateLeft);
                 flags.HalfCarry = false;
                 flags.Subtract = false;
                 return shifted;

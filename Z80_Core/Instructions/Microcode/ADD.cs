@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class ADD : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -26,15 +26,14 @@ namespace Z80.Core
             byte addByte(byte value)
             {
                 int result = cpu.Registers.A + value;
-                FlagHelper.SetFlagsFromArithmeticOperation(flags, cpu.Registers.A, value, result);
+                flags = FlagLookup.FlagsFromArithmeticOperation(cpu.Registers.A, value, false);
                 return (byte)result;
             }
 
             ushort addWord(ushort first, ushort second)
             {
                 int result = first + second;
-                FlagHelper.SetFlagsFromArithmeticOperation(flags, first, second, result, false,
-                    new Flag[] { Flag.Sign, Flag.Zero, Flag.ParityOverflow });
+                flags = FlagLookup.FlagsFromArithmeticOperation16Bit(flags, first, second, result, false, false);
                 return (ushort)result;
             }
 

@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class XOR : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -16,7 +16,7 @@ namespace Z80.Core
             void xor(byte operand)
             {
                 int result = (byte)(r.A ^ operand);
-                FlagHelper.SetFlagsFromLogicalOperation(flags, r.A, operand, result);
+                FlagLookup.FlagsFromLogicalOperation(r.A, operand, LogicalOperation.Xor);
                 r.A = (byte)result;
             }
 

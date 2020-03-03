@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class RRD : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -26,8 +26,7 @@ namespace Z80.Core
             cpu.Memory.WriteByteAt(cpu.Registers.HL, xHL);
             cpu.Registers.A = a;
 
-            FlagHelper.SetFlagsFromLogicalOperation(flags, 0x00, 0x00, a, false,
-                new Flag[] { Flag.HalfCarry, Flag.Subtract, Flag.Carry });
+            flags = FlagLookup.FlagsFromBitwiseOperation(a, BitwiseOperation.RotateRight);
             flags.HalfCarry = false;
             flags.Subtract = false;
 

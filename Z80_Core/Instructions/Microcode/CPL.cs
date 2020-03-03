@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class CPL : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             Flags flags = cpu.Registers.Flags;
             flags.HalfCarry = true;

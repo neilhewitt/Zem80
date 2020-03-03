@@ -13,11 +13,7 @@ namespace Z80.Core.Tests
         {
             short result = (short)(first ^ second);
             Flags flags = new Flags();
-
-            flags.Zero = (result == 0);
-            flags.Sign = ((sbyte)result < 0);
-            flags.ParityOverflow = (result > 0xFF);
-
+            FlagLookup.FlagsFromLogicalOperation(first, second, LogicalOperation.Xor);
             return ((byte)result, flags);
         }
 

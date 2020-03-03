@@ -18,7 +18,7 @@ namespace Z80.Core
         private ushort _topOfStack;
         private bool _synchronous;
 
-        private EventHandler<InstructionPackage> _beforeExecute;
+        private EventHandler<ExecutionPackage> _beforeExecute;
         private EventHandler<ExecutionResult> _afterExecute;
         private EventHandler _beforeStart;
         private EventHandler _onStop;
@@ -43,7 +43,7 @@ namespace Z80.Core
 
         // why yes, you do have to do event handlers this way if you want them to be on the interface and not on the type... no idea why
         // (basically, automatic properties don't work as events when they are explicitly on the interface, so we use a backing variable... old-school style)
-        event EventHandler<InstructionPackage> IDebugProcessor.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
+        event EventHandler<ExecutionPackage> IDebugProcessor.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
         event EventHandler<ExecutionResult> IDebugProcessor.AfterExecute { add { _afterExecute += value; } remove { _afterExecute -= value; } }
         event EventHandler IDebugProcessor.BeforeStart { add { _beforeStart += value; } remove { _beforeStart -= value; } }
         event EventHandler IDebugProcessor.OnStop { add { _onStop += value; } remove { _onStop -= value; } }
@@ -160,7 +160,7 @@ namespace Z80.Core
             InterruptsEnabled = true;
         }
 
-        public ExecutionResult Execute(InstructionPackage package)
+        public ExecutionResult Execute(ExecutionPackage package)
         {
             _beforeExecute?.Invoke(this, package);
             ExecutionResult result = package.Instruction.Implementation.Execute(this, package);
@@ -177,7 +177,7 @@ namespace Z80.Core
                 if (!_halted)
                 {
                     byte[] instruction = Memory.ReadBytesAt(Registers.PC, 4);
-                    InstructionPackage package = _decoder.Decode(instruction);
+                    ExecutionPackage package = _decoder.Decode(instruction);
                     if (package == null)
                     {
                         Stop(); // only happens if instruction buffer is short (end of memory reached) and corrupt (not a valid instruction)
@@ -217,7 +217,7 @@ namespace Z80.Core
                     switch (InterruptMode)
                     {
                         case InterruptMode.IM0: // read instruction data from data bus in 1-4 cycles and execute resulting instruction - flags are set but PC is unaffected
-                            InstructionPackage package = _decoder.DecodeInterrupt(() =>
+                            ExecutionPackage package = _decoder.DecodeInterrupt(() =>
                                 {
                                     _interruptCallback(); // each time callback is called, device will set data bus with next instruction byte
                                     return DataBus;
@@ -256,6 +256,8 @@ namespace Z80.Core
 
             _topOfStack = topOfStackAddress;
             Registers.SP = _topOfStack;
+
+            FlagLookup.BuildFlagLookupTables();
         }
     }
 }

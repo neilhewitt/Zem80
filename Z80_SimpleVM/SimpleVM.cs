@@ -47,6 +47,18 @@ namespace Z80.SimpleVM
             _cpu.Memory.WriteBytesAt(address, code);
         }
 
+        private byte ReadChar()
+        {
+            return 0;
+        }
+
+        private void WriteChar(byte input)
+        {
+            char c = Convert.ToChar(input);
+            if (_output != null) _output(Convert.ToChar(c));
+            else Console.Write(c);
+        }
+
         private byte ReadByte()
         {
             return 0;
@@ -54,8 +66,9 @@ namespace Z80.SimpleVM
 
         private void WriteByte(byte input)
         {
-            if (_output != null) _output(Convert.ToChar(input)); 
-            else Console.Write(Convert.ToChar(input));
+            string s = input.ToString("X2");
+            if (_output != null) { _output(s[0]); _output(s[1]); }
+            else Console.Write(s);
         }
 
         private void Signal(PortSignal signal)
@@ -65,7 +78,8 @@ namespace Z80.SimpleVM
         public VirtualMachine()
         {
             _cpu = Bootstrapper.BuildCPU();
-            _cpu.Ports[0].Connect(ReadByte, WriteByte, Signal);
+            _cpu.Ports[0].Connect(ReadChar, WriteChar, Signal);
+            _cpu.Ports[1].Connect(ReadByte, WriteByte, Signal);
         }
     }
 }

@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class ADC : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -27,7 +27,7 @@ namespace Z80.Core
             {
                 if (flags.Carry) value++;
                 int result = cpu.Registers.A + value;
-                FlagHelper.SetFlagsFromArithmeticOperation(flags, cpu.Registers.A, value, result);
+                flags = FlagLookup.FlagsFromArithmeticOperation(cpu.Registers.A, value, false);
                 return (byte)result;
             }
 
@@ -35,7 +35,7 @@ namespace Z80.Core
             {
                 if (cpu.Registers.Flags.Carry) value++;
                 int result = cpu.Registers.HL + value;
-                FlagHelper.SetFlagsFromArithmeticOperation(flags, cpu.Registers.HL, value, result);
+                flags = FlagLookup.FlagsFromArithmeticOperation16Bit(flags, cpu.Registers.HL, value, result, true, false);
                 return (ushort)result;
             }
 

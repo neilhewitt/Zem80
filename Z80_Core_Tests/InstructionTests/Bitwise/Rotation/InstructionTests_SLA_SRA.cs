@@ -9,11 +9,10 @@ namespace Z80.Core.Tests
     [TestFixture]
     public class InstructionTests_SLA_SRA : InstructionTestBase
     {
-        private Flags GetExpectedFlags(byte original, byte expected, bool carry)
+        private Flags GetExpectedFlags(byte original, byte expected, bool carry, BitwiseOperation operation)
         {
             Flags flags = new Flags();
-            FlagHelper.SetFlagsFromLogicalOperation(flags, original, 0x00, expected, carry,
-                new Flag[] { Flag.HalfCarry, Flag.Subtract });
+            flags = FlagLookup.FlagsFromBitwiseOperation(original, operation);
             flags.HalfCarry = false;
             flags.Subtract = false;
             return flags;
@@ -28,7 +27,7 @@ namespace Z80.Core.Tests
 
             ExecutionResult executionResult = ExecuteInstruction($"SLA A");
 
-            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(7));
+            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(7), BitwiseOperation.ShiftLeft);
 
             Assert.That(Registers.A, Is.EqualTo(expected));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
@@ -43,7 +42,7 @@ namespace Z80.Core.Tests
 
             ExecutionResult executionResult = ExecuteInstruction($"SRA B");
 
-            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(0));
+            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(0), BitwiseOperation.ShiftRight);
 
             Assert.That(Registers.B, Is.EqualTo(expected));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
@@ -60,7 +59,7 @@ namespace Z80.Core.Tests
 
             ExecutionResult executionResult = ExecuteInstruction($"SLA (HL)");
 
-            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(7));
+            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(7), BitwiseOperation.ShiftLeft);
 
             Assert.That(ReadByteAt(address), Is.EqualTo(expected));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
@@ -77,7 +76,7 @@ namespace Z80.Core.Tests
 
             ExecutionResult executionResult = ExecuteInstruction($"SRA (HL)");
 
-            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(0));
+            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(0), BitwiseOperation.ShiftRight);
 
             Assert.That(ReadByteAt(address), Is.EqualTo(expected));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
@@ -94,7 +93,7 @@ namespace Z80.Core.Tests
 
             ExecutionResult executionResult = ExecuteInstruction($"SLA ({ indexRegister }+o)", arg1: (byte)offset);
 
-            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(7));
+            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(7), BitwiseOperation.ShiftLeft);
 
             Assert.That(ReadByteAtIndexAndOffset(indexRegister, offset), Is.EqualTo(expected));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
@@ -111,7 +110,7 @@ namespace Z80.Core.Tests
 
             ExecutionResult executionResult = ExecuteInstruction($"SRA ({ indexRegister }+o)", arg1: (byte)offset);
 
-            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(0));
+            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(0), BitwiseOperation.ShiftRight);
 
             Assert.That(ReadByteAtIndexAndOffset(indexRegister, offset), Is.EqualTo(expected));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));

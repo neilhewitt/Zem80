@@ -1,36 +1,38 @@
    1:     -	0005          				.org 5h
    2:    0+4	0005  79      				ld a,c
    3:    4+7	0006  FE02    				cp 2h
-   4:   11+7+5	0008  2805    				jr z,charout
-   5:   18+7	000A  FE09    				cp 9h
-   6:   25+7+5	000C  2805    				jr z,strout
-   7:     -	000E          	gohome:		
-   8:   32+10	000E  C9      				ret
-   9:     -	000F          	charout:	
-  10:   42+4	000F  7B      				ld a,e
-  11:   46+11	0010  D300    				out (0),a
-  12:   57+10	0012  C9      				ret
-  13:     -	0013          	strout:		
-  14:   67+11	0013  E5      				push hl
-  15:   78+11	0014  D5      				push de
-  16:   89+10	0015  E1      				pop hl
-  17:     -	0016          	loop:		
-  18:   99+7	0016  7E      				ld a,(hl)
-  19:  106+7	0017  FE24    				cp 24h
-  20:  113+7+5	0019  280D    				jr z,theend
-  21:  120+11	001B  D300    				out (0),a
-  22:  131+4	001D  2C      				inc l
-  23:  135+4	001E  7D      				ld a,l
-  24:  139+7	001F  FEFF    				cp 0ffh
-  25:  146+7+5	0021  2003    				jr nz,notzero
-  26:  153+7	0023  2E00    				ld l,0
-  27:  160+4	0025  24      				inc h
-  28:     -	0026          	notzero:	
-  29:  164+12	0026  18EE    				jr loop
-  30:     -	0028          	theend:		
-  31:  176+10	0028  E1      				pop hl
-  32:  186+10	0029  C9      				ret
-  33:				        
+   4:   11+10+7	0008  CC1600  				call z,charout
+   5:   21+7	000B  FE09    				cp 9h
+   6:   28+10+7	000D  CC1E00  				call z,strout
+   7:   38+7	0010  FE03    				cp 3h
+   8:   45+10+7	0012  CC1A00  				call z,byteout	
+   9:   55+10	0015  C9      				ret
+  10:     -	0016          	charout:	
+  11:   65+4	0016  7B      				ld a,e
+  12:   69+11	0017  D300    				out (0),a
+  13:   80+10	0019  C9      				ret
+  14:     -	001A          	byteout:
+  15:   90+4	001A  7B      				ld a,e
+  16:   94+11	001B  D301    				out (1),a
+  17:  105+10	001D  C9      				ret
+  18:     -	001E          	strout:		
+  19:  115+11	001E  E5      				push hl
+  20:  126+11	001F  D5      				push de
+  21:  137+10	0020  E1      				pop hl
+  22:     -	0021          	loop:		
+  23:  147+7	0021  7E      				ld a,(hl)
+  24:  154+7	0022  FE24    				cp 24h
+  25:  161+7+5	0024  2808    				jr z,theend
+  26:  168+11	0026  D300    				out (0),a
+  27:  179+10	0028  110100  				ld de,0001h
+  28:  189+11	002B  19      				add hl,de
+  29:  200+12	002C  18F3    				jr loop
+  30:     -	002E          	theend:					
+  31:  212+10	002E  E1      				pop hl
+  32:  222+10	002F  C9      				ret
+  33:				
+  34:				
+  35:				        
 
 
 
@@ -38,16 +40,15 @@ Statistics:
 
      4	passes
      0	jr promotions
-     6	symbols
-    37	bytes
+     5	symbols
+    43	bytes
 
 
 
 Symbol Table:
 
-charout            f     
-gohome             e     
-loop              16     
-notzero           26     
-strout            13     
-theend            28     
+byteout           1a     
+charout           16     
+loop              21     
+strout            1e     
+theend            2e     

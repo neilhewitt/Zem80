@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class RETN : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             cpu.Pop(RegisterPairName.PC);
             return new ExecutionResult(package, cpu.Registers.Flags, false, true);

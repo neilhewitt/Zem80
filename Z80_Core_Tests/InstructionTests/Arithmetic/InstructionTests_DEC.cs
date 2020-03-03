@@ -15,7 +15,7 @@ namespace Z80.Core.Tests
             Flags flags = new Flags();
             sbyte subtract = -1;
             int result = input - 1;
-            FlagHelper.SetFlagsFromArithmeticOperation(flags, input, (byte)subtract, result, true);
+            flags = FlagLookup.FlagsFromArithmeticOperation(input, (byte)subtract, true);
             return ((byte)result, flags);
         }
 

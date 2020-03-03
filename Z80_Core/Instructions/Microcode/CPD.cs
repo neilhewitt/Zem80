@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class CPD : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -18,7 +18,7 @@ namespace Z80.Core
             cpu.Registers.HL--;
             cpu.Registers.BC--;
 
-            FlagHelper.SetFlagsFromArithmeticOperation(flags, a, b, result, true);
+            flags = FlagLookup.FlagsFromArithmeticOperation(a, b, true);
             flags.ParityOverflow = (cpu.Registers.BC - 1 != 0);
 
             return new ExecutionResult(package, flags, false);

@@ -60,15 +60,15 @@ namespace Z80.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool OverflowsWhenAdding(this byte first, byte second)
         {
-            short result = (short)(first + second);
-            return ((first > 0x80 && second > 0x80 && result > 0) 
-                || (first < 0x80 && second < 0x80 && result < 0));
+            int result = (byte)((sbyte)first + (sbyte)second);
+            return (result >= 0x80 || result <= -0x80);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool OverflowsWhenSubtracting(this byte first, byte second)
+        public static bool OverflowsWhenAdding(this ushort first, ushort second)
         {
-            return (short)(first - second) < 0;
+            int result = (byte)((sbyte)first + (sbyte)second);
+            return (result >= 0x8000 || result <= -0x8000);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

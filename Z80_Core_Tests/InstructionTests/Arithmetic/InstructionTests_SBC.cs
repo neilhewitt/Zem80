@@ -14,7 +14,7 @@ namespace Z80.Core.Tests
             if (carry) subtract--;
 
             int result = value - subtract;
-            FlagHelper.SetFlagsFromArithmeticOperation(flags, value, subtract, result, true);
+            flags = FlagLookup.FlagsFromArithmeticOperation(value, subtract, true);
             flags.Subtract = true;
 
             return ((byte)result, flags);
@@ -26,7 +26,7 @@ namespace Z80.Core.Tests
             if (carry) subtract--;
 
             int result = value - subtract;
-            FlagHelper.SetFlagsFromArithmeticOperation(flags, value, subtract, result, true);
+            flags = FlagLookup.FlagsFromArithmeticOperation16Bit(flags, value, subtract, result, true, true);
             flags.Subtract = true;
 
             return ((ushort)result, flags);

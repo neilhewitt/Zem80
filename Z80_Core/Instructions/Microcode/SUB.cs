@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class SUB : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -21,7 +21,7 @@ namespace Z80.Core
             byte subByte(byte value)
             {
                 int result = cpu.Registers.A - value;
-                FlagHelper.SetFlagsFromArithmeticOperation(flags, cpu.Registers.A, value, result, true);
+                flags = FlagLookup.FlagsFromArithmeticOperation(cpu.Registers.A, value, true);
 
                 return (byte)result;
             }

@@ -12,8 +12,7 @@ namespace Z80.Core.Tests
         private Flags GetExpectedFlags(byte original, byte expected, bool carry)
         {
             Flags flags = new Flags();
-            FlagHelper.SetFlagsFromLogicalOperation(flags, original, 0x00, expected, carry,
-                new Flag[] { Flag.HalfCarry, Flag.Subtract });
+            flags = FlagLookup.FlagsFromBitwiseOperation(original, BitwiseOperation.ShiftRight);
             flags.HalfCarry = false;
             flags.Subtract = false;
             return flags;

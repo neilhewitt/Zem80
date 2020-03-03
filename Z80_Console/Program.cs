@@ -38,7 +38,7 @@ namespace Z80_Console
             //Console.ReadLine();
         }
 
-        private static void Before_Instruction_Execution(object sender, InstructionPackage e)
+        private static void Before_Instruction_Execution(object sender, ExecutionPackage e)
         {
             ConsoleColor oldColour = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Yellow;

@@ -8,7 +8,7 @@ namespace Z80.Core
 {
     public class InstructionDecoder
     {
-        public InstructionPackage Decode(byte[] instructionBytes)
+        public ExecutionPackage Decode(byte[] instructionBytes)
         {
             byte opcode = 0x00;
             InstructionData data = new InstructionData();
@@ -19,7 +19,7 @@ namespace Z80.Core
                 if (instructionBytes[0] == 0x00 ||
                     (instructionBytes[0] == 0xDD || instructionBytes[0] == 0xFD) && (instructionBytes[1] == 0xDD || instructionBytes[1] == 0xFD))
                 {
-                    return new InstructionPackage(Instruction.NOP, data);
+                    return new ExecutionPackage(Instruction.NOP, data);
                 }
 
                 byte prefix = instructionBytes[0];
@@ -35,7 +35,7 @@ namespace Z80.Core
                         data.Argument1 = instructionBytes[2];
                     }
 
-                    return new InstructionPackage(instruction, data);
+                    return new ExecutionPackage(instruction, data);
                 }
                 else if (prefix == 0xED)
                 {
@@ -49,7 +49,7 @@ namespace Z80.Core
                         data.Argument2 = instructionBytes[3];
                     }
 
-                    return new InstructionPackage(instruction, data);
+                    return new ExecutionPackage(instruction, data);
                 }
                 else if (prefix == 0xDD || prefix == 0xFD)
                 {
@@ -69,7 +69,7 @@ namespace Z80.Core
                         data.Argument2 = instructionBytes[3];
                     }
 
-                    return new InstructionPackage(instruction, data);
+                    return new ExecutionPackage(instruction, data);
 
                 }
                 else
@@ -91,7 +91,7 @@ namespace Z80.Core
                         data.Argument2 = instructionBytes[2];
                     }
 
-                    return new InstructionPackage(instruction, data);
+                    return new ExecutionPackage(instruction, data);
                 }
             }
             catch (InstructionNotFoundException)
@@ -102,7 +102,7 @@ namespace Z80.Core
             }
         }
 
-        public InstructionPackage DecodeInterrupt(Func<byte> dataRead)
+        public ExecutionPackage DecodeInterrupt(Func<byte> dataRead)
         {
             if (dataRead == null) throw new Z80Exception("You must supply a valid delegate / Func<bool> to support reading device data.");
 

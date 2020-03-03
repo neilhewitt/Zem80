@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class INC : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -23,7 +23,7 @@ namespace Z80.Core
             byte inc(byte value)
             {
                 ushort result = (ushort)(value + 1);
-                FlagHelper.SetFlagsFromArithmeticOperation(flags, value, 1, result, true);
+                flags = FlagLookup.FlagsFromArithmeticOperation(value, 1, true);
                 if (result > 0xFF) result = 0;
                 return (byte)result;
             }

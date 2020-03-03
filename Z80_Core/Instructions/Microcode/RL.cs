@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class RL : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -43,8 +43,7 @@ namespace Z80.Core
             byte flagsAndCarry(byte original, byte shifted)
             {
                 shifted = shifted.SetBit(0, previousCarry);
-                FlagHelper.SetFlagsFromLogicalOperation(flags, original, 0x00, shifted, original.GetBit(7),
-                    new Flag[] { Flag.HalfCarry, Flag.Subtract });
+                flags = FlagLookup.FlagsFromBitwiseOperation(original, BitwiseOperation.RotateLeft);
                 flags.HalfCarry = false;
                 flags.Subtract = false;
                 return shifted;

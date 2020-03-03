@@ -1,14 +1,19 @@
 			.org 5h
 			ld a,c
 			cp 2h
-			jr z,charout
+			call z,charout
 			cp 9h
-			jr z,strout
-gohome:		
+			call z,strout
+			cp 3h
+			call z,byteout	
 			ret
 charout:	
 			ld a,e
 			out (0),a
+			ret
+byteout:
+			ld a,e
+			out (1),a
 			ret
 strout:		
 			push hl
@@ -19,15 +24,12 @@ loop:
 			cp 24h
 			jr z,theend
 			out (0),a
-			inc l
-			ld a,l
-			cp 0ffh
-			jr nz,notzero
-			ld l,0
-			inc h
-notzero:	
+			ld de,0001h
+			add hl,de
 			jr loop
-theend:		
+theend:					
 			pop hl
 			ret
+
+
         

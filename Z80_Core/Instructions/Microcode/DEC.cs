@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class DEC : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -23,7 +23,7 @@ namespace Z80.Core
             {
                 int result = value - 1;
                 sbyte subtract = -1;
-                FlagHelper.SetFlagsFromArithmeticOperation(flags, value, (byte)subtract, result, true);
+                flags = FlagLookup.FlagsFromArithmeticOperation(value, (byte)subtract, true);
                 return (byte)result;
             }
 

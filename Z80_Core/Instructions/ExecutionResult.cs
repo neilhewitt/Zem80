@@ -11,7 +11,7 @@ namespace Z80.Core
         public byte ClockCycles { get; }
         public bool ProgramCounterUpdated { get; }
 
-        public ExecutionResult(InstructionPackage package, Flags flags, bool conditionTrue, bool pcWasSet = false)
+        public ExecutionResult(ExecutionPackage package, Flags flags, bool conditionTrue, bool pcWasSet = false)
         {
             Instruction = package.Instruction;
             Flags = flags;

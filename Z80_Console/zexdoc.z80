@@ -24,7 +24,6 @@
 ; along with this program; if not, write to the Free Software
 ; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	aseg
 	org	100h
 
 	jp	start
@@ -193,7 +192,7 @@ tstr	macro	insn1,insn2,insn3,insn4,memop,riy,rix,rhl,rde,rbc,flags,acc,rsp,?lab
 	endm
 
 tmsg	macro	msg,?lab
-?lab:	db	'msg'
+?lab:	db	msg
 	if	$ ge ?lab+31
 	error	'message too long'
 	else
@@ -1179,26 +1178,11 @@ ph8lp:	ld	a,(hl)
 
 ; display byte in a
 phex2:	push	af
-	rrca
-	rrca
-	rrca
-	rrca
-	call	phex1
-	pop	af
-; fall through	
-
-; display low nibble in a
-phex1:	push	af
 	push	bc
 	push	de
 	push	hl
-	and	a,0fh
-	cp	a,10
-	jp	c,ph11
-	add	a,'a'-'9'-1
-ph11:	add	a,'0'
 	ld	e,a
-	ld	c,2
+	ld	c,3
 	call	bdos
 	pop	hl
 	pop	de
@@ -1206,7 +1190,7 @@ ph11:	add	a,'0'
 	pop	af
 	ret
 
-bdos	push	af
+bdos:	push	af
 	push	bc
 	push	de
 	push	hl

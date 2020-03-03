@@ -4,12 +4,12 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class InstructionPackage
+    public class ExecutionPackage
     {
         public Instruction Instruction { get; }
         public InstructionData Data { get; }
 
-        public InstructionPackage(Instruction instruction, InstructionData data)
+        public ExecutionPackage(Instruction instruction, InstructionData data)
         {
             Instruction = instruction;
             Data = data;

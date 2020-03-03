@@ -11,19 +11,10 @@ namespace Z80.Core.Tests
         private (byte, Flags) GetExpectedResultAndFlags(byte value, byte add, bool carry)
         {
             Flags flags = new Flags();
-
-            ushort result = (ushort)(value + add);
-            short signedResult = (short)result;
-
-            flags.Carry = result > 0xFF;
-            flags.ParityOverflow = (signedResult > 0x7F || signedResult < -0x80);
-            flags.Zero = result == 0;
-            flags.Sign = ((sbyte)signedResult < 0);
-            flags.HalfCarry = value.HalfCarryWhenAdding(add);
-
+            int result = value + add;
+            flags = FlagLookup.FlagsFromArithmeticOperation(value, add, false);
             return ((byte)result, flags);
         }
-
 
         [Test]
         public void ADD_A_r([Values(0x00, 0x7E, 0x7F, 0xFF)] byte input, [Values(true, false)] bool carry)

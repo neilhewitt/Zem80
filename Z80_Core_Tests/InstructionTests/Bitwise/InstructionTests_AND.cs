@@ -11,14 +11,8 @@ namespace Z80.Core.Tests
         private (byte result, Flags flags) GetExpectedResultAndFlags(byte first, byte second)
         {
             Flags flags = new Flags();
-
             byte result = (byte)(first & second);
-
-            flags.Sign = ((sbyte)result < 0);
-            flags.Zero = result == 0;
-            flags.ParityOverflow = (result.CountBits(true) % 2 == 0);
-            flags.HalfCarry = true;
-
+            FlagLookup.FlagsFromLogicalOperation(first, second, LogicalOperation.And);
             return (result, flags);
         }
 

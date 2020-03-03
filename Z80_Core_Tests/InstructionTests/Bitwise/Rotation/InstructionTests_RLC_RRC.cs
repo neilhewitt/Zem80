@@ -9,12 +9,10 @@ namespace Z80.Core.Tests
     [TestFixture]
     public class InstructionTests_RLC_RRC : InstructionTestBase
     {
-        private Flags GetExpectedFlags(byte original, byte expected, bool carry)
+        private Flags GetExpectedFlags(byte original, byte expected, bool carry, BitwiseOperation operation)
         {
             Flags flags = new Flags();
-
-            FlagHelper.SetFlagsFromLogicalOperation(flags, original, 0x00, expected, carry,
-                new Flag[] { Flag.HalfCarry, Flag.Subtract });
+            flags = FlagLookup.FlagsFromBitwiseOperation(original, operation);
             flags.HalfCarry = false;
             flags.Subtract = false;
             return flags;
@@ -30,7 +28,7 @@ namespace Z80.Core.Tests
 
             ExecutionResult executionResult = ExecuteInstruction($"RLC A");
 
-            Flags expectedFlags = GetExpectedFlags(value, expected, expected.GetBit(0));
+            Flags expectedFlags = GetExpectedFlags(value, expected, expected.GetBit(0), BitwiseOperation.RotateLeft);
 
             Assert.That(Registers.A, Is.EqualTo(expected));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
@@ -46,7 +44,7 @@ namespace Z80.Core.Tests
 
             ExecutionResult executionResult = ExecuteInstruction($"RRC B");
 
-            Flags expectedFlags =  GetExpectedFlags(value, expected, expected.GetBit(7));
+            Flags expectedFlags =  GetExpectedFlags(value, expected, expected.GetBit(7), BitwiseOperation.RotateRight);
 
             Assert.That(Registers.B, Is.EqualTo(expected));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
@@ -64,7 +62,7 @@ namespace Z80.Core.Tests
 
             ExecutionResult executionResult = ExecuteInstruction($"RLC (HL)");
 
-            Flags expectedFlags =  GetExpectedFlags(value, expected, expected.GetBit(0));
+            Flags expectedFlags =  GetExpectedFlags(value, expected, expected.GetBit(0), BitwiseOperation.RotateLeft);
 
             Assert.That(ReadByteAt(address), Is.EqualTo(expected));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
@@ -82,7 +80,7 @@ namespace Z80.Core.Tests
 
             ExecutionResult executionResult = ExecuteInstruction($"RRC (HL)");
 
-            Flags expectedFlags =  GetExpectedFlags(value, expected, expected.GetBit(7));
+            Flags expectedFlags =  GetExpectedFlags(value, expected, expected.GetBit(7), BitwiseOperation.RotateRight);
 
             Assert.That(ReadByteAt(address), Is.EqualTo(expected));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
@@ -100,7 +98,7 @@ namespace Z80.Core.Tests
 
             ExecutionResult executionResult = ExecuteInstruction($"RLC ({ indexRegister }+o)", arg1: (byte)offset);
 
-            Flags expectedFlags =  GetExpectedFlags(value, expected, expected.GetBit(0));
+            Flags expectedFlags =  GetExpectedFlags(value, expected, expected.GetBit(0), BitwiseOperation.RotateLeft);
 
             Assert.That(ReadByteAtIndexAndOffset(indexRegister, offset), Is.EqualTo(expected));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
@@ -118,7 +116,7 @@ namespace Z80.Core.Tests
 
             ExecutionResult executionResult = ExecuteInstruction($"RRC ({ indexRegister }+o)", arg1: (byte)offset);
 
-            Flags expectedFlags =  GetExpectedFlags(value, expected, expected.GetBit(7));
+            Flags expectedFlags =  GetExpectedFlags(value, expected, expected.GetBit(7), BitwiseOperation.RotateRight);
 
             Assert.That(ReadByteAtIndexAndOffset(indexRegister, offset), Is.EqualTo(expected));
             Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));

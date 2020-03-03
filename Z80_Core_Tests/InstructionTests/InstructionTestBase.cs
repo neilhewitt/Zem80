@@ -36,7 +36,7 @@ namespace Z80.Core.Tests
                 Argument2 = arg2 ?? 0
             };
             
-            ExecutionResult result = CPU.Execute(new InstructionPackage(instruction, data)); // only available on IDebugProcessor debug interface - sets flags but does not advance PC
+            ExecutionResult result = CPU.Execute(new ExecutionPackage(instruction, data)); // only available on IDebugProcessor debug interface - sets flags but does not advance PC
             return result;
         }
 

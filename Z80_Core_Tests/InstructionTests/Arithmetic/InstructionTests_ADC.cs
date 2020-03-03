@@ -12,16 +12,8 @@ namespace Z80.Core.Tests
         {
             Flags flags = new Flags();
             if (carry) add++;
-
-            ushort result = (ushort)(value + add);
-            short signedResult = (short)result;
-
-            flags.Carry = result > 0xFF;
-            flags.ParityOverflow = (signedResult > 0x7F || signedResult < -0x80);
-            flags.Zero = result == 0;
-            flags.Sign = ((sbyte)signedResult < 0);
-            flags.HalfCarry = value.HalfCarryWhenAdding(add);
-
+            int result = value + add;
+            flags = FlagLookup.FlagsFromArithmeticOperation(value, add, false);
             return ((byte)result, flags);
         }
 
@@ -29,16 +21,8 @@ namespace Z80.Core.Tests
         {
             Flags flags = new Flags();
             if (carry) add++;
-
-            uint result = (uint)(value + add);
-            int signedResult = (int)result;
-
-            flags.Carry = result > 0xFFFF;
-            flags.ParityOverflow = (signedResult > 0x7FFF || signedResult < -0x8000);
-            flags.Zero = result == 0;
-            flags.Sign = ((short)signedResult < 0);
-            flags.HalfCarry = value.HalfCarryWhenAdding(add);
-
+            int result = value + add;
+            flags = FlagLookup.FlagsFromArithmeticOperation16Bit(flags, value, add, result, true, false);
             return ((ushort)result, flags);
         }
 

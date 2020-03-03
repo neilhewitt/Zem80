@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class AND : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
@@ -16,14 +16,9 @@ namespace Z80.Core
 
             byte and(byte operand)
             {
-                byte result = (byte)(r.A & operand);
-
-                if (result == 0x00) flags.Zero = true;
-                if (((sbyte)result) < 0) flags.Sign = true;
-                if (result.CountBits(true) % 2 == 0) flags.ParityOverflow = true;
-                flags.HalfCarry = true;
-
-                return result;
+                int result = (r.A & operand);
+                FlagLookup.FlagsFromLogicalOperation(r.A, operand, LogicalOperation.And);
+                return (byte)result;
             }
 
             switch (instruction.Prefix)

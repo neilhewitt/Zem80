@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public class DI : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             cpu.DisableInterrupts();
             return new ExecutionResult(package, cpu.Registers.Flags, false);

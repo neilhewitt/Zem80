@@ -5,7 +5,7 @@ namespace Z80.Core
     public interface IDebugProcessor
     {
         event EventHandler<ExecutionResult> AfterExecute;
-        event EventHandler<InstructionPackage> BeforeExecute;
+        event EventHandler<ExecutionPackage> BeforeExecute;
         event EventHandler BeforeStart;
         event EventHandler OnStop;
         event EventHandler OnHalt;
@@ -38,6 +38,6 @@ namespace Z80.Core
         void SetInterruptMode(InterruptMode mode);
         void Start(bool synchronous = false, ushort address = 0x0000);
         void Stop();
-        ExecutionResult Execute(InstructionPackage package);
+        ExecutionResult Execute(ExecutionPackage package);
     }
 }
