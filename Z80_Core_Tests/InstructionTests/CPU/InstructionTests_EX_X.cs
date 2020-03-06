@@ -15,9 +15,9 @@ namespace Z80.Core.Tests
             ushort AF = 0x7F00;
             ushort altAF = 0xFFFF;
 
-            Registers.AF = AF;
+            ((IDebugRegisters)Registers).AF = AF;
             ExecuteInstruction("EX AF,AF'");
-            Registers.AF = altAF;
+            ((IDebugRegisters)Registers).AF = altAF;
             ExecuteInstruction("EX AF,AF'");
             ushort firstAF = Registers.AF;
             ExecuteInstruction("EX AF,AF'");

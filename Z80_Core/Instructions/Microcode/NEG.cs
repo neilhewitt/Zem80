@@ -14,7 +14,7 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
 
             int result = 0x00 - r.A;
-            flags = FlagLookup.FlagsFromArithmeticOperation(0x00, r.A, true);
+            flags = FlagLookup.FlagsFromArithmeticOperation(0x00, r.A, false, true);
             r.A = (byte)result;
 
             return new ExecutionResult(package, flags, false);

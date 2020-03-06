@@ -23,7 +23,7 @@ namespace Z80.Core
             {
                 int result = value - 1;
                 sbyte subtract = -1;
-                flags = FlagLookup.FlagsFromArithmeticOperation(value, (byte)subtract, true);
+                flags = FlagLookup.FlagsFromArithmeticOperation(value, (byte)subtract, false, true);
                 return (byte)result;
             }
 

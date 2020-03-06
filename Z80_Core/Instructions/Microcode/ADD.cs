@@ -26,14 +26,14 @@ namespace Z80.Core
             byte addByte(byte value)
             {
                 int result = cpu.Registers.A + value;
-                flags = FlagLookup.FlagsFromArithmeticOperation(cpu.Registers.A, value, false);
+                flags = FlagLookup.FlagsFromArithmeticOperation(cpu.Registers.A, value, false, false);
                 return (byte)result;
             }
 
             ushort addWord(ushort first, ushort second)
             {
                 int result = first + second;
-                flags = FlagLookup.FlagsFromArithmeticOperation16Bit(flags, first, second, result, false, false);
+                flags = FlagLookup.FlagsFromArithmeticOperation16Bit(flags, first, second, false, false, false);
                 return (ushort)result;
             }
 

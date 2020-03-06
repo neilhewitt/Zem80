@@ -1,0 +1,5 @@
+[TestCase(0x01, 0x01, 0x01, FlagState.HalfCarry)]
+[TestCase(0x03, 0x03, 0x03, FlagState.ParityOverflow | FlagState. HalfCarry)]
+[TestCase(0x00, 0x00, 0x00, FlagState.ParityOverflow | FlagState. HalfCarry | FlagState. Zero)]
+[TestCase(0x80, 0x80, 0x80, FlagState.HalfCarry | FlagState. Sign)]
+[TestCase(0x81, 0x81, 0x81, FlagState.ParityOverflow | FlagState. HalfCarry | FlagState. Sign)]

@@ -9,32 +9,35 @@ namespace Z80.Core
         Z, NZ, C, NC, PO, PE, M, P
     }
 
-    public enum Flag
+    [Flags]
+    public enum FlagState
     {
-        Sign, Zero, Five, HalfCarry, Three, ParityOverflow, Subtract, Carry
+        None = 0,
+        Carry = 1,
+        Subtract = 2,
+        Three = 4,
+        ParityOverflow = 8,
+        Five = 16,
+        HalfCarry = 32,
+        Zero = 64,
+        Sign = 128
     }
 
     public class Flags
     {
         private byte _flags;
-        private Action<byte> _set_flags;
-        private Func<byte> _get_flags;
 
-        public bool Sign { get { return GetBit(7); } set { SetBit(7, value); } }
-        public bool Zero { get { return GetBit(6); } set { SetBit(6, value); } }
-        public bool Five { get { return GetBit(5); } set { SetBit(5, value); } }
-        public bool HalfCarry { get { return GetBit(4); } set { SetBit(4, value); } }
-        public bool Three { get { return GetBit(3); } set { SetBit(3, value); } }
-        public bool ParityOverflow { get { return GetBit(2); } set { SetBit(2, value); } }
-        public bool Subtract { get { return GetBit(1); } set { SetBit(1, value); } }
-        public bool Carry { get { return GetBit(0); } set { SetBit(0, value); } }
-
-        public virtual byte Value => _get_flags();
-
-        public void Set(byte flags)
-        {
-            _set_flags(flags);
-        }
+        public bool Sign { get { return _flags.GetBit(7); } set { _flags = _flags.SetBit(7, value); } }
+        public bool Zero { get { return _flags.GetBit(6); } set { _flags = _flags.SetBit(6, value); } }
+        public bool Five { get { return _flags.GetBit(5); } set { _flags = _flags.SetBit(5, value); } }
+        public bool HalfCarry { get { return _flags.GetBit(4); } set { _flags = _flags.SetBit(4, value); } }
+        public bool Three { get { return _flags.GetBit(3); } set { _flags = _flags.SetBit(3, value); } }
+        public bool ParityOverflow { get { return _flags.GetBit(2); } set { _flags = _flags.SetBit(2, value); } }
+        public bool Subtract { get { return _flags.GetBit(1); } set { _flags = _flags.SetBit(1, value); } }
+        public bool Carry { get { return _flags.GetBit(0); } set { _flags = _flags.SetBit(0, value); } }
+        public virtual byte Value { get { return _flags; } set { _flags = value; } }
+        
+        public FlagState State => GetState();
 
         public void SetFromCondition(Condition condition)
         {
@@ -82,6 +85,7 @@ namespace Z80.Core
             return obj switch
             {
                 Flags f => f.Value == Value,
+                FlagState f => (int)f == Value,
                 _ => false
             };
         }
@@ -91,20 +95,21 @@ namespace Z80.Core
             return base.GetHashCode();
         }
 
-        protected virtual bool GetBit(int bitIndex)
-        {
-            return (_get_flags() & (1 << bitIndex)) != 0;
-        }
-
-        protected virtual void SetBit(int bitIndex, bool value)
-        {
-            int mask = 1 << bitIndex;
-            _set_flags((byte)(value ? _get_flags() | mask : _get_flags() & ~mask));
-        }
-
         protected virtual void ClearAll()
         {
-            _set_flags(0);
+            _flags = 0;
+        }
+
+        private FlagState GetState()
+        {
+            FlagState state = FlagState.None;
+            if (Sign) state = state | FlagState.Sign;
+            if (Zero) state = state | FlagState.Zero;
+            if (HalfCarry) state = state | FlagState.HalfCarry;
+            if (ParityOverflow) state = state | FlagState.ParityOverflow;
+            if (Subtract) state = state | FlagState.Subtract;
+            if (Carry) state = state | FlagState.Carry;
+            return state;
         }
 
         public Flags() : this(0)
@@ -114,14 +119,6 @@ namespace Z80.Core
         public Flags(byte flags)
         {
             _flags = flags;
-            _get_flags = () => _flags;
-            _set_flags = (value) => _flags = value;
-        }
-
-        public Flags(Func<byte> getter, Action<byte> setter)
-        {
-            _get_flags = getter;
-            _set_flags = setter;
         }
     }
 }

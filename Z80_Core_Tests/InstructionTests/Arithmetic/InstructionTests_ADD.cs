@@ -8,78 +8,102 @@ namespace Z80.Core.Tests
     [TestFixture]
     public class InstructionTests_ADD : InstructionTestBase
     {
-        private (byte, Flags) GetExpectedResultAndFlags(byte value, byte add, bool carry)
-        {
-            Flags flags = new Flags();
-            int result = value + add;
-            flags = FlagLookup.FlagsFromArithmeticOperation(value, add, false);
-            return ((byte)result, flags);
-        }
-
         [Test]
-        public void ADD_A_r([Values(0x00, 0x7E, 0x7F, 0xFF)] byte input, [Values(true, false)] bool carry)
+        // FLAGS: ***V0*
+        [TestCase(0x00, 0x01, 0x01, FlagState.None)]
+        [TestCase(0x10, 0xF1, 0x01, FlagState.Carry)]
+        [TestCase(0x01, 0x0F, 0x10, FlagState.HalfCarry)]
+        [TestCase(0x02, 0xFF, 0x01, FlagState.Carry | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x00, 0x00, FlagState.Zero)]
+        [TestCase(0x10, 0xF0, 0x00, FlagState.Carry | FlagState.Zero)]
+        [TestCase(0x01, 0xFF, 0x00, FlagState.Carry | FlagState.HalfCarry | FlagState.Zero)]
+        [TestCase(0x00, 0x80, 0x80, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x90, 0xF0, 0x80, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x01, 0x7F, 0x80, FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x81, 0xFF, 0x80, FlagState.Carry | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        public void ADD_A_r(byte input, byte add, byte expectedResult, FlagState expectedFlagState)
         {
-            byte add = 0x01; // with input range, covers all cases
-
-            Flags.Carry = carry; // simulates previous Carry flag value
             Registers.A = input;
             Registers.B = add;
 
             ExecutionResult executionResult = ExecuteInstruction($"ADD A,B");
-            (byte expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(input, add, carry);
 
             Assert.That(Registers.A, Is.EqualTo(expectedResult));
-            Assert.That(executionResult.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(executionResult.Flags.State, Is.EqualTo(expectedFlagState));
         }
 
         [Test]
-        public void ADD_A_n([Values(0x00, 0x7E, 0x7F, 0xFF)] byte input, [Values(true, false)] bool carry)
+        // FLAGS: ***V0*
+        [TestCase(0x00, 0x01, 0x01, FlagState.None)]
+        [TestCase(0x10, 0xF1, 0x01, FlagState.Carry)]
+        [TestCase(0x01, 0x0F, 0x10, FlagState.HalfCarry)]
+        [TestCase(0x02, 0xFF, 0x01, FlagState.Carry | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x00, 0x00, FlagState.Zero)]
+        [TestCase(0x10, 0xF0, 0x00, FlagState.Carry | FlagState.Zero)]
+        [TestCase(0x01, 0xFF, 0x00, FlagState.Carry | FlagState.HalfCarry | FlagState.Zero)]
+        [TestCase(0x00, 0x80, 0x80, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x90, 0xF0, 0x80, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x01, 0x7F, 0x80, FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x81, 0xFF, 0x80, FlagState.Carry | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        public void ADD_A_n(byte input, byte add, byte expectedResult, FlagState expectedFlagState)
         {
-            byte add = 0x01; // with input range, covers all cases
-
-            Flags.Carry = carry; // simulates previous Carry flag value
             Registers.A = input;
 
             ExecutionResult executionResult = ExecuteInstruction($"ADD A,n", arg1: add);
-            (byte expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(input, add, carry);
 
             Assert.That(Registers.A, Is.EqualTo(expectedResult));
-            Assert.That(executionResult.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(executionResult.Flags.State, Is.EqualTo(expectedFlagState));
         }
 
         [Test]
-        public void ADD_A_xHL([Values(0x00, 0x7E, 0x7F, 0xFF)] byte input, [Values(true, false)] bool carry)
+        [TestCase(0x00, 0x01, 0x01, FlagState.None)]
+        [TestCase(0x10, 0xF1, 0x01, FlagState.Carry)]
+        [TestCase(0x01, 0x0F, 0x10, FlagState.HalfCarry)]
+        [TestCase(0x02, 0xFF, 0x01, FlagState.Carry | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x00, 0x00, FlagState.Zero)]
+        [TestCase(0x10, 0xF0, 0x00, FlagState.Carry | FlagState.Zero)]
+        [TestCase(0x01, 0xFF, 0x00, FlagState.Carry | FlagState.HalfCarry | FlagState.Zero)]
+        [TestCase(0x00, 0x80, 0x80, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x90, 0xF0, 0x80, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x01, 0x7F, 0x80, FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x81, 0xFF, 0x80, FlagState.Carry | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        public void ADD_A_xHL(byte input, byte add, byte expectedResult, FlagState expectedFlagState)
         {
-            byte add = 0x01; // with input range, covers all cases
-
-            Flags.Carry = carry; // simulates previous Carry flag value
             Registers.A = input;
             Registers.HL = 0x5000;
             WriteByteAt(Registers.HL, add);
 
-            ExecutionResult executionResult = ExecuteInstruction($"ADD A,(HL)");
-            (byte expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(input, add, carry);
+            ExecutionResult executionResult = ExecuteInstruction($"ADD A,n", arg1: add);
 
             Assert.That(Registers.A, Is.EqualTo(expectedResult));
-            Assert.That(executionResult.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(executionResult.Flags.State, Is.EqualTo(expectedFlagState));
         }
 
         [Test]
-        public void ADD_A_xIndexOffset([Values(0x00, 0x7E, 0x7F, 0xFF)] byte input, [Values(true, false)] bool carry, [Values(127, -127)] sbyte offset,
-            [Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName registerPair)
+        [TestCase(0x00, 0x01, 0x01, FlagState.None)]
+        [TestCase(0x10, 0xF1, 0x01, FlagState.Carry)]
+        [TestCase(0x01, 0x0F, 0x10, FlagState.HalfCarry)]
+        [TestCase(0x02, 0xFF, 0x01, FlagState.Carry | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x00, 0x00, FlagState.Zero)]
+        [TestCase(0x10, 0xF0, 0x00, FlagState.Carry | FlagState.Zero)]
+        [TestCase(0x01, 0xFF, 0x00, FlagState.Carry | FlagState.HalfCarry | FlagState.Zero)]
+        [TestCase(0x00, 0x80, 0x80, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x90, 0xF0, 0x80, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x01, 0x7F, 0x80, FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x81, 0xFF, 0x80, FlagState.Carry | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        public void ADD_A_xIndexOffset(byte input, byte add, byte expectedResult, FlagState expectedFlagState)
         {
-            byte add = 0x01; // with input range, covers all cases
+            RegisterPairName indexRegister = RandomBool() ? RegisterPairName.IX : RegisterPairName.IY; // doesn't matter which as long as we exercise both
+            sbyte offset = 0x7F;
 
-            Flags.Carry = carry; // simulates previous Carry flag value
             Registers.A = input;
-            Registers[registerPair] = 0x5000;
-            WriteByteAt((ushort)(Registers[registerPair] + offset), add);
+            Registers[indexRegister] = 0x5000;
+            WriteByteAtIndexAndOffset(indexRegister, offset, add);
 
-            ExecutionResult executionResult = ExecuteInstruction($"ADD A,({ registerPair }+o)", arg1: (byte)offset);
-            (byte expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(input, add, carry);
+            ExecutionResult executionResult = ExecuteInstruction($"ADD A,({ indexRegister }+o)", arg1: (byte)offset);
 
             Assert.That(Registers.A, Is.EqualTo(expectedResult));
-            Assert.That(executionResult.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(executionResult.Flags.State, Is.EqualTo(expectedFlagState));
         }
     }
 }

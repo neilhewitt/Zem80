@@ -23,19 +23,17 @@ namespace Z80.Core
                 return cpu.Memory.ReadByteAt((ushort)(address + offset));
             }
 
-            byte addByteWithCarry(byte value)
+            byte addByteWithCarry(int value)
             {
-                if (flags.Carry) value++;
-                int result = cpu.Registers.A + value;
-                flags = FlagLookup.FlagsFromArithmeticOperation(cpu.Registers.A, value, false);
+                int result = cpu.Registers.A + value + (flags.Carry ? 1 : 0);
+                flags = FlagLookup.FlagsFromArithmeticOperation(cpu.Registers.A, value, flags.Carry, false);
                 return (byte)result;
             }
 
-            ushort addWordWithCarry(ushort value)
+            ushort addWordWithCarry(int value)
             {
-                if (cpu.Registers.Flags.Carry) value++;
-                int result = cpu.Registers.HL + value;
-                flags = FlagLookup.FlagsFromArithmeticOperation16Bit(flags, cpu.Registers.HL, value, result, true, false);
+                int result = cpu.Registers.HL + value + (flags.Carry ? 1 : 0);
+                flags = FlagLookup.FlagsFromArithmeticOperation16Bit(flags, cpu.Registers.HL, value, flags.Carry, true, false);
                 return (ushort)result;
             }
 

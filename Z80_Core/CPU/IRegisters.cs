@@ -5,7 +5,7 @@
         byte this[RegisterName register] { get; set; }
         ushort this[RegisterPairName registerPair] { get;set; }
         byte A { get; set; }
-        ushort AF { get; set; }
+        ushort AF { get; }
         byte B { get; set; }
         ushort BC { get; set; }
         byte C { get; set; }
@@ -29,7 +29,6 @@
 
         Flags Flags { get; }
 
-        //void SetFlags(byte flags);
         void ExchangeAF();
         void ExchangeBCDEHL();
         Registers Snapshot();

@@ -12,21 +12,25 @@ namespace Z80.Core.Tests
         {
             Flags flags = new Flags();
             byte result = (byte)(first & second);
-            FlagLookup.FlagsFromLogicalOperation(first, second, LogicalOperation.And);
+            flags = FlagLookup.FlagsFromLogicalOperation(first, second, LogicalOperation.And);
             return (result, flags);
         }
 
         [Test]
-        public void AND_r([Values(0x00, 0x7F, 0x80, 0xFF)] byte first, [Values(0x7F, 0x80, 0xFF)] byte second)
+        [TestCase(0x01, 0x01, 0x01, FlagState.HalfCarry)]
+        [TestCase(0x03, 0x03, 0x03, FlagState.ParityOverflow | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x00, 0x00, FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Zero)]
+        [TestCase(0x80, 0x80, 0x80, FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x81, 0x81, 0x81, FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        public void AND_r(byte first, byte second, byte expectedResult, FlagState expectedFlags)
         {
             Registers.A = first;
             Registers.B = second;
 
             ExecutionResult executionResult = ExecuteInstruction($"AND B");
-            (byte expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(first, second);
 
             Assert.That(Registers.A, Is.EqualTo(expectedResult));
-            Assert.That(executionResult.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(executionResult.Flags.State, Is.EqualTo(expectedFlags));
         }
 
         [Test]

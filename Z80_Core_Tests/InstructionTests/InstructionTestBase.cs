@@ -70,6 +70,11 @@ namespace Z80.Core.Tests
             CPU.Memory.WriteWordAt(address, value);
         }
 
+        public bool RandomBool()
+        {
+            return _random.Next(0x00, 0x01) == 0x00;
+        }
+
         public byte[] RandomBytes(int size)
         {
             return Enumerable.Range(0, size).Select(x => (byte)_random.Next(0x00, 0xFF)).ToArray();

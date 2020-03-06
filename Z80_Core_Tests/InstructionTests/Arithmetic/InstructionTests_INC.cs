@@ -13,7 +13,7 @@ namespace Z80.Core.Tests
         {
             Flags flags = new Flags();
             int result = input + 1;
-            flags = FlagLookup.FlagsFromArithmeticOperation(input, 1, true);
+            flags = FlagLookup.FlagsFromArithmeticOperation(input, 1, false, true);
             return ((byte)result, flags);
         }
 

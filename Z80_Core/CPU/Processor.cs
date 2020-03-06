@@ -14,7 +14,7 @@ namespace Z80.Core
         private bool _pendingInterrupt;
         private Action _interruptCallback;
         private bool _pendingNonMaskableInterrupt;
-        private Task _instructionCycle;
+        private Thread _instructionCycle;
         private ushort _topOfStack;
         private bool _synchronous;
 
@@ -27,6 +27,7 @@ namespace Z80.Core
         private InstructionDecoder _decoder = new InstructionDecoder();
 
         public IDebugProcessor Debuggable => (IDebugProcessor)this;
+        public bool Synchronous => _synchronous;
 
         public IRegisters Registers { get; private set; }
         public IMemory Memory { get; private set; }
@@ -36,7 +37,6 @@ namespace Z80.Core
         public InterruptMode InterruptMode { get; private set; } = InterruptMode.IM0;
         public bool InterruptsEnabled { get; private set; } = true;
         public double SpeedInMhz { get; private set; }
-
         public long InstructionTicks { get; private set; }
         public long ClockCycles { get; private set; }
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; // yay for tri-states!
@@ -59,7 +59,8 @@ namespace Z80.Core
 
                 if (!synchronous) // run the CPU on a thread and return to the calling code immediately
                 {
-                    _instructionCycle = new Task(InstructionCycle, TaskCreationOptions.None);
+                    _synchronous = false;
+                    _instructionCycle = new Thread(new ThreadStart(InstructionCycle));
                     _instructionCycle.Start();
                 }
                 else
@@ -74,6 +75,8 @@ namespace Z80.Core
         {
             _running = false;
             _halted = false;
+            _instructionCycle?.Abort();
+
             _onStop?.Invoke(null, null);
         }
 
@@ -165,7 +168,7 @@ namespace Z80.Core
             _beforeExecute?.Invoke(this, package);
             ExecutionResult result = package.Instruction.Implementation.Execute(this, package);
             _afterExecute?.Invoke(this, result);
-            if (result.Flags != null) Registers.Flags.Set(result.Flags.Value);
+            if (result.Flags != null) Registers.Flags.Value = result.Flags.Value;
 
             return result;
         }
@@ -181,8 +184,7 @@ namespace Z80.Core
                     if (package == null)
                     {
                         Stop(); // only happens if instruction buffer is short (end of memory reached) and corrupt (not a valid instruction)
-                        if (_synchronous) return;
-                        else Thread.CurrentThread.Abort();
+                        return;
                     }
 
                     ExecutionResult result = Execute(package);

@@ -108,6 +108,7 @@ done:	ld	de,msg2
 
 tests:
 	dw	adc16
+	dw  0
 	dw	add16
 	dw	add16x
 	dw	add16y

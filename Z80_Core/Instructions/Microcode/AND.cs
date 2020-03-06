@@ -17,7 +17,7 @@ namespace Z80.Core
             byte and(byte operand)
             {
                 int result = (r.A & operand);
-                FlagLookup.FlagsFromLogicalOperation(r.A, operand, LogicalOperation.And);
+                flags = FlagLookup.FlagsFromLogicalOperation(r.A, operand, LogicalOperation.And);
                 return (byte)result;
             }
 

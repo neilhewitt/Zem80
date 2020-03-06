@@ -141,7 +141,7 @@ namespace Z80.Core
             return state switch
             {
                 true => (byte)(input | (1 << bitIndex)),
-                false => (byte)(input | (0 << bitIndex))
+                false => (byte)(input & ~(1 << bitIndex))
             };
         }
 
@@ -163,11 +163,6 @@ namespace Z80.Core
             }
 
             return bits;
-        }
-
-        public static string ToBinaryString(this bool[] input)
-        {
-            return String.Join("", input.Reverse().Select(x => x ? "1" : "0"));
         }
     }
 }

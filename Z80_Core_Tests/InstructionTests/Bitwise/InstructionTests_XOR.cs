@@ -13,7 +13,7 @@ namespace Z80.Core.Tests
         {
             short result = (short)(first ^ second);
             Flags flags = new Flags();
-            FlagLookup.FlagsFromLogicalOperation(first, second, LogicalOperation.Xor);
+            flags = FlagLookup.FlagsFromLogicalOperation(first, second, LogicalOperation.Xor);
             return ((byte)result, flags);
         }
 

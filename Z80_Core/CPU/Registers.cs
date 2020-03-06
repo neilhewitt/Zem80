@@ -5,19 +5,22 @@ using System.Linq;
 
 namespace Z80.Core
 {
-    public class Registers : IRegisters
+    public class Registers : IRegisters, IDebugRegisters
     {
+        private byte _accumulator;
+        private byte _altAccumulator;
         private byte[] _registers;
-        private byte _AFOffset = 0;
         private byte _BCDEHLOffset = 0;
+        private Flags _flags;
+        private Flags _altFlags;
 
         public byte this[RegisterName register] { get { return GetRegister(register); } set { SetRegister(register, value); } }
         public ushort this[RegisterPairName registerPair] { get { return GetRegisterPair(registerPair); } set { SetRegisterPair(registerPair, value); } }
 
 
         // 8-bit registers
-        public byte A { get { return _registers[_AFOffset]; } set { _registers[_AFOffset] = value; } }
-        public byte F { get { return _registers[_AFOffset + 1]; } set { _registers[_AFOffset + 1] = value; } } // flags register - shouldn't set F or AF directly, use Flags property instead
+        public byte A { get { return _accumulator; } set { _accumulator = value; } }
+        public byte F { get { return _flags.Value; } } // flags register - shouldn't set F or AF directly, use Flags property instead
         public byte B { get { return _registers[_BCDEHLOffset + 2]; } set { _registers[_BCDEHLOffset + 2] = value; } }
         public byte C { get { return _registers[_BCDEHLOffset + 3]; } set { _registers[_BCDEHLOffset + 3] = value; } }
         public byte D { get { return _registers[_BCDEHLOffset + 4]; } set { _registers[_BCDEHLOffset + 4] = value; } }
@@ -26,7 +29,8 @@ namespace Z80.Core
         public byte L { get { return _registers[_BCDEHLOffset + 7]; } set { _registers[_BCDEHLOffset + 7] = value; } }
 
         // Registers as 16-bit pairs
-        public ushort AF { get { return Get16BitValue(_AFOffset); } set { Set16BitValue(_AFOffset, value); } }
+        public ushort AF { get { return GetWord(_accumulator, _flags.Value); } }
+
         public ushort BC { get { return Get16BitValue(_BCDEHLOffset + 2); } set { Set16BitValue(_BCDEHLOffset + 2, value); } }
         public ushort DE { get { return Get16BitValue(_BCDEHLOffset + 4); } set { Set16BitValue(_BCDEHLOffset + 4, value); } }
         public ushort HL { get { return Get16BitValue(_BCDEHLOffset + 6); } set { Set16BitValue(_BCDEHLOffset + 6, value); } }
@@ -53,16 +57,24 @@ namespace Z80.Core
         // program counter
         public ushort PC { get { return Get16BitValue(24); } set { Set16BitValue(24, value); } }
 
-        public Flags Flags { get; private set; }
+        public Flags Flags => _flags;
 
-        //public void SetFlags(byte flags)
-        //{
-        //    Flags.SetFrom(flags);
-        //}
+        // debug property where AF can be set directly (needed for tests)
+        ushort IDebugRegisters.AF { get { return GetWord(_accumulator, _flags.Value); } 
+                                    set { _accumulator = value.HighByte(); _flags.Value = value.LowByte(); } }
 
         public void ExchangeAF()
         {
-            _AFOffset = (byte)((_AFOffset == 0) ? 8 : 0);
+            lock(this)
+            {
+                byte accumulator = _accumulator;
+                _accumulator = _altAccumulator;
+                _altAccumulator = accumulator;
+
+                Flags flags = _flags;
+                _flags = _altFlags;
+                _altFlags = flags;
+            }
         }
 
         public void ExchangeBCDEHL()
@@ -78,6 +90,10 @@ namespace Z80.Core
         public void Clear()
         {
             _registers = new byte[26];
+            _flags = new Flags();
+            _altFlags = new Flags();
+            _accumulator = 0x00;
+            _altAccumulator = 0x00;
         }
 
         private byte GetRegister(RegisterName index)
@@ -86,7 +102,7 @@ namespace Z80.Core
 
             if (index == RegisterName.A)
             {
-                return _registers[_AFOffset];
+                return _accumulator;
             }
             else
             {
@@ -100,7 +116,7 @@ namespace Z80.Core
 
             if (index == RegisterPairName.AF)
             {
-                return Get16BitValue(_AFOffset);
+                return GetWord(_accumulator, _flags.Value);
             }
             else
             {
@@ -114,7 +130,7 @@ namespace Z80.Core
             {
                 if (register == RegisterName.A)
                 {
-                    _registers[_AFOffset] = value;
+                    _accumulator = value;
                 }
                 else
                 {
@@ -129,7 +145,8 @@ namespace Z80.Core
             {
                 if (registerPair == RegisterPairName.AF)
                 {
-                    Set16BitValue(_AFOffset, value);
+                    _accumulator = value.HighByte();
+                    _flags.Value = value.LowByte();
                 }
                 else
                 {
@@ -140,28 +157,25 @@ namespace Z80.Core
 
         private ushort Get16BitValue(int offset)
         {
-            return (ushort)((_registers[offset] * 256) + _registers[offset + 1]);
+            return GetWord(_registers[offset], _registers[offset + 1]);
+        }
+
+        private ushort GetWord(byte high, byte low)
+        {
+            return (ushort)((high * 256) + low); 
         }
 
         private void Set16BitValue(int offset, ushort value)
         {
-            byte[] bytes = BitConverter.GetBytes(value);
-            bool isLittleEndian = BitConverter.IsLittleEndian;
-            // storage of register data is always in little-endian format (as both the Z80 and x86 are little-endian)
-            // but .NET is portable so this code *could* be running on a big-endian architecture and the ushort value will come out
-            // in reverse order... so set the bytes directly (this is why we're using BitConverter here, because it knows the endian-ness)
-
-            _registers[offset] = bytes[isLittleEndian ? 1 : 0]; 
-            _registers[offset + 1] = bytes[isLittleEndian ? 0 : 1];
+            _registers[offset] = value.HighByte();
+            _registers[offset + 1] = value.LowByte();
         }
 
         public Registers()
         {
             _registers = new byte[26];
-            Flags = new Flags(
-                getter: () => _registers[_AFOffset + 1], 
-                setter: (value) => _registers[_AFOffset + 1] = value
-                );
+            _flags = new Flags();
+            _altFlags = new Flags();
         }
 
         private Registers(byte[] registerValues)
@@ -173,10 +187,8 @@ namespace Z80.Core
             }
             
             _registers = registerValues;
-            Flags = new Flags(
-                getter: () => _registers[_AFOffset + 1], 
-                setter: (value) => _registers[_AFOffset + 1] = value
-                );
+            _flags = new Flags();
+            _altFlags = new Flags();
         }
     }
 }

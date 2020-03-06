@@ -13,7 +13,7 @@ namespace Z80.Core.Tests
         {
             Flags flags = new Flags();
             int result = input - compareTo;
-            flags = FlagLookup.FlagsFromArithmeticOperation(input, compareTo, true);
+            flags = FlagLookup.FlagsFromArithmeticOperation(input, compareTo, false, true);
             flags.ParityOverflow = (byteCount - 2 != 0);
 
             return flags;

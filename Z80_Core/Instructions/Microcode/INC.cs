@@ -23,7 +23,7 @@ namespace Z80.Core
             byte inc(byte value)
             {
                 ushort result = (ushort)(value + 1);
-                flags = FlagLookup.FlagsFromArithmeticOperation(value, 1, true);
+                flags = FlagLookup.FlagsFromArithmeticOperation(value, 1, false, true);
                 if (result > 0xFF) result = 0;
                 return (byte)result;
             }

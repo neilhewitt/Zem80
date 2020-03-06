@@ -16,7 +16,7 @@ namespace Z80.Core
             void xor(byte operand)
             {
                 int result = (byte)(r.A ^ operand);
-                FlagLookup.FlagsFromLogicalOperation(r.A, operand, LogicalOperation.Xor);
+                flags = FlagLookup.FlagsFromLogicalOperation(r.A, operand, LogicalOperation.Xor);
                 r.A = (byte)result;
             }
 
