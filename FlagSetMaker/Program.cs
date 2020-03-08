@@ -10,6 +10,7 @@ namespace FlagSetMaker
     {
         static void Main(string[] args)
         {
+            #region done
             //ProcessInstruction<byte>("ADC A,n",
             //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation(i, j, carry, false).State,
             //    (i, j, carry) => (byte)(i + j + (carry ? 1 : 0)),
@@ -30,10 +31,10 @@ namespace FlagSetMaker
             //    (i, j, carry) => (ushort)(i - j - (carry ? 1 : 0)),
             //    true, true);
 
-            ProcessArithmetic16("ADC HL,rr",
-                (flags, i, j, carry) => FlagLookup.FlagsFromArithmeticOperation16Bit(flags, i, j, carry, true, false).State,
-                (i, j, carry) => (ushort)(i + j + (carry ? 1 : 0)),
-                true);
+            //ProcessArithmetic16("ADC HL,rr",
+            //    (flags, i, j, carry) => FlagLookup.FlagsFromArithmeticOperation16Bit(flags, i, j, carry, true, false).State,
+            //    (i, j, carry) => (ushort)(i + j + (carry ? 1 : 0)),
+            //    true);
 
             //ProcessInstruction("SUB A,n",
             //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation(i, j, true).State,
@@ -44,6 +45,9 @@ namespace FlagSetMaker
             //    (i, j, carry) => FlagLookup.FlagsFromLogicalOperation(i, j, LogicalOperation.And).State,
             //    (i, j, carry) => (byte)(i & j),
             //    false, true);
+            #endregion
+
+
         }
 
         static void ProcessArithmetic8(string instruction, Func<byte, int, bool, FlagState> getFlags, Func<byte, int, bool, int> getResult, bool useCarry)
