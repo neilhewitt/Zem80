@@ -9,111 +9,107 @@ namespace Z80.Core.Tests
     [TestFixture]
     public class InstructionTests_SLA_SRA : InstructionTestBase
     {
-        private Flags GetExpectedFlags(byte original, byte expected, bool carry, BitwiseOperation operation)
-        {
-            Flags flags = new Flags();
-            flags = FlagLookup.FlagsFromBitwiseOperation(original, operation);
-            flags.HalfCarry = false;
-            flags.Subtract = false;
-            return flags;
-        }
-
         [Test]
-        public void SLA_A()
+        [TestCase(0x01, 0x02, FlagState.None)]
+        [TestCase(0x03, 0x06, FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x40, 0x80, FlagState.Carry | FlagState.Sign)]
+        [TestCase(0x41, 0x82, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        public void SLA_A(byte input, byte expectedResult, FlagState expectedState)
         {
-            byte value = 0x7F;
-            byte expected = (byte)(value << 1);
-            Registers.A = value;
+            Registers.A = input; // single branch of code, no need to test all registers
 
             ExecutionResult executionResult = ExecuteInstruction($"SLA A");
 
-            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(7), BitwiseOperation.ShiftLeft);
-
-            Assert.That(Registers.A, Is.EqualTo(expected));
-            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(Registers.A, Is.EqualTo(expectedResult));
+            Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
 
         [Test]
-        public void SRA_B()
+        [TestCase(0x04, 0x02, FlagState.None)]
+        [TestCase(0x02, 0x01, FlagState.Carry)]
+        [TestCase(0x0C, 0x06, FlagState.ParityOverflow)]
+        [TestCase(0x06, 0x03, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        public void SRA_B(byte input, byte expectedResult, FlagState expectedState)
         {
-            byte value = 0x7F;
-            byte expected = (byte)(value >> 1);
-            Registers.B = value;
+            Registers.B = input; // single branch of code, no need to test all registers
 
             ExecutionResult executionResult = ExecuteInstruction($"SRA B");
 
-            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(0), BitwiseOperation.ShiftRight);
-
-            Assert.That(Registers.B, Is.EqualTo(expected));
-            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(Registers.B, Is.EqualTo(expectedResult));
+            Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
 
+
         [Test]
-        public void SLA_xHL()
+        [TestCase(0x01, 0x02, FlagState.None)]
+        [TestCase(0x03, 0x06, FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x40, 0x80, FlagState.Carry | FlagState.Sign)]
+        [TestCase(0x41, 0x82, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        public void SLA_xHL(byte input, byte expectedResult, FlagState expectedState)
         {
-            byte value = 0x7F;
-            byte expected = (byte)(value << 1);
-            ushort address = 0x5000;
-            WriteByteAt(address, value);
-            Registers.HL = address;
+            Registers.HL = 0x5000;
+            WriteByteAt(Registers.HL, input); // single branch of code, no need to test all registers
 
             ExecutionResult executionResult = ExecuteInstruction($"SLA (HL)");
 
-            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(7), BitwiseOperation.ShiftLeft);
-
-            Assert.That(ReadByteAt(address), Is.EqualTo(expected));
-            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(ReadByteAt(Registers.HL), Is.EqualTo(expectedResult));
+            Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
 
         [Test]
-        public void SRA_xHL()
+        [TestCase(0x04, 0x02, FlagState.None)]
+        [TestCase(0x02, 0x01, FlagState.Carry)]
+        [TestCase(0x0C, 0x06, FlagState.ParityOverflow)]
+        [TestCase(0x06, 0x03, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        public void SRA_xHL(byte input, byte expectedResult, FlagState expectedState)
         {
-            byte value = 0x7F;
-            byte expected = (byte)(value >> 1);
-            ushort address = 0x5000;
-            WriteByteAt(address, value);
-            Registers.HL = address;
+            Registers.HL = 0x5000;
+            WriteByteAt(Registers.HL, input); // single branch of code, no need to test all registers
 
             ExecutionResult executionResult = ExecuteInstruction($"SRA (HL)");
 
-            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(0), BitwiseOperation.ShiftRight);
-
-            Assert.That(ReadByteAt(address), Is.EqualTo(expected));
-            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(ReadByteAt(Registers.HL), Is.EqualTo(expectedResult));
+            Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
 
         [Test]
-        public void SLA_xIndexOffset([Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName indexRegister, [Values(127, -128)] sbyte offset)
+        [TestCase(0x01, 0x02, FlagState.None)]
+        [TestCase(0x03, 0x06, FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x40, 0x80, FlagState.Carry | FlagState.Sign)]
+        [TestCase(0x41, 0x82, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        public void SLA_xIndexOffset(byte input, byte expectedResult, FlagState expectedState)
         {
-            byte value = 0x7F;
-            byte expected = (byte)(value << 1);
-            ushort address = 0x5000;
-            WriteByteAt((ushort)(address + offset), value);
-            Registers[indexRegister] = address;
+            Registers.IX = 0x5000;
+            sbyte offset = (sbyte)(RandomBool() ? 0x7F : -0x80);
+            WriteByteAtIndexAndOffset(RegisterWord.IX, offset, input); // single branch of code, no need to test all registers
 
-            ExecutionResult executionResult = ExecuteInstruction($"SLA ({ indexRegister }+o)", arg1: (byte)offset);
+            ExecutionResult executionResult = ExecuteInstruction($"SLA (IX+o)", arg1: (byte)offset);
 
-            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(7), BitwiseOperation.ShiftLeft);
-
-            Assert.That(ReadByteAtIndexAndOffset(indexRegister, offset), Is.EqualTo(expected));
-            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(ReadByteAtIndexAndOffset(RegisterWord.IX, offset), Is.EqualTo(expectedResult));
+            Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
 
         [Test]
-        public void SRA_xIndexOffset([Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName indexRegister, [Values(127, -128)] sbyte offset)
+        [TestCase(0x04, 0x02, FlagState.None)]
+        [TestCase(0x02, 0x01, FlagState.Carry)]
+        [TestCase(0x0C, 0x06, FlagState.ParityOverflow)]
+        [TestCase(0x06, 0x03, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        public void SRA_xIndexOffset(byte input, byte expectedResult, FlagState expectedState)
         {
-            byte value = 0x7F;
-            byte expected = (byte)(value >> 1);
-            ushort address = 0x5000;
-            WriteByteAt((ushort)(address + offset), value);
-            Registers[indexRegister] = address;
+            Registers.IY = 0x5000;
+            sbyte offset = (sbyte)(RandomBool() ? 0x7F : -0x80);
+            WriteByteAtIndexAndOffset(RegisterWord.IY, offset, input); // single branch of code, no need to test all registers
 
-            ExecutionResult executionResult = ExecuteInstruction($"SRA ({ indexRegister }+o)", arg1: (byte)offset);
+            ExecutionResult executionResult = ExecuteInstruction($"SRA (IY+o)", arg1: (byte)offset);
 
-            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(0), BitwiseOperation.ShiftRight);
-
-            Assert.That(ReadByteAtIndexAndOffset(indexRegister, offset), Is.EqualTo(expected));
-            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(ReadByteAtIndexAndOffset(RegisterWord.IY, offset), Is.EqualTo(expectedResult));
+            Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Z80.Core.Tests
             Flags flags = new Flags();
 
             int result = value - subtract - (carry ? 1 : 0);
-            flags = FlagLookup.FlagsFromArithmeticOperation(value, subtract, carry, true);
+            flags = FlagLookup.FlagsFromArithmeticOperation8(value, subtract, carry, true);
             flags.Subtract = true;
 
             return ((byte)result, flags);
@@ -24,7 +24,7 @@ namespace Z80.Core.Tests
             Flags flags = new Flags();
 
             int result = value - subtract - (carry ? 1 : 0);
-            flags = FlagLookup.FlagsFromArithmeticOperation16Bit(flags, value, subtract, carry, true, true);
+            flags = FlagLookup.FlagsFromArithmeticOperation16(flags, value, subtract, carry, true, true);
             flags.Subtract = true;
 
             return ((ushort)result, flags);
@@ -168,7 +168,7 @@ namespace Z80.Core.Tests
         [TestCase(0x01, 0x7F, false, 0x82, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
         public void SBC_A_xIndexOffset(byte input, byte sub, bool carry, byte expectedResult, FlagState expectedFlagState)            
         {
-            RegisterPairName indexRegister = RandomBool() ? RegisterPairName.IX : RegisterPairName.IY; // doesn't matter which as long as we exercise both
+            RegisterWord indexRegister = RandomBool() ? RegisterWord.IX : RegisterWord.IY; // doesn't matter which as long as we exercise both
             sbyte offset = (sbyte)(RandomBool() ? 0x7F : -0x7F);
 
             Flags.Carry = carry;

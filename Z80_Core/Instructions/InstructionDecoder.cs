@@ -11,28 +11,32 @@ namespace Z80.Core
         public ExecutionPackage Decode(byte[] instructionBytes)
         {
             byte opcode = 0x00;
+            byte b0 = instructionBytes[0];
+            byte b1 = instructionBytes[1];
+            byte b2 = instructionBytes[2];
+            byte b3 = instructionBytes[3];
             InstructionData data = new InstructionData();
 
             try
             {
                 // handle NOP + special case - sequences of DD or FD (uniform or mixed) count as NOP until the final DD / FD
-                if (instructionBytes[0] == 0x00 ||
-                    (instructionBytes[0] == 0xDD || instructionBytes[0] == 0xFD) && (instructionBytes[1] == 0xDD || instructionBytes[1] == 0xFD))
+                if (b0 == 0x00 ||
+                    (b0 == 0xDD || b0 == 0xFD) && (b1 == 0xDD || b1 == 0xFD))
                 {
                     return new ExecutionPackage(Instruction.NOP, data);
                 }
 
-                byte prefix = instructionBytes[0];
+                byte prefix = b0;
 
-                if (prefix == 0xCB || ((prefix == 0xDD || prefix == 0xFD) && instructionBytes[1] == 0xCB))
+                if (prefix == 0xCB || ((prefix == 0xDD || prefix == 0xFD) && b1 == 0xCB))
                 {
                     // extended instructions (including double-prefix 'DD CB' and 'FD CB')
-                    opcode = (prefix != 0xCB) ? instructionBytes[3] : instructionBytes[1];
+                    opcode = (prefix != 0xCB) ? b3 : b1;
                     Instruction instruction = Instruction.Find(opcode, (InstructionPrefix)prefix);
 
                     if (instruction.Argument1 == ArgumentType.Displacement)
                     {
-                        data.Argument1 = instructionBytes[2];
+                        data.Argument1 = b2;
                     }
 
                     return new ExecutionPackage(instruction, data);
@@ -40,13 +44,13 @@ namespace Z80.Core
                 else if (prefix == 0xED)
                 {
                     // other extended instructions
-                    opcode = instructionBytes[1];
+                    opcode = b1;
                     Instruction instruction = Instruction.Find(opcode, InstructionPrefix.ED);
 
                     if (instruction.Argument1 == ArgumentType.ImmediateWord)
                     {
-                        data.Argument1 = instructionBytes[2];
-                        data.Argument2 = instructionBytes[3];
+                        data.Argument1 = b2;
+                        data.Argument2 = b3;
                     }
 
                     return new ExecutionPackage(instruction, data);
@@ -56,17 +60,17 @@ namespace Z80.Core
                     // identical to unprefixed instruction with same opcode except IX (0xDD) or IY (0xFD) replaces HL
                     // plus additional instructions unique to IX / IY including single-byte operations on high / low bytes of either
 
-                    opcode = instructionBytes[1];
+                    opcode = b1;
                     Instruction instruction = Instruction.Find(opcode, (InstructionPrefix)prefix);
 
                     if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
                     {
-                        data.Argument1 = instructionBytes[2];
+                        data.Argument1 = b2;
                     }
                     else if (instruction.Argument1 == ArgumentType.ImmediateWord)
                     {
-                        data.Argument1 = instructionBytes[2];
-                        data.Argument2 = instructionBytes[3];
+                        data.Argument1 = b2;
+                        data.Argument2 = b3;
                     }
 
                     return new ExecutionPackage(instruction, data);
@@ -77,18 +81,18 @@ namespace Z80.Core
                     // unprefixed instructions (can be 1-3 bytes only)
 
                     prefix = 0x00;
-                    opcode = instructionBytes[0];
+                    opcode = b0;
 
                     Instruction instruction = Instruction.Find(opcode, InstructionPrefix.Unprefixed);
 
                     if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
                     {
-                        data.Argument1 = instructionBytes[1];
+                        data.Argument1 = b1;
                     }
                     else if (instruction.Argument1 == ArgumentType.ImmediateWord)
                     {
-                        data.Argument1 = instructionBytes[1];
-                        data.Argument2 = instructionBytes[2];
+                        data.Argument1 = b1;
+                        data.Argument2 = b2;
                     }
 
                     return new ExecutionPackage(instruction, data);

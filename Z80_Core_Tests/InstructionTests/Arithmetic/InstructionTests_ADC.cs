@@ -140,7 +140,7 @@ namespace Z80.Core.Tests
         [TestCase(0x81, 0xFF, false, 0x80, FlagState.Carry | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
         public void ADC_A_xIndexOffset(byte input, byte add, bool carry, byte expectedResult, FlagState expectedFlagState)
         {
-            RegisterPairName indexRegister = RandomBool() ? RegisterPairName.IX : RegisterPairName.IY; // doesn't matter which as long as we exercise both
+            RegisterWord indexRegister = RandomBool() ? RegisterWord.IX : RegisterWord.IY; // doesn't matter which as long as we exercise both
             sbyte offset = (sbyte)(RandomBool() ? 0x7F : -0x7F);
 
             Flags.Carry = carry; // simulates previous Carry flag value

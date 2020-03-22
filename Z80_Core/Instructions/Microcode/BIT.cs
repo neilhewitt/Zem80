@@ -16,7 +16,7 @@ namespace Z80.Core
 
             byte bitIndex = instruction.BitIndex.Value;
             byte value;
-            if (instruction.OperandRegister != RegisterName.None)
+            if (instruction.OperandRegister != RegisterByte.None)
             {
                 value = r[instruction.OperandRegister]; // BIT b, r
             }

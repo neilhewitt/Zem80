@@ -9,117 +9,187 @@ namespace Z80.Core.Tests
     [TestFixture]
     public class InstructionTests_RLC_RRC : InstructionTestBase
     {
-        private Flags GetExpectedFlags(byte original, byte expected, bool carry, BitwiseOperation operation)
-        {
-            Flags flags = new Flags();
-            flags = FlagLookup.FlagsFromBitwiseOperation(original, operation);
-            flags.HalfCarry = false;
-            flags.Subtract = false;
-            return flags;
-        }
-
         [Test]
-        public void RLC_A()
+        [TestCase(0x01, 0x02, FlagState.None)]
+        [TestCase(0x01, 0x02, FlagState.None)]
+        [TestCase(0x80, 0x01, FlagState.Carry)]
+        [TestCase(0x80, 0x01, FlagState.Carry)]
+        [TestCase(0x03, 0x06, FlagState.ParityOverflow)]
+        [TestCase(0x03, 0x06, FlagState.ParityOverflow)]
+        [TestCase(0x81, 0x03, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x81, 0x03, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x40, 0x80, FlagState.Sign)]
+        [TestCase(0x40, 0x80, FlagState.Sign)]
+        [TestCase(0xC1, 0x83, FlagState.Carry | FlagState.Sign)]
+        [TestCase(0xC1, 0x83, FlagState.Carry | FlagState.Sign)]
+        [TestCase(0x41, 0x82, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x41, 0x82, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0xC0, 0x81, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0xC0, 0x81, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        public void RLC_A(byte input, byte expectedResult, FlagState expectedState)
         {
-            byte value = 0x7F;
-            byte expected = (byte)(value << 1);
-            Registers.A = value;
-            expected = expected.SetBit(0, value.GetBit(7));
+            Registers.A = input; // single branch of code, no need to test all registers
 
             ExecutionResult executionResult = ExecuteInstruction($"RLC A");
 
-            Flags expectedFlags = GetExpectedFlags(value, expected, expected.GetBit(0), BitwiseOperation.RotateLeft);
-
-            Assert.That(Registers.A, Is.EqualTo(expected));
-            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(Registers.A, Is.EqualTo(expectedResult));
+            Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
 
         [Test]
-        public void RRC_B()
+        [TestCase(0x02, 0x01, FlagState.None)]
+        [TestCase(0x02, 0x01, FlagState.None)]
+        [TestCase(0x80, 0x40, FlagState.Carry)]
+        [TestCase(0x80, 0x40, FlagState.Carry)]
+        [TestCase(0x06, 0x03, FlagState.ParityOverflow)]
+        [TestCase(0x06, 0x03, FlagState.ParityOverflow)]
+        [TestCase(0x82, 0x41, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x82, 0x41, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x01, 0x80, FlagState.Sign)]
+        [TestCase(0x01, 0x80, FlagState.Sign)]
+        [TestCase(0x83, 0xC1, FlagState.Carry | FlagState.Sign)]
+        [TestCase(0x83, 0xC1, FlagState.Carry | FlagState.Sign)]
+        [TestCase(0x03, 0x81, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x03, 0x81, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x81, 0xC0, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x81, 0xC0, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        public void RRC_B(byte input, byte expectedResult, FlagState expectedState)
         {
-            byte value = 0x7F;
-            byte expected = (byte)(value >> 1);
-            Registers.B = value;
-            expected = expected.SetBit(7, value.GetBit(0));
+            Registers.B = input; // single branch of code, no need to test all registers
 
             ExecutionResult executionResult = ExecuteInstruction($"RRC B");
 
-            Flags expectedFlags =  GetExpectedFlags(value, expected, expected.GetBit(7), BitwiseOperation.RotateRight);
-
-            Assert.That(Registers.B, Is.EqualTo(expected));
-            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(Registers.B, Is.EqualTo(expectedResult));
+            Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
 
+
         [Test]
-        public void RLC_xHL()
+        [TestCase(0x01, 0x02, FlagState.None)]
+        [TestCase(0x01, 0x02, FlagState.None)]
+        [TestCase(0x80, 0x01, FlagState.Carry)]
+        [TestCase(0x80, 0x01, FlagState.Carry)]
+        [TestCase(0x03, 0x06, FlagState.ParityOverflow)]
+        [TestCase(0x03, 0x06, FlagState.ParityOverflow)]
+        [TestCase(0x81, 0x03, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x81, 0x03, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x40, 0x80, FlagState.Sign)]
+        [TestCase(0x40, 0x80, FlagState.Sign)]
+        [TestCase(0xC1, 0x83, FlagState.Carry | FlagState.Sign)]
+        [TestCase(0xC1, 0x83, FlagState.Carry | FlagState.Sign)]
+        [TestCase(0x41, 0x82, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x41, 0x82, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0xC0, 0x81, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0xC0, 0x81, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        public void RLC_xHL(byte input, byte expectedResult, FlagState expectedState)
         {
-            byte value = 0x7F;
-            byte expected = (byte)(value << 1);
-            ushort address = 0x5000;
-            WriteByteAt(address, value);
-            Registers.HL = address;
-            expected = expected.SetBit(0, value.GetBit(7));
+            Registers.HL = 0x5000;
+            WriteByteAt(Registers.HL, input); // single branch of code, no need to test all registers
 
             ExecutionResult executionResult = ExecuteInstruction($"RLC (HL)");
 
-            Flags expectedFlags =  GetExpectedFlags(value, expected, expected.GetBit(0), BitwiseOperation.RotateLeft);
-
-            Assert.That(ReadByteAt(address), Is.EqualTo(expected));
-            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(ReadByteAt(Registers.HL), Is.EqualTo(expectedResult));
+            Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
 
         [Test]
-        public void RRC_xHL()
+        [TestCase(0x02, 0x01, FlagState.None)]
+        [TestCase(0x02, 0x01, FlagState.None)]
+        [TestCase(0x80, 0x40, FlagState.Carry)]
+        [TestCase(0x80, 0x40, FlagState.Carry)]
+        [TestCase(0x06, 0x03, FlagState.ParityOverflow)]
+        [TestCase(0x06, 0x03, FlagState.ParityOverflow)]
+        [TestCase(0x82, 0x41, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x82, 0x41, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x01, 0x80, FlagState.Sign)]
+        [TestCase(0x01, 0x80, FlagState.Sign)]
+        [TestCase(0x83, 0xC1, FlagState.Carry | FlagState.Sign)]
+        [TestCase(0x83, 0xC1, FlagState.Carry | FlagState.Sign)]
+        [TestCase(0x03, 0x81, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x03, 0x81, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x81, 0xC0, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x81, 0xC0, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        public void RRC_xHL(byte input, byte expectedResult, FlagState expectedState)
         {
-            byte value = 0x7F;
-            byte expected = (byte)(value >> 1);
-            ushort address = 0x5000;
-            WriteByteAt(address, value);
-            Registers.HL = address;
-            expected = expected.SetBit(7, value.GetBit(0));
+            Registers.HL = 0x5000;
+            WriteByteAt(Registers.HL, input); // single branch of code, no need to test all registers
 
             ExecutionResult executionResult = ExecuteInstruction($"RRC (HL)");
 
-            Flags expectedFlags =  GetExpectedFlags(value, expected, expected.GetBit(7), BitwiseOperation.RotateRight);
-
-            Assert.That(ReadByteAt(address), Is.EqualTo(expected));
-            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(ReadByteAt(Registers.HL), Is.EqualTo(expectedResult));
+            Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
 
         [Test]
-        public void RLC_xIndexOffset([Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName indexRegister, [Values(127, -128)] sbyte offset)
+        [TestCase(0x01, 0x02, FlagState.None)]
+        [TestCase(0x01, 0x02, FlagState.None)]
+        [TestCase(0x80, 0x01, FlagState.Carry)]
+        [TestCase(0x80, 0x01, FlagState.Carry)]
+        [TestCase(0x03, 0x06, FlagState.ParityOverflow)]
+        [TestCase(0x03, 0x06, FlagState.ParityOverflow)]
+        [TestCase(0x81, 0x03, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x81, 0x03, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x40, 0x80, FlagState.Sign)]
+        [TestCase(0x40, 0x80, FlagState.Sign)]
+        [TestCase(0xC1, 0x83, FlagState.Carry | FlagState.Sign)]
+        [TestCase(0xC1, 0x83, FlagState.Carry | FlagState.Sign)]
+        [TestCase(0x41, 0x82, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x41, 0x82, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0xC0, 0x81, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0xC0, 0x81, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+
+        public void RLC_xIndexOffset(byte input, byte expectedResult, FlagState expectedState)
         {
-            byte value = 0x7F;
-            byte expected = (byte)(value << 1);
-            ushort address = 0x5000;
-            WriteByteAt((ushort)(address + offset), value);
-            Registers[indexRegister] = address;
-            expected = expected.SetBit(0, value.GetBit(7));
+            Registers.IX = 0x5000;
+            sbyte offset = (sbyte)(RandomBool() ? 0x7F : -0x80);
+            WriteByteAtIndexAndOffset(RegisterWord.IX, offset, input); // single branch of code, no need to test all registers
 
-            ExecutionResult executionResult = ExecuteInstruction($"RLC ({ indexRegister }+o)", arg1: (byte)offset);
+            ExecutionResult executionResult = ExecuteInstruction($"RLC (IX+o)", arg1: (byte)offset);
 
-            Flags expectedFlags =  GetExpectedFlags(value, expected, expected.GetBit(0), BitwiseOperation.RotateLeft);
-
-            Assert.That(ReadByteAtIndexAndOffset(indexRegister, offset), Is.EqualTo(expected));
-            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(ReadByteAtIndexAndOffset(RegisterWord.IX, offset), Is.EqualTo(expectedResult));
+            Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
 
         [Test]
-        public void RRC_xIndexOffset([Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName indexRegister, [Values(127, -128)] sbyte offset)
+        [TestCase(0x02, 0x01, FlagState.None)]
+        [TestCase(0x02, 0x01, FlagState.None)]
+        [TestCase(0x80, 0x40, FlagState.Carry)]
+        [TestCase(0x80, 0x40, FlagState.Carry)]
+        [TestCase(0x06, 0x03, FlagState.ParityOverflow)]
+        [TestCase(0x06, 0x03, FlagState.ParityOverflow)]
+        [TestCase(0x82, 0x41, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x82, 0x41, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x01, 0x80, FlagState.Sign)]
+        [TestCase(0x01, 0x80, FlagState.Sign)]
+        [TestCase(0x83, 0xC1, FlagState.Carry | FlagState.Sign)]
+        [TestCase(0x83, 0xC1, FlagState.Carry | FlagState.Sign)]
+        [TestCase(0x03, 0x81, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x03, 0x81, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x81, 0xC0, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x81, 0xC0, FlagState.Carry | FlagState.ParityOverflow | FlagState.Sign)]
+
+        public void RRC_xIndexOffset(byte input, byte expectedResult, FlagState expectedState)
         {
-            byte value = 0x7F;
-            byte expected = (byte)(value >> 1);
-            ushort address = 0x5000;
-            WriteByteAt((ushort)(address + offset), value);
-            Registers[indexRegister] = address;
-            expected = expected.SetBit(7, value.GetBit(0));
+            Registers.IY = 0x5000;
+            sbyte offset = (sbyte)(RandomBool() ? 0x7F : -0x80);
+            WriteByteAtIndexAndOffset(RegisterWord.IY, offset, input); // single branch of code, no need to test all registers
 
-            ExecutionResult executionResult = ExecuteInstruction($"RRC ({ indexRegister }+o)", arg1: (byte)offset);
+            ExecutionResult executionResult = ExecuteInstruction($"RRC (IY+o)", arg1: (byte)offset);
 
-            Flags expectedFlags =  GetExpectedFlags(value, expected, expected.GetBit(7), BitwiseOperation.RotateRight);
-
-            Assert.That(ReadByteAtIndexAndOffset(indexRegister, offset), Is.EqualTo(expected));
-            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(ReadByteAtIndexAndOffset(RegisterWord.IY, offset), Is.EqualTo(expectedResult));
+            Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
     }
 }

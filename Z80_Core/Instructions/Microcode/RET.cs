@@ -15,7 +15,7 @@ namespace Z80.Core
 
             void ret()
             {
-                cpu.Pop(RegisterPairName.PC);
+                cpu.Pop(RegisterWord.PC);
                 pcWasSet = true;
             }
 

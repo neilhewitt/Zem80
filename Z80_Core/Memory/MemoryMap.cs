@@ -24,9 +24,9 @@ namespace Z80.Core
         {
             int size = (int)entry.SizeInBytes;
 
-            if (startAddress % 1024 > 0)
+            if (startAddress % PAGE_SIZE_IN_BYTES > 0)
             {
-                throw new MemoryMapException("Start address must be on a page boundary (divisible by 1024).");
+                throw new MemoryMapException($"Start address must be on a page boundary (divisible by {PAGE_SIZE_IN_BYTES}).");
             }
 
             if (startAddress + size > SizeInBytes)
@@ -73,12 +73,6 @@ namespace Z80.Core
             int pageIndex = (int)Math.Floor((double)address / (double)(PAGE_SIZE_IN_BYTES));
             return pageIndex;
         }
-
-        private int AddressFromPage(ushort pageNumber)
-        {
-            return pageNumber * PAGE_SIZE_IN_BYTES;
-        }
-
         public MemoryMap(uint sizeInBytes, bool autoMap = false)
         {
             SizeInBytes = sizeInBytes;

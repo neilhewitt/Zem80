@@ -15,20 +15,72 @@ namespace Z80.Core.Tests
             Flags flags = new Flags();
             sbyte subtract = -1;
             int result = input - 1;
-            flags = FlagLookup.FlagsFromArithmeticOperation(input, (byte)subtract, false, true);
+            flags = FlagLookup.FlagsFromArithmeticOperation8(input, (byte)subtract, false, true);
             return ((byte)result, flags);
         }
 
         [Test]
-        public void DEC_r([Values(0x7F, 0xFF, 0x01, 0x00)] byte input)
+        [TestCase(0x02, 0x01, FlagState.Subtract)]
+        [TestCase(0x80, 0x7F, FlagState.Subtract | FlagState.ParityOverflow)]
+        [TestCase(0x0F, 0x0E, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x7F, 0x7E, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
+        [TestCase(0x01, 0x00, FlagState.Subtract | FlagState.Zero)]
+        [TestCase(0x00, 0xFF, FlagState.Subtract | FlagState.Sign)]
+        [TestCase(0x81, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0xFF, 0xFE, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x8F, 0x8E, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        public void DEC_r(byte input, byte expectedResult, FlagState expectedState)
         {
             Registers.A = input;
 
             ExecutionResult executionResult = ExecuteInstruction($"DEC A");
-            (byte expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(input);
 
             Assert.That(Registers.A, Is.EqualTo(expectedResult));
-            Assert.That(executionResult.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(executionResult.Flags.State, Is.EqualTo(expectedState));
+        }
+
+        [Test]
+        [TestCase(0x02, 0x01, FlagState.Subtract)]
+        [TestCase(0x80, 0x7F, FlagState.Subtract | FlagState.ParityOverflow)]
+        [TestCase(0x0F, 0x0E, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x7F, 0x7E, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
+        [TestCase(0x01, 0x00, FlagState.Subtract | FlagState.Zero)]
+        [TestCase(0x00, 0xFF, FlagState.Subtract | FlagState.Sign)]
+        [TestCase(0x81, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0xFF, 0xFE, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x8F, 0x8E, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        public void DEC_xHL(byte input, byte expectedResult, FlagState expectedState)
+        {
+            Registers.HL = 0x5000;
+            WriteByteAt(Registers.HL, input);
+
+            ExecutionResult executionResult = ExecuteInstruction($"DEC (HL)");
+
+            Assert.That(ReadByteAt(Registers.HL), Is.EqualTo(expectedResult));
+            Assert.That(executionResult.Flags.State, Is.EqualTo(expectedState));
+        }
+
+
+        [Test]
+        [TestCase(0x02, 0x01, FlagState.Subtract)]
+        [TestCase(0x80, 0x7F, FlagState.Subtract | FlagState.ParityOverflow)]
+        [TestCase(0x0F, 0x0E, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x7F, 0x7E, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
+        [TestCase(0x01, 0x00, FlagState.Subtract | FlagState.Zero)]
+        [TestCase(0x00, 0xFF, FlagState.Subtract | FlagState.Sign)]
+        [TestCase(0x81, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0xFF, 0xFE, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x8F, 0x8E, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        public void DEC_xIndexOffset(byte input, byte expectedResult, FlagState expectedState)
+        {
+            Registers.IX = 0x5000;
+            sbyte offset = (sbyte)(RandomBool() ? 0x7F : -0x80);
+            WriteByteAtIndexAndOffset(RegisterWord.IX, offset, input);
+
+            ExecutionResult executionResult = ExecuteInstruction($"DEC (IX+o)", arg1: (byte)offset);
+
+            Assert.That(ReadByteAtIndexAndOffset(RegisterWord.IX, offset), Is.EqualTo(expectedResult));
+            Assert.That(executionResult.Flags.State, Is.EqualTo(expectedState));
         }
 
         [Test]
@@ -41,35 +93,6 @@ namespace Z80.Core.Tests
             ushort expectedResult = (ushort)(input - 1);
 
             Assert.That(Registers.BC, Is.EqualTo(expectedResult)); // no flags affected by DEC rr
-        }
-
-        [Test]
-        public void DEC_xHL([Values(0x7F, 0xFF, 0x01, 0x00)] byte input)
-        {
-            ushort address = 0x5000;
-            Registers.HL = address;
-            WriteByteAt(address, input);
-
-            ExecutionResult executionResult = ExecuteInstruction($"DEC (HL)");
-            (byte expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(input);
-
-            Assert.That(ReadByteAt(address), Is.EqualTo(expectedResult));
-            Assert.That(executionResult.Flags, Is.EqualTo(expectedFlags));
-        }
-
-        [Test]
-        public void DEC_xIndexOffset([Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName registerPair, [Values(127, -127)] sbyte offset, 
-            [Values(0x7F, 0xFF, 0x01, 0x00)] byte input)
-        {
-            ushort address = 0x5000;
-            Registers[registerPair] = address;
-            WriteByteAtIndexAndOffset(registerPair, offset, input); // write input to address pointed to by (<index register> + offset)
-
-            ExecutionResult executionResult = ExecuteInstruction($"DEC ({registerPair}+o)", arg1: (byte)offset);
-            (byte expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(input);
-
-            Assert.That(ReadByteAtIndexAndOffset(registerPair, offset), Is.EqualTo(expectedResult));
-            Assert.That(executionResult.Flags, Is.EqualTo(expectedFlags));
         }
     }
 }

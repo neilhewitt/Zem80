@@ -26,14 +26,14 @@ namespace Z80.Core
             byte subc(byte value)
             {
                 int result = cpu.Registers.A - value - (flags.Carry ? 1 : 0);
-                flags = FlagLookup.FlagsFromArithmeticOperation(cpu.Registers.A, value, flags.Carry, true);
+                flags = FlagLookup.FlagsFromArithmeticOperation8(cpu.Registers.A, value, flags.Carry, true);
                 return (byte)result;
             }
 
             ushort subwc(ushort value)
             {
                 int result = cpu.Registers.HL - value - (flags.Carry ? 1 : 0);
-                flags = FlagLookup.FlagsFromArithmeticOperation16Bit(flags, cpu.Registers.HL, value, flags.Carry, true, true);
+                flags = FlagLookup.FlagsFromArithmeticOperation16(flags, cpu.Registers.HL, value, flags.Carry, true, true);
                 return (ushort)result;
             }
 

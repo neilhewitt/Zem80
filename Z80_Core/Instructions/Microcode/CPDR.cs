@@ -18,7 +18,7 @@ namespace Z80.Core
             cpu.Registers.HL--;
             cpu.Registers.BC--;
 
-            flags = FlagLookup.FlagsFromArithmeticOperation(a, b, false, true);
+            flags = FlagLookup.FlagsFromArithmeticOperation8(a, b, false, true);
             flags.ParityOverflow = (cpu.Registers.BC - 1 != 0);
 
             return new ExecutionResult(package, flags, (result == 0 || cpu.Registers.BC == 0), (result != 0 && cpu.Registers.BC != 0));

@@ -14,8 +14,8 @@ namespace Z80.Core
         private Flags _flags;
         private Flags _altFlags;
 
-        public byte this[RegisterName register] { get { return GetRegister(register); } set { SetRegister(register, value); } }
-        public ushort this[RegisterPairName registerPair] { get { return GetRegisterPair(registerPair); } set { SetRegisterPair(registerPair, value); } }
+        public byte this[RegisterByte register] { get { return GetRegister(register); } set { SetRegister(register, value); } }
+        public ushort this[RegisterWord registerPair] { get { return GetRegisterPair(registerPair); } set { SetRegisterPair(registerPair, value); } }
 
 
         // 8-bit registers
@@ -96,11 +96,11 @@ namespace Z80.Core
             _altAccumulator = 0x00;
         }
 
-        private byte GetRegister(RegisterName index)
+        private byte GetRegister(RegisterByte index)
         {
-            if (index == RegisterName.None) return 0xFF;
+            if (index == RegisterByte.None) return 0xFF;
 
-            if (index == RegisterName.A)
+            if (index == RegisterByte.A)
             {
                 return _accumulator;
             }
@@ -110,11 +110,11 @@ namespace Z80.Core
             }
         }
 
-        private ushort GetRegisterPair(RegisterPairName index)
+        private ushort GetRegisterPair(RegisterWord index)
         {
-            if (index == RegisterPairName.None) return 0xFF;
+            if (index == RegisterWord.None) return 0xFF;
 
-            if (index == RegisterPairName.AF)
+            if (index == RegisterWord.AF)
             {
                 return GetWord(_accumulator, _flags.Value);
             }
@@ -124,11 +124,11 @@ namespace Z80.Core
             }
         }
 
-        private void SetRegister(RegisterName register, byte value)
+        private void SetRegister(RegisterByte register, byte value)
         {
-            if (register != RegisterName.None)
+            if (register != RegisterByte.None)
             {
-                if (register == RegisterName.A)
+                if (register == RegisterByte.A)
                 {
                     _accumulator = value;
                 }
@@ -139,11 +139,11 @@ namespace Z80.Core
             }
         }
 
-        private void SetRegisterPair(RegisterPairName registerPair, ushort value)
+        private void SetRegisterPair(RegisterWord registerPair, ushort value)
         {
-            if (registerPair != RegisterPairName.None)
+            if (registerPair != RegisterWord.None)
             {
-                if (registerPair == RegisterPairName.AF)
+                if (registerPair == RegisterWord.AF)
                 {
                     _accumulator = value.HighByte();
                     _flags.Value = value.LowByte();

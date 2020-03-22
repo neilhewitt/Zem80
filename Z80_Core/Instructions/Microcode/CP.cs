@@ -16,7 +16,7 @@ namespace Z80.Core
             void cp(byte value)
             {
                 int result = cpu.Registers.A - value;
-                flags = FlagLookup.FlagsFromArithmeticOperation(cpu.Registers.A, value, false, true);
+                flags = FlagLookup.FlagsFromArithmeticOperation8(cpu.Registers.A, value, false, true);
             }
 
             switch (instruction.Prefix)

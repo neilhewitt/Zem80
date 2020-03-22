@@ -2,94 +2,78 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Z80.Core;
 
 namespace Z80.Core.Tests
 {
     [TestFixture]
     public class InstructionTests_XOR : InstructionTestBase
     {
-        private (byte expectedResult, Flags expectedFlags) GetExpectedResultAndFlags(byte first, byte second)
-        {
-            short result = (short)(first ^ second);
-            Flags flags = new Flags();
-            flags = FlagLookup.FlagsFromLogicalOperation(first, second, LogicalOperation.Xor);
-            return ((byte)result, flags);
-        }
-
-        private bool CheckFlags(Flags expected, Flags current)
-        {
-            return current.Check(
-                    zero: expected.Zero,
-                    sign: expected.Sign,
-                    halfCarry: false,
-                    parityOverflow: expected.ParityOverflow,
-                    carry: false,
-                    subtract: false
-                );
-        }
-
         [Test]
-        public void XOR_r()
+        [TestCase(0x00, 0x01, 0x01, FlagState.None)]
+        [TestCase(0x00, 0x03, 0x03, FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x00, 0x80, 0x80, FlagState.Sign)]
+        [TestCase(0x00, 0x81, 0x81, FlagState.ParityOverflow | FlagState.Sign)]
+        public void XOR_r(byte first, byte second, byte expectedResult, FlagState expectedFlags)
         {
-            byte first = 0x7F;
-            byte second = 0x33;
-
             Registers.A = first;
             Registers.B = second;
-            ExecutionResult executionResult = ExecuteInstruction($"XOR B"); // if one register works, they all do
-            (short expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(first, second);
+
+            ExecutionResult executionResult = ExecuteInstruction($"XOR B");
 
             Assert.That(Registers.A, Is.EqualTo(expectedResult));
-            Assert.That(CheckFlags(expectedFlags, executionResult.Flags), Is.True); ;
+            Assert.That(executionResult.Flags.State, Is.EqualTo(expectedFlags));
         }
 
         [Test]
-        public void XOR_n()
+        [TestCase(0x00, 0x01, 0x01, FlagState.None)]
+        [TestCase(0x00, 0x03, 0x03, FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x00, 0x80, 0x80, FlagState.Sign)]
+        [TestCase(0x00, 0x81, 0x81, FlagState.ParityOverflow | FlagState.Sign)]
+        public void XOR_n(byte first, byte second, byte expectedResult, FlagState expectedFlags)
         {
-            byte first = 0x7F;
-            byte second = 0x33;
-
             Registers.A = first;
+
             ExecutionResult executionResult = ExecuteInstruction($"XOR n", arg1: second);
-            (short expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(first, second);
 
             Assert.That(Registers.A, Is.EqualTo(expectedResult));
-            Assert.That(CheckFlags(expectedFlags, executionResult.Flags), Is.True); ;
+            Assert.That(executionResult.Flags.State, Is.EqualTo(expectedFlags));
         }
 
         [Test]
-        public void XOR_xHL()
+        [TestCase(0x00, 0x01, 0x01, FlagState.None)]
+        [TestCase(0x00, 0x03, 0x03, FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x00, 0x80, 0x80, FlagState.Sign)]
+        [TestCase(0x00, 0x81, 0x81, FlagState.ParityOverflow | FlagState.Sign)]
+        public void XOR_xHL(byte first, byte second, byte expectedResult, FlagState expectedFlags)
         {
-            byte first = 0x7F;
-            byte second = 0x33;
-
             Registers.A = first;
             Registers.HL = 0x5000;
             WriteByteAt(Registers.HL, second);
 
-            ExecutionResult executionResult = ExecuteInstruction($"XOR (HL)"); 
-            (short expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(first, second);
-
+            ExecutionResult executionResult = ExecuteInstruction($"XOR (HL)");
             Assert.That(Registers.A, Is.EqualTo(expectedResult));
-            Assert.That(CheckFlags(expectedFlags, executionResult.Flags), Is.True); ;
+            Assert.That(executionResult.Flags.State, Is.EqualTo(expectedFlags));
         }
 
         [Test]
-        public void XOR_xIndexOffset([Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName registerPair, [Values(127, -128)] sbyte offset)
+        [TestCase(0x00, 0x01, 0x01, FlagState.None)]
+        [TestCase(0x00, 0x03, 0x03, FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x00, 0x80, 0x80, FlagState.Sign)]
+        [TestCase(0x00, 0x81, 0x81, FlagState.ParityOverflow | FlagState.Sign)]
+        public void XOR_xIndexOffset(byte first, byte second, byte expectedResult, FlagState expectedFlags)
         {
-            byte first = 0x7F;
-            byte second = 0x33;
-
             Registers.A = first;
-            Registers[registerPair] = 0x5000;
-            WriteByteAtIndexAndOffset(registerPair, offset, second);
+            Registers.IX = 0x5000;
+            sbyte offset = (sbyte)(RandomBool() ? 0x7F : -0x80);
+            WriteByteAtIndexAndOffset(RegisterWord.IX, offset, second);
 
-            ExecutionResult executionResult = ExecuteInstruction($"XOR ({ registerPair }+o)", arg1: (byte)offset);
-            (short expectedResult, Flags expectedFlags) = GetExpectedResultAndFlags(first, second);
-
+            ExecutionResult executionResult = ExecuteInstruction($"XOR (IX+o)", arg1: (byte)offset);
             Assert.That(Registers.A, Is.EqualTo(expectedResult));
-            Assert.That(CheckFlags(expectedFlags, executionResult.Flags), Is.True); ;
+            Assert.That(executionResult.Flags.State, Is.EqualTo(expectedFlags));
         }
     }
 }

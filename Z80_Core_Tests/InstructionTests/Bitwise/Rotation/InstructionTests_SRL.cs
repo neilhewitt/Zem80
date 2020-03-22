@@ -9,66 +9,55 @@ namespace Z80.Core.Tests
     [TestFixture]
     public class InstructionTests_SRL : InstructionTestBase
     {
-        private Flags GetExpectedFlags(byte original, byte expected, bool carry)
+        [Test]
+        [TestCase(0x04, 0x02, FlagState.None)]
+        [TestCase(0x02, 0x01, FlagState.Carry)]
+        [TestCase(0x0C, 0x06, FlagState.ParityOverflow)]
+        [TestCase(0x06, 0x03, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        public void SRL_A(byte input, byte expectedResult, FlagState expectedState)
         {
-            Flags flags = new Flags();
-            flags = FlagLookup.FlagsFromBitwiseOperation(original, BitwiseOperation.ShiftRight);
-            flags.HalfCarry = false;
-            flags.Subtract = false;
-            return flags;
+            Registers.A = input; // single branch of code, no need to test all registers
+
+            ExecutionResult executionResult = ExecuteInstruction($"SRL A");
+
+            Assert.That(Registers.A, Is.EqualTo(expectedResult));
+            Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
 
         [Test]
-        public void SRL_B()
+        [TestCase(0x04, 0x02, FlagState.None)]
+        [TestCase(0x02, 0x01, FlagState.Carry)]
+        [TestCase(0x0C, 0x06, FlagState.ParityOverflow)]
+        [TestCase(0x06, 0x03, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        public void SRL_xHL(byte input, byte expectedResult, FlagState expectedState)
         {
-            byte value = 0x7F;
-            byte expected = (byte)(value >> 1);
-            Registers.B = value;
-            expected = expected.SetBit(7, false);
-
-            ExecutionResult executionResult = ExecuteInstruction($"SRL B");
-
-            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(0));
-
-            Assert.That(Registers.B, Is.EqualTo(expected));
-            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
-        }
-
-
-        [Test]
-        public void SRL_xHL()
-        {
-            byte value = 0x7F;
-            byte expected = (byte)(value >> 1);
-            ushort address = 0x5000;
-            WriteByteAt(address, value);
-            Registers.HL = address;
-            expected = expected.SetBit(7, false);
+            Registers.HL = 0x5000;
+            WriteByteAt(Registers.HL, input); // single branch of code, no need to test all registers
 
             ExecutionResult executionResult = ExecuteInstruction($"SRL (HL)");
 
-            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(0));
-
-            Assert.That(ReadByteAt(address), Is.EqualTo(expected));
-            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(ReadByteAt(Registers.HL), Is.EqualTo(expectedResult));
+            Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
 
         [Test]
-        public void SRL_xIndexOffset([Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName indexRegister, [Values(127, -128)] sbyte offset)
+        [TestCase(0x04, 0x02, FlagState.None)]
+        [TestCase(0x02, 0x01, FlagState.Carry)]
+        [TestCase(0x0C, 0x06, FlagState.ParityOverflow)]
+        [TestCase(0x06, 0x03, FlagState.Carry | FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState.Zero)]
+        public void SRL_xIndexOffset(byte input, byte expectedResult, FlagState expectedState)
         {
-            byte value = 0x7F;
-            byte expected = (byte)(value >> 1);
-            ushort address = 0x5000;
-            WriteByteAt((ushort)(address + offset), value);
-            Registers[indexRegister] = address;
-            expected = expected.SetBit(7, false);
+            Registers.IX = 0x5000;
+            sbyte offset = (sbyte)(RandomBool() ? 0x7F : -0x80);
+            WriteByteAtIndexAndOffset(RegisterWord.IX, offset, input); // single branch of code, no need to test all registers
 
-            ExecutionResult executionResult = ExecuteInstruction($"SRL ({ indexRegister }+o)", arg1: (byte)offset);
+            ExecutionResult executionResult = ExecuteInstruction($"SRL (IX+o)", arg1: (byte)offset);
 
-            Flags expectedFlags = GetExpectedFlags(value, expected, value.GetBit(0));
-
-            Assert.That(ReadByteAtIndexAndOffset(indexRegister, offset), Is.EqualTo(expected));
-            Assert.That(CPU.Registers.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(ReadByteAtIndexAndOffset(RegisterWord.IX, offset), Is.EqualTo(expectedResult));
+            Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
     }
 }

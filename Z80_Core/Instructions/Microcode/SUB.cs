@@ -21,7 +21,7 @@ namespace Z80.Core
             byte subByte(byte value)
             {
                 int result = cpu.Registers.A - value;
-                flags = FlagLookup.FlagsFromArithmeticOperation(cpu.Registers.A, value, false, true);
+                flags = FlagLookup.FlagsFromArithmeticOperation8(cpu.Registers.A, value, false, true);
 
                 return (byte)result;
             }

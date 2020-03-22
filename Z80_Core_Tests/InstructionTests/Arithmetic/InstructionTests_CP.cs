@@ -9,63 +9,98 @@ namespace Z80.Core.Tests
     [TestFixture]
     public class InstructionTests_CP : InstructionTestBase
     {
-        private Flags GetExpectedFlags(byte input, byte compare)
+        [Test]
+        [TestCase(0x01, 0x00, 0x01, FlagState.Subtract)]
+        [TestCase(0x00, 0x81, 0x7F, FlagState.Subtract | FlagState.ParityOverflow)]
+        [TestCase(0x01, 0xFF, 0x02, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x01, 0x8F, 0x72, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x00, 0x00, FlagState.Subtract | FlagState.Zero)]
+        [TestCase(0x40, 0x40, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x08, 0x08, 0x00, FlagState.Subtract | FlagState.HalfCarry | FlagState.Zero)]
+        [TestCase(0x48, 0x48, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Zero)]
+        [TestCase(0x00, 0x01, 0xFF, FlagState.Subtract | FlagState.Sign)]
+        [TestCase(0x00, 0x80, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x01, 0x0F, 0xF2, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x01, 0x7F, 0x82, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        public void CP_r(byte first, byte second, byte result, FlagState state)
         {
-            Flags flags = new Flags();
-            int result = input - compare;
-            flags = FlagLookup.FlagsFromArithmeticOperation(input, compare, false, true);
+            Registers.A = first;
+            Registers.B = second;
 
-            return flags;
+            ExecutionResult executionResult = ExecuteInstruction($"CP B");
+
+            Assert.That(executionResult.Flags.State, Is.EqualTo(state));
         }
 
         [Test]
-        public void CP_r([Values(0, 1, 2, 3, 4, 5, 7)] RegisterName register, [Values(0x7F, 0x80, 0xFF)] byte input)
+        [TestCase(0x01, 0x00, 0x01, FlagState.Subtract)]
+        [TestCase(0x00, 0x81, 0x7F, FlagState.Subtract | FlagState.ParityOverflow)]
+        [TestCase(0x01, 0xFF, 0x02, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x01, 0x8F, 0x72, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x00, 0x00, FlagState.Subtract | FlagState.Zero)]
+        [TestCase(0x40, 0x40, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x08, 0x08, 0x00, FlagState.Subtract | FlagState.HalfCarry | FlagState.Zero)]
+        [TestCase(0x48, 0x48, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Zero)]
+        [TestCase(0x00, 0x01, 0xFF, FlagState.Subtract | FlagState.Sign)]
+        [TestCase(0x00, 0x80, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x01, 0x0F, 0xF2, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x01, 0x7F, 0x82, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        public void CP_n(byte first, byte second, byte result, FlagState state)
         {
-            Registers.A = input;
-            if (register != RegisterName.A) Registers[register] = 0x80;
+            Registers.A = first;
 
-            ExecutionResult executionResult = ExecuteInstruction($"CP {register}");
-            Flags expectedFlags = GetExpectedFlags(Registers.A, Registers[register]);
+            ExecutionResult executionResult = ExecuteInstruction($"CP n", arg1: second);
 
-            Assert.That(executionResult.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(executionResult.Flags.State, Is.EqualTo(state));
         }
 
         [Test]
-        public void CP_n([Values(0x7F, 0x80, 0xFF)] byte input)
+        [TestCase(0x01, 0x00, 0x01, FlagState.Subtract)]
+        [TestCase(0x00, 0x81, 0x7F, FlagState.Subtract | FlagState.ParityOverflow)]
+        [TestCase(0x01, 0xFF, 0x02, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x01, 0x8F, 0x72, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x00, 0x00, FlagState.Subtract | FlagState.Zero)]
+        [TestCase(0x40, 0x40, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x08, 0x08, 0x00, FlagState.Subtract | FlagState.HalfCarry | FlagState.Zero)]
+        [TestCase(0x48, 0x48, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Zero)]
+        [TestCase(0x00, 0x01, 0xFF, FlagState.Subtract | FlagState.Sign)]
+        [TestCase(0x00, 0x80, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x01, 0x0F, 0xF2, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x01, 0x7F, 0x82, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        public void CP_xHL(byte first, byte second, byte result, FlagState state)
         {
-            Registers.A = input;
-
-            ExecutionResult executionResult = ExecuteInstruction($"CP n", arg1: 0x80);
-            Flags expectedFlags = GetExpectedFlags(Registers.A, 0x80);
-
-            Assert.That(executionResult.Flags, Is.EqualTo(expectedFlags));
-        }
-
-        [Test]
-        public void CP_xHL([Values(0x7F, 0x80, 0xFF)] byte input)
-        {
-            Registers.A = input;
+            Registers.A = first;
             Registers.HL = 0x5000;
-            WriteByteAt(Registers.HL, 0x80);
+            WriteByteAt(Registers.HL, second);
 
             ExecutionResult executionResult = ExecuteInstruction($"CP (HL)");
-            Flags expectedFlags = GetExpectedFlags(Registers.A, 0x80);
 
-            Assert.That(executionResult.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(executionResult.Flags.State, Is.EqualTo(state));
         }
 
         [Test]
-        public void CP_xIndexOffset([Values(RegisterPairName.IX, RegisterPairName.IY)] RegisterPairName registerPair, 
-            [Values(0x7F, 0x80, 0xFF)] byte input, [Values(127, -127)] sbyte offset)
+        [TestCase(0x01, 0x00, 0x01, FlagState.Subtract)]
+        [TestCase(0x00, 0x81, 0x7F, FlagState.Subtract | FlagState.ParityOverflow)]
+        [TestCase(0x01, 0xFF, 0x02, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x01, 0x8F, 0x72, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x00, 0x00, FlagState.Subtract | FlagState.Zero)]
+        [TestCase(0x40, 0x40, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x08, 0x08, 0x00, FlagState.Subtract | FlagState.HalfCarry | FlagState.Zero)]
+        [TestCase(0x48, 0x48, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Zero)]
+        [TestCase(0x00, 0x01, 0xFF, FlagState.Subtract | FlagState.Sign)]
+        [TestCase(0x00, 0x80, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x01, 0x0F, 0xF2, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x01, 0x7F, 0x82, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        public void CP_xIndexOffset(byte first, byte second, byte result, FlagState state)
         {
-            Registers.A = input;
-            Registers[registerPair] = 0x5000;
-            WriteByteAt((ushort)(Registers[registerPair] + offset), 0x80);
+            Registers.A = first;
+            Registers.IX = 0x5000;
+            sbyte offset = (sbyte)(RandomBool() ? 0x7F : -0x80);
+            WriteByteAtIndexAndOffset(RegisterWord.IX, offset, second);
 
-            ExecutionResult executionResult = ExecuteInstruction($"CP ({ registerPair }+o)", arg1: (byte)offset);
-            Flags expectedFlags = GetExpectedFlags(Registers.A, 0x80);
+            ExecutionResult executionResult = ExecuteInstruction($"CP (IX+o)", arg1: (byte)offset);
 
-            Assert.That(executionResult.Flags, Is.EqualTo(expectedFlags));
+            Assert.That(executionResult.Flags.State, Is.EqualTo(state));
         }
     }
 }

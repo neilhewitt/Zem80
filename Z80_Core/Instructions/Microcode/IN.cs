@@ -13,7 +13,7 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
 
-            byte @in(byte portNumber, RegisterName fromRegister, RegisterName toRegister)
+            byte @in(byte portNumber, RegisterByte fromRegister, RegisterByte toRegister)
             {
                 IPort port = cpu.Ports[portNumber];
                 cpu.SetAddressBus(portNumber, r[fromRegister]);
@@ -26,12 +26,12 @@ namespace Z80.Core
             if (instruction.Prefix == InstructionPrefix.Unprefixed)
             {
                 // IN A,(n)
-                @in(data.Argument1, RegisterName.A, RegisterName.A);
+                @in(data.Argument1, RegisterByte.A, RegisterByte.A);
             }
             else
             {
                 // IN r,(C)
-                byte input = @in(r.C, RegisterName.B, instruction.OperandRegister);
+                byte input = @in(r.C, RegisterByte.B, instruction.OperandRegister);
                 flags.Sign = ((sbyte)input < 0);
                 flags.Zero = (input == 0);
                 flags.ParityOverflow = (input.CountBits(true) % 2 == 0);

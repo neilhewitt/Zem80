@@ -22,8 +22,7 @@ namespace Z80.Core
             byte dec(byte value)
             {
                 int result = value - 1;
-                sbyte subtract = -1;
-                flags = FlagLookup.FlagsFromArithmeticOperation(value, (byte)subtract, false, true);
+                flags = FlagLookup.FlagsFromArithmeticOperation8(value, 1, false, true);
                 return (byte)result;
             }
 

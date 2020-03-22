@@ -10,6 +10,8 @@ namespace FlagSetMaker
     {
         static void Main(string[] args)
         {
+            FlagLookup.BuildFlagLookupTables();
+
             #region done
             //ProcessInstruction<byte>("ADC A,n",
             //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation(i, j, carry, false).State,
@@ -41,16 +43,103 @@ namespace FlagSetMaker
             //    (i, j, carry) => (byte)(i - j),
             //    false, true);
 
-            //ProcessInstruction("AND n",
-            //    (i, j, carry) => FlagLookup.FlagsFromLogicalOperation(i, j, LogicalOperation.And).State,
+            //Process8("CP n",
+            //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation8(i, (byte)j, false, true).State,
+            //    (i, j, carry) => (byte)(i - j),
+            //    false);
+
+            //Process8("DEC n",
+            //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation8(i, (byte)1, false, true).State,
+            //    (i, j, carry) => (byte)(i - 1),
+            //    false);
+
+            //Process8("AND n",
+            //    (i, j, carry) => FlagLookup.FlagsFromLogicalOperation(i, (byte)j, LogicalOperation.And).State,
             //    (i, j, carry) => (byte)(i & j),
-            //    false, true);
+            //    false);
+
+            //Process8("OR n",
+            //    (i, j, carry) => FlagLookup.FlagsFromLogicalOperation(i, (byte)j, LogicalOperation.Or).State,
+            //    (i, j, carry) => (byte)(i | j),
+            //    false);
+
+            //Process8("XOR n",
+            //    (i, j, carry) => FlagLookup.FlagsFromLogicalOperation(i, (byte)j, LogicalOperation.Xor).State,
+            //    (i, j, carry) => (byte)(i ^ j),
+            //    false);
+
+            //Process8("INC n",
+            //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation8(i, (byte)1, false, false).State,
+            //    (i, j, carry) => (byte)(i + 1),
+            //    false);
+
+            //Process8("RL",
+            //    (i, j, carry) => FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.RotateLeft).State,
+            //    (i, j, carry) => ((byte)(i << 1)).SetBit(0, carry),
+            //    true);
+
+            //Process8("RR",
+            //    (i, j, carry) => FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.RotateRight).State,
+            //    (i, j, carry) => ((byte)(i >> 1)).SetBit(7, carry),
+            //    true);
+
+            //Process8("RLC",
+            //    (i, j, carry) => {
+            //        Flags flags = FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.RotateLeft);
+            //        flags.HalfCarry = false;
+            //        flags.Subtract = false;
+            //        return flags.State;
+            //        },
+            //    (i, j, carry) => ((byte)(i << 1)).SetBit(0, i.GetBit(7)),
+            //    true);
+
+            //Process8("RRC",
+            //    (i, j, carry) => {
+            //        Flags flags = FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.RotateRight);
+            //        flags.HalfCarry = false;
+            //        flags.Subtract = false;
+            //        return flags.State;
+            //    },
+            //    (i, j, carry) => ((byte)(i >> 1)).SetBit(7, i.GetBit(0)),
+            //    true);
+
+            Process8("SLA",
+                (i, j, carry) =>
+                {
+                    Flags flags = FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.ShiftLeft);
+                    flags.HalfCarry = false;
+                    flags.Subtract = false;
+                    return flags;
+                },
+                (i, j, carry, flags) => { byte result = ((byte)(i << 1)); flags.Carry = result.GetBit(7); return result; },
+                false, false, true);
+
+            Process8("SRA",
+                (i, j, carry) =>
+                {
+                    Flags flags = FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.ShiftRight);
+                    flags.HalfCarry = false;
+                    flags.Subtract = false;
+                    return flags;
+                },
+                (i, j, carry, flags) => { byte result = ((byte)(i >> 1)).SetBit(7, i.GetBit(7)); flags.Carry = result.GetBit(0); return result; },
+                false, false, true);
+
+            Process8("SRL",
+                (i, j, carry) =>
+                {
+                    Flags flags = FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.ShiftRight);
+                    flags.HalfCarry = false;
+                    flags.Subtract = false;
+                    return flags;
+                },
+                (i, j, carry, flags) => { byte result = ((byte)(i >> 1)).SetBit(7, false); flags.Carry = result.GetBit(0); return result; },
+                false, false, true);
+
             #endregion
-
-
         }
 
-        static void ProcessArithmetic8(string instruction, Func<byte, int, bool, FlagState> getFlags, Func<byte, int, bool, int> getResult, bool useCarry)
+        static void Process8(string instruction, Func<byte, int, bool, Flags> getFlags, Func<byte, int, bool, Flags, int> getResult, bool useCarry, bool includeOperand = true, bool includeResult = true)
         {
             List<string> output = new List<string>();
 
@@ -63,14 +152,15 @@ namespace FlagSetMaker
                     {
                         if ((carry && useCarry) || !carry)
                         {
-                            FlagState state = getFlags((byte)i, j, carry);
+                            Flags flags = getFlags((byte)i, j, carry);
+                            int result = getResult((byte)i, j, carry, flags);
 
-                            if (!log.ContainsKey(state))
+                            if (!log.ContainsKey(flags.State))
                             {
-                                log.Add(state, (new List<string>(), new List<string>()));
+                                log.Add(flags.State, (new List<string>(), new List<string>()));
                             }
-                            IList<string> listToAddTo = carry ? log[state].Item1 : log[state].Item2;
-                            listToAddTo.Add($"0x{i.ToString("X2")}, 0x{j.ToString("X2")}, {(useCarry ? (carry.ToString().ToLower() + ", ") : "")}0x{getResult((byte)i, j, carry).ToString("X2")}, FlagState.{state.ToString().Replace(",", " | FlagState.")}");
+                            IList<string> listToAddTo = carry ? log[flags.State].Item1 : log[flags.State].Item2;
+                            listToAddTo.Add($"0x{i.ToString("X2")}, {(includeOperand ? $"0x{j.ToString("X2")}, " : "")}{(useCarry ? (carry.ToString().ToLower() + ", ") : "")}{(includeResult? $"0x{ result.ToString("X2")}, " : "")}FlagState.{flags.State.ToString().Replace(",", " | FlagState.")}");
                         }
                     }
                 }
@@ -79,7 +169,7 @@ namespace FlagSetMaker
             ProcessLog(instruction, log, output);
         }
 
-        static void ProcessArithmetic16(string instruction, Func<Flags, ushort, int, bool, FlagState> getFlags, Func<ushort, int, bool, int> getResult, bool useCarry)
+        static void Process16(string instruction, Func<Flags, ushort, int, bool, FlagState> getFlags, Func<ushort, int, bool, int> getResult, bool useCarry)
         {
             List<string> output = new List<string>();
 
@@ -92,7 +182,6 @@ namespace FlagSetMaker
                     {
                         if ((carry && useCarry) || !carry)
                         {
-                            if (i == 256 && j == 32512) i = i;
                             FlagState state = getFlags(new Flags(), (ushort)i, j, carry);
 
                             if (!log.ContainsKey(state))
@@ -130,19 +219,6 @@ namespace FlagSetMaker
             }
 
             File.WriteAllLines("..\\..\\..\\" + instruction + ".txt", output);
-        }
-
-        static ExecutionResult ExecuteInstruction(IDebugProcessor processor, string mnemonic, byte? arg1 = null, byte? arg2 = null)
-        {
-            Instruction instruction = Instruction.FindByMnemonic(mnemonic);
-            InstructionData data = new InstructionData()
-            {
-                Argument1 = arg1 ?? 0,
-                Argument2 = arg2 ?? 0
-            };
-
-            ExecutionResult result = processor.Execute(new ExecutionPackage(instruction, data)); // only available on IDebugProcessor debug interface - sets flags but does not advance PC
-            return result;
         }
     }
 }

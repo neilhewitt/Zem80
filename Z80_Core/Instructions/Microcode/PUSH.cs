@@ -18,16 +18,16 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xC5: // PUSH BC
-                            cpu.Push(RegisterPairName.BC);
+                            cpu.Push(RegisterWord.BC);
                             break;
                         case 0xD5: // PUSH DE
-                            cpu.Push(RegisterPairName.DE);
+                            cpu.Push(RegisterWord.DE);
                             break;
                         case 0xE5: // PUSH HL
-                            cpu.Push(RegisterPairName.HL);
+                            cpu.Push(RegisterWord.HL);
                             break;
                         case 0xF5: // PUSH AF
-                            cpu.Push(RegisterPairName.AF);
+                            cpu.Push(RegisterWord.AF);
                             break;
                     }
                     break;
@@ -36,7 +36,7 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xE5: // PUSH IX
-                            cpu.Push(RegisterPairName.IX);
+                            cpu.Push(RegisterWord.IX);
                             break;
                     }
                     break;
@@ -45,7 +45,7 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xE5: // PUSH IY
-                            cpu.Push(RegisterPairName.IY);
+                            cpu.Push(RegisterWord.IY);
                             break;
                     }
                     break;

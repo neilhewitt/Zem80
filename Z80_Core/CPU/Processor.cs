@@ -7,8 +7,6 @@ namespace Z80.Core
 {
     public class Processor : IDebugProcessor
     {
-        private static object _padlock = new object();
-
         private bool _running;
         private bool _halted;
         private bool _pendingInterrupt;
@@ -16,8 +14,6 @@ namespace Z80.Core
         private bool _pendingNonMaskableInterrupt;
         private Thread _instructionCycle;
         private ushort _topOfStack;
-        private bool _synchronous;
-
         private EventHandler<ExecutionPackage> _beforeExecute;
         private EventHandler<ExecutionResult> _afterExecute;
         private EventHandler _beforeStart;
@@ -27,7 +23,7 @@ namespace Z80.Core
         private InstructionDecoder _decoder = new InstructionDecoder();
 
         public IDebugProcessor Debuggable => (IDebugProcessor)this;
-        public bool Synchronous => _synchronous;
+        public bool Synchronous { get; private set; }
 
         public IRegisters Registers { get; private set; }
         public IMemory Memory { get; private set; }
@@ -54,18 +50,18 @@ namespace Z80.Core
             if (!_running)
             {
                 _beforeStart?.Invoke(null, null);
-                Registers.PC = address;
+                Registers.PC = address; // ordinarily, execution will start at 0x0000, but this can be overridden
                 _running = true;
 
                 if (!synchronous) // run the CPU on a thread and return to the calling code immediately
                 {
-                    _synchronous = false;
+                    Synchronous = false;
                     _instructionCycle = new Thread(new ThreadStart(InstructionCycle));
                     _instructionCycle.Start();
                 }
                 else
                 {
-                    _synchronous = true;
+                    Synchronous = true;
                     InstructionCycle(); // run the CPU as a synchronous task until stopped
                 }
             }
@@ -100,14 +96,14 @@ namespace Z80.Core
             Registers.SP = _topOfStack;
         }
 
-        public void Push(RegisterPairName register)
+        public void Push(RegisterWord register)
         {
             ushort value = Registers[register];
             Registers.SP -= 2;
             Memory.WriteWordAt(Registers.SP, value);
         }
 
-        public void Pop(RegisterPairName register)
+        public void Pop(RegisterWord register)
         {
             ushort value = Memory.ReadWordAt(Registers.SP);
             Registers.SP += 2;
@@ -166,7 +162,7 @@ namespace Z80.Core
         public ExecutionResult Execute(ExecutionPackage package)
         {
             _beforeExecute?.Invoke(this, package);
-            ExecutionResult result = package.Instruction.Implementation.Execute(this, package);
+            ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
             _afterExecute?.Invoke(this, result);
             if (result.Flags != null) Registers.Flags.Value = result.Flags.Value;
 
@@ -203,7 +199,7 @@ namespace Z80.Core
 
                 if (_pendingNonMaskableInterrupt)
                 {
-                    Push(RegisterPairName.PC);
+                    Push(RegisterWord.PC);
                     Registers.PC = 0x0066;
                     _pendingNonMaskableInterrupt = false;
                     _halted = false;
@@ -228,13 +224,13 @@ namespace Z80.Core
                             break;
 
                         case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
-                            Push(RegisterPairName.PC);
+                            Push(RegisterWord.PC);
                             Registers.PC = 0x0038;
                             break;
 
                         case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
                             _interruptCallback(); // device must populate data bus with low byte of address
-                            Push(RegisterPairName.PC);
+                            Push(RegisterWord.PC);
                             Registers.PC = (ushort)((Registers.I * 256) + DataBus);
                             break;
                     }

@@ -18,16 +18,16 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xC1: // POP BC
-                            cpu.Pop(RegisterPairName.BC);
+                            cpu.Pop(RegisterWord.BC);
                             break;
                         case 0xD1: // POP DE
-                            cpu.Pop(RegisterPairName.DE);
+                            cpu.Pop(RegisterWord.DE);
                             break;
                         case 0xE1: // POP HL
-                            cpu.Pop(RegisterPairName.HL);
+                            cpu.Pop(RegisterWord.HL);
                             break;
                         case 0xF1: // POP AF
-                            cpu.Pop(RegisterPairName.AF);
+                            cpu.Pop(RegisterWord.AF);
                             break;
 
                     }
@@ -37,7 +37,7 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xE1: // POP IX
-                            cpu.Pop(RegisterPairName.IX);
+                            cpu.Pop(RegisterWord.IX);
                             break;
 
                     }
@@ -47,7 +47,7 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xE1: // POP IY
-                            cpu.Pop(RegisterPairName.IY);
+                            cpu.Pop(RegisterWord.IY);
                             break;
 
                     }

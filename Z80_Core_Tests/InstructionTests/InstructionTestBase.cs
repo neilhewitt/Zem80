@@ -40,7 +40,7 @@ namespace Z80.Core.Tests
             return result;
         }
 
-        public byte ReadByteAtIndexAndOffset(RegisterPairName indexRegister, sbyte offset)
+        public byte ReadByteAtIndexAndOffset(RegisterWord indexRegister, sbyte offset)
         {
             return CPU.Memory.ReadByteAt((ushort)(Registers[indexRegister] + offset));
         }
@@ -60,7 +60,7 @@ namespace Z80.Core.Tests
             CPU.Memory.WriteByteAt(address, value);
         }
 
-        public void WriteByteAtIndexAndOffset(RegisterPairName indexRegister, sbyte offset, byte value)
+        public void WriteByteAtIndexAndOffset(RegisterWord indexRegister, sbyte offset, byte value)
         {
             CPU.Memory.WriteByteAt((ushort)(Registers[indexRegister] + offset), value);
         }

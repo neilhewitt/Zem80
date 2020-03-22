@@ -13,7 +13,7 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
 
-            void @out(byte portNumber, RegisterName addressRegister, RegisterName dataRegister)
+            void @out(byte portNumber, RegisterByte addressRegister, RegisterByte dataRegister)
             {
                 IPort port = cpu.Ports[portNumber];
                 byte output = r[dataRegister];
@@ -25,11 +25,11 @@ namespace Z80.Core
 
             if (instruction.Prefix == InstructionPrefix.Unprefixed)
             {
-                @out(data.Argument1, RegisterName.A, RegisterName.A);
+                @out(data.Argument1, RegisterByte.A, RegisterByte.A);
             }
             else
             {
-                @out(r.C, RegisterName.B, instruction.OperandRegister);
+                @out(r.C, RegisterByte.B, instruction.OperandRegister);
             }
 
             return new ExecutionResult(package, flags, false);
