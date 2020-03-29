@@ -22,7 +22,7 @@ namespace Z80.Core
             flags.Carry = carry;
             r.A = value;
 
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public RRA()

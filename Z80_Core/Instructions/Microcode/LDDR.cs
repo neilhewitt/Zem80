@@ -22,7 +22,9 @@ namespace Z80.Core
             flags.ParityOverflow = false;
             flags.Subtract = false;
 
-            return new ExecutionResult(package, flags, (r.BC == 0), (r.BC != 0));
+            bool conditionTrue = (r.BC == 0);
+
+            return new ExecutionResult(package, flags, conditionTrue, !conditionTrue);
         }
 
         public LDDR()

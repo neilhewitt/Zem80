@@ -14,11 +14,11 @@ namespace Z80.Core
             IRegisters r = cpu.Registers;
 
             sbyte offset = (sbyte)(data.Argument1);
-            RegisterByte register = instruction.OperandRegister;
+            ByteRegister register = instruction.OperandByteRegister;
             bool previousCarry = flags.Carry;
 
             byte original, shifted;
-            if (register != RegisterByte.None)
+            if (register != ByteRegister.None)
             {
                 original = r[register];
                 shifted = (byte)(original >> 1);
@@ -43,13 +43,13 @@ namespace Z80.Core
             byte setFlags(byte original, byte shifted)
             {
                 shifted = shifted.SetBit(7, previousCarry);
-                flags = FlagLookup.FlagsFromBitwiseOperation(original, BitwiseOperation.RotateRight);
+                flags = FlagLookup.BitwiseFlags(original, BitwiseOperation.RotateRight);
                 flags.HalfCarry = false;
                 flags.Subtract = false;
                 return shifted;
             }
 
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public RR()

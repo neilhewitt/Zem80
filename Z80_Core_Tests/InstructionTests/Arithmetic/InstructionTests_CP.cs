@@ -10,19 +10,17 @@ namespace Z80.Core.Tests
     public class InstructionTests_CP : InstructionTestBase
     {
         [Test]
-        [TestCase(0x01, 0x00, 0x01, FlagState.Subtract)]
-        [TestCase(0x00, 0x81, 0x7F, FlagState.Subtract | FlagState.ParityOverflow)]
-        [TestCase(0x01, 0xFF, 0x02, FlagState.Subtract | FlagState.HalfCarry)]
-        [TestCase(0x01, 0x8F, 0x72, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
-        [TestCase(0x00, 0x00, 0x00, FlagState.Subtract | FlagState.Zero)]
-        [TestCase(0x40, 0x40, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
-        [TestCase(0x08, 0x08, 0x00, FlagState.Subtract | FlagState.HalfCarry | FlagState.Zero)]
-        [TestCase(0x48, 0x48, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Zero)]
-        [TestCase(0x00, 0x01, 0xFF, FlagState.Subtract | FlagState.Sign)]
-        [TestCase(0x00, 0x80, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
-        [TestCase(0x01, 0x0F, 0xF2, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
-        [TestCase(0x01, 0x7F, 0x82, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
-        public void CP_r(byte first, byte second, byte result, FlagState state)
+        [TestCase(0x01, 0x00, FlagState.Subtract)]
+        [TestCase(0x00, 0x90, FlagState.Subtract | FlagState.ParityOverflow)]
+        [TestCase(0x01, 0xFF, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x81, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x00, FlagState.Subtract | FlagState.Zero)]
+        [TestCase(0x40, 0x40, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x00, 0x10, FlagState.Subtract | FlagState.Sign)]
+        [TestCase(0x00, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x00, 0x01, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x01, 0x7F, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        public void CP_r(byte first, byte second, FlagState state)
         {
             Registers.A = first;
             Registers.B = second;
@@ -33,19 +31,17 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        [TestCase(0x01, 0x00, 0x01, FlagState.Subtract)]
-        [TestCase(0x00, 0x81, 0x7F, FlagState.Subtract | FlagState.ParityOverflow)]
-        [TestCase(0x01, 0xFF, 0x02, FlagState.Subtract | FlagState.HalfCarry)]
-        [TestCase(0x01, 0x8F, 0x72, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
-        [TestCase(0x00, 0x00, 0x00, FlagState.Subtract | FlagState.Zero)]
-        [TestCase(0x40, 0x40, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
-        [TestCase(0x08, 0x08, 0x00, FlagState.Subtract | FlagState.HalfCarry | FlagState.Zero)]
-        [TestCase(0x48, 0x48, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Zero)]
-        [TestCase(0x00, 0x01, 0xFF, FlagState.Subtract | FlagState.Sign)]
-        [TestCase(0x00, 0x80, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
-        [TestCase(0x01, 0x0F, 0xF2, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
-        [TestCase(0x01, 0x7F, 0x82, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
-        public void CP_n(byte first, byte second, byte result, FlagState state)
+        [TestCase(0x01, 0x00, FlagState.Subtract)]
+        [TestCase(0x00, 0x90, FlagState.Subtract | FlagState.ParityOverflow)]
+        [TestCase(0x01, 0xFF, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x81, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x00, FlagState.Subtract | FlagState.Zero)]
+        [TestCase(0x40, 0x40, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x00, 0x10, FlagState.Subtract | FlagState.Sign)]
+        [TestCase(0x00, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x00, 0x01, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x01, 0x7F, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        public void CP_n(byte first, byte second, FlagState state)
         {
             Registers.A = first;
 
@@ -55,19 +51,17 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        [TestCase(0x01, 0x00, 0x01, FlagState.Subtract)]
-        [TestCase(0x00, 0x81, 0x7F, FlagState.Subtract | FlagState.ParityOverflow)]
-        [TestCase(0x01, 0xFF, 0x02, FlagState.Subtract | FlagState.HalfCarry)]
-        [TestCase(0x01, 0x8F, 0x72, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
-        [TestCase(0x00, 0x00, 0x00, FlagState.Subtract | FlagState.Zero)]
-        [TestCase(0x40, 0x40, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
-        [TestCase(0x08, 0x08, 0x00, FlagState.Subtract | FlagState.HalfCarry | FlagState.Zero)]
-        [TestCase(0x48, 0x48, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Zero)]
-        [TestCase(0x00, 0x01, 0xFF, FlagState.Subtract | FlagState.Sign)]
-        [TestCase(0x00, 0x80, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
-        [TestCase(0x01, 0x0F, 0xF2, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
-        [TestCase(0x01, 0x7F, 0x82, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
-        public void CP_xHL(byte first, byte second, byte result, FlagState state)
+        [TestCase(0x01, 0x00, FlagState.Subtract)]
+        [TestCase(0x00, 0x90, FlagState.Subtract | FlagState.ParityOverflow)]
+        [TestCase(0x01, 0xFF, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x81, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x00, FlagState.Subtract | FlagState.Zero)]
+        [TestCase(0x40, 0x40, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x00, 0x10, FlagState.Subtract | FlagState.Sign)]
+        [TestCase(0x00, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x00, 0x01, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x01, 0x7F, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        public void CP_xHL(byte first, byte second, FlagState state)
         {
             Registers.A = first;
             Registers.HL = 0x5000;
@@ -79,24 +73,22 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        [TestCase(0x01, 0x00, 0x01, FlagState.Subtract)]
-        [TestCase(0x00, 0x81, 0x7F, FlagState.Subtract | FlagState.ParityOverflow)]
-        [TestCase(0x01, 0xFF, 0x02, FlagState.Subtract | FlagState.HalfCarry)]
-        [TestCase(0x01, 0x8F, 0x72, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
-        [TestCase(0x00, 0x00, 0x00, FlagState.Subtract | FlagState.Zero)]
-        [TestCase(0x40, 0x40, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
-        [TestCase(0x08, 0x08, 0x00, FlagState.Subtract | FlagState.HalfCarry | FlagState.Zero)]
-        [TestCase(0x48, 0x48, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Zero)]
-        [TestCase(0x00, 0x01, 0xFF, FlagState.Subtract | FlagState.Sign)]
-        [TestCase(0x00, 0x80, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
-        [TestCase(0x01, 0x0F, 0xF2, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
-        [TestCase(0x01, 0x7F, 0x82, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
-        public void CP_xIndexOffset(byte first, byte second, byte result, FlagState state)
+        [TestCase(0x01, 0x00, FlagState.Subtract)]
+        [TestCase(0x00, 0x90, FlagState.Subtract | FlagState.ParityOverflow)]
+        [TestCase(0x01, 0xFF, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x81, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x00, FlagState.Subtract | FlagState.Zero)]
+        [TestCase(0x40, 0x40, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x00, 0x10, FlagState.Subtract | FlagState.Sign)]
+        [TestCase(0x00, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x00, 0x01, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x01, 0x7F, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
+        public void CP_xIndexOffset(byte first, byte second, FlagState state)
         {
             Registers.A = first;
             Registers.IX = 0x5000;
             sbyte offset = (sbyte)(RandomBool() ? 0x7F : -0x80);
-            WriteByteAtIndexAndOffset(RegisterWord.IX, offset, second);
+            WriteByteAtIndexAndOffset(WordRegister.IX, offset, second);
 
             ExecutionResult executionResult = ExecuteInstruction($"CP (IX+o)", arg1: (byte)offset);
 

@@ -13,7 +13,7 @@ namespace Z80.Core
 
             cpu.Registers.ExchangeBCDEHL();
 
-            return new ExecutionResult(package, null, false);
+            return new ExecutionResult(package, null, false, false);
         }
 
         public EXX()

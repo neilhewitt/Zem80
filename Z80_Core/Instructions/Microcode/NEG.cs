@@ -14,10 +14,10 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
 
             int result = 0x00 - r.A;
-            flags = FlagLookup.FlagsFromArithmeticOperation8(0x00, r.A, false, true);
+            flags = FlagLookup.ByteArithmeticFlags(0x00, r.A, false, true);
             r.A = (byte)result;
 
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public NEG()

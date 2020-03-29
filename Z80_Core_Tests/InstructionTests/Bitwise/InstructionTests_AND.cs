@@ -69,7 +69,7 @@ namespace Z80.Core.Tests
             Registers.A = first;
             Registers.IX = 0x5000;
             sbyte offset = (sbyte)(RandomBool() ? 0x7F : -0x80);
-            WriteByteAtIndexAndOffset(RegisterWord.IX, offset, second);
+            WriteByteAtIndexAndOffset(WordRegister.IX, offset, second);
 
             ExecutionResult executionResult = ExecuteInstruction($"AND (IX+o)", arg1: (byte)offset);
             Assert.That(Registers.A, Is.EqualTo(expectedResult));

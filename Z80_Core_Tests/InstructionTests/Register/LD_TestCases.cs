@@ -7,67 +7,30 @@ namespace Z80.Core.Tests
 {
     public static class LD_TestCases
     {
-        public static IEnumerable<RegisterWord> GetRegisterPairs()
+        public static IEnumerable<WordRegister> GetWordRegisters()
         {
             // get all register pairs that are assignable with LD
-            return new List<RegisterWord>()
+            return new List<WordRegister>()
             {
-                RegisterWord.BC,
-                RegisterWord.DE,
-                RegisterWord.HL,
-                RegisterWord.IX,
-                RegisterWord.IY,
-                RegisterWord.SP
+                WordRegister.BC,
+                WordRegister.DE,
+                WordRegister.HL,
+                WordRegister.IX,
+                WordRegister.IY,
+                WordRegister.SP
             };
         }
 
-        public static IEnumerable<RegisterWord> GetRegisterPairs_PUSH_POP() // special case
-        {
-            // get all register pairs that can be PUSHed or POPped
-            return new List<RegisterWord>()
-            {
-                RegisterWord.AF,
-                RegisterWord.BC,
-                RegisterWord.DE,
-                RegisterWord.HL,
-                RegisterWord.IX,
-                RegisterWord.IY
-            };
-        }
-
-
-        public static IEnumerable<RegisterByte> GetRegisters()
+        public static IEnumerable<ByteRegister> GetByteRegisters()
         {
             // generate a list of registers excluding F (note 6 == RegisterIndex.None and has to be omitted)
-            IList<RegisterByte> cases = new System.Collections.Generic.List<RegisterByte>();
+            IList<ByteRegister> cases = new System.Collections.Generic.List<ByteRegister>();
             for (int i = 0; i <= 7; i++)
             {
-                RegisterByte register = (RegisterByte)i;
+                ByteRegister register = (ByteRegister)i;
                 if (i != 6)
                 {
                     cases.Add(register);
-                }
-            }
-
-            return cases;
-        }
-
-        public static IEnumerable<RegisterByte> Plus(this IEnumerable<RegisterByte> registers, RegisterByte name) => registers.Append(name);
-
-        public static IEnumerable<object[]> GetRegistersAndBits()
-        {
-            // generate a matrix of each register (A-H without F) plus each bit index (0-6)
-            // for bit setting operations
-            IList<object[]> cases = new System.Collections.Generic.List<object[]>();
-            for (int i = 0; i <= 7; i++)
-            {
-                if (i != 6)
-                {
-                    RegisterByte register = (RegisterByte)i;
-                    for (int j = 0; j <= 6; j++)
-                    {
-                        cases.Add(new object[] { register, j });
-                    }
                 }
             }
 
@@ -81,10 +44,10 @@ namespace Z80.Core.Tests
             IList<object[]> cases = new System.Collections.Generic.List<object[]>();
             for (int i = 0; i <= 7; i++)
             {
-                RegisterByte left = (RegisterByte)i;
+                ByteRegister left = (ByteRegister)i;
                 for (int j = 0; j <= 7; j++)
                 {
-                    RegisterByte right = (RegisterByte)j;
+                    ByteRegister right = (ByteRegister)j;
                     if (i != 6 && j != 6)
                     {
                         cases.Add(new object[] { left, right });
@@ -101,41 +64,21 @@ namespace Z80.Core.Tests
             IList<object[]> cases = new System.Collections.Generic.List<object[]>();
             for (int i = 0; i <= 7; i++)
             {
-                RegisterByte register = (RegisterByte)i;
+                ByteRegister register = (ByteRegister)i;
                 if (i != 6)
                 {
-                    cases.Add(new object[] { register, RegisterWord.IX });
-                    cases.Add(new object[] { register, RegisterWord.IY });
+                    cases.Add(new object[] { register, WordRegister.IX });
+                    cases.Add(new object[] { register, WordRegister.IY });
                 }
             }
 
             return cases;
         }
 
-        public static IEnumerable<RegisterWord> GetIndexRegisters()
+        public static IEnumerable<WordRegister> GetIndexRegisters()
         {
             // get the Index register names (for indexed operations)
-            return new List<RegisterWord>() { RegisterWord.IX, RegisterWord.IY };
-        }
-
-        public static IEnumerable<(string, Func<Flags>, Func<Flags, bool>)> GetConditions()
-        {
-            yield return ("Z", () => new Flags() { Zero = true }, (Flags flags) => flags.Zero);
-            yield return ("NZ", () => new Flags() { Zero = false }, (Flags flags) => !flags.Zero);
-            yield return ("C", () => new Flags() { Carry = true }, (Flags flags) => flags.Carry);
-            yield return ("NC", () => new Flags() { Carry = false }, (Flags flags) => !flags.Carry);
-            yield return ("PE", () => new Flags() { ParityOverflow = true }, (Flags flags) => flags.ParityOverflow);
-            yield return ("PO", () => new Flags() { ParityOverflow = false }, (Flags flags) => !flags.ParityOverflow);
-            yield return ("M", () => new Flags() { Sign = true }, (Flags flags) => flags.Sign);
-            yield return ("P", () => new Flags() { Sign = false }, (Flags flags) => !flags.Sign);
-        }
-
-        public static IEnumerable<(string, Func<Flags>, Func<Flags, bool>)> GetZeroAndCarryConditions()
-        {
-            yield return ("Z", () => new Flags() { Zero = true }, (Flags flags) => flags.Zero);
-            yield return ("NZ", () => new Flags() { Zero = false }, (Flags flags) => !flags.Zero);
-            yield return ("C", () => new Flags() { Carry = true }, (Flags flags) => flags.Carry);
-            yield return ("NC", () => new Flags() { Carry = false }, (Flags flags) => !flags.Carry);
+            return new List<WordRegister>() { WordRegister.IX, WordRegister.IY };
         }
     }
 }

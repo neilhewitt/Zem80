@@ -93,7 +93,7 @@ namespace Z80.Core.Tests
         [TestCase(0x81, 0xFF, 0x80, FlagState.Carry | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
         public void ADD_A_xIndexOffset(byte input, byte add, byte expectedResult, FlagState expectedFlagState)
         {
-            RegisterWord indexRegister = RandomBool() ? RegisterWord.IX : RegisterWord.IY; // doesn't matter which as long as we exercise both
+            WordRegister indexRegister = RandomBool() ? WordRegister.IX : WordRegister.IY; // doesn't matter which as long as we exercise both
             sbyte offset = 0x7F;
 
             Registers.A = input;

@@ -9,16 +9,16 @@ namespace Z80.Core
         public Instruction Instruction { get; }
         public Flags Flags { get; }
         public byte ClockCycles { get; }
-        public bool ProgramCounterUpdated { get; }
+        public bool InstructionSetsProgramCounter { get; }
 
-        public ExecutionResult(ExecutionPackage package, Flags flags, bool conditionTrue, bool pcWasSet = false)
+        public ExecutionResult(ExecutionPackage package, Flags flags, bool conditionTrue, bool instructionSetsProgramCounter)
         {
             Instruction = package.Instruction;
             Flags = flags;
-            ClockCycles = (byte)(conditionTrue ? 
-                package.Instruction.ClockCyclesConditional ?? package.Instruction.ClockCycles : 
+            ClockCycles = (byte)(conditionTrue ?
+                package.Instruction.ClockCyclesConditional ?? package.Instruction.ClockCycles :
                 package.Instruction.ClockCycles);
-            ProgramCounterUpdated = pcWasSet;
+            InstructionSetsProgramCounter = instructionSetsProgramCounter;
         }
     }
 }

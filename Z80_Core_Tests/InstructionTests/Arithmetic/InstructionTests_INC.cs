@@ -15,7 +15,7 @@ namespace Z80.Core.Tests
             Flags flags = new Flags();
             sbyte subtract = -1;
             int result = input - 1;
-            flags = FlagLookup.FlagsFromArithmeticOperation8(input, (byte)subtract, false, true);
+            flags = FlagLookup.ByteArithmeticFlags(input, (byte)subtract, false, true);
             return ((byte)result, flags);
         }
 
@@ -63,11 +63,11 @@ namespace Z80.Core.Tests
         {
             Registers.IX = 0x5000;
             sbyte offset = (sbyte)(RandomBool() ? 0x7F : -0x80);
-            WriteByteAtIndexAndOffset(RegisterWord.IX, offset, input);
+            WriteByteAtIndexAndOffset(WordRegister.IX, offset, input);
 
             ExecutionResult executionResult = ExecuteInstruction($"INC (IX+o)", arg1: (byte)offset);
 
-            Assert.That(ReadByteAtIndexAndOffset(RegisterWord.IX, offset), Is.EqualTo(expectedResult));
+            Assert.That(ReadByteAtIndexAndOffset(WordRegister.IX, offset), Is.EqualTo(expectedResult));
             Assert.That(executionResult.Flags.State, Is.EqualTo(expectedState));
         }
 

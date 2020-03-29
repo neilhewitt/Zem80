@@ -11,14 +11,16 @@ namespace Z80.Core
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             Flags flags = cpu.Registers.Flags;
-            bool pcWasSet = false;
+            bool conditionTrue = false;
+            bool callRequired = false;
 
             void call()
             {
-                cpu.Registers.PC += 3; // to allow for this instruction
-                cpu.Push(RegisterWord.PC);
+                cpu.Registers.PC += 3;
+                cpu.Push(WordRegister.PC);
                 cpu.Registers.PC = data.ArgumentsAsWord;
-                pcWasSet = true;
+                conditionTrue = instruction.Opcode != 0xCD;
+                callRequired = true;
             }
 
             switch (instruction.Prefix)
@@ -57,7 +59,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(package, cpu.Registers.Flags, false, pcWasSet);
+            return new ExecutionResult(package, cpu.Registers.Flags, conditionTrue, callRequired);
         }
 
         public CALL()

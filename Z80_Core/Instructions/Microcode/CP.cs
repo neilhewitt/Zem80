@@ -16,7 +16,7 @@ namespace Z80.Core
             void cp(byte value)
             {
                 int result = cpu.Registers.A - value;
-                flags = FlagLookup.FlagsFromArithmeticOperation8(cpu.Registers.A, value, false, true);
+                flags = FlagLookup.ByteArithmeticFlags(cpu.Registers.A, value, false, true);
             }
 
             switch (instruction.Prefix)
@@ -87,7 +87,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public CP()

@@ -7,6 +7,8 @@ namespace Z80.Core
 {
     public static class FlagLookup
     {
+        private const bool FLAG_PRECALCULATION_ENABLED = false;
+
         private static bool _initialised;
         private static byte[,,] _addFlags8;
         private static byte[,,] _subFlags8;
@@ -15,15 +17,15 @@ namespace Z80.Core
 
         public static void BuildFlagLookupTables()
         {
-            if (!_initialised)
+            if (!_initialised && FLAG_PRECALCULATION_ENABLED)
             {
                 _addFlags8 = new byte[256, 256, 2];
                 for (int i = 0; i < 256; i++)
                 {
                     for (int j = 0; j < 256; j++)
                     {
-                        _addFlags8[i, j, 0] = arithmeticFlags((byte)i, (byte)j, false, false).Value;
-                        _addFlags8[i, j, 1] = arithmeticFlags((byte)i, (byte)j, true, false).Value;
+                        _addFlags8[i, j, 0] = CalulateArithmeticFlags((byte)i, (byte)j, false, false).Value;
+                        _addFlags8[i, j, 1] = CalulateArithmeticFlags((byte)i, (byte)j, true, false).Value;
                     }
                 }
 
@@ -32,8 +34,8 @@ namespace Z80.Core
                 {
                     for (int j = 0; j < 256; j++)
                     {
-                        _subFlags8[i, j, 0] = arithmeticFlags((byte)i, (byte)j, false, true).Value;
-                        _subFlags8[i, j, 1] = arithmeticFlags((byte)i, (byte)j, true, true).Value;
+                        _subFlags8[i, j, 0] = CalulateArithmeticFlags((byte)i, (byte)j, false, true).Value;
+                        _subFlags8[i, j, 1] = CalulateArithmeticFlags((byte)i, (byte)j, true, true).Value;
                     }
                 }
 
@@ -42,9 +44,9 @@ namespace Z80.Core
                 {
                     for (int j = 0; j < 256; j++)
                     {
-                        _logicalFlags[i, j, 0] = logicalFlags((byte)i, (byte)j, i | j, LogicalOperation.Or).Value;
-                        _logicalFlags[i, j, 1] = logicalFlags((byte)i, (byte)j, i & j, LogicalOperation.And).Value;
-                        _logicalFlags[i, j, 2] = logicalFlags((byte)i, (byte)j, i ^ j, LogicalOperation.Xor).Value;
+                        _logicalFlags[i, j, 0] = CalculateLogicalFlags((byte)i, (byte)j, LogicalOperation.Or).Value;
+                        _logicalFlags[i, j, 1] = CalculateLogicalFlags((byte)i, (byte)j, LogicalOperation.And).Value;
+                        _logicalFlags[i, j, 2] = CalculateLogicalFlags((byte)i, (byte)j, LogicalOperation.Xor).Value;
                     }
                 }
 
@@ -52,79 +54,58 @@ namespace Z80.Core
                 for (int i = 0; i < 256; i++)
                 {
                     Flags flags = new Flags();
-                    _bitwiseFlags[i, 0] = bitwiseFlags(i, i << 1, BitwiseOperation.ShiftLeft).Value;
-                    _bitwiseFlags[i, 1] = bitwiseFlags(i, i >> 1, BitwiseOperation.ShiftRight).Value;
-
-                    byte rotated = ((byte)(i << 1)).SetBit(0, ((byte)i).GetBit(7));
-                    _bitwiseFlags[i, 2] = bitwiseFlags(i, rotated, BitwiseOperation.RotateLeft).Value;
-
-                    rotated = ((byte)(i >> 1)).SetBit(7, ((byte)i).GetBit(0));
-                    _bitwiseFlags[i, 3] = bitwiseFlags(i, rotated, BitwiseOperation.RotateRight).Value;
+                    _bitwiseFlags[i, 0] = CalculateBitwiseFlags((byte)i, BitwiseOperation.ShiftLeft).Value;
+                    _bitwiseFlags[i, 1] = CalculateBitwiseFlags((byte)i, BitwiseOperation.ShiftRight).Value;
+                    _bitwiseFlags[i, 2] = CalculateBitwiseFlags((byte)i, BitwiseOperation.RotateLeft).Value;
+                    _bitwiseFlags[i, 3] = CalculateBitwiseFlags((byte)i, BitwiseOperation.RotateRight).Value;
                 }
 
                 _initialised = true;
-            }
+            }            
+        }
 
-            Flags arithmeticFlags(byte startingValue, byte addOrSubtractValue, bool carry, bool subtract)
+        public static Flags ByteArithmeticFlags(byte startingValue, int addOrSubtractValue, bool carry, bool subtract)
+        {
+            if (FLAG_PRECALCULATION_ENABLED)
             {
-                Flags flags = new Flags();
-
-                int result = subtract ? startingValue - addOrSubtractValue - (carry ? 1 : 0) : startingValue + addOrSubtractValue + (carry ? 1 : 0);
-
-                flags.Zero = ((byte)result == 0);
-                flags.Carry = result > 0xFF;
-                flags.Sign = ((sbyte)result < 0);
-                flags.ParityOverflow = (startingValue.OverflowsWhenAdding((byte)addOrSubtractValue));
-                flags.HalfCarry = (startingValue.HalfCarryWhenAdding((byte)addOrSubtractValue));
-                flags.Subtract = subtract; // don't forget to override
-                return flags;
+                return new Flags((subtract ?
+                                    _subFlags8[startingValue, addOrSubtractValue, carry ? 1 : 0] :
+                                    _addFlags8[startingValue, addOrSubtractValue, carry ? 1 : 0]
+                                    ));
             }
-
-            Flags logicalFlags(byte first, byte second, int result, LogicalOperation operation)
+            else
             {
-                Flags flags = new Flags();
-                flags.Zero = ((byte)result == 0x00);
-                flags.Sign = (((sbyte)result) < 0);
-                flags.ParityOverflow = (((byte)result).CountBits(true) % 2 == 0);
-                flags.HalfCarry = operation == LogicalOperation.And; 
-                flags.Subtract = false;
-                flags.Carry = false;
-                return flags;
-            }
-
-            Flags bitwiseFlags(int value, int result, BitwiseOperation operation)
-            {
-                Flags flags = new Flags();
-                flags.Zero = ((byte)result == 0x00);
-                flags.Sign = (((sbyte)result) < 0);
-                flags.ParityOverflow = (((byte)result).CountBits(true) % 2 == 0);
-                flags.HalfCarry = false;
-                flags.Subtract = false;
-                flags.Carry = ((byte)value).GetBit(7);
-                return flags;
+                return CalulateArithmeticFlags(startingValue, (byte)addOrSubtractValue, carry, subtract);
             }
         }
 
-        public static Flags FlagsFromArithmeticOperation8(byte startingValue, int addOrSubtractValue, bool carry, bool subtract)
+        public static Flags LogicalFlags(byte first, byte second, LogicalOperation operation)
         {
-            return new Flags((subtract ? 
-                                _subFlags8[startingValue, addOrSubtractValue, carry ? 1 : 0] : 
-                                _addFlags8[startingValue, addOrSubtractValue, carry ? 1 : 0]
-                                ));
-        }
-        public static Flags FlagsFromLogicalOperation(byte first, byte second, LogicalOperation operation)
-        {
-            return new Flags(_logicalFlags[first, second, (int)operation]);
+            if (FLAG_PRECALCULATION_ENABLED)
+            {
+                return new Flags(_logicalFlags[first, second, (int)operation]);
+            }
+            else
+            {
+                return CalculateLogicalFlags(first, second, operation);
+            }
         }
 
-        public static Flags FlagsFromBitwiseOperation(byte value, BitwiseOperation operation)
+        public static Flags BitwiseFlags(byte value, BitwiseOperation operation)
         {
-            return new Flags(_bitwiseFlags[value, (int)operation]);
+            if (FLAG_PRECALCULATION_ENABLED)
+            {
+                return new Flags(_bitwiseFlags[value, (int)operation]);
+            }
+            else
+            {
+                return CalculateBitwiseFlags(value, operation);
+            }
         }
 
         // the state space of 16 x 16 bit numbers is too large to pre-calculate the flags in a reasonable time
         // TODO: run the code to completion and store output in a file?
-        public static Flags FlagsFromArithmeticOperation16(Flags flags, ushort startingValue, int addOrSubtractValue, bool carry, bool setSignZeroParityOverflow, bool subtract) 
+        public static Flags WordArithmeticFlags(Flags flags, ushort startingValue, int addOrSubtractValue, bool carry, bool setSignZeroParityOverflow, bool subtract) 
         {
             if (flags == null) flags = new Flags();
 
@@ -134,11 +115,68 @@ namespace Z80.Core
             flags.Carry = result > 0xFFFF;
             flags.Sign = setSignZeroParityOverflow && ((short)result < 0);
             flags.ParityOverflow = setSignZeroParityOverflow && (startingValue.OverflowsWhenAdding((ushort)addOrSubtractValue));
-            flags.HalfCarry = (startingValue.HalfCarryWhenAdding((ushort)addOrSubtractValue));
+            flags.HalfCarry = subtract ? (startingValue.HalfCarryWhenSubtracting((ushort)addOrSubtractValue)) : (startingValue.HalfCarryWhenAdding((ushort)addOrSubtractValue));
             flags.Subtract = subtract;
 
             return flags;
         }
 
+        private static Flags CalulateArithmeticFlags(byte startingValue, byte addOrSubtractValue, bool carry, bool subtract)
+        {
+            Flags flags = new Flags();
+
+            int result = subtract ? startingValue - addOrSubtractValue - (carry ? 1 : 0) : startingValue + addOrSubtractValue + (carry ? 1 : 0);
+
+            flags.Zero = ((byte)result == 0);
+            flags.Carry = result > 0xFF;
+            flags.Sign = ((sbyte)result < 0);
+            flags.ParityOverflow = (startingValue.OverflowsWhenAddingOrSubtracting(addOrSubtractValue));
+            flags.HalfCarry = subtract ? (startingValue.HalfCarryWhenSubtracting(addOrSubtractValue)) : (startingValue.HalfCarryWhenAdding(addOrSubtractValue));
+            flags.Subtract = subtract; // don't forget to override
+            return flags;
+        }
+
+        private static Flags CalculateLogicalFlags(byte first, byte second, LogicalOperation operation)
+        {
+            Flags flags = new Flags();
+
+            int result = operation switch
+            {
+                LogicalOperation.And => first & second,
+                LogicalOperation.Or => first | second,
+                LogicalOperation.Xor => first ^ second,
+                _ => 0x00
+            };
+
+            flags.Zero = ((byte)result == 0x00);
+            flags.Sign = (((sbyte)result) < 0);
+            flags.ParityOverflow = (((byte)result).CountBits(true) % 2 == 0);
+            flags.HalfCarry = operation == LogicalOperation.And;
+            flags.Subtract = false;
+            flags.Carry = false;
+            return flags;
+        }
+
+        private static Flags CalculateBitwiseFlags(byte value, BitwiseOperation operation)
+        {
+            Flags flags = new Flags();
+
+            int result = operation switch
+            {
+                BitwiseOperation.ShiftLeft => value << 1,
+                BitwiseOperation.ShiftRight => value >> 1,
+                BitwiseOperation.RotateLeft => ((byte)(value << 1)).SetBit(0, value.GetBit(7)),
+                BitwiseOperation.RotateRight => ((byte)(value >> 1)).SetBit(7, value.GetBit(0)),
+                _ => 0x00
+            };
+
+            flags.Zero = ((byte)result == 0x00);
+            flags.Sign = (((sbyte)result) < 0);
+            flags.ParityOverflow = (((byte)result).CountBits(true) % 2 == 0);
+            flags.HalfCarry = false;
+            flags.Subtract = false;
+            flags.Carry = ((byte)value).GetBit(7);
+            return flags;
+        }
     }
 }

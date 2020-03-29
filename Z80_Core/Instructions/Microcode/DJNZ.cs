@@ -10,22 +10,18 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            bool pcWasSet = true;
+            bool conditionTrue = false;
 
+            sbyte jump = 0;
             if (cpu.Registers.B > 0)
             {
-                cpu.Registers.PC += 2; // include size of this instruction
+                conditionTrue = true;
                 cpu.Registers.B--;
-                sbyte jump = (sbyte)data.Argument1; 
-                cpu.Registers.PC += (ushort)jump;
-                if (jump == 0) pcWasSet = false;
-            }
-            else
-            {
-                pcWasSet = false;
+                jump = (sbyte)data.Argument1;
+                cpu.Registers.PC = (ushort)(cpu.Registers.PC + jump);
             }
 
-            return new ExecutionResult(package, cpu.Registers.Flags, !pcWasSet, pcWasSet);
+            return new ExecutionResult(package, cpu.Registers.Flags, conditionTrue, jump != 0);
         }
 
         public DJNZ()

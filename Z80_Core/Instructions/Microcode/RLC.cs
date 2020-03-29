@@ -13,10 +13,10 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
             sbyte offset = (sbyte)(data.Argument1);
-            RegisterByte register = instruction.OperandRegister;
+            ByteRegister register = instruction.OperandByteRegister;
 
             byte original, shifted;
-            if (register != RegisterByte.None)
+            if (register != ByteRegister.None)
             {
                 original = r[register];
                 shifted = (byte)(original << 1);
@@ -42,13 +42,13 @@ namespace Z80.Core
 
             byte setFlags(byte original, byte shifted)
             {
-                flags = FlagLookup.FlagsFromBitwiseOperation(original, BitwiseOperation.RotateLeft);
+                flags = FlagLookup.BitwiseFlags(original, BitwiseOperation.RotateLeft);
                 flags.HalfCarry = false;
                 flags.Subtract = false;
                 return shifted;
             }
 
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public RLC()

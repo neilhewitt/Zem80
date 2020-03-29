@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public enum RegisterByte
+    public enum ByteRegister
     {
         None = 6,
         B = 0,

@@ -24,6 +24,7 @@
 ; along with this program; if not, write to the Free Software
 ; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+	aseg
 	org	100h
 
 	jp	start
@@ -108,7 +109,6 @@ done:	ld	de,msg2
 
 tests:
 	dw	adc16
-	dw  0
 	dw	add16
 	dw	add16x
 	dw	add16y

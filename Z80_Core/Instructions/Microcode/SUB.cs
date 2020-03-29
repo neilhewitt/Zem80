@@ -21,7 +21,7 @@ namespace Z80.Core
             byte subByte(byte value)
             {
                 int result = cpu.Registers.A - value;
-                flags = FlagLookup.FlagsFromArithmeticOperation8(cpu.Registers.A, value, false, true);
+                flags = FlagLookup.ByteArithmeticFlags(cpu.Registers.A, value, false, true);
 
                 return (byte)result;
             }
@@ -92,7 +92,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public SUB()

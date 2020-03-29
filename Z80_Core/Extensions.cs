@@ -42,13 +42,19 @@ namespace Z80.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HalfCarryWhenAdding(this ushort first, ushort second)
         {
-            return (((first & 0x0FFF) + (second & 0x0FFF)) & 0x1000) == 0x1000;
+            return HalfCarryWhenAdding(first.HighByte(), second.HighByte());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HalfCarryWhenSubtracting(this byte first, byte second)
         {
-            return ((first & 0x0F) - (second & 0x0F) < 0);
+            return (((first & 0x0F) - (second & 0x0F)) < 0);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool HalfCarryWhenSubtracting(this ushort first, ushort second)
+        {
+            return HalfCarryWhenSubtracting(first.HighByte(), second.HighByte());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -58,7 +64,7 @@ namespace Z80.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool OverflowsWhenAdding(this byte first, byte second)
+        public static bool OverflowsWhenAddingOrSubtracting(this byte first, byte second)
         {
             int result = (byte)((sbyte)first + (sbyte)second);
             return (result >= 0x80 || result <= -0x80);

@@ -12,7 +12,7 @@ namespace Z80.Core
             flags.Carry = true;
             flags.HalfCarry = false;
             flags.Subtract = false;
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public SCF()

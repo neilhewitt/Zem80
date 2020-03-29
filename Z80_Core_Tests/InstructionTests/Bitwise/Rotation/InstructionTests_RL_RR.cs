@@ -155,12 +155,12 @@ namespace Z80.Core.Tests
         {
             sbyte offset = 0x7F;
             Registers.IX = 0x5000;
-            WriteByteAtIndexAndOffset(RegisterWord.IX, offset, input);
+            WriteByteAtIndexAndOffset(WordRegister.IX, offset, input);
             Flags.Carry = carry;
 
             ExecutionResult executionResult = ExecuteInstruction($"RL (IX+o)", arg1: (byte)offset);
 
-            Assert.That(ReadByteAtIndexAndOffset(RegisterWord.IX, offset), Is.EqualTo(expectedResult));
+            Assert.That(ReadByteAtIndexAndOffset(WordRegister.IX, offset), Is.EqualTo(expectedResult));
             Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
 
@@ -187,12 +187,12 @@ namespace Z80.Core.Tests
         {
             sbyte offset = -0x80;
             Registers.IY = 0x5000;
-            WriteByteAtIndexAndOffset(RegisterWord.IY, offset, input);
+            WriteByteAtIndexAndOffset(WordRegister.IY, offset, input);
             Flags.Carry = carry;
 
             ExecutionResult executionResult = ExecuteInstruction($"RR (IY+o)", arg1: (byte)offset);
 
-            Assert.That(ReadByteAtIndexAndOffset(RegisterWord.IY, offset), Is.EqualTo(expectedResult));
+            Assert.That(ReadByteAtIndexAndOffset(WordRegister.IY, offset), Is.EqualTo(expectedResult));
             Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
     }

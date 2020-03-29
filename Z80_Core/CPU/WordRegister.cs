@@ -1,6 +1,6 @@
 ﻿namespace Z80.Core
 {
-    public enum RegisterWord
+    public enum WordRegister
     {
         None = 6,
         AF = 7,

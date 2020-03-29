@@ -18,16 +18,16 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xC1: // POP BC
-                            cpu.Pop(RegisterWord.BC);
+                            cpu.Pop(WordRegister.BC);
                             break;
                         case 0xD1: // POP DE
-                            cpu.Pop(RegisterWord.DE);
+                            cpu.Pop(WordRegister.DE);
                             break;
                         case 0xE1: // POP HL
-                            cpu.Pop(RegisterWord.HL);
+                            cpu.Pop(WordRegister.HL);
                             break;
                         case 0xF1: // POP AF
-                            cpu.Pop(RegisterWord.AF);
+                            cpu.Pop(WordRegister.AF);
                             break;
 
                     }
@@ -37,7 +37,7 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xE1: // POP IX
-                            cpu.Pop(RegisterWord.IX);
+                            cpu.Pop(WordRegister.IX);
                             break;
 
                     }
@@ -47,14 +47,14 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0xE1: // POP IY
-                            cpu.Pop(RegisterWord.IY);
+                            cpu.Pop(WordRegister.IY);
                             break;
 
                     }
                     break;
             }
 
-            return new ExecutionResult(package, cpu.Registers.Flags, false);
+            return new ExecutionResult(package, cpu.Registers.Flags, false, false);
         }
 
         public POP()

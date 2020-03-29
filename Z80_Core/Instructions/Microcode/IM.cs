@@ -30,7 +30,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(package, cpu.Registers.Flags, false);
+            return new ExecutionResult(package, cpu.Registers.Flags, false, false);
         }
 
         public IM()

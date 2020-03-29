@@ -13,27 +13,27 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
 
-            byte rb(ushort address)
+            byte readByte(ushort address)
             {
                 return cpu.Memory.ReadByteAt(address);
             }
 
-            byte ro(ushort address, byte offset)
+            byte readOffset(ushort address, byte offset)
             {
                 return cpu.Memory.ReadByteAt((ushort)(address + (sbyte)offset));
             }
 
-            byte subc(byte value)
+            byte subByteWithCarry(byte value)
             {
                 int result = cpu.Registers.A - value - (flags.Carry ? 1 : 0);
-                flags = FlagLookup.FlagsFromArithmeticOperation8(cpu.Registers.A, value, flags.Carry, true);
+                flags = FlagLookup.ByteArithmeticFlags(cpu.Registers.A, value, flags.Carry, true);
                 return (byte)result;
             }
 
-            ushort subwc(ushort value)
+            ushort subWordWithCarry(ushort value)
             {
                 int result = cpu.Registers.HL - value - (flags.Carry ? 1 : 0);
-                flags = FlagLookup.FlagsFromArithmeticOperation16(flags, cpu.Registers.HL, value, flags.Carry, true, true);
+                flags = FlagLookup.WordArithmeticFlags(flags, cpu.Registers.HL, value, flags.Carry, true, true);
                 return (ushort)result;
             }
 
@@ -43,31 +43,31 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x98: // SBC A,B
-                            r.A = subc(r.B);
+                            r.A = subByteWithCarry(r.B);
                             break;
                         case 0x99: // SBC A,C
-                            r.A = subc(r.C);
+                            r.A = subByteWithCarry(r.C);
                             break;
                         case 0x9A: // SBC A,D
-                            r.A = subc(r.D);
+                            r.A = subByteWithCarry(r.D);
                             break;
                         case 0x9B: // SBC A,E
-                            r.A = subc(r.E);
+                            r.A = subByteWithCarry(r.E);
                             break;
                         case 0x9C: // SBC A,H
-                            r.A = subc(r.H);
+                            r.A = subByteWithCarry(r.H);
                             break;
                         case 0x9D: // SBC A,L
-                            r.A = subc(r.L);
+                            r.A = subByteWithCarry(r.L);
                             break;
                         case 0x9F: // SBC A,A
-                            r.A = subc(r.A);
+                            r.A = subByteWithCarry(r.A);
                             break;
                         case 0x9E: // SBC A,(HL)
-                            r.A = subc(rb(r.HL));
+                            r.A = subByteWithCarry(readByte(r.HL));
                             break;
                         case 0xDE: // SBC A,n
-                            r.A = subc(data.Argument1);
+                            r.A = subByteWithCarry(data.Argument1);
                             break;
                     }
                     break;
@@ -76,16 +76,16 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x42: // SBC HL,BC
-                            r.HL = subwc(r.BC);
+                            r.HL = subWordWithCarry(r.BC);
                             break;
                         case 0x52: // SBC HL,DE
-                            r.HL = subwc(r.DE);
+                            r.HL = subWordWithCarry(r.DE);
                             break;
                         case 0x62: // SBC HL,HL
-                            r.HL = subwc(r.HL);
+                            r.HL = subWordWithCarry(r.HL);
                             break;
                         case 0x72: // SBC HL,SP
-                            r.HL = subwc(r.SP);
+                            r.HL = subWordWithCarry(r.SP);
                             break;
                     }
                     break;
@@ -94,13 +94,13 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x9C: // SBC A,IXh
-                            r.A = subc(r.IXh);
+                            r.A = subByteWithCarry(r.IXh);
                             break;
                         case 0x9D: // SBC A,IXl
-                            r.A = subc(r.IXl);
+                            r.A = subByteWithCarry(r.IXl);
                             break;
                         case 0x9E: // SBC A,(IX+o)
-                            r.A = subc(ro(r.IX, data.Argument1));
+                            r.A = subByteWithCarry(readOffset(r.IX, data.Argument1));
                             break;
                     }
                     break;
@@ -109,19 +109,19 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x9C: // SBC A,IYh
-                            r.A = subc(r.IYh);
+                            r.A = subByteWithCarry(r.IYh);
                             break;
                         case 0x9D: // SBC A,IYl
-                            r.A = subc(r.IYl);
+                            r.A = subByteWithCarry(r.IYl);
                             break;
                         case 0x9E: // SBC A,(IY+o)
-                            r.A = subc(ro(r.IY, data.Argument1));
+                            r.A = subByteWithCarry(readOffset(r.IY, data.Argument1));
                             break;
                     }
                     break;
             }
 
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public SBC()

@@ -26,11 +26,11 @@ namespace Z80.Core
             cpu.Memory.WriteByteAt(cpu.Registers.HL, xHL);
             cpu.Registers.A = a;
 
-            flags = FlagLookup.FlagsFromBitwiseOperation(a, BitwiseOperation.RotateRight);
+            flags = FlagLookup.BitwiseFlags(a, BitwiseOperation.RotateRight);
             flags.HalfCarry = false;
             flags.Subtract = false;
 
-            return new ExecutionResult(package, cpu.Registers.Flags, false);
+            return new ExecutionResult(package, cpu.Registers.Flags, false, false);
         }
 
         public RLD()

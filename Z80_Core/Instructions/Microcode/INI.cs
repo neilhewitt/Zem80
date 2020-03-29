@@ -24,7 +24,7 @@ namespace Z80.Core
             flags.Zero = (r.B == 0);
             flags.Subtract = true;
 
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public INI()

@@ -17,7 +17,7 @@ namespace Z80.Core
             byte and(byte operand)
             {
                 int result = (r.A & operand);
-                flags = FlagLookup.FlagsFromLogicalOperation(r.A, operand, LogicalOperation.And);
+                flags = FlagLookup.LogicalFlags(r.A, operand, LogicalOperation.And);
                 return (byte)result;
             }
 
@@ -88,7 +88,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public AND()

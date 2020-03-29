@@ -14,7 +14,7 @@ namespace Z80.Core.Tests
         {
             ushort address = 0x2000;
             Registers.HL = address;
-            CPU.Push(RegisterWord.HL);
+            CPU.Push(WordRegister.HL);
 
             ExecutionResult executionResult = ExecuteInstruction("RET");
 
@@ -26,7 +26,7 @@ namespace Z80.Core.Tests
         {
             ushort address = 0x2000;
             Registers.HL = address;
-            CPU.Push(RegisterWord.HL);
+            CPU.Push(WordRegister.HL);
 
             ExecutionResult executionResult = ExecuteInstruction("RETI");
 
@@ -38,7 +38,7 @@ namespace Z80.Core.Tests
         {
             ushort address = 0x2000;
             Registers.HL = address;
-            CPU.Push(RegisterWord.HL);
+            CPU.Push(WordRegister.HL);
 
             ExecutionResult executionResult = ExecuteInstruction("RETN");
 
@@ -57,7 +57,7 @@ namespace Z80.Core.Tests
         {
             ushort address = 0x2000;
             Registers.HL = address;
-            CPU.Push(RegisterWord.HL);
+            CPU.Push(WordRegister.HL);
 
             Registers.Flags.SetFromCondition(condition);
             ExecutionResult executionResult = ExecuteInstruction($"RET { condition }");

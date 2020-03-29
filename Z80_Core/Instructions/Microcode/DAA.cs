@@ -44,7 +44,7 @@ namespace Z80.Core
 
             r.A = A;
 
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public DAA()

@@ -3,11 +3,13 @@
     public enum ModifierType
     {
         None,
-        Register,
+        ByteRegister,
+        WordRegister,
         InputRegister,
         Bit,
         BitAndRegister,
         IndexRegister,
-        IndexRegisterHalf
+        IndexRegisterHalf,
+
     }
 }

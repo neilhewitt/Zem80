@@ -13,18 +13,18 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
             sbyte offset = (sbyte)(data.Argument1);
-            RegisterByte register = instruction.OperandRegister;
+            ByteRegister register = instruction.OperandByteRegister;
 
             void setFlags(byte original, byte shifted)
             {
-                flags = FlagLookup.FlagsFromBitwiseOperation(original, BitwiseOperation.ShiftLeft);
+                flags = FlagLookup.BitwiseFlags(original, BitwiseOperation.ShiftLeft);
                 flags.Carry = shifted.GetBit(7);
                 flags.HalfCarry = false;
                 flags.Subtract = false;
             }
 
             byte original, shifted;
-            if (register != RegisterByte.None)
+            if (register != ByteRegister.None)
             {
                 original = r[register];
                 shifted = (byte)(original << 1);
@@ -46,7 +46,7 @@ namespace Z80.Core
                 cpu.Memory.WriteByteAt(address, shifted);
             }
 
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public SLA()

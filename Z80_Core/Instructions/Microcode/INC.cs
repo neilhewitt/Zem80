@@ -23,7 +23,7 @@ namespace Z80.Core
             byte inc(byte value)
             {
                 ushort result = (ushort)(value + 1);
-                flags = FlagLookup.FlagsFromArithmeticOperation8(value, 1, false, false);
+                flags = FlagLookup.ByteArithmeticFlags(value, 1, false, false);
                 if (result > 0xFF) result = 0;
                 return (byte)result;
             }
@@ -111,7 +111,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public INC()

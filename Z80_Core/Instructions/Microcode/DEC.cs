@@ -22,7 +22,7 @@ namespace Z80.Core
             byte dec(byte value)
             {
                 int result = value - 1;
-                flags = FlagLookup.FlagsFromArithmeticOperation8(value, 1, false, true);
+                flags = FlagLookup.ByteArithmeticFlags(value, 1, false, true);
                 return (byte)result;
             }
 
@@ -109,7 +109,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public DEC()

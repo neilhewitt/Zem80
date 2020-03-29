@@ -41,7 +41,7 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        public void SET_xIndexOffset([Values(RegisterWord.IX, RegisterWord.IY)] RegisterWord registerPair, [Values(0x7F, -0x80)] sbyte offset)
+        public void SET_xIndexOffset([Values(WordRegister.IX, WordRegister.IY)] WordRegister registerPair, [Values(0x7F, -0x80)] sbyte offset)
         {
             Flags initialFlags = Flags;
             byte initialValue = 0x00;

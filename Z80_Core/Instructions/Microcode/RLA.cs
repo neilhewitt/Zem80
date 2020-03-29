@@ -23,7 +23,7 @@ namespace Z80.Core
 
             r.A = value;
 
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public RLA()

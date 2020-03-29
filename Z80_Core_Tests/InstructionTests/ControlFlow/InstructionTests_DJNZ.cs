@@ -20,8 +20,8 @@ namespace Z80.Core.Tests
             ExecutionResult executionResult = ExecuteInstruction("DJNZ o", arg1: (byte)jump);
             ushort expectedAddress = jump switch
             {
-                0x7F => address, // if jump == 0x7F then Registers.B was set to zero, so jump should not have happened and the program counter should be the same
-                _ => (ushort)(address + jump + 2) // otherwise, add/subtract the jump from the address, then add 2 bytes for instruction length
+                var j when (j == 0 || j == 0x7F) => (ushort)(address + 2), // if jump == 0x7F then Registers.B was set to zero, so jump should not have happened and the program counter should be address + 2 bytes for instruction length
+                _ => (ushort)(address + jump) // otherwise, add/subtract the jump from the address
             };
 
             Assert.That(Registers.PC, Is.EqualTo(expectedAddress));

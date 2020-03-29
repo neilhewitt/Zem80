@@ -13,9 +13,9 @@ namespace Z80.Core
             IRegisters r = cpu.Registers;
             byte bitIndex = instruction.BitIndex ?? 0xFF;
             sbyte offset = (sbyte)(data.Argument1);
-            RegisterByte register = instruction.OperandRegister;
+            ByteRegister register = instruction.OperandByteRegister;
 
-            if (register != RegisterByte.None)
+            if (register != ByteRegister.None)
             {
                 r[register] = r[register].SetBit(bitIndex, true);
             }
@@ -33,7 +33,7 @@ namespace Z80.Core
                 cpu.Memory.WriteByteAt(address, value);
             }
 
-            return new ExecutionResult(package, cpu.Registers.Flags, false);
+            return new ExecutionResult(package, cpu.Registers.Flags, false, false);
         }
 
         public SET()

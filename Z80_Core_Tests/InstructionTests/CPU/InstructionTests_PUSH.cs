@@ -11,13 +11,13 @@ namespace Z80.Core.Tests
     {
         [Test]
         public void PUSH_rr([Values(
-                RegisterWord.AF,
-                RegisterWord.BC,
-                RegisterWord.DE,
-                RegisterWord.HL,
-                RegisterWord.IX,
-                RegisterWord.IY
-            )] RegisterWord registerPair)
+                WordRegister.AF,
+                WordRegister.BC,
+                WordRegister.DE,
+                WordRegister.HL,
+                WordRegister.IX,
+                WordRegister.IY
+            )] WordRegister registerPair)
         {
             ushort value = 0x5000;;
             ushort stackAddress = Registers.SP;

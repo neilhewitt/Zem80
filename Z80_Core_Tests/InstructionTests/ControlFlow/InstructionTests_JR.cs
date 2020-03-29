@@ -21,7 +21,7 @@ namespace Z80.Core.Tests
 
             Registers.Flags.SetFromCondition(condition);
             ExecutionResult executionResult = ExecuteInstruction($"JR { condition },o", arg1:(byte)jump);
-            ushort expectedPC = (ushort)((address + jump) + 2);
+            ushort expectedPC = (ushort)(address + jump + 2);
 
             Assert.That(Registers.PC, Is.EqualTo(expectedPC));
             Assert.That(Registers.Flags.SatisfyCondition(condition), Is.True);
@@ -34,7 +34,7 @@ namespace Z80.Core.Tests
             ushort address = Registers.PC;
 
             ExecutionResult executionResult = ExecuteInstruction($"JR o", arg1: (byte)jump);
-            ushort expectedPC = (ushort)((address + jump) + 2);
+            ushort expectedPC = (ushort)(address + jump + 2);
 
             Assert.That(Registers.PC, Is.EqualTo(expectedPC));
         }

@@ -152,11 +152,11 @@ namespace Z80.Core.Tests
         {
             Registers.IX = 0x5000;
             sbyte offset = (sbyte)(RandomBool() ? 0x7F : -0x80);
-            WriteByteAtIndexAndOffset(RegisterWord.IX, offset, input); // single branch of code, no need to test all registers
+            WriteByteAtIndexAndOffset(WordRegister.IX, offset, input); // single branch of code, no need to test all registers
 
             ExecutionResult executionResult = ExecuteInstruction($"RLC (IX+o)", arg1: (byte)offset);
 
-            Assert.That(ReadByteAtIndexAndOffset(RegisterWord.IX, offset), Is.EqualTo(expectedResult));
+            Assert.That(ReadByteAtIndexAndOffset(WordRegister.IX, offset), Is.EqualTo(expectedResult));
             Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
 
@@ -184,11 +184,11 @@ namespace Z80.Core.Tests
         {
             Registers.IY = 0x5000;
             sbyte offset = (sbyte)(RandomBool() ? 0x7F : -0x80);
-            WriteByteAtIndexAndOffset(RegisterWord.IY, offset, input); // single branch of code, no need to test all registers
+            WriteByteAtIndexAndOffset(WordRegister.IY, offset, input); // single branch of code, no need to test all registers
 
             ExecutionResult executionResult = ExecuteInstruction($"RRC (IY+o)", arg1: (byte)offset);
 
-            Assert.That(ReadByteAtIndexAndOffset(RegisterWord.IY, offset), Is.EqualTo(expectedResult));
+            Assert.That(ReadByteAtIndexAndOffset(WordRegister.IY, offset), Is.EqualTo(expectedResult));
             Assert.That(CPU.Registers.Flags.State, Is.EqualTo(expectedState));
         }
     }

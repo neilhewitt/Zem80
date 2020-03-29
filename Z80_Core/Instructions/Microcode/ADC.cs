@@ -26,14 +26,14 @@ namespace Z80.Core
             byte addByteWithCarry(int value)
             {
                 int result = cpu.Registers.A + value + (flags.Carry ? 1 : 0);
-                flags = FlagLookup.FlagsFromArithmeticOperation8(cpu.Registers.A, value, flags.Carry, false);
+                flags = FlagLookup.ByteArithmeticFlags(cpu.Registers.A, value, flags.Carry, false);
                 return (byte)result;
             }
 
             ushort addWordWithCarry(int value)
             {
                 int result = cpu.Registers.HL + value + (flags.Carry ? 1 : 0);
-                flags = FlagLookup.FlagsFromArithmeticOperation16(flags, cpu.Registers.HL, value, flags.Carry, true, false);
+                flags = FlagLookup.WordArithmeticFlags(flags, cpu.Registers.HL, value, flags.Carry, true, false);
                 return (ushort)result;
             }
 
@@ -121,7 +121,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public ADC()

@@ -103,38 +103,64 @@ namespace FlagSetMaker
             //    (i, j, carry) => ((byte)(i >> 1)).SetBit(7, i.GetBit(0)),
             //    true);
 
-            Process8("SLA",
-                (i, j, carry) =>
-                {
-                    Flags flags = FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.ShiftLeft);
-                    flags.HalfCarry = false;
-                    flags.Subtract = false;
-                    return flags;
-                },
-                (i, j, carry, flags) => { byte result = ((byte)(i << 1)); flags.Carry = result.GetBit(7); return result; },
-                false, false, true);
+            //Process8("SLA",
+            //    (i, j, carry) =>
+            //    {
+            //        Flags flags = FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.ShiftLeft);
+            //        flags.HalfCarry = false;
+            //        flags.Subtract = false;
+            //        return flags;
+            //    },
+            //    (i, j, carry, flags) => { byte result = ((byte)(i << 1)); flags.Carry = result.GetBit(7); return result; },
+            //    false, false, true);
 
-            Process8("SRA",
-                (i, j, carry) =>
-                {
-                    Flags flags = FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.ShiftRight);
-                    flags.HalfCarry = false;
-                    flags.Subtract = false;
-                    return flags;
-                },
-                (i, j, carry, flags) => { byte result = ((byte)(i >> 1)).SetBit(7, i.GetBit(7)); flags.Carry = result.GetBit(0); return result; },
-                false, false, true);
+            //Process8("SRA",
+            //    (i, j, carry) =>
+            //    {
+            //        Flags flags = FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.ShiftRight);
+            //        flags.HalfCarry = false;
+            //        flags.Subtract = false;
+            //        return flags;
+            //    },
+            //    (i, j, carry, flags) => { byte result = ((byte)(i >> 1)).SetBit(7, i.GetBit(7)); flags.Carry = result.GetBit(0); return result; },
+            //    false, false, true);
 
-            Process8("SRL",
-                (i, j, carry) =>
-                {
-                    Flags flags = FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.ShiftRight);
-                    flags.HalfCarry = false;
-                    flags.Subtract = false;
-                    return flags;
-                },
-                (i, j, carry, flags) => { byte result = ((byte)(i >> 1)).SetBit(7, false); flags.Carry = result.GetBit(0); return result; },
-                false, false, true);
+            //Process8("SRL",
+            //    (i, j, carry) =>
+            //    {
+            //        Flags flags = FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.ShiftRight);
+            //        flags.HalfCarry = false;
+            //        flags.Subtract = false;
+            //        return flags;
+            //    },
+            //    (i, j, carry, flags) => { byte result = ((byte)(i >> 1)).SetBit(7, false); flags.Carry = result.GetBit(0); return result; },
+            //    false, false, true);
+
+            //Process8("CP n",
+            //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation8(i, (byte)j, false, true),
+            //    (i, j, carry, flags) => (byte)(i - j),
+            //    false, true, false);
+
+
+            //Process8("DEC",
+            //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation8(i, (byte)1, false, true),
+            //    (i, j, carry, flags) => (byte)(i - 1),
+            //    false, false, true);
+
+            //Process8("SBC",
+            //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation8(i, (byte)j, carry, true),
+            //    (i, j, carry, flags) => (byte)(i - j - (carry ? 1 : 0)),
+            //    true, true, true);
+
+            Process16("SBC HL,rr",
+                (flags, i, j, carry) => FlagLookup.WordArithmeticFlags(flags, i, j, carry, true, true).State,
+                (i, j, carry) => (ushort)(i - j - (carry ? 1 : 0)),
+                true);
+
+            //Process8("SUB",
+            //(i, j, carry) => FlagLookup.FlagsFromArithmeticOperation8(i, (byte)j, false, true),
+            //    (i, j, carry, flags) => (byte)(i - j),
+            //    false, true, true);
 
             #endregion
         }

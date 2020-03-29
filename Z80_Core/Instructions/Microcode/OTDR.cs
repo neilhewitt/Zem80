@@ -25,7 +25,9 @@ namespace Z80.Core
             flags.Zero = true;
             flags.Subtract = true;
 
-            return new ExecutionResult(package, flags, (r.B == 0), (r.B != 0));
+            bool conditionTrue = (r.B == 0);
+
+            return new ExecutionResult(package, flags, conditionTrue, !conditionTrue);
         }
 
         public OTDR()

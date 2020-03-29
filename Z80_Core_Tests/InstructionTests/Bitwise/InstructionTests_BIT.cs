@@ -9,7 +9,7 @@ namespace Z80.Core.Tests
     public class InstructionTests_BIT : InstructionTestBase
     {
         [Test]
-        public void BIT_b_r([Values(0, 1, 2, 3, 4, 5, 7)] RegisterByte register, [Range(0, 6)] int bitIndex)
+        public void BIT_b_r([Values(0, 1, 2, 3, 4, 5, 7)] ByteRegister register, [Range(0, 6)] int bitIndex)
         {
             byte value = 0x7F;
             bool zeroFlagExpected = value.GetBit(bitIndex) == false;
@@ -45,7 +45,7 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        public void BIT_b_xIndexOffset([Values(RegisterWord.IX, RegisterWord.IY)] RegisterWord registerPair, [Range(0, 6)] int bitIndex, [Values(0, 127, -127)] sbyte offset)
+        public void BIT_b_xIndexOffset([Values(WordRegister.IX, WordRegister.IY)] WordRegister registerPair, [Range(0, 6)] int bitIndex, [Values(0, 127, -127)] sbyte offset)
         {
             byte value = 0x7F;
             ushort address = 0x5000;

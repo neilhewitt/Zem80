@@ -20,6 +20,9 @@ namespace Z80.Core
         private EventHandler _onStop;
         private EventHandler _onHalt;
 
+        private int _pushes;
+        private int _pops;
+
         private InstructionDecoder _decoder = new InstructionDecoder();
 
         public IDebugProcessor Debuggable => (IDebugProcessor)this;
@@ -96,18 +99,20 @@ namespace Z80.Core
             Registers.SP = _topOfStack;
         }
 
-        public void Push(RegisterWord register)
+        public void Push(WordRegister register)
         {
             ushort value = Registers[register];
             Registers.SP -= 2;
             Memory.WriteWordAt(Registers.SP, value);
+            _pushes++;
         }
 
-        public void Pop(RegisterWord register)
+        public void Pop(WordRegister register)
         {
             ushort value = Memory.ReadWordAt(Registers.SP);
             Registers.SP += 2;
             Registers[register] = value;
+            _pops++;
         }
 
         public ushort Peek()
@@ -164,7 +169,9 @@ namespace Z80.Core
             _beforeExecute?.Invoke(this, package);
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
             _afterExecute?.Invoke(this, result);
+            
             if (result.Flags != null) Registers.Flags.Value = result.Flags.Value;
+            if (!result.InstructionSetsProgramCounter) Registers.PC += result.Instruction.SizeInBytes;
 
             return result;
         }
@@ -175,6 +182,7 @@ namespace Z80.Core
             {
                 if (!_halted)
                 {
+                    // read next 4 bytes and decode to instruction to execute
                     byte[] instruction = Memory.ReadBytesAt(Registers.PC, 4);
                     ExecutionPackage package = _decoder.Decode(instruction);
                     if (package == null)
@@ -183,13 +191,8 @@ namespace Z80.Core
                         return;
                     }
 
+                    // execute the instruction together with data
                     ExecutionResult result = Execute(package);
-                    if (!result.ProgramCounterUpdated)
-                    {
-                        if (Registers.PC + package.Instruction.SizeInBytes >= Memory.SizeInBytes) Stop(); // PC overflow
-                        Registers.PC += package.Instruction.SizeInBytes;
-                    }
-
                     ClockCycles += result.ClockCycles;
                 }
                 else
@@ -197,49 +200,58 @@ namespace Z80.Core
                     ClockCycles++; // while halted we should be running NOP continuously (but no Program Counter movement), so just add a cycle each time
                 }
 
-                if (_pendingNonMaskableInterrupt)
-                {
-                    Push(RegisterWord.PC);
-                    Registers.PC = 0x0066;
-                    _pendingNonMaskableInterrupt = false;
-                    _halted = false;
-                }
-
-                if (_pendingInterrupt && InterruptsEnabled)
-                {
-                    if (_interruptCallback == null && InterruptMode != InterruptMode.IM1)
-                    {
-                        throw new Z80Exception("Interrupt mode is " + InterruptMode.ToString() + " which requires a callback for reading data from the interrupting device. Callback was null.");
-                    }
-
-                    switch (InterruptMode)
-                    {
-                        case InterruptMode.IM0: // read instruction data from data bus in 1-4 cycles and execute resulting instruction - flags are set but PC is unaffected
-                            ExecutionPackage package = _decoder.DecodeInterrupt(() =>
-                                {
-                                    _interruptCallback(); // each time callback is called, device will set data bus with next instruction byte
-                                    return DataBus;
-                                });
-                            ExecutionResult result = Execute(package); // instruction is *usually* RST which diverts execution, but can be any valid instruction
-                            break;
-
-                        case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
-                            Push(RegisterWord.PC);
-                            Registers.PC = 0x0038;
-                            break;
-
-                        case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
-                            _interruptCallback(); // device must populate data bus with low byte of address
-                            Push(RegisterWord.PC);
-                            Registers.PC = (ushort)((Registers.I * 256) + DataBus);
-                            break;
-                    }
-
-                    _pendingInterrupt = false;
-                    _halted = false;
-                }
+                HandleNonMaskableInterrupts();
+                HandleMaskableInterrupts();
 
                 InstructionTicks++;
+            }
+        }
+
+        private void HandleNonMaskableInterrupts()
+        {
+            if (_pendingNonMaskableInterrupt)
+            {
+                Push(WordRegister.PC);
+                Registers.PC = 0x0066;
+                _pendingNonMaskableInterrupt = false;
+                _halted = false;
+            }
+        }
+
+        private void HandleMaskableInterrupts()
+        {
+            if (_pendingInterrupt && InterruptsEnabled)
+            {
+                if (_interruptCallback == null && InterruptMode != InterruptMode.IM1)
+                {
+                    throw new Z80Exception("Interrupt mode is " + InterruptMode.ToString() + " which requires a callback for reading data from the interrupting device. Callback was null.");
+                }
+
+                switch (InterruptMode)
+                {
+                    case InterruptMode.IM0: // read instruction data from data bus in 1-4 cycles and execute resulting instruction - flags are set but PC is unaffected
+                        ExecutionPackage package = _decoder.DecodeInterrupt(() =>
+                        {
+                            _interruptCallback(); // each time callback is called, device will set data bus with next instruction byte
+                            return DataBus;
+                        });
+                        ExecutionResult result = Execute(package); // instruction is *usually* RST which diverts execution, but can be any valid instruction
+                        break;
+
+                    case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
+                        Push(WordRegister.PC);
+                        Registers.PC = 0x0038;
+                        break;
+
+                    case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
+                        _interruptCallback(); // device must populate data bus with low byte of address
+                        Push(WordRegister.PC);
+                        Registers.PC = (ushort)((Registers.I * 256) + DataBus);
+                        break;
+                }
+
+                _pendingInterrupt = false;
+                _halted = false;
             }
         }
 

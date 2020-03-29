@@ -32,13 +32,13 @@ namespace Z80.Core.Tests
         {
             ushort bcWord = 0x8000;
             Registers.BC = bcWord;
-            CPU.Push(RegisterWord.BC); // push value of BC on the stack
+            CPU.Push(WordRegister.BC); // push value of BC on the stack
 
             ushort hlWord = 0x5000;
             Registers.HL = hlWord;
 
             ExecuteInstruction("EX (SP),HL");
-            CPU.Pop(RegisterWord.BC); // pop stack value into BC - should be previous value of HL, and HL should be previous value of BC, via the stack
+            CPU.Pop(WordRegister.BC); // pop stack value into BC - should be previous value of HL, and HL should be previous value of BC, via the stack
 
             Assert.That(Registers.HL, Is.EqualTo(bcWord));
             Assert.That(Registers.BC, Is.EqualTo(hlWord));
@@ -59,17 +59,17 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        public void EX_xSP_Index([Values(RegisterWord.IX, RegisterWord.IY)] RegisterWord indexRegister)
+        public void EX_xSP_Index([Values(WordRegister.IX, WordRegister.IY)] WordRegister indexRegister)
         {
             ushort indexWord = 0x8000;
             Registers[indexRegister] = indexWord;
 
             ushort bcWord = 0x5000;
             Registers.BC = bcWord;
-            CPU.Push(RegisterWord.BC);
+            CPU.Push(WordRegister.BC);
 
             ExecuteInstruction($"EX (SP),{indexRegister}");
-            CPU.Pop(RegisterWord.BC); // pop stack value into BC - should be previous value of IX/IY, and IX/IY should be previous value of BC, via the stack
+            CPU.Pop(WordRegister.BC); // pop stack value into BC - should be previous value of IX/IY, and IX/IY should be previous value of BC, via the stack
 
             Assert.That(Registers[indexRegister], Is.EqualTo(bcWord));
             Assert.That(Registers.BC, Is.EqualTo(indexWord));

@@ -16,7 +16,7 @@ namespace Z80.Core
             void or(byte operand)
             {
                 int result = (r.A | operand);
-                flags = FlagLookup.FlagsFromLogicalOperation(r.A, operand, LogicalOperation.Or);
+                flags = FlagLookup.LogicalFlags(r.A, operand, LogicalOperation.Or);
                 r.A = (byte)result;
             }
 
@@ -86,7 +86,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(package, flags, false);
+            return new ExecutionResult(package, flags, false, false);
         }
 
         public OR()
