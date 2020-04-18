@@ -13,16 +13,36 @@ namespace FlagSetMaker
             FlagLookup.BuildFlagLookupTables();
 
             #region done
-            
+
             //Process8("RR",
             //    (i, j, carry) => FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.RotateRight).State,
             //    (i, j, carry) => ((byte)(i >> 1)).SetBit(7, carry),
+            //    true);
+
+            //Process8("ADC A,n",
+            //    (i, j, carry) => FlagLookup.ByteArithmeticFlags(i, j, carry, false),
+            //    (i, j, carry, flags) => (byte)(i + j + (carry ? 1 : 0)),
+            //    true);
+
+            //Process8("SBC A,n",
+            //    (i, j, carry) => FlagLookup.ByteArithmeticFlags(i, j, carry, true),
+            //    (i, j, carry, flags) => (byte)(i - j - (carry ? 1 : 0)),
             //    true);
 
             //Process16("ADC HL,rr",
             //    (flags, i, j, carry) => FlagLookup.WordArithmeticFlags(flags, i, j, carry, true, false).State,
             //    (i, j, carry) => (ushort)(i + j + (carry ? 1 : 0)),
             //    true);
+
+            //Process16("SBC HL,rr",
+            //    (flags, i, j, carry) => FlagLookup.WordArithmeticFlags(flags, i, j, carry, true, true).State,
+            //    (i, j, carry) => (ushort)(i - j - (carry ? 1 : 0)),
+            //    true);
+
+            Process8("INC n",
+                (i, j, carry) => FlagLookup.ByteArithmeticFlags(i, 1, carry, false),
+                (i, j, carry, flags) => (byte)(i + 1), false, false, true
+                );
 
             #endregion
         }

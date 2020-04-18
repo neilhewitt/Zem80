@@ -23,12 +23,9 @@ namespace Z80.Core.Tests
         [TestCase(0x02, 0x01, FlagState.Subtract)]
         [TestCase(0x7F, 0x7E, FlagState.Subtract | FlagState.ParityOverflow)]
         [TestCase(0x10, 0x0F, FlagState.Subtract | FlagState.HalfCarry)]
-        [TestCase(0x80, 0x7F, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
         [TestCase(0x01, 0x00, FlagState.Subtract | FlagState.Zero)]
-        [TestCase(0xFF, 0xFE, FlagState.Subtract | FlagState.Sign)]
-        [TestCase(0x81, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x81, 0x80, FlagState.Subtract | FlagState.Sign)]
         [TestCase(0x00, 0xFF, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
-        [TestCase(0x90, 0x8F, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
         public void DEC_r(byte input, byte expectedResult, FlagState expectedState)
         {
             Registers.A = input;
@@ -43,12 +40,9 @@ namespace Z80.Core.Tests
         [TestCase(0x02, 0x01, FlagState.Subtract)]
         [TestCase(0x7F, 0x7E, FlagState.Subtract | FlagState.ParityOverflow)]
         [TestCase(0x10, 0x0F, FlagState.Subtract | FlagState.HalfCarry)]
-        [TestCase(0x80, 0x7F, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
         [TestCase(0x01, 0x00, FlagState.Subtract | FlagState.Zero)]
-        [TestCase(0xFF, 0xFE, FlagState.Subtract | FlagState.Sign)]
-        [TestCase(0x81, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x81, 0x80, FlagState.Subtract | FlagState.Sign)]
         [TestCase(0x00, 0xFF, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
-        [TestCase(0x90, 0x8F, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
         public void DEC_xHL(byte input, byte expectedResult, FlagState expectedState)
         {
             Registers.HL = 0x5000;
@@ -65,12 +59,9 @@ namespace Z80.Core.Tests
         [TestCase(0x02, 0x01, FlagState.Subtract)]
         [TestCase(0x7F, 0x7E, FlagState.Subtract | FlagState.ParityOverflow)]
         [TestCase(0x10, 0x0F, FlagState.Subtract | FlagState.HalfCarry)]
-        [TestCase(0x80, 0x7F, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
         [TestCase(0x01, 0x00, FlagState.Subtract | FlagState.Zero)]
-        [TestCase(0xFF, 0xFE, FlagState.Subtract | FlagState.Sign)]
-        [TestCase(0x81, 0x80, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x81, 0x80, FlagState.Subtract | FlagState.Sign)]
         [TestCase(0x00, 0xFF, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
-        [TestCase(0x90, 0x8F, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
         public void DEC_xIndexOffset(byte input, byte expectedResult, FlagState expectedState)
         {
             Registers.IX = 0x5000;

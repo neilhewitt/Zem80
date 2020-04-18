@@ -23,7 +23,8 @@ namespace Z80.Core.Tests
         [TestCase(0x00, 0x01, FlagState.None)]
         [TestCase(0x0F, 0x10, FlagState.HalfCarry)]
         [TestCase(0xFF, 0x00, FlagState.Carry | FlagState.HalfCarry | FlagState.Zero)]
-        [TestCase(0x80, 0x81, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x80, 0x81, FlagState.Sign)]
+        [TestCase(0x8F, 0x90, FlagState.HalfCarry | FlagState.Sign)]
         [TestCase(0x7F, 0x80, FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
         public void INC_r(byte input, byte expectedResult, FlagState expectedState)
         {
@@ -39,7 +40,8 @@ namespace Z80.Core.Tests
         [TestCase(0x00, 0x01, FlagState.None)]
         [TestCase(0x0F, 0x10, FlagState.HalfCarry)]
         [TestCase(0xFF, 0x00, FlagState.Carry | FlagState.HalfCarry | FlagState.Zero)]
-        [TestCase(0x80, 0x81, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x80, 0x81, FlagState.Sign)]
+        [TestCase(0x8F, 0x90, FlagState.HalfCarry | FlagState.Sign)]
         [TestCase(0x7F, 0x80, FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
         public void INC_xHL(byte input, byte expectedResult, FlagState expectedState)
         {
@@ -57,7 +59,8 @@ namespace Z80.Core.Tests
         [TestCase(0x00, 0x01, FlagState.None)]
         [TestCase(0x0F, 0x10, FlagState.HalfCarry)]
         [TestCase(0xFF, 0x00, FlagState.Carry | FlagState.HalfCarry | FlagState.Zero)]
-        [TestCase(0x80, 0x81, FlagState.ParityOverflow | FlagState.Sign)]
+        [TestCase(0x80, 0x81, FlagState.Sign)]
+        [TestCase(0x8F, 0x90, FlagState.HalfCarry | FlagState.Sign)]
         [TestCase(0x7F, 0x80, FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
         public void INC_xIndexOffset(byte input, byte expectedResult, FlagState expectedState)
         {

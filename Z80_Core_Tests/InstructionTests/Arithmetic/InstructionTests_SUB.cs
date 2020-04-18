@@ -9,10 +9,10 @@ namespace Z80.Core.Tests
     public class InstructionTests_SUB : InstructionTestBase
     {
         [Test]
-        [TestCase(0x01, 0x00, 0x01, FlagState.Subtract)]
-        [TestCase(0x00, 0x90, 0x70, FlagState.Subtract | FlagState.ParityOverflow)]
-        [TestCase(0x01, 0xFF, 0x02, FlagState.Subtract | FlagState.HalfCarry)]
-        [TestCase(0x00, 0x81, 0x7F, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x90, 0x70, FlagState.Subtract)]
+        [TestCase(0x41, 0x40, 0x01, FlagState.Subtract | FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x81, 0x7F, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x41, 0x3F, 0x02, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
         [TestCase(0x00, 0x00, 0x00, FlagState.Subtract | FlagState.Zero)]
         [TestCase(0x40, 0x40, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
         [TestCase(0x00, 0x10, 0xF0, FlagState.Subtract | FlagState.Sign)]
@@ -31,10 +31,10 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        [TestCase(0x01, 0x00, 0x01, FlagState.Subtract)]
-        [TestCase(0x00, 0x90, 0x70, FlagState.Subtract | FlagState.ParityOverflow)]
-        [TestCase(0x01, 0xFF, 0x02, FlagState.Subtract | FlagState.HalfCarry)]
-        [TestCase(0x00, 0x81, 0x7F, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x90, 0x70, FlagState.Subtract)]
+        [TestCase(0x41, 0x40, 0x01, FlagState.Subtract | FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x81, 0x7F, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x41, 0x3F, 0x02, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
         [TestCase(0x00, 0x00, 0x00, FlagState.Subtract | FlagState.Zero)]
         [TestCase(0x40, 0x40, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
         [TestCase(0x00, 0x10, 0xF0, FlagState.Subtract | FlagState.Sign)]
@@ -53,10 +53,10 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        [TestCase(0x01, 0x00, 0x01, FlagState.Subtract)]
-        [TestCase(0x00, 0x90, 0x70, FlagState.Subtract | FlagState.ParityOverflow)]
-        [TestCase(0x01, 0xFF, 0x02, FlagState.Subtract | FlagState.HalfCarry)]
-        [TestCase(0x00, 0x81, 0x7F, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x90, 0x70, FlagState.Subtract)]
+        [TestCase(0x41, 0x40, 0x01, FlagState.Subtract | FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x81, 0x7F, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x41, 0x3F, 0x02, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
         [TestCase(0x00, 0x00, 0x00, FlagState.Subtract | FlagState.Zero)]
         [TestCase(0x40, 0x40, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
         [TestCase(0x00, 0x10, 0xF0, FlagState.Subtract | FlagState.Sign)]
@@ -76,10 +76,10 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        [TestCase(0x01, 0x00, 0x01, FlagState.Subtract)]
-        [TestCase(0x00, 0x90, 0x70, FlagState.Subtract | FlagState.ParityOverflow)]
-        [TestCase(0x01, 0xFF, 0x02, FlagState.Subtract | FlagState.HalfCarry)]
-        [TestCase(0x00, 0x81, 0x7F, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
+        [TestCase(0x00, 0x90, 0x70, FlagState.Subtract)]
+        [TestCase(0x41, 0x40, 0x01, FlagState.Subtract | FlagState.ParityOverflow)]
+        [TestCase(0x00, 0x81, 0x7F, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x41, 0x3F, 0x02, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
         [TestCase(0x00, 0x00, 0x00, FlagState.Subtract | FlagState.Zero)]
         [TestCase(0x40, 0x40, 0x00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
         [TestCase(0x00, 0x10, 0xF0, FlagState.Subtract | FlagState.Sign)]

@@ -255,7 +255,7 @@ namespace Z80.Core
             }
         }
 
-        internal Processor(IRegisters registers, IMemoryMap map, IMemory memory, IPorts ports, ushort topOfStackAddress, double speedInMHz)
+        internal Processor(IRegisters registers, IMemoryMap map, IMemory memory, IPorts ports, ushort topOfStackAddress, double speedInMHz, bool enableFlagPrecalculation = true)
         {
             Registers = registers;
             Ports = ports;
@@ -267,6 +267,7 @@ namespace Z80.Core
             _topOfStack = topOfStackAddress;
             Registers.SP = _topOfStack;
 
+            FlagLookup.EnablePrecalculation = enableFlagPrecalculation;
             FlagLookup.BuildFlagLookupTables();
         }
     }

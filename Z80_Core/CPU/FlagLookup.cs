@@ -7,7 +7,7 @@ namespace Z80.Core
 {
     public static class FlagLookup
     {
-        private const bool FLAG_PRECALCULATION_ENABLED = true;
+        public static bool EnablePrecalculation { get; set; } = false;
 
         private static bool _initialised;
         private static byte[,,] _addFlags8;
@@ -17,7 +17,7 @@ namespace Z80.Core
 
         public static void BuildFlagLookupTables()
         {
-            if (!_initialised && FLAG_PRECALCULATION_ENABLED)
+            if (!_initialised && EnablePrecalculation)
             {
                 _addFlags8 = new byte[256, 256, 2];
                 for (int i = 0; i < 256; i++)
@@ -66,7 +66,7 @@ namespace Z80.Core
 
         public static Flags ByteArithmeticFlags(byte startingValue, int addOrSubtractValue, bool carry, bool subtract)
         {
-            if (FLAG_PRECALCULATION_ENABLED)
+            if (EnablePrecalculation)
             {
                 return new Flags((subtract ?
                                     _subFlags8[startingValue, addOrSubtractValue, carry ? 1 : 0] :
@@ -81,7 +81,7 @@ namespace Z80.Core
 
         public static Flags LogicalFlags(byte first, byte second, LogicalOperation operation)
         {
-            if (FLAG_PRECALCULATION_ENABLED)
+            if (EnablePrecalculation)
             {
                 return new Flags(_logicalFlags[first, second, (int)operation]);
             }
@@ -93,7 +93,7 @@ namespace Z80.Core
 
         public static Flags BitwiseFlags(byte value, BitwiseOperation operation)
         {
-            if (FLAG_PRECALCULATION_ENABLED)
+            if (EnablePrecalculation)
             {
                 return new Flags(_bitwiseFlags[value, (int)operation]);
             }
@@ -206,13 +206,13 @@ namespace Z80.Core
 
         private static bool Overflows(byte first, byte second)
         {
-            int result = (byte)((sbyte)first + (sbyte)second);
+            int result = ((sbyte)first + (sbyte)second);
             return (result >= 0x80 || result <= -0x80);
         }
 
         private static bool Overflows(ushort first, ushort second)
         {
-            int result = (ushort)((short)first + (short)second);
+            int result = ((short)first + (short)second);
             return (result >= 0x8000 || result <= -0x8000);
         }
     }
