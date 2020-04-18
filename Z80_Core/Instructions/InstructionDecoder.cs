@@ -10,7 +10,6 @@ namespace Z80.Core
     {
         public ExecutionPackage Decode(byte[] instructionBytes)
         {
-            byte opcode = 0x00;
             byte b0 = instructionBytes[0];
             byte b1 = instructionBytes[1];
             byte b2 = instructionBytes[2];
@@ -31,8 +30,7 @@ namespace Z80.Core
                 if (prefix == 0xCB || ((prefix == 0xDD || prefix == 0xFD) && b1 == 0xCB))
                 {
                     // extended instructions (including double-prefix 'DD CB' and 'FD CB')
-                    opcode = (prefix != 0xCB) ? b3 : b1;
-                    Instruction instruction = Instruction.Find(opcode, (InstructionPrefix)prefix);
+                    Instruction instruction = Instruction.Find((prefix != 0xCB) ? b3 : b1, (InstructionPrefix)prefix);
 
                     if (instruction.Argument1 == ArgumentType.Displacement)
                     {
@@ -44,8 +42,7 @@ namespace Z80.Core
                 else if (prefix == 0xED)
                 {
                     // other extended instructions
-                    opcode = b1;
-                    Instruction instruction = Instruction.Find(opcode, InstructionPrefix.ED);
+                    Instruction instruction = Instruction.Find(b1, InstructionPrefix.ED);
 
                     if (instruction.Argument1 == ArgumentType.ImmediateWord)
                     {
@@ -60,8 +57,7 @@ namespace Z80.Core
                     // identical to unprefixed instruction with same opcode except IX (0xDD) or IY (0xFD) replaces HL
                     // plus additional instructions unique to IX / IY including single-byte operations on high / low bytes of either
 
-                    opcode = b1;
-                    Instruction instruction = Instruction.Find(opcode, (InstructionPrefix)prefix);
+                    Instruction instruction = Instruction.Find(b1, (InstructionPrefix)prefix);
 
                     if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
                     {
@@ -79,11 +75,7 @@ namespace Z80.Core
                 else
                 {
                     // unprefixed instructions (can be 1-3 bytes only)
-
-                    prefix = 0x00;
-                    opcode = b0;
-
-                    Instruction instruction = Instruction.Find(opcode, InstructionPrefix.Unprefixed);
+                    Instruction instruction = Instruction.Find(b0, InstructionPrefix.Unprefixed);
 
                     if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
                     {
@@ -128,7 +120,6 @@ namespace Z80.Core
                 {
                     // could be any size instruction between 2 and 4 bytes
                     // find instruction and check size, then assemble instruction bytes from device
-                    byte opcode = instructionBytes[1];
                     Instruction instruction = Instruction.Find(instructionBytes[0], (InstructionPrefix)instructionBytes[1]);
                     for (int i = 2; i <= instruction.SizeInBytes; i++) // 2 - 4 bytes
                     {
@@ -140,8 +131,7 @@ namespace Z80.Core
             {
                 // could be any size instruction between 1 and 3 bytes
                 // find instruction and check size, then assemble instruction bytes from device
-                byte opcode = instructionBytes[0];
-                Instruction instruction = Instruction.Find(opcode, InstructionPrefix.Unprefixed);
+                Instruction instruction = Instruction.Find(instructionBytes[0], InstructionPrefix.Unprefixed);
                 for (int i = 1; i <= instruction.SizeInBytes; i++) // 1 - 3 bytes
                 {
                     instructionBytes[i] = dataRead();

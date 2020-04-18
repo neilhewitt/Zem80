@@ -44,7 +44,7 @@ namespace Z80.Core
         public byte ClockCycles { get; private set; }
         public byte? ClockCyclesConditional { get; private set; }
         public byte? BitIndex { get; private set; }
-        public ByteRegister OperandByteRegister { get; private set; }
+        public ByteRegister OperandRegister { get; private set; }
         public bool ReplacesHLWithIX => Prefix == InstructionPrefix.DDCB;
         public bool ReplacesHLWithIY => Prefix == InstructionPrefix.FDCB;
         internal IMicrocode Microcode { get; private set; }
@@ -61,12 +61,14 @@ namespace Z80.Core
             SizeInBytes = size;
             ClockCycles = clockCycles;
             ClockCyclesConditional = clockCyclesConditional;
+
             BitIndex = Modifier switch
             {
                 var m when (m == ModifierType.Bit || m == ModifierType.BitAndRegister) => opcode.GetByteFromBits(3, 3),
                 _ => null
             };
-            OperandByteRegister = Modifier switch
+
+            OperandRegister = Modifier switch
             {
                 var m when (m == ModifierType.Bit || m == ModifierType.WordRegister || m == ModifierType.None) => ByteRegister.None,
                 ModifierType.InputRegister => (ByteRegister)opcode.GetByteFromBits(3, 3),

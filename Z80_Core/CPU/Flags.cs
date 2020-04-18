@@ -1,27 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 
 namespace Z80.Core
 {
-    public enum Condition
-    {
-        Z, NZ, C, NC, PO, PE, M, P
-    }
-
-    [Flags]
-    public enum FlagState
-    {
-        None = 0,
-        Carry = 1,
-        Subtract = 2,
-        Three = 4,
-        ParityOverflow = 8,
-        Five = 16,
-        HalfCarry = 32,
-        Zero = 64,
-        Sign = 128
-    }
 
     public class Flags
     {
@@ -80,6 +61,7 @@ namespace Z80.Core
                     zero.HasValue ? Zero == zero : true);
         }
 
+        // this is used by NUnit, so ignore the '0 references' and DO NOT REMOVE!
         public override bool Equals(object obj)
         {
             return obj switch
@@ -90,14 +72,10 @@ namespace Z80.Core
             };
         }
 
+        // ditto as above
         public override int GetHashCode()
         {
             return base.GetHashCode();
-        }
-
-        protected virtual void ClearAll()
-        {
-            _flags = 0;
         }
 
         private FlagState GetState()

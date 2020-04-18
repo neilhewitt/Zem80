@@ -14,7 +14,7 @@ namespace Z80.Core
             IRegisters r = cpu.Registers;
 
             sbyte offset = (sbyte)(data.Argument1);
-            ByteRegister register = instruction.OperandByteRegister;
+            ByteRegister register = instruction.OperandRegister;
             bool previousCarry = flags.Carry;
 
             byte original, shifted;

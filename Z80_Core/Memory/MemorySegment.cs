@@ -5,7 +5,7 @@ using Z80.Core;
 
 namespace Z80.Core
 {
-    public class RAM : IMemorySegment
+    public class MemorySegment : IMemorySegment
     {
         private const uint MAX_SEGMENT_SIZE_IN_BYTES = 65536;
         private byte[] _memory;
@@ -41,7 +41,7 @@ namespace Z80.Core
             }
         }
 
-        public RAM(ushort startAddress, uint sizeInBytes)
+        public MemorySegment(ushort startAddress, uint sizeInBytes)
         {
             // we have to use uint as the size type because the max permissible size is 65536 bytes which cannot be contained in a ushort - but we now need to do a size check
             if (sizeInBytes > MAX_SEGMENT_SIZE_IN_BYTES) throw new MemorySegmentException("Requested segment size exceeded maximum possible size of " + MAX_SEGMENT_SIZE_IN_BYTES + " bytes.");

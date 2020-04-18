@@ -31,7 +31,7 @@ namespace Z80.Core
             else
             {
                 // IN r,(C)
-                byte input = @in(r.C, ByteRegister.B, instruction.OperandByteRegister);
+                byte input = @in(r.C, ByteRegister.B, instruction.OperandRegister);
                 flags.Sign = ((sbyte)input < 0);
                 flags.Zero = (input == 0);
                 flags.ParityOverflow = (input.CountBits(true) % 2 == 0);

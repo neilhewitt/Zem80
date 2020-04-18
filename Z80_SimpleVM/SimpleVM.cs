@@ -20,11 +20,6 @@ namespace Z80.SimpleVM
             _cpu.Start(runSyncronous, address);
         }
 
-        private void VirtualMachine_AfterExecute(object sender, ExecutionResult e)
-        {
-            throw new NotImplementedException();
-        }
-
         public void Stop()
         {
             _cpu.Stop();

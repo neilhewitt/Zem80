@@ -76,7 +76,7 @@ namespace Z80.Core
         public MemoryMap(uint sizeInBytes, bool autoMap = false)
         {
             SizeInBytes = sizeInBytes;
-            if (autoMap) Map(new RAM(0, sizeInBytes), 0); // maps a single block to the whole of memory space (you can map ROM in later)
+            if (autoMap) Map(new MemorySegment(0, sizeInBytes), 0); // maps a single block to the whole of memory space (you can map ROM in later)
         }
     }
 }

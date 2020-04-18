@@ -20,7 +20,7 @@ namespace Z80.Core.Tests
             sbyte expected = (sbyte)(0 - value);
             bool zero = expected == 0;
             bool sign = expected < 0;
-            bool halfCarry = expected.HalfCarryWhenConvertingToByte();
+            bool halfCarry = (((expected & 0x0F) & 0x10) != 0x10);
             bool parityOverflow = (byte)expected == 0x80;
             bool carry = (byte)expected != 0x00;
 

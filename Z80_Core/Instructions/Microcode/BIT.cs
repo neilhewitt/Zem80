@@ -16,9 +16,9 @@ namespace Z80.Core
 
             byte bitIndex = instruction.BitIndex.Value;
             byte value;
-            if (instruction.OperandByteRegister != ByteRegister.None)
+            if (instruction.OperandRegister != ByteRegister.None)
             {
-                value = r[instruction.OperandByteRegister]; // BIT b, r
+                value = r[instruction.OperandRegister]; // BIT b, r
             }
             else
             {
@@ -26,7 +26,7 @@ namespace Z80.Core
                 sbyte offset = (instruction.ReplacesHLWithIY || instruction.ReplacesHLWithIY) ? (sbyte)data.Argument1 : (sbyte)0;
                 value = cpu.Memory.ReadByteAt((ushort)(address + offset));
             }
-
+           
             flags.Zero = value.GetBit(bitIndex) == false;
             flags.HalfCarry = true;
             flags.Subtract = false;

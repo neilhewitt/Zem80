@@ -13,7 +13,7 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             IRegisters r = cpu.Registers;
             sbyte offset = (sbyte)(data.Argument1);
-            ByteRegister register = instruction.OperandByteRegister;
+            ByteRegister register = instruction.OperandRegister;
 
             void setFlags(byte original, byte shifted)
             {

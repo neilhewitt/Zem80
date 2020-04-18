@@ -5,7 +5,7 @@ using Z80.Core;
 
 namespace Z80.Core
 {
-    public class ROM : RAM
+    public class ReadOnlyMemorySegment : MemorySegment
     {
         new public bool ReadOnly => true;
 
@@ -19,7 +19,7 @@ namespace Z80.Core
             // do nothing - we're read-only
         }
 
-        public ROM(ushort address, ushort sizeInBytes)
+        public ReadOnlyMemorySegment(ushort address, ushort sizeInBytes)
             : base(address, sizeInBytes)
         {
         }

@@ -29,7 +29,7 @@ namespace Z80.Core
             }
             else
             {
-                @out(r.C, ByteRegister.B, instruction.OperandByteRegister);
+                @out(r.C, ByteRegister.B, instruction.OperandRegister);
             }
 
             return new ExecutionResult(package, flags, false, false);

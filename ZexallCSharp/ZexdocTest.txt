@@ -1,0 +1,3229 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace ZexallCSharp
+{
+    public class ZexdocTest : IZexTestSource
+    {
+        public IDictionary<string, TestDescriptor> Tests { get; } = new Dictionary<string, TestDescriptor>()
+		{
+			{
+				"<ADC,SBC> HL,<BC,DE,HL,SP>",
+				new TestDescriptor()
+				{
+					Message = "<ADC,SBC> HL,<BC,DE,HL,SP>",
+					Mask = 0xC7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xED, 0x42, 0x00, 0x00),
+						MemOp = 0x832C,
+						IY = 0x4F88,
+						IX = 0xF22B,
+						HL = 0xB339,
+						DE = 0x7E1F,
+						BC = 0x1563,
+						F = 0xD3,
+						A = 0x89,
+						SP = 0x465E
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x38, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0xF821,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0xFFFF,
+						DE = 0xFFFF,
+						BC = 0xFFFF,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0xFFFF
+					},
+					CRC = (0xF8,0xB4,0xEA,0xA9)
+				}
+			},
+			{
+				"ADD HL,<BC,DE,HL,SP>",
+				new TestDescriptor()
+				{
+					Message = "ADD HL,<BC,DE,HL,SP>",
+					Mask = 0xC7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x09, 0x00, 0x00, 0x00),
+						MemOp = 0xC4A5,
+						IY = 0xC4C7,
+						IX = 0xD226,
+						HL = 0xA050,
+						DE = 0x58EA,
+						BC = 0x8566,
+						F = 0xC6,
+						A = 0xDE,
+						SP = 0x9BC9
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x30, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0xF821,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0xFFFF,
+						DE = 0xFFFF,
+						BC = 0xFFFF,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0xFFFF
+					},
+					CRC = (0x89,0xFD,0xB6,0x35)
+				}
+			},
+			{
+				"ADD IX,<BC,DE,IX,SP>",
+				new TestDescriptor()
+				{
+					Message = "ADD IX,<BC,DE,IX,SP>",
+					Mask = 0xC7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x09, 0x00, 0x00),
+						MemOp = 0xDDAC,
+						IY = 0xC294,
+						IX = 0x635B,
+						HL = 0x33D3,
+						DE = 0x6A76,
+						BC = 0xFA20,
+						F = 0x94,
+						A = 0x68,
+						SP = 0x36F5
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x30, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0xF821,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0xFFFF,
+						HL = 0x0000,
+						DE = 0xFFFF,
+						BC = 0xFFFF,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0xFFFF
+					},
+					CRC = (0xC1,0x33,0x79,0x0B)
+				}
+			},
+			{
+				"ADD IY,<BC,DE,IY,SP>",
+				new TestDescriptor()
+				{
+					Message = "ADD IY,<BC,DE,IY,SP>",
+					Mask = 0xC7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xFD, 0x09, 0x00, 0x00),
+						MemOp = 0xC7C2,
+						IY = 0xF407,
+						IX = 0x51C1,
+						HL = 0x3E96,
+						DE = 0x0BF4,
+						BC = 0x510F,
+						F = 0x92,
+						A = 0x1E,
+						SP = 0x71EA
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x30, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0xF821,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0xFFFF,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0xFFFF,
+						BC = 0xFFFF,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0xFFFF
+					},
+					CRC = (0xE8,0x81,0x7B,0x9E)
+				}
+			},
+			{
+				"ALUOP A,NN",
+				new TestDescriptor()
+				{
+					Message = "ALUOP A,NN",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xC6, 0x00, 0x00, 0x00),
+						MemOp = 0x9140,
+						IY = 0x7E3C,
+						IX = 0x7A67,
+						HL = 0xDF6D,
+						DE = 0x5B61,
+						BC = 0x0B29,
+						F = 0x10,
+						A = 0x66,
+						SP = 0x85B2
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x38, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0xFF, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x48,0x79,0x93,0x60)
+				}
+			},
+			{
+				"ALUOP A,<B,C,D,E,H,L,(HL),A>",
+				new TestDescriptor()
+				{
+					Message = "ALUOP A,<B,C,D,E,H,L,(HL),A>",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x80, 0x00, 0x00, 0x00),
+						MemOp = 0xC53E,
+						IY = 0x573A,
+						IX = 0x4C4D,
+						HL = 0x0014,
+						DE = 0xE309,
+						BC = 0xA666,
+						F = 0xD0,
+						A = 0x3B,
+						SP = 0xADBB
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x3F, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0xFFFF,
+						BC = 0xFFFF,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xFE,0x43,0xB0,0x16)
+				}
+			},
+			{
+				"ALUOP A,<IXH,IXL,IYH,IYL>",
+				new TestDescriptor()
+				{
+					Message = "ALUOP A,<IXH,IXL,IYH,IYL>",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x84, 0x00, 0x00),
+						MemOp = 0xD6F7,
+						IY = 0xC76E,
+						IX = 0xACCF,
+						HL = 0x2847,
+						DE = 0x22DD,
+						BC = 0xC035,
+						F = 0xC5,
+						A = 0x38,
+						SP = 0x234B
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x39, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0xFFFF,
+						BC = 0xFFFF,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xA4,0x02,0x6D,0x5A)
+				}
+			},
+			{
+				"ALUOP A,(<IX,IY>+1)",
+				new TestDescriptor()
+				{
+					Message = "ALUOP A,(<IX,IY>+1)",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x86, 0x01, 0x00),
+						MemOp = 0x90B7,
+						IY = 0x0013,
+						IX = 0x0013,
+						HL = 0x32FD,
+						DE = 0x406E,
+						BC = 0xC1DC,
+						F = 0x45,
+						A = 0x6E,
+						SP = 0xE5FA
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x38, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0001,
+						IX = 0x0001,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xE8,0x49,0x67,0x6E)
+				}
+			},
+			{
+				"BIT N,(<IX,IY>+1)",
+				new TestDescriptor()
+				{
+					Message = "BIT N,(<IX,IY>+1)",
+					Mask = 0x53,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0xCB, 0x01, 0x46),
+						MemOp = 0x2075,
+						IY = 0x0013,
+						IX = 0x0013,
+						HL = 0x3CFC,
+						DE = 0xA79A,
+						BC = 0x3D74,
+						F = 0x51,
+						A = 0x27,
+						SP = 0xCA14
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x00, 0x00, 0x38),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x53,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xA8,0xEE,0x08,0x67)
+				}
+			},
+			{
+				"BIT N,<B,C,D,E,H,L,(HL),A>",
+				new TestDescriptor()
+				{
+					Message = "BIT N,<B,C,D,E,H,L,(HL),A>",
+					Mask = 0x53,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xCB, 0x40, 0x00, 0x00),
+						MemOp = 0x3EF1,
+						IY = 0x9DFC,
+						IX = 0x7ACC,
+						HL = 0x0014,
+						DE = 0xBE61,
+						BC = 0x7A86,
+						F = 0x50,
+						A = 0x24,
+						SP = 0x1998
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x3F, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x53,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0xFFFF,
+						BC = 0xFFFF,
+						F = 0x00,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					CRC = (0x7B,0x55,0xE6,0xC8)
+				}
+			},
+			{
+				"CPD<R>",
+				new TestDescriptor()
+				{
+					Message = "CPD<R>",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xED, 0xA9, 0x00, 0x00),
+						MemOp = 0xC7B6,
+						IY = 0x72B4,
+						IX = 0x18F6,
+						HL = 0x002B,
+						DE = 0x8DBD,
+						BC = 0x0001,
+						F = 0xC0,
+						A = 0x30,
+						SP = 0x94A3
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x10, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0010,
+						F = 0x00,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xA8,0x7E,0x6C,0xFA)
+				}
+			},
+			{
+				"CPI<R>",
+				new TestDescriptor()
+				{
+					Message = "CPI<R>",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xED, 0xA1, 0x00, 0x00),
+						MemOp = 0x4D48,
+						IY = 0xAF4A,
+						IX = 0x906B,
+						HL = 0x0014,
+						DE = 0x4E71,
+						BC = 0x0001,
+						F = 0x93,
+						A = 0x6A,
+						SP = 0x907C
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x10, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0010,
+						F = 0x00,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x06,0xDE,0xB3,0x56)
+				}
+			},
+			{
+				"<DAA,CPL,SCF,CCF>",
+				new TestDescriptor()
+				{
+					Message = "<DAA,CPL,SCF,CCF>",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x27, 0x00, 0x00, 0x00),
+						MemOp = 0x2141,
+						IY = 0x09FA,
+						IX = 0x1D60,
+						HL = 0xA559,
+						DE = 0x8D5B,
+						BC = 0x9079,
+						F = 0x04,
+						A = 0x8E,
+						SP = 0x299D
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x18, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x9B,0x4B,0xA6,0x75)
+				}
+			},
+			{
+				"<INC,DEC> A",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> A",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x3C, 0x00, 0x00, 0x00),
+						MemOp = 0x4ADF,
+						IY = 0xD5D8,
+						IX = 0xE598,
+						HL = 0x8A2B,
+						DE = 0xA7B0,
+						BC = 0x431B,
+						F = 0x44,
+						A = 0x5A,
+						SP = 0xD030
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x01, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xD1,0x88,0x15,0xA4)
+				}
+			},
+			{
+				"<INC,DEC> B",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> B",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x04, 0x00, 0x00, 0x00),
+						MemOp = 0xD623,
+						IY = 0x432D,
+						IX = 0x7A61,
+						HL = 0x8180,
+						DE = 0x5A86,
+						BC = 0x1E85,
+						F = 0x86,
+						A = 0x58,
+						SP = 0x9BBB
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x01, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0xFF00,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x5F,0x68,0x22,0x64)
+				}
+			},
+			{
+				"<INC,DEC> BC",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> BC",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x03, 0x00, 0x00, 0x00),
+						MemOp = 0xCD97,
+						IY = 0x44AB,
+						IX = 0x8DC9,
+						HL = 0xE3E3,
+						DE = 0x11CC,
+						BC = 0xE8A4,
+						F = 0x02,
+						A = 0x49,
+						SP = 0x2A4D
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x08, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0xF821,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xD2,0xAE,0x3B,0xEC)
+				}
+			},
+			{
+				"<INC,DEC> C",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> C",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x0C, 0x00, 0x00, 0x00),
+						MemOp = 0xD789,
+						IY = 0x0935,
+						IX = 0x055B,
+						HL = 0x9F85,
+						DE = 0x8B27,
+						BC = 0xD208,
+						F = 0x95,
+						A = 0x05,
+						SP = 0x0660
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x01, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x00FF,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xC2,0x84,0x55,0x4C)
+				}
+			},
+			{
+				"<INC,DEC> D",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> D",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x14, 0x00, 0x00, 0x00),
+						MemOp = 0xA0EA,
+						IY = 0x5FBA,
+						IX = 0x65FB,
+						HL = 0x981C,
+						DE = 0x38CC,
+						BC = 0xDEBC,
+						F = 0x43,
+						A = 0x5C,
+						SP = 0x03BD
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x01, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0xFF00,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x45,0x23,0xDE,0x10)
+				}
+			},
+			{
+				"<INC,DEC> DE",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> DE",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x13, 0x00, 0x00, 0x00),
+						MemOp = 0x342E,
+						IY = 0x131D,
+						IX = 0x28C9,
+						HL = 0x0ACA,
+						DE = 0x9967,
+						BC = 0x3A2E,
+						F = 0x92,
+						A = 0xF6,
+						SP = 0x9D54
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x08, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0xF821,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xAE,0xC6,0xD4,0x2C)
+				}
+			},
+			{
+				"<INC,DEC> E",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> E",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x1C, 0x00, 0x00, 0x00),
+						MemOp = 0x602F,
+						IY = 0x4C0D,
+						IX = 0x2402,
+						HL = 0xE2F5,
+						DE = 0xA0F4,
+						BC = 0xA10A,
+						F = 0x13,
+						A = 0x32,
+						SP = 0x5925
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x01, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x00FF,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xE1,0x75,0xAF,0xCC)
+				}
+			},
+			{
+				"<INC,DEC> H",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> H",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x24, 0x00, 0x00, 0x00),
+						MemOp = 0x1506,
+						IY = 0xF2EB,
+						IX = 0xE8DD,
+						HL = 0x262B,
+						DE = 0x11A6,
+						BC = 0xBC1A,
+						F = 0x17,
+						A = 0x06,
+						SP = 0x2818
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x01, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0xFF00,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x1C,0xED,0x84,0x7D)
+				}
+			},
+			{
+				"<INC,DEC> HL",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> HL",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x23, 0x00, 0x00, 0x00),
+						MemOp = 0xC3F4,
+						IY = 0x07A5,
+						IX = 0x1B6D,
+						HL = 0x4F04,
+						DE = 0xE2C2,
+						BC = 0x822A,
+						F = 0x57,
+						A = 0xE0,
+						SP = 0xC3E1
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x08, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0xF821,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xFC,0x0D,0x6D,0x4A)
+				}
+			},
+			{
+				"<INC,DEC> IX",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> IX",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x23, 0x00, 0x00),
+						MemOp = 0xBC3C,
+						IY = 0x0D9B,
+						IX = 0xE081,
+						HL = 0xADFD,
+						DE = 0x9A7F,
+						BC = 0x96E5,
+						F = 0x13,
+						A = 0x85,
+						SP = 0x0BE2
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x08, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0xF821,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xA5,0x4D,0xBE,0x31)
+				}
+			},
+			{
+				"<INC,DEC> IY",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> IY",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xFD, 0x23, 0x00, 0x00),
+						MemOp = 0x9402,
+						IY = 0x637A,
+						IX = 0x3182,
+						HL = 0xC65A,
+						DE = 0xB2E9,
+						BC = 0xABB4,
+						F = 0x16,
+						A = 0xF2,
+						SP = 0x6D05
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x08, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0xF821,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x50,0x5D,0x51,0xA3)
+				}
+			},
+			{
+				"<INC,DEC> L",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> L",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x2C, 0x00, 0x00, 0x00),
+						MemOp = 0x8031,
+						IY = 0xA520,
+						IX = 0x4356,
+						HL = 0xB409,
+						DE = 0xF4C1,
+						BC = 0xDFA2,
+						F = 0xD1,
+						A = 0x3C,
+						SP = 0x3EA2
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x01, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x00FF,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x56,0xCD,0x06,0xF3)
+				}
+			},
+			{
+				"<INC,DEC> (HL)",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> (HL)",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x34, 0x00, 0x00, 0x00),
+						MemOp = 0xB856,
+						IY = 0x0C7C,
+						IX = 0xE53E,
+						HL = 0x0014,
+						DE = 0x877E,
+						BC = 0xDA58,
+						F = 0x15,
+						A = 0x5C,
+						SP = 0x1F37
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x01, 0x00, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xB8,0x3A,0xDC,0xEF)
+				}
+			},
+			{
+				"<INC,DEC> SP",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> SP",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x33, 0x00, 0x00, 0x00),
+						MemOp = 0x346F,
+						IY = 0xD482,
+						IX = 0xD169,
+						HL = 0xDEB6,
+						DE = 0xA494,
+						BC = 0xF476,
+						F = 0x53,
+						A = 0x02,
+						SP = 0x855B
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x08, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0xF821
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x5D,0xAC,0xD5,0x27)
+				}
+			},
+			{
+				"<INC,DEC> (<IX,IY>+1)",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> (<IX,IY>+1)",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x34, 0x01, 0x00),
+						MemOp = 0xFA6E,
+						IY = 0x0013,
+						IX = 0x0013,
+						HL = 0x2C28,
+						DE = 0x8894,
+						BC = 0x5057,
+						F = 0x16,
+						A = 0x33,
+						SP = 0x286F
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x01, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x20,0x58,0x14,0x70)
+				}
+			},
+			{
+				"<INC,DEC> IXH",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> IXH",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x24, 0x00, 0x00),
+						MemOp = 0xB838,
+						IY = 0x316C,
+						IX = 0xC6D4,
+						HL = 0x3E01,
+						DE = 0x8358,
+						BC = 0x15B4,
+						F = 0x81,
+						A = 0xDE,
+						SP = 0x4259
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x01, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0xFF00,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x6F,0x46,0x36,0x62)
+				}
+			},
+			{
+				"<INC,DEC> IXL",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> IXL",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x2C, 0x00, 0x00),
+						MemOp = 0x4D14,
+						IY = 0x7460,
+						IX = 0x76D4,
+						HL = 0x06E7,
+						DE = 0x32A2,
+						BC = 0x213C,
+						F = 0xD6,
+						A = 0xD7,
+						SP = 0x99A5
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x01, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x00FF,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x02,0x7B,0xEF,0x2C)
+				}
+			},
+			{
+				"<INC,DEC> IYH",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> IYH",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x24, 0x00, 0x00),
+						MemOp = 0x2836,
+						IY = 0x9F6F,
+						IX = 0x9116,
+						HL = 0x61B9,
+						DE = 0x82CB,
+						BC = 0xE219,
+						F = 0x92,
+						A = 0x73,
+						SP = 0xA98C
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x01, 0x00, 0x00),
+						MemOp = 0xFF00,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x2D,0x96,0x6C,0xF3)
+				}
+			},
+			{
+				"<INC,DEC> IYL",
+				new TestDescriptor()
+				{
+					Message = "<INC,DEC> IYL",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x2C, 0x00, 0x00),
+						MemOp = 0xD7C6,
+						IY = 0x62D5,
+						IX = 0xA09E,
+						HL = 0x7039,
+						DE = 0x3E7E,
+						BC = 0x9F12,
+						F = 0x90,
+						A = 0xD9,
+						SP = 0x220F
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x01, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xFB,0xCB,0xBA,0x95)
+				}
+			},
+			{
+				"LD <BC,DE>,(NNNN)",
+				new TestDescriptor()
+				{
+					Message = "LD <BC,DE>,(NNNN)",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xED, 0x4B, 0x14, 0x14),
+						MemOp = 0xF9A8,
+						IY = 0xF559,
+						IX = 0x93A4,
+						HL = 0xF5ED,
+						DE = 0x6F96,
+						BC = 0xD968,
+						F = 0x86,
+						A = 0xE6,
+						SP = 0x4BD8
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x10, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0xFFFF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x4D,0x45,0xA9,0xAC)
+				}
+			},
+			{
+				"LD HL,(NNNN)",
+				new TestDescriptor()
+				{
+					Message = "LD HL,(NNNN)",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x2A, 0x14, 0x14, 0x00),
+						MemOp = 0x9863,
+						IY = 0x7830,
+						IX = 0x2077,
+						HL = 0xB1FE,
+						DE = 0xB9FA,
+						BC = 0xABB8,
+						F = 0x04,
+						A = 0x06,
+						SP = 0x6015
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0xFFFF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x5F,0x97,0x24,0x87)
+				}
+			},
+			{
+				"LD SP,(NNNN)",
+				new TestDescriptor()
+				{
+					Message = "LD SP,(NNNN)",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xED, 0x7B, 0x14, 0x14),
+						MemOp = 0x8DFC,
+						IY = 0x57D7,
+						IX = 0x2161,
+						HL = 0xCA18,
+						DE = 0xC185,
+						BC = 0x27DA,
+						F = 0x83,
+						A = 0x1E,
+						SP = 0xF460
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0xFFFF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x7A,0xCE,0xA1,0x1B)
+				}
+			},
+			{
+				"LD <IX,IY>,(NNNN)",
+				new TestDescriptor()
+				{
+					Message = "LD <IX,IY>,(NNNN)",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x2A, 0x14, 0x14),
+						MemOp = 0xDED7,
+						IY = 0xA6FA,
+						IX = 0xF780,
+						HL = 0x244C,
+						DE = 0x87DE,
+						BC = 0xBCC2,
+						F = 0x16,
+						A = 0x63,
+						SP = 0x4C96
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0xFFFF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x85,0x8B,0xF1,0x6D)
+				}
+			},
+			{
+				"LD (NNNN),<BC,DE>",
+				new TestDescriptor()
+				{
+					Message = "LD (NNNN),<BC,DE>",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xED, 0x43, 0x14, 0x14),
+						MemOp = 0x1F98,
+						IY = 0x844D,
+						IX = 0xE8AC,
+						HL = 0xC9ED,
+						DE = 0xC95D,
+						BC = 0x8F61,
+						F = 0x80,
+						A = 0x3F,
+						SP = 0xC7BF
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x10, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0xFFFF,
+						BC = 0xFFFF,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x64,0x1E,0x87,0x15)
+				}
+			},
+			{
+				"LD (NNNN),HL",
+				new TestDescriptor()
+				{
+					Message = "LD (NNNN),HL",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x22, 0x14, 0x14, 0x00),
+						MemOp = 0xD003,
+						IY = 0x7772,
+						IX = 0x7F53,
+						HL = 0x3F72,
+						DE = 0x64EA,
+						BC = 0xE180,
+						F = 0x10,
+						A = 0x2D,
+						SP = 0x35E9
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0xFFFF,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xA3,0x60,0x8B,0x47)
+				}
+			},
+			{
+				"LD (NNNN),SP",
+				new TestDescriptor()
+				{
+					Message = "LD (NNNN),SP",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xED, 0x73, 0x14, 0x14),
+						MemOp = 0xC0DC,
+						IY = 0xD1D6,
+						IX = 0xED5A,
+						HL = 0xF356,
+						DE = 0xAFDA,
+						BC = 0x6CA7,
+						F = 0x44,
+						A = 0x9F,
+						SP = 0x3F0A
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0xFFFF
+					},
+					CRC = (0x16,0x58,0x5F,0xD7)
+				}
+			},
+			{
+				"LD (NNNN),<IX,IY>",
+				new TestDescriptor()
+				{
+					Message = "LD (NNNN),<IX,IY>",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x22, 0x14, 0x14),
+						MemOp = 0x6CC3,
+						IY = 0x0D91,
+						IX = 0x6900,
+						HL = 0x8EF8,
+						DE = 0xE3D6,
+						BC = 0xC3F7,
+						F = 0xC6,
+						A = 0xD9,
+						SP = 0xC2DF
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0xFFFF,
+						IX = 0xFFFF,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xBA,0x10,0x2A,0x6B)
+				}
+			},
+			{
+				"LD <BC,DE,HL,SP>,NNNN",
+				new TestDescriptor()
+				{
+					Message = "LD <BC,DE,HL,SP>,NNNN",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x01, 0x00, 0x00, 0x00),
+						MemOp = 0x5C1C,
+						IY = 0x2D46,
+						IX = 0x8EB9,
+						HL = 0x6078,
+						DE = 0x74B1,
+						BC = 0xB30E,
+						F = 0x46,
+						A = 0xD1,
+						SP = 0x30CC
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x30, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0xFF, 0xFF, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xDE,0x39,0x19,0x69)
+				}
+			},
+			{
+				"LD <IX,IY>,NNNN",
+				new TestDescriptor()
+				{
+					Message = "LD <IX,IY>,NNNN",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x21, 0x00, 0x00),
+						MemOp = 0x87E8,
+						IY = 0x2006,
+						IX = 0xBD12,
+						HL = 0xB69B,
+						DE = 0x7253,
+						BC = 0xA1E5,
+						F = 0x51,
+						A = 0x13,
+						SP = 0xF1BD
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0xFF, 0xFF),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x22,0x7D,0xD5,0x25)
+				}
+			},
+			{
+				"LD A,<(BC),(DE)>",
+				new TestDescriptor()
+				{
+					Message = "LD A,<(BC),(DE)>",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x0A, 0x00, 0x00, 0x00),
+						MemOp = 0xB3A8,
+						IY = 0x1D2A,
+						IX = 0x7F8E,
+						HL = 0x42AC,
+						DE = 0x0014,
+						BC = 0x0014,
+						F = 0xC6,
+						A = 0xB1,
+						SP = 0xEF8E
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x10, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					CRC = (0xB0,0x81,0x89,0x35)
+				}
+			},
+			{
+				"LD <B,C,D,E,H,L,(HL),A>,NN",
+				new TestDescriptor()
+				{
+					Message = "LD <B,C,D,E,H,L,(HL),A>,NN",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x06, 0x00, 0x00, 0x00),
+						MemOp = 0xC407,
+						IY = 0xF49D,
+						IX = 0xD13D,
+						HL = 0x0339,
+						DE = 0xDE89,
+						BC = 0x7455,
+						F = 0x53,
+						A = 0xC0,
+						SP = 0x5509
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x38, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					CRC = (0xF1,0xDA,0xB5,0x56)
+				}
+			},
+			{
+				"LD (<IX,IY>+1),NN",
+				new TestDescriptor()
+				{
+					Message = "LD (<IX,IY>+1),NN",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x36, 0x01, 0x00),
+						MemOp = 0x1B45,
+						IY = 0x0013,
+						IX = 0x0013,
+						HL = 0xD5C1,
+						DE = 0x61C7,
+						BC = 0xBDC4,
+						F = 0xC0,
+						A = 0x85,
+						SP = 0xCD16
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0xFF),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					CRC = (0x26,0x0,0x47,0x7E)
+				}
+			},
+			{
+				"LD <B,C,D,E>,(<IX,IY>+1)",
+				new TestDescriptor()
+				{
+					Message = "LD <B,C,D,E>,(<IX,IY>+1)",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x46, 0x01, 0x00),
+						MemOp = 0xD016,
+						IY = 0x0013,
+						IX = 0x0013,
+						HL = 0x4260,
+						DE = 0x7F39,
+						BC = 0x0404,
+						F = 0x97,
+						A = 0x4A,
+						SP = 0xD085
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x18, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0001,
+						IX = 0x0001,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0xFFFF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xCC,0x11,0x06,0xA8)
+				}
+			},
+			{
+				"LD <H,L>,(<IX,IY>+1)",
+				new TestDescriptor()
+				{
+					Message = "LD <H,L>,(<IX,IY>+1)",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x66, 0x01, 0x00),
+						MemOp = 0x84E0,
+						IY = 0x0013,
+						IX = 0x0013,
+						HL = 0x9C52,
+						DE = 0xA799,
+						BC = 0x49B6,
+						F = 0x93,
+						A = 0x00,
+						SP = 0xEEAD
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x08, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0001,
+						IX = 0x0001,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0xFFFF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xFA,0x2A,0x4D,0x03)
+				}
+			},
+			{
+				"LD A,(<IX,IY>+1)",
+				new TestDescriptor()
+				{
+					Message = "LD A,(<IX,IY>+1)",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x7E, 0x01, 0x00),
+						MemOp = 0xD8B6,
+						IY = 0x0013,
+						IX = 0x0013,
+						HL = 0xC612,
+						DE = 0xDF07,
+						BC = 0x9CD0,
+						F = 0x43,
+						A = 0xA6,
+						SP = 0xA0E5
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0001,
+						IX = 0x0001,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0xFFFF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xA5,0xE9,0xAC,0x64)
+				}
+			},
+			{
+				"LD <IXH,IXL,IYH,IYL>,NN",
+				new TestDescriptor()
+				{
+					Message = "LD <IXH,IXL,IYH,IYL>,NN",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x26, 0x00, 0x00),
+						MemOp = 0x3C53,
+						IY = 0x4640,
+						IX = 0xE179,
+						HL = 0x7711,
+						DE = 0xC107,
+						BC = 0x1AFA,
+						F = 0x81,
+						A = 0xAD,
+						SP = 0x5D9B
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x08, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					CRC = (0x24,0xE8,0x82,0x8B)
+				}
+			},
+			{
+				"LD <BCDEHLA>,<BCDEHLA>",
+				new TestDescriptor()
+				{
+					Message = "LD <BCDEHLA>,<BCDEHLA>",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x40, 0x00, 0x00, 0x00),
+						MemOp = 0x72A4,
+						IY = 0xA024,
+						IX = 0x61AC,
+						HL = 0x0014,
+						DE = 0x82C7,
+						BC = 0x718F,
+						F = 0x97,
+						A = 0x8F,
+						SP = 0xEF8E
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x3F, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0xFFFF,
+						BC = 0xFFFF,
+						F = 0xD7,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					CRC = (0x74,0x4B,0x01,0x18)
+				}
+			},
+			{
+				"LD <BCDEXYA>,<BCDEXYA>",
+				new TestDescriptor()
+				{
+					Message = "LD <BCDEXYA>,<BCDEXYA>",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x40, 0x00, 0x00),
+						MemOp = 0xBCC5,
+						IY = 0x0014,
+						IX = 0x0014,
+						HL = 0x0014,
+						DE = 0x2FC2,
+						BC = 0x98C0,
+						F = 0x83,
+						A = 0x1F,
+						SP = 0x3BCD
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x3F, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0xFFFF,
+						BC = 0xFFFF,
+						F = 0xD7,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					CRC = (0x47,0x8B,0xA3,0x6B)
+				}
+			},
+			{
+				"LD A,(NNNN) / LD (NNNN),A",
+				new TestDescriptor()
+				{
+					Message = "LD A,(NNNN) / LD (NNNN),A",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x32, 0x14, 0x14, 0x00),
+						MemOp = 0xFD68,
+						IY = 0xF4EC,
+						IX = 0x44A0,
+						HL = 0xB543,
+						DE = 0x0653,
+						BC = 0xCDBA,
+						F = 0xD2,
+						A = 0x4F,
+						SP = 0x1FD8
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x08, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					CRC = (0xC9,0x26,0x2D,0xE5)
+				}
+			},
+			{
+				"LDD<R> (1)",
+				new TestDescriptor()
+				{
+					Message = "LDD<R> (1)",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xED, 0xA8, 0x00, 0x00),
+						MemOp = 0x9852,
+						IY = 0x68FA,
+						IX = 0x66A1,
+						HL = 0x0017,
+						DE = 0x0015,
+						BC = 0x0001,
+						F = 0xC1,
+						A = 0x68,
+						SP = 0x20B7
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x10, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0xFFFF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x94,0xF4,0x27,0x69)
+				}
+			},
+			{
+				"LDD<R> (2)",
+				new TestDescriptor()
+				{
+					Message = "LDD<R> (2)",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xED, 0xA8, 0x00, 0x00),
+						MemOp = 0xF12E,
+						IY = 0xEB2A,
+						IX = 0xD5BA,
+						HL = 0x0017,
+						DE = 0x0015,
+						BC = 0x0002,
+						F = 0x47,
+						A = 0xFF,
+						SP = 0xFBE4
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x10, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0xFFFF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x5A,0x90,0x7E,0xD4)
+				}
+			},
+			{
+				"LDI<R> (1)",
+				new TestDescriptor()
+				{
+					Message = "LDI<R> (1)",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xED, 0xA0, 0x00, 0x00),
+						MemOp = 0xFE30,
+						IY = 0x03CD,
+						IX = 0x6058,
+						HL = 0x0016,
+						DE = 0x0014,
+						BC = 0x0001,
+						F = 0x04,
+						A = 0x60,
+						SP = 0x2688
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x10, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0xFFFF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x9A,0xBD,0xF6,0xB5)
+				}
+			},
+			{
+				"LDI<R> (2)",
+				new TestDescriptor()
+				{
+					Message = "LDI<R> (2)",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xED, 0xA0, 0x00, 0x00),
+						MemOp = 0x4ACE,
+						IY = 0xC26E,
+						IX = 0xB188,
+						HL = 0x0016,
+						DE = 0x0014,
+						BC = 0x0002,
+						F = 0x14,
+						A = 0x2D,
+						SP = 0xA39F
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x10, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0xFFFF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xEB,0x59,0x89,0x1B)
+				}
+			},
+			{
+				"NEG",
+				new TestDescriptor()
+				{
+					Message = "NEG",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xED, 0x44, 0x00, 0x00),
+						MemOp = 0x38A2,
+						IY = 0x5F6B,
+						IX = 0xD934,
+						HL = 0x57E4,
+						DE = 0xD2D6,
+						BC = 0x4642,
+						F = 0x43,
+						A = 0x5A,
+						SP = 0x09CC
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x6A,0x3C,0x3B,0xBD)
+				}
+			},
+			{
+				"<RRD,RLD>",
+				new TestDescriptor()
+				{
+					Message = "<RRD,RLD>",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xED, 0x67, 0x00, 0x00),
+						MemOp = 0x91CB,
+						IY = 0xC48B,
+						IX = 0xFA62,
+						HL = 0x0014,
+						DE = 0xE720,
+						BC = 0xB479,
+						F = 0x40,
+						A = 0x06,
+						SP = 0x8AE2
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x08, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					CRC = (0x95,0x5B,0xA3,0x26)
+				}
+			},
+			{
+				"<RLCA,RRCA,RLA,RRA>",
+				new TestDescriptor()
+				{
+					Message = "<RLCA,RRCA,RLA,RRA>",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x07, 0x00, 0x00, 0x00),
+						MemOp = 0xCB92,
+						IY = 0x6D43,
+						IX = 0x0A90,
+						HL = 0xC284,
+						DE = 0x0C53,
+						BC = 0xF50E,
+						F = 0x91,
+						A = 0xEB,
+						SP = 0x40FC
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x18, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x25,0x13,0x30,0xAE)
+				}
+			},
+			{
+				"SHF/ROT (<IX,IY>+1)",
+				new TestDescriptor()
+				{
+					Message = "SHF/ROT (<IX,IY>+1)",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0xCB, 0x01, 0x06),
+						MemOp = 0xDDAF,
+						IY = 0x0013,
+						IX = 0x0013,
+						HL = 0xFF3C,
+						DE = 0xDBF6,
+						BC = 0x94F4,
+						F = 0x82,
+						A = 0x80,
+						SP = 0x61D9
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x00, 0x00, 0x38),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x80,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x57,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x71,0x3A,0xCD,0x81)
+				}
+			},
+			{
+				"SHF/ROT <B,C,D,E,H,L,(HL),A>",
+				new TestDescriptor()
+				{
+					Message = "SHF/ROT <B,C,D,E,H,L,(HL),A>",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xCB, 0x00, 0x00, 0x00),
+						MemOp = 0xCCEB,
+						IY = 0x5D4A,
+						IX = 0xE007,
+						HL = 0x0014,
+						DE = 0x1395,
+						BC = 0x30EE,
+						F = 0x43,
+						A = 0x78,
+						SP = 0x3DAD
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x3F, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x80,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0xFFFF,
+						BC = 0xFFFF,
+						F = 0x57,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					CRC = (0xEB,0x60,0x4D,0x58)
+				}
+			},
+			{
+				"<SET,RES> N,<BCDEHL(HL)A>",
+				new TestDescriptor()
+				{
+					Message = "<SET,RES> N,<BCDEHL(HL)A>",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xCB, 0x80, 0x00, 0x00),
+						MemOp = 0x2CD5,
+						IY = 0x97AB,
+						IX = 0x39FF,
+						HL = 0x0014,
+						DE = 0xD14B,
+						BC = 0x6AB2,
+						F = 0x53,
+						A = 0x27,
+						SP = 0xB538
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x7F, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0xFFFF,
+						BC = 0xFFFF,
+						F = 0xD7,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					CRC = (0x8B,0x57,0xF0,0x08)
+				}
+			},
+			{
+				"<SET,RES> N,(<IX,IY>+1)",
+				new TestDescriptor()
+				{
+					Message = "<SET,RES> N,(<IX,IY>+1)",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0xCB, 0x01, 0x86),
+						MemOp = 0xFB44,
+						IY = 0x0013,
+						IX = 0x0013,
+						HL = 0xBA09,
+						DE = 0x68BE,
+						BC = 0x32D8,
+						F = 0x10,
+						A = 0x5E,
+						SP = 0xA867
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x00, 0x00, 0x78),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x00FF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0xD7,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0xCC,0x63,0xF9,0x8A)
+				}
+			},
+			{
+				"LD (<IX,IY>+1),<B,C,D,E>",
+				new TestDescriptor()
+				{
+					Message = "LD (<IX,IY>+1),<B,C,D,E>",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x70, 0x01, 0x00),
+						MemOp = 0x270D,
+						IY = 0x0013,
+						IX = 0x0013,
+						HL = 0xB73A,
+						DE = 0x887B,
+						BC = 0x99EE,
+						F = 0x86,
+						A = 0x70,
+						SP = 0xCA07
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x03, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0001,
+						IX = 0x0001,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0xFFFF,
+						BC = 0xFFFF,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x04,0x62,0x6A,0xBF)
+				}
+			},
+			{
+				"LD (<IX,IY>+1),<H,L>",
+				new TestDescriptor()
+				{
+					Message = "LD (<IX,IY>+1),<H,L>",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x74, 0x01, 0x00),
+						MemOp = 0xB664,
+						IY = 0x0013,
+						IX = 0x0013,
+						HL = 0xE8AC,
+						DE = 0xB5F5,
+						BC = 0xAAFE,
+						F = 0x12,
+						A = 0x10,
+						SP = 0x9566
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x01, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0001,
+						IX = 0x0001,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0xFFFF,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					CRC = (0x6A,0x1A,0x88,0x31)
+				}
+			},
+			{
+				"LD (<IX,IY>+1),A",
+				new TestDescriptor()
+				{
+					Message = "LD (<IX,IY>+1),A",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0xDD, 0x77, 0x01, 0x00),
+						MemOp = 0x67AF,
+						IY = 0x0013,
+						IX = 0x0013,
+						HL = 0x4F13,
+						DE = 0x0644,
+						BC = 0xBCD7,
+						F = 0x50,
+						A = 0xAC,
+						SP = 0x5FAF
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x20, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0001,
+						IX = 0x0001,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					CRC = (0xCC,0xBE,0x5A,0x96)
+				}
+			},
+			{
+				"LD (<BC,DE>),A",
+				new TestDescriptor()
+				{
+					Message = "LD (<BC,DE>),A",
+					Mask = 0xD7,
+					Base = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x02, 0x00, 0x00, 0x00),
+						MemOp = 0x0C3B,
+						IY = 0xB592,
+						IX = 0x6CFF,
+						HL = 0x959E,
+						DE = 0x0014,
+						BC = 0x0015,
+						F = 0xC1,
+						A = 0x21,
+						SP = 0xBDE7
+					},
+					Increment = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x18, 0x00, 0x00, 0x00),
+						MemOp = 0x0000,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0x00,
+						SP = 0x0000
+					},
+					Shift = new TestVector()
+						{
+						Instruction = new InstructionBytes(0x00, 0x00, 0x00, 0x00),
+						MemOp = 0xFFFF,
+						IY = 0x0000,
+						IX = 0x0000,
+						HL = 0x0000,
+						DE = 0x0000,
+						BC = 0x0000,
+						F = 0x00,
+						A = 0xFF,
+						SP = 0x0000
+					},
+					CRC = (0x7A,0x4C,0x11,0x4F)
+				}
+			}
+		};
+    }
+}

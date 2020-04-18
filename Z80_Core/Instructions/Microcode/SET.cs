@@ -13,7 +13,7 @@ namespace Z80.Core
             IRegisters r = cpu.Registers;
             byte bitIndex = instruction.BitIndex ?? 0xFF;
             sbyte offset = (sbyte)(data.Argument1);
-            ByteRegister register = instruction.OperandByteRegister;
+            ByteRegister register = instruction.OperandRegister;
 
             if (register != ByteRegister.None)
             {

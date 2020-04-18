@@ -175,14 +175,22 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        [TestCase(0x0000, 0x8000, true, 0x7FFF, FlagState.Subtract)]
-        [TestCase(0x0000, 0x8100, true, 0x7EFF, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x0100, 0x0000, true, 0x00FF, FlagState.Subtract)]
+        [TestCase(0x0000, 0x8000, true, 0x7FFF, FlagState.Subtract | FlagState.ParityOverflow)]
+        [TestCase(0x0100, 0xFF00, true, 0x01FF, FlagState.Subtract | FlagState.HalfCarry)]
+        [TestCase(0x0000, 0x8100, true, 0x7EFF, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry)]
         [TestCase(0x0000, 0x0000, false, 0x0000, FlagState.Subtract | FlagState.Zero)]
-        [TestCase(0x0000, 0x8100, false, 0x7F00, FlagState.Subtract | FlagState.HalfCarry | FlagState.Zero)]
+        [TestCase(0x0000, 0x80FF, true, 0x7F00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero)]
+        [TestCase(0x0100, 0xFF00, false, 0x0200, FlagState.Subtract | FlagState.HalfCarry | FlagState.Zero)]
+        [TestCase(0x0000, 0x8100, false, 0x7F00, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Zero)]
         [TestCase(0x0000, 0x0000, true, 0xFFFF, FlagState.Subtract | FlagState.Sign)]
+        [TestCase(0x0100, 0x8000, true, 0x80FF, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Sign)]
         [TestCase(0x0000, 0x0100, true, 0xFEFF, FlagState.Subtract | FlagState.HalfCarry | FlagState.Sign)]
+        [TestCase(0x0100, 0x7F00, true, 0x81FF, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Sign)]
         [TestCase(0x0000, 0x00FF, true, 0xFF00, FlagState.Subtract | FlagState.Zero | FlagState.Sign)]
+        [TestCase(0x0000, 0x8000, false, 0x8000, FlagState.Subtract | FlagState.ParityOverflow | FlagState.Zero | FlagState.Sign)]
         [TestCase(0x0000, 0x0100, false, 0xFF00, FlagState.Subtract | FlagState.HalfCarry | FlagState.Zero | FlagState.Sign)]
+        [TestCase(0x0100, 0x7F00, false, 0x8200, FlagState.Subtract | FlagState.ParityOverflow | FlagState.HalfCarry | FlagState.Zero | FlagState.Sign)]
         public void SBC_HL_rr(int input, int sub, bool carry, int expectedResult, FlagState expectedFlagState)
         {
             sbyte offset = (sbyte)(RandomBool() ? 0x7F : -0x7F);

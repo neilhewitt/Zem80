@@ -14,7 +14,6 @@ namespace Z80.Core
 
             byte a = cpu.Registers.A;
             byte b = cpu.Memory.ReadByteAt(cpu.Registers.HL);
-            int result = a - b;
             cpu.Registers.HL--;
             cpu.Registers.BC--;
 

@@ -13,154 +13,16 @@ namespace FlagSetMaker
             FlagLookup.BuildFlagLookupTables();
 
             #region done
-            //ProcessInstruction<byte>("ADC A,n",
-            //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation(i, j, carry, false).State,
-            //    (i, j, carry) => (byte)(i + j + (carry ? 1 : 0)),
-            //    true, false);
-
-            ////ProcessInstruction("ADD A,n",
-            ////    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation(i, j, false).State,
-            ////    (i, j, carry) => (byte)(i + j),
-            ////    false, false);
-
-            //ProcessArithmetic8("SBC A,n",
-            //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation(i, j, carry, true).State,
-            //    (i, j, carry) => (byte)(i - j - (carry ? 1 : 0)),
-            //    true, true);
-
-            //ProcessArithmetic16("SBC HL,rr",
-            //    (flags, i, j, carry) => FlagLookup.FlagsFromArithmeticOperation16Bit(flags, i, j, carry, true, true).State,
-            //    (i, j, carry) => (ushort)(i - j - (carry ? 1 : 0)),
-            //    true, true);
-
-            //ProcessArithmetic16("ADC HL,rr",
-            //    (flags, i, j, carry) => FlagLookup.FlagsFromArithmeticOperation16Bit(flags, i, j, carry, true, false).State,
-            //    (i, j, carry) => (ushort)(i + j + (carry ? 1 : 0)),
-            //    true);
-
-            //ProcessInstruction("SUB A,n",
-            //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation(i, j, true).State,
-            //    (i, j, carry) => (byte)(i - j),
-            //    false, true);
-
-            //Process8("CP n",
-            //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation8(i, (byte)j, false, true).State,
-            //    (i, j, carry) => (byte)(i - j),
-            //    false);
-
-            //Process8("DEC n",
-            //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation8(i, (byte)1, false, true).State,
-            //    (i, j, carry) => (byte)(i - 1),
-            //    false);
-
-            //Process8("AND n",
-            //    (i, j, carry) => FlagLookup.FlagsFromLogicalOperation(i, (byte)j, LogicalOperation.And).State,
-            //    (i, j, carry) => (byte)(i & j),
-            //    false);
-
-            //Process8("OR n",
-            //    (i, j, carry) => FlagLookup.FlagsFromLogicalOperation(i, (byte)j, LogicalOperation.Or).State,
-            //    (i, j, carry) => (byte)(i | j),
-            //    false);
-
-            //Process8("XOR n",
-            //    (i, j, carry) => FlagLookup.FlagsFromLogicalOperation(i, (byte)j, LogicalOperation.Xor).State,
-            //    (i, j, carry) => (byte)(i ^ j),
-            //    false);
-
-            //Process8("INC n",
-            //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation8(i, (byte)1, false, false).State,
-            //    (i, j, carry) => (byte)(i + 1),
-            //    false);
-
-            //Process8("RL",
-            //    (i, j, carry) => FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.RotateLeft).State,
-            //    (i, j, carry) => ((byte)(i << 1)).SetBit(0, carry),
-            //    true);
-
+            
             //Process8("RR",
             //    (i, j, carry) => FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.RotateRight).State,
             //    (i, j, carry) => ((byte)(i >> 1)).SetBit(7, carry),
             //    true);
 
-            //Process8("RLC",
-            //    (i, j, carry) => {
-            //        Flags flags = FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.RotateLeft);
-            //        flags.HalfCarry = false;
-            //        flags.Subtract = false;
-            //        return flags.State;
-            //        },
-            //    (i, j, carry) => ((byte)(i << 1)).SetBit(0, i.GetBit(7)),
+            //Process16("ADC HL,rr",
+            //    (flags, i, j, carry) => FlagLookup.WordArithmeticFlags(flags, i, j, carry, true, false).State,
+            //    (i, j, carry) => (ushort)(i + j + (carry ? 1 : 0)),
             //    true);
-
-            //Process8("RRC",
-            //    (i, j, carry) => {
-            //        Flags flags = FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.RotateRight);
-            //        flags.HalfCarry = false;
-            //        flags.Subtract = false;
-            //        return flags.State;
-            //    },
-            //    (i, j, carry) => ((byte)(i >> 1)).SetBit(7, i.GetBit(0)),
-            //    true);
-
-            //Process8("SLA",
-            //    (i, j, carry) =>
-            //    {
-            //        Flags flags = FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.ShiftLeft);
-            //        flags.HalfCarry = false;
-            //        flags.Subtract = false;
-            //        return flags;
-            //    },
-            //    (i, j, carry, flags) => { byte result = ((byte)(i << 1)); flags.Carry = result.GetBit(7); return result; },
-            //    false, false, true);
-
-            //Process8("SRA",
-            //    (i, j, carry) =>
-            //    {
-            //        Flags flags = FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.ShiftRight);
-            //        flags.HalfCarry = false;
-            //        flags.Subtract = false;
-            //        return flags;
-            //    },
-            //    (i, j, carry, flags) => { byte result = ((byte)(i >> 1)).SetBit(7, i.GetBit(7)); flags.Carry = result.GetBit(0); return result; },
-            //    false, false, true);
-
-            //Process8("SRL",
-            //    (i, j, carry) =>
-            //    {
-            //        Flags flags = FlagLookup.FlagsFromBitwiseOperation(i, BitwiseOperation.ShiftRight);
-            //        flags.HalfCarry = false;
-            //        flags.Subtract = false;
-            //        return flags;
-            //    },
-            //    (i, j, carry, flags) => { byte result = ((byte)(i >> 1)).SetBit(7, false); flags.Carry = result.GetBit(0); return result; },
-            //    false, false, true);
-
-            //Process8("CP n",
-            //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation8(i, (byte)j, false, true),
-            //    (i, j, carry, flags) => (byte)(i - j),
-            //    false, true, false);
-
-
-            //Process8("DEC",
-            //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation8(i, (byte)1, false, true),
-            //    (i, j, carry, flags) => (byte)(i - 1),
-            //    false, false, true);
-
-            //Process8("SBC",
-            //    (i, j, carry) => FlagLookup.FlagsFromArithmeticOperation8(i, (byte)j, carry, true),
-            //    (i, j, carry, flags) => (byte)(i - j - (carry ? 1 : 0)),
-            //    true, true, true);
-
-            Process16("SBC HL,rr",
-                (flags, i, j, carry) => FlagLookup.WordArithmeticFlags(flags, i, j, carry, true, true).State,
-                (i, j, carry) => (ushort)(i - j - (carry ? 1 : 0)),
-                true);
-
-            //Process8("SUB",
-            //(i, j, carry) => FlagLookup.FlagsFromArithmeticOperation8(i, (byte)j, false, true),
-            //    (i, j, carry, flags) => (byte)(i - j),
-            //    false, true, true);
 
             #endregion
         }

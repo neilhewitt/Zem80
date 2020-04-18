@@ -10,18 +10,6 @@ namespace Z80.Core
     public static class Extensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string ToHexString(this byte input)
-        {
-            return input.ToString("X2");
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string ToBinaryString(this byte input)
-        {
-            return new ByteBits(input).ToString();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte LowByte(this ushort input)
         {
             return (byte)(input % 256); 
@@ -34,67 +22,25 @@ namespace Z80.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool HalfCarryWhenAdding(this byte first, byte second)
-        {
-            return (((first & 0x0F) + (second & 0x0F)) & 0x10) == 0x10;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool HalfCarryWhenAdding(this ushort first, ushort second)
-        {
-            return HalfCarryWhenAdding(first.HighByte(), second.HighByte());
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool HalfCarryWhenSubtracting(this byte first, byte second)
-        {
-            return (((first & 0x0F) - (second & 0x0F)) < 0);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool HalfCarryWhenSubtracting(this ushort first, ushort second)
-        {
-            return HalfCarryWhenSubtracting(first.HighByte(), second.HighByte());
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool HalfCarryWhenConvertingToByte(this sbyte value)
-        {
-            return (((value & 0x0F) & 0x10) != 0x10);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool OverflowsWhenAddingOrSubtracting(this byte first, byte second)
-        {
-            int result = (byte)((sbyte)first + (sbyte)second);
-            return (result >= 0x80 || result <= -0x80);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool OverflowsWhenAdding(this ushort first, ushort second)
-        {
-            int result = (byte)((sbyte)first + (sbyte)second);
-            return (result >= 0x8000 || result <= -0x8000);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte RemoveBits(this byte input, int startIndex, int numberOfBits)
-        {
-            ByteBits bits = new ByteBits(input);
-            bits.SetBits(startIndex, numberOfBits, false);
-            return bits.Value;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool[] GetBits(this byte input, int startIndex, int numberOfBits)
         {
-            ByteBits bits = new ByteBits(input);
             bool[] output = new bool[numberOfBits];
             for (int i = startIndex; i < startIndex + numberOfBits; i++)
             {
-                output[i - startIndex] = bits[i];
+                output[i - startIndex] = input.GetBit(i);
             }
             return output;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static byte SetBits(this byte input, int startIndex, params bool[] bitsToSet)
+        {
+            byte output = input;
+            for (int i = startIndex; i < startIndex + bitsToSet.Length; i++)
+            {
+                output.SetBit(i, bitsToSet[i - startIndex]);
+            }
+            return output;        
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -126,19 +72,7 @@ namespace Z80.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte GetByteFromBits(this byte input, int startIndex, int numberOfBits)
         {
-            ByteBits bits = new ByteBits(input);
-            return ((byte)0x00).SetBits(0, bits.GetBits(startIndex, numberOfBits));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte SetBits(this byte input, int startIndex, params bool[] bitsToSet)
-        {
-            ByteBits bits = new ByteBits(input);
-            for(int i = startIndex; i < startIndex + bitsToSet.Length; i++)
-            {
-                bits[i] = bitsToSet[i - startIndex];
-            }
-            return bits.Value;
+            return ((byte)0x00).SetBits(0, input.GetBits(startIndex, numberOfBits));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -152,13 +86,29 @@ namespace Z80.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ushort SetBit(this ushort input, int bitIndex, bool state)
+        {
+            return state switch
+            {
+                true => (ushort)(input | (1 << bitIndex)),
+                false => (ushort)(input & ~(1 << bitIndex))
+            };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool GetBit(this byte input, int bitIndex)
         {
             return (input & (1 << bitIndex)) != 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte CountBits(this byte input, bool state)
+        public static bool GetBit(this ushort input, int bitIndex)
+        {
+            return (input & (1 << bitIndex)) != 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int CountBits(this byte input, bool state)
         {
             if (!state) input = (byte)~input;
             byte bits = 0;
@@ -169,6 +119,15 @@ namespace Z80.Core
             }
 
             return bits;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string SetChar(this string input, int index, char replace)
+        {
+            if (input.Length <= index) throw new ArgumentOutOfRangeException();
+            if (index == 0) return replace + input.Substring(1); // start
+            if (index == input.Length - 1) return input.Substring(0, index) + replace; // end
+            else return input.Substring(0, index) + replace + input.Substring(index + 1);
         }
     }
 }

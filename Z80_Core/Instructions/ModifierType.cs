@@ -9,7 +9,6 @@
         Bit,
         BitAndRegister,
         IndexRegister,
-        IndexRegisterHalf,
-
+        IndexRegisterHalf
     }
 }
