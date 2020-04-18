@@ -38,7 +38,7 @@ namespace Z80.Core
             byte output = input;
             for (int i = startIndex; i < startIndex + bitsToSet.Length; i++)
             {
-                output.SetBit(i, bitsToSet[i - startIndex]);
+                output = output.SetBit(i, bitsToSet[i - startIndex]);
             }
             return output;        
         }
