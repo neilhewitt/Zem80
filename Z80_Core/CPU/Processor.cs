@@ -25,7 +25,7 @@ namespace Z80.Core
 
         private InstructionDecoder _decoder = new InstructionDecoder();
 
-        public IDebugProcessor Debuggable => (IDebugProcessor)this;
+        public IDebugProcessor Debug => (IDebugProcessor)this;
         public bool Synchronous { get; private set; }
 
         public IRegisters Registers { get; private set; }
@@ -164,7 +164,12 @@ namespace Z80.Core
             InterruptsEnabled = true;
         }
 
-        public ExecutionResult Execute(ExecutionPackage package)
+        ExecutionResult IDebugProcessor.Execute(ExecutionPackage package)
+        {
+            return Execute(package);
+        }
+
+        private ExecutionResult Execute(ExecutionPackage package)
         {
             _beforeExecute?.Invoke(this, package);
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);

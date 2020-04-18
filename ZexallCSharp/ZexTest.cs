@@ -36,16 +36,19 @@ namespace ZexallCSharp
             // for each change above, apply change for each 1 bit in shift vector
             // this is the total test case set for this test
 
-            //Console.CursorVisible = false;
-            //Console.SetCursorPosition(0, 0);
+            Console.CursorVisible = false;
+            Console.SetCursorPosition(0, 0);
             Console.Write(descriptor.Name.PadRight(10));
 
             byte[] crc = new byte[4] { 255, 255, 255, 255 };
+
+            InstructionDecoder decoder = new InstructionDecoder();
 
             var tests = MakeTestSet(descriptor);
             int testsDone = 0;
             foreach (var test in tests)
             {
+                var package = decoder.Decode(test.Instruction.AsByteArray());
                 TestState state = _executeTest(test);
                 if (state != null)
                 {
@@ -71,7 +74,23 @@ namespace ZexallCSharp
                     Console.ForegroundColor = ConsoleColor.White;
                     return false; // fail out immediately
                 }
-                    
+
+                Console.SetCursorPosition(0, 2);
+                Console.WriteLine(descriptor.Message + " ----------->");
+                Console.WriteLine("Instruction: " + test.Instruction.First + " " + test.Instruction.Second + " ("
+                    + package.Instruction.Mnemonic + ") " + package.Data.Argument1.ToString("X2") + " " + package.Data.Argument2.ToString("X2"));
+                Console.WriteLine("MemOp: " + test.MemOp.ToString("X4"));
+                Console.WriteLine("IY: " + test.IY.ToString("X4"));
+                Console.WriteLine("IX: " + test.IX.ToString("X4"));
+                Console.WriteLine("HL: " + test.HL.ToString("X4"));
+                Console.WriteLine("DE: " + test.DE.ToString("X4"));
+                Console.WriteLine("BC: " + test.BC.ToString("X4"));
+                Console.WriteLine("F: " + test.F.ToString("X2"));
+                Console.WriteLine("A: " + test.A.ToString("X2"));
+                Console.WriteLine("SP: " + test.SP.ToString("X4"));
+                Console.WriteLine();
+                Console.WriteLine("Done: " + testsDone);
+
                 #region console-output-for-test
                 //Console.SetCursorPosition(0, 2);
                 //Console.WriteLine(descriptor.Message + " ----------->");
@@ -130,55 +149,6 @@ namespace ZexallCSharp
             return shiftCases;
         }
 
-        private void Shift(List<TestVector> shiftCases, IList<TestVector> incrementCases, TestVector shift, byte mask, int valueIndex)
-        {
-            if (shift.Bytes.All(x => x == 0))
-            {
-                shiftCases.AddRange(incrementCases);
-                return;
-            }
-
-            if (valueIndex > 19) return;
-
-            foreach (TestVector incrementCase in incrementCases)
-            {
-                dynamic baseValue = incrementCase.GetValue(valueIndex);
-                dynamic shiftValue = shift.GetValue(valueIndex);
-
-                int bitIndex = (shiftValue is byte) ? 7 : 15;
-                while (shiftValue > 0)
-                {
-                    if (shiftValue is byte)
-                    {
-                        byte s = (byte)shiftValue;
-                        if (s.GetBit(bitIndex))
-                        {
-                            TestVector newVector = new TestVector(incrementCase);
-                            newVector.SetValue(valueIndex, baseValue ^ shiftValue);
-                            shiftCases.Add(newVector);
-                        }
-                        s = s.SetBit(bitIndex--, false);
-                        shiftValue = s;
-                    }
-                    else if (shiftValue is ushort)
-                    {
-                        ushort s = (ushort)shiftValue;                        
-                        if (s == 65535 && shift.MemOp == 0 && shift.F != 0) s = 255;
-                        if (s.GetBit(bitIndex))
-                        {
-                            TestVector newVector = new TestVector(incrementCase);
-                            newVector.SetValue(valueIndex, baseValue ^ shiftValue);
-                            shiftCases.Add(newVector);
-                        }
-                        s = s.SetBit(bitIndex--, false);
-                        shiftValue = s;
-                    }
-                }
-            }
-
-            Shift(shiftCases, incrementCases, shift, mask, valueIndex + 1);
-        }
-
         private void Increment(IList<TestVector> cases, IList<byte> permutations, int index, TestVector baseCase, TestVector increment)
         {
             if (increment.Bytes.All(b => b == 0))
@@ -203,6 +173,7 @@ namespace ZexallCSharp
                     TestVector newCase = null;
                     newCase = new TestVector(baseCase);
                     newCase.Bytes[index] = (byte)(baseCase.Bytes[index] ^ permutation);
+                    baseCase = newCase;
                     if (index == lastIndexNotZero)
                     {
                         cases.Add(newCase);
@@ -236,6 +207,56 @@ namespace ZexallCSharp
 
             if (permutations.Count() > 0) permutations.Add(0);
             return permutations.Distinct().ToList();
+        }
+
+        private void Shift(List<TestVector> shiftCases, IList<TestVector> incrementCases, TestVector shift, byte mask, int valueIndex)
+        {
+            if (shift.Bytes.All(x => x == 0))
+            {
+                shiftCases.AddRange(incrementCases);
+                return;
+            }
+
+            if (valueIndex > 19) return;
+
+            foreach (TestVector incrementCase in incrementCases)
+            {
+                dynamic baseValue = incrementCase.GetValue(valueIndex);
+                dynamic shiftValue = shift.GetValue(valueIndex);
+
+                int bitIndex = (shiftValue is byte) ? 7 : 15;
+                while (shiftValue > 0)
+                {
+                    if (shiftValue is byte)
+                    {
+                        byte s = (byte)shiftValue;
+                        if (s.GetBit(bitIndex))
+                        {
+                            TestVector newVector = new TestVector(incrementCase);
+                            newVector.SetValue(valueIndex, baseValue ^ shiftValue);
+                            shiftCases.Add(newVector);
+                            baseValue = shiftValue;
+                        }
+                        s = s.SetBit(bitIndex--, false);
+                        shiftValue = s;
+                    }
+                    else if (shiftValue is ushort)
+                    {
+                        ushort s = (ushort)shiftValue;
+                        if (s == 65535 && shift.MemOp == 0 && shift.F != 0) s = 255;
+                        if (s.GetBit(bitIndex))
+                        {
+                            TestVector newVector = new TestVector(incrementCase);
+                            newVector.SetValue(valueIndex, baseValue ^ shiftValue);
+                            shiftCases.Add(newVector);
+                        }
+                        s = s.SetBit(bitIndex--, false);
+                        shiftValue = s;
+                    }
+                }
+            }
+
+            Shift(shiftCases, incrementCases, shift, mask, valueIndex + 1);
         }
 
         public ZexTest(IZexTestSource testSource, Func<TestVector, TestState> executeTest)

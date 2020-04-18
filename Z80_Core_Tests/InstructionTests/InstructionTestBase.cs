@@ -10,14 +10,14 @@ namespace Z80.Core.Tests
     {
         protected Random _random;
 
-        public IDebugProcessor CPU { get; private set; }
+        public Processor CPU { get; private set; }
         public IRegisters Registers => CPU.Registers;
         public Flags Flags => CPU.Registers.Flags;
 
         [OneTimeSetUp]
         public void Setup()
         {
-            CPU = Bootstrapper.BuildCPU().Debuggable;
+            CPU = Bootstrapper.BuildCPU();
             _random = new Random(DateTime.Now.Millisecond);
         }
 
@@ -36,7 +36,7 @@ namespace Z80.Core.Tests
                 Argument2 = arg2 ?? 0
             };
             
-            ExecutionResult result = CPU.Execute(new ExecutionPackage(instruction, data)); // only available on IDebugProcessor debug interface - sets flags but does not advance PC
+            ExecutionResult result = CPU.Debug.Execute(new ExecutionPackage(instruction, data)); // only available on Processor debug interface - sets flags but does not advance PC
             return result;
         }
 

@@ -3,7 +3,8 @@
     public interface IRegisters
     {
         byte this[ByteRegister register] { get; set; }
-        ushort this[WordRegister registerPair] { get;set; }
+        ushort this[WordRegister registerPair] { get; set; }
+
         byte A { get; set; }
         ushort AF { get; }
         byte B { get; set; }

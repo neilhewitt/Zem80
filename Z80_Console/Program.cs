@@ -12,25 +12,25 @@ namespace Z80_Console
 {
     class Program
     {
-        private static IDebugProcessor _cpu;
+        private static Processor _cpu;
         private static bool _flowCange;
         private static int _tabs;
 
         static void Main(string[] args)
         {
             VirtualMachine vm = new VirtualMachine();
-            _cpu = (IDebugProcessor)vm.CPU;
+            _cpu = (Processor)vm.CPU;
 
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Starting VM...\r\n");
 
-            vm.Load(0x05, "cpm_patch.bin"); // patc te CP/M BDOS routines out
+            vm.Load(0x05, "cpm_patch.bin"); // patch the CP/M BDOS routines out
             vm.Load(0x100, "zexdoc.bin");
 
             Console.ForegroundColor = ConsoleColor.Green;
 
-            //((IDebugProcessor)_cpu).BeforeExecute += Before_Instruction_Execution;
-            //((IDebugProcessor)_cpu).AfterExecute += After_Instruction_Execute;
+            //((Processor)_cpu).BeforeExecute += Before_Instruction_Execution;
+            //((Processor)_cpu).AfterExecute += After_Instruction_Execute;
             vm.Start(0x0100, true);
 
             Console.ForegroundColor = ConsoleColor.White;
