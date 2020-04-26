@@ -1,39 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
 using System.Reflection;
+using System.Globalization;
 
 namespace Z80.Core
 {
     public class Instruction
     {
-        public static Instruction NOP => InstructionSet.Instructions[InstructionPrefix.Unprefixed][0x00];
-
-        public static Instruction Find(byte opcode, InstructionPrefix prefix)
-        {
-            try
-            {
-                return InstructionSet.Instructions[prefix][opcode];
-            }
-            catch (KeyNotFoundException)
-            {
-                throw new InstructionNotFoundException($"Instruction not found ({ prefix.ToString() }::{opcode}.)");
-            }
-        }
-
-        public static Instruction FindByMnemonic(string mnemonic)
-        {
-            try
-            {
-                return InstructionSet.Instructions.Values.SelectMany(x => x.Values).Single(x => x.Mnemonic == (mnemonic));
-            }
-            catch (InvalidOperationException)
-            {
-                throw new InstructionNotFoundException($"Instruction not found ({mnemonic})");
-            }
-        }
-
         public InstructionPrefix Prefix { get; private set; }
         public byte Opcode { get; private set; }
         public string Mnemonic { get; private set; }
@@ -41,49 +15,51 @@ namespace Z80.Core
         public ArgumentType Argument2 { get; private set; }
         public ModifierType Modifier { get; private set; }
         public byte SizeInBytes { get; private set; }
+        public IReadOnlyList<MachineCycle> MachineCycles { get; private set; }
         public byte ClockCycles { get; private set; }
         public byte? ClockCyclesConditional { get; private set; }
         public byte? BitIndex { get; private set; }
         public ByteRegister OperandRegister { get; private set; }
-        public bool ReplacesHLWithIX => Prefix == InstructionPrefix.DDCB;
-        public bool ReplacesHLWithIY => Prefix == InstructionPrefix.FDCB;
+        public bool HLIX => Prefix == InstructionPrefix.DDCB;
+        public bool HLIY => Prefix == InstructionPrefix.FDCB;
         internal IMicrocode Microcode { get; private set; }
 
-        internal Instruction(InstructionPrefix prefix, byte opcode, string mnemonic, ArgumentType argument1, ArgumentType argument2, ModifierType modifier, byte size, byte clockCycles, 
-            byte? clockCyclesConditional, IMicrocode implementation = null)
+        public Instruction(string opcode, string mnemonic, ArgumentType argument1, ArgumentType argument2, ModifierType modifier, byte sizeInBytes, MachineCycle[] machineCycles, IMicrocode microcode = null)
         {
-            Prefix = prefix;
-            Opcode = opcode;
+            Prefix = opcode.Length == 2 ? InstructionPrefix.Unprefixed : (InstructionPrefix)Enum.Parse(typeof(InstructionPrefix), opcode[..^2], true);
+            Opcode = byte.Parse(opcode[^2..], NumberStyles.HexNumber); ;
             Mnemonic = mnemonic;
             Argument1 = argument1;
             Argument2 = argument2;
             Modifier = modifier;
-            SizeInBytes = size;
-            ClockCycles = clockCycles;
-            ClockCyclesConditional = clockCyclesConditional;
+            SizeInBytes = sizeInBytes;
 
             BitIndex = Modifier switch
             {
-                var m when (m == ModifierType.Bit || m == ModifierType.BitAndRegister) => opcode.GetByteFromBits(3, 3),
+                var m when (m == ModifierType.Bit || m == ModifierType.BitAndRegister) => Opcode.GetByteFromBits(3, 3),
                 _ => null
             };
 
             OperandRegister = Modifier switch
             {
                 var m when (m == ModifierType.Bit || m == ModifierType.WordRegister || m == ModifierType.None) => ByteRegister.None,
-                ModifierType.InputRegister => (ByteRegister)opcode.GetByteFromBits(3, 3),
-                _ => (ByteRegister)opcode.GetByteFromBits(0, 3)
+                ModifierType.InputRegister => (ByteRegister)Opcode.GetByteFromBits(3, 3),
+                _ => (ByteRegister)Opcode.GetByteFromBits(0, 3)
             };
 
-            if (implementation != null)
+            MachineCycles = new List<MachineCycle>(machineCycles);
+            ClockCycles = (byte)MachineCycles.Where(x => x.IsConditional == false).Sum(x => x.ClockCycles); // sum of machine cycles (except conditional ones)
+            if (MachineCycles.Any(x => x.IsConditional == true)) ClockCyclesConditional = (byte)MachineCycles.Sum(x => x.ClockCycles); // sum of all machine cycles (including conditional)
+
+            // this is expensive, but only done once at startup; binds the Instruction directly to the method instance implementing it
+            if (microcode == null)
             {
-                Microcode = implementation;
+                Type microcodeType = Assembly.GetExecutingAssembly().GetTypes().SingleOrDefault(x => x.Name == mnemonic.Split(' ')[0]);
+                Microcode = (IMicrocode)Activator.CreateInstance(microcodeType);
             }
             else
             {
-                // this is expensive, but only done once at startup; binds the Instruction directly to the method instance implementing it
-                Type microcodeType = Assembly.GetExecutingAssembly().GetTypes().SingleOrDefault(x => x.Name == mnemonic.Split(' ')[0]);
-                Microcode = (IMicrocode)Activator.CreateInstance(microcodeType);
+                Microcode = microcode;
             }
         }
     }

@@ -4,11 +4,11 @@ using System.Text;
 
 namespace Z80.Core
 {
-    public class Ports : IPorts
+    public class Ports
     {
-        private IDictionary<byte, IPort> _ports;
+        private IDictionary<byte, Port> _ports;
 
-        public IPort this[byte portNumber]
+        public Port this[byte portNumber]
         {
             get
             {
@@ -16,21 +16,13 @@ namespace Z80.Core
             }
         }
 
-        public Ports()
+        public Ports(Processor cpu)
         {
-            _ports = new Dictionary<byte, IPort>();
+            _ports = new Dictionary<byte, Port>();
             for (int i = 0; i <= 255; i++)
             {
-                Port port = new Port((byte)i);
+                Port port = new Port((byte)i, cpu);
                 _ports.Add((byte)i, port);
-            }
-        }
-
-        public Ports(IPort[] ports)
-        {
-            foreach(IPort port in ports)
-            {
-                _ports.Add(port.Number, port);
             }
         }
     }

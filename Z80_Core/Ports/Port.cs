@@ -2,46 +2,63 @@
 
 namespace Z80.Core
 {
-    public class Port : IPort
+    public class Port
     {
         private Func<byte> _read;
         private Action<byte> _write;
-        private Action<PortSignal> _signal;
+        private Action _signalRead;
+        private Action _signalWrite;
+        private Processor _cpu;
 
         public byte Number { get; private set; }
 
         public byte ReadByte()
         {
-            return (byte)((_read != null) ? _read() : 0);
+            _cpu.BeginPortReadCycle();
+            byte input = (byte)((_read != null) ? _read() : 0);
+            _cpu.CompletePortReadCycle(input);
+            return input;
         }
 
         public void WriteByte(byte output)
         {
+            _cpu.BeginPortWriteCycle(output);
             if (_write != null) _write(output);
+            _cpu.CompletePortWriteCycle();
         }
 
         public void SignalRead()
         {
             // tells port that data is about to be read to data bus
-            if (_signal != null) _signal(PortSignal.Read);
+            if (_signalRead != null)
+            {
+                _cpu.IO.RD.Value = true;
+                _signalRead();
+            }
         }
 
         public void SignalWrite()
         {
             // tells port to read the data bus
-            if (_signal != null) _signal(PortSignal.Write);
+            if (_signalWrite != null) 
+            {
+                _cpu.IO.WR.Value = true;
+                _signalWrite(); 
+            }
         }
 
-        public void Connect(Func<byte> reader, Action<byte> writer, Action<PortSignal> signaller)
+        public void Connect(Func<byte> reader, Action<byte> writer, Action signalRead, Action signalWrite)
         {
             _read = reader;
             _write = writer;
-            _signal = signaller;
+            _signalRead = signalRead;
+            _signalWrite = signalWrite;
         }
 
-        public Port(byte number)
+        public Port(byte number, Processor cpu)
         {
             Number = number;
+            _cpu = cpu;
         }
     }
 }

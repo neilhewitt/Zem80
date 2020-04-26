@@ -19,19 +19,24 @@ namespace Z80.Core
             try
             {
                 // handle NOP + special case - sequences of DD or FD (uniform or mixed) count as NOP until the final DD / FD
-                if (b0 == 0x00 ||
-                    (b0 == 0xDD || b0 == 0xFD) && (b1 == 0xDD || b1 == 0xFD))
+                if (b0 == 0x00 || ((b0 == 0xDD || b0 == 0xFD) && (b1 == 0xDD || b1 == 0xFD)))
                 {
-                    return new ExecutionPackage(Instruction.NOP, data);
+                    return new ExecutionPackage(InstructionSet.NOP, data);
                 }
 
+                // b0 may be a prefix byte (or the first byte of two prefix bytes), and can be any of:
+                // CB, ED, DD, FD, DD+CB or DD+FD
+
                 byte prefix = b0;
+                Instruction instruction = null;
 
-                if (prefix == 0xCB || ((prefix == 0xDD || prefix == 0xFD) && b1 == 0xCB))
+                if (((prefix == 0xDD || prefix == 0xFD) && b1 == 0xCB))
                 {
-                    // extended instructions (including double-prefix 'DD CB' and 'FD CB')
-                    Instruction instruction = Instruction.Find((prefix != 0xCB) ? b3 : b1, (InstructionPrefix)prefix);
+                    // extended instructions (double-prefix 'DD CB' and 'FD CB')
+                    // prefix is always followed by a displacement byte or 0x00, opcode is then in *b3*
+                    instruction = InstructionSet.Find(b3, (InstructionPrefix)(prefix, b1).ToWord());
 
+                    // only displacement arguments valid for DDCB/FDCB instructions
                     if (instruction.Argument1 == ArgumentType.Displacement)
                     {
                         data.Argument1 = b2;
@@ -39,25 +44,29 @@ namespace Z80.Core
 
                     return new ExecutionPackage(instruction, data);
                 }
-                else if (prefix == 0xED)
+                else if (prefix == 0xCB || prefix == 0xED || prefix == 0xDD || prefix == 0xFD)
                 {
                     // other extended instructions
-                    Instruction instruction = Instruction.Find(b1, InstructionPrefix.ED);
-
-                    if (instruction.Argument1 == ArgumentType.ImmediateWord)
+                    instruction = InstructionSet.Find(b1, (InstructionPrefix)prefix);
+                    if (instruction == null)
                     {
-                        data.Argument1 = b2;
-                        data.Argument2 = b3;
+                        if (prefix == 0xED)
+                        {
+                            byte[] undocumentedED = new byte[] { 0x4C, 0x4E, 0x54, 0x55, 0x5C, 0x5D, 0x64, 0x65, 0x6C, 0x6D, 0x6E, 0x71, 0x74, 0x75, 0x76, 0x77, 0x7C, 0x7D, 0x7E };
+                            // some ED instructions are undocumented but are the equivalent of the unprefixed instruction without the prefix
+                            // in which case we should behave as per the unprefixed instruction,
+                            // but if not on the list above, any missing ED instruction should be treated as 2 x NOP
+                            // in this case we return a package with the instruction set to null and the CPU will sort it out
+                            if (!undocumentedED.Contains(b1))
+                            {
+                                return new ExecutionPackage(null, data);
+                            }
+                        }
+
+                        // ignore the prefix and use the unprefixed instruction, there are holes in the extended instruction set
+                        // and some (naughty!) code uses this technique to consume extra cycles for synchronisation
+                        return Decode(new byte[4] { b1, b2, b3, 0x00 });
                     }
-
-                    return new ExecutionPackage(instruction, data);
-                }
-                else if (prefix == 0xDD || prefix == 0xFD)
-                {
-                    // identical to unprefixed instruction with same opcode except IX (0xDD) or IY (0xFD) replaces HL
-                    // plus additional instructions unique to IX / IY including single-byte operations on high / low bytes of either
-
-                    Instruction instruction = Instruction.Find(b1, (InstructionPrefix)prefix);
 
                     if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
                     {
@@ -70,12 +79,11 @@ namespace Z80.Core
                     }
 
                     return new ExecutionPackage(instruction, data);
-
                 }
                 else
                 {
                     // unprefixed instructions (can be 1-3 bytes only)
-                    Instruction instruction = Instruction.Find(b0, InstructionPrefix.Unprefixed);
+                    instruction = InstructionSet.Find(b0, InstructionPrefix.Unprefixed);
 
                     if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
                     {
@@ -100,43 +108,10 @@ namespace Z80.Core
 
         public ExecutionPackage DecodeInterrupt(Func<byte> dataRead)
         {
-            if (dataRead == null) throw new Z80Exception("You must supply a valid delegate / Func<bool> to support reading device data.");
+            if (dataRead == null) throw new InterruptException("You must supply a valid delegate / Func<bool> to support reading device data.");
 
             byte[] instructionBytes = new byte[4];
-            instructionBytes[0] = dataRead();
-
-            if (instructionBytes[0] == 0xCB || instructionBytes[0] == 0xDD || instructionBytes[0] == 0xED || instructionBytes[0] == 0xFD)
-            {
-                // we have a prefix... need the next byte
-                instructionBytes[1] = dataRead();
-
-                if (instructionBytes[0] == 0xCB && (instructionBytes[1] == 0xDD || instructionBytes[1] == 0xFD))
-                {
-                    // double-byte prefix - read next 2 bytes from device and decode (always 4 bytes)
-                    instructionBytes[2] = dataRead();
-                    instructionBytes[3] = dataRead();
-                }
-                else
-                {
-                    // could be any size instruction between 2 and 4 bytes
-                    // find instruction and check size, then assemble instruction bytes from device
-                    Instruction instruction = Instruction.Find(instructionBytes[0], (InstructionPrefix)instructionBytes[1]);
-                    for (int i = 2; i <= instruction.SizeInBytes; i++) // 2 - 4 bytes
-                    {
-                        instructionBytes[i] = dataRead();
-                    }
-                }
-            }
-            else
-            {
-                // could be any size instruction between 1 and 3 bytes
-                // find instruction and check size, then assemble instruction bytes from device
-                Instruction instruction = Instruction.Find(instructionBytes[0], InstructionPrefix.Unprefixed);
-                for (int i = 1; i <= instruction.SizeInBytes; i++) // 1 - 3 bytes
-                {
-                    instructionBytes[i] = dataRead();
-                }
-            }
+            for (int i = 0; i < 4; i++) instructionBytes[i] = dataRead();
 
             return Decode(instructionBytes);
         }

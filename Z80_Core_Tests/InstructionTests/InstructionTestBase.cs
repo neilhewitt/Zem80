@@ -11,7 +11,7 @@ namespace Z80.Core.Tests
         protected Random _random;
 
         public Processor CPU { get; private set; }
-        public IRegisters Registers => CPU.Registers;
+        public Registers Registers => CPU.Registers;
         public Flags Flags => CPU.Registers.Flags;
 
         [OneTimeSetUp]
@@ -29,7 +29,7 @@ namespace Z80.Core.Tests
 
         public ExecutionResult ExecuteInstruction(string mnemonic, byte? arg1 = null, byte? arg2 = null)
         {
-            Instruction instruction = Instruction.FindByMnemonic(mnemonic);
+            Instruction instruction = InstructionSet.FindByMnemonic(mnemonic);
             InstructionData data = new InstructionData()
             {
                 Argument1 = arg1 ?? 0,

@@ -17,8 +17,8 @@ namespace Z80.Core.Tests
             _index = 0;
             Func<byte> reader = () => 0;
             Action<byte> writer = (value) => data[_index++] = value;
-            Action<PortSignal> signaller = (s) => { };
-            CPU.Ports[portNumber].Connect(reader, writer, signaller);
+            Action signaller = () => { };
+            CPU.Ports[0x00].Connect(reader, writer, signaller, signaller);
         }
 
         private void SetupBuffer(ushort bufferAddress, byte bufferLength, int offset)

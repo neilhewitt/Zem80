@@ -15,8 +15,8 @@ namespace Z80.Core.Tests
             byte data = 0x23;
 
             Func<byte> reader = () => 0x23;
-            Action<PortSignal> signaller = (s) => { };
-            CPU.Ports[0x00].Connect(reader, null, signaller);
+            Action signaller = () => { };
+            CPU.Ports[0x00].Connect(reader, null, signaller, null);
 
             ExecutionResult executionResult = ExecuteInstruction($"IN A,(n)", arg1: 0x00);
 
@@ -26,12 +26,11 @@ namespace Z80.Core.Tests
         [Test]
         public void IN_r_xC()
         {
-            PortSignal signal;
             byte data = 0x23;
 
             Func<byte> reader = () => data;
-            Action<PortSignal> signaller = (s) => { signal = s; };
-            CPU.Ports[0].Connect(reader, null, signaller);
+            Action signaller = () => { };
+            CPU.Ports[0].Connect(reader, null, null, signaller);
 
             ExecutionResult executionResult = ExecuteInstruction($"IN B,(C)");
 

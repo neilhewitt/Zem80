@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Z80.Core
 {
-    public class Registers : IRegisters
+    public class Registers
     {
         private byte[] _registers;
         private byte _offset = 0;

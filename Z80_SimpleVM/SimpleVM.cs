@@ -66,15 +66,19 @@ namespace Z80.SimpleVM
             else Console.Write(s);
         }
 
-        private void Signal(PortSignal signal)
+        private void SignalWrite()
+        {
+        }
+
+        private void SignalRead()
         {
         }
 
         public VirtualMachine()
         {
             _cpu = Bootstrapper.BuildCPU();
-            _cpu.Ports[0].Connect(ReadChar, WriteChar, Signal);
-            _cpu.Ports[1].Connect(ReadByte, WriteByte, Signal);
+            _cpu.Ports[0].Connect(ReadChar, WriteChar, SignalRead, SignalWrite);
+            _cpu.Ports[1].Connect(ReadByte, WriteByte, SignalRead, SignalWrite);
         }
     }
 }

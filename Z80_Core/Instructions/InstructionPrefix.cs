@@ -12,6 +12,7 @@ namespace Z80.Core
         DD = 0xDD, 
         FD = 0xFD,
         DDCB = 0xDDCB,
-        FDCB = 0xFDCB
+        FDCB = 0xFDCB,
+        PseudoInstruction = 0xFFFF
     }
 }

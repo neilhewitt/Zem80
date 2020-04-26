@@ -34,7 +34,7 @@ namespace Z80_Console
             vm.Start(0x0100, true);
 
             Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine("\r\nProgram as finised. Press enter to exit.");
+            Console.WriteLine("\r\nProgram has finished. Press enter to exit.");
             Console.ReadLine();
         }
 
