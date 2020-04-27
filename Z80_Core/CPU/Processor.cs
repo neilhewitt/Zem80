@@ -4,13 +4,14 @@ using System.Threading;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
+using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace Z80.Core
 {
     public class Processor : IDebugProcessor
     {
         private Instruction _executingInstruction;
-
         private bool _running;
         private bool _halted;
         private bool _pendingInterrupt;
@@ -23,9 +24,15 @@ namespace Z80.Core
         private EventHandler _beforeStart;
         private EventHandler _onStop;
         private EventHandler _onHalt;
+        private EventHandler<TickEvent> _onBeforeTick;
+        private EventHandler<TickEvent> _onAfterTick;
+        private IDictionary<string, Func<TickEvent, Processor, bool>> _devices;
+
+        public IReadOnlyDictionary<string, Func<TickEvent, Processor, bool>> Devices => (IReadOnlyDictionary<string, Func<TickEvent, Processor, bool>>)_devices;
 
         public IDebugProcessor Debug => (IDebugProcessor)this;
         public bool Synchronous { get; private set; }
+        public bool EndOnHalt { get; private set; }
 
         public Registers Registers { get; private set; }
         public Memory Memory { get; private set; }
@@ -34,10 +41,10 @@ namespace Z80.Core
         public InterruptMode InterruptMode { get; private set; } = InterruptMode.IM0;
         public bool InterruptsEnabled { get; private set; } = true;
         public double SpeedInMhz { get; private set; }
-        public long InstructionTicks { get; private set; }
+        public long Ticks { get; private set; }
         public long ClockCycles { get; private set; }
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; // yay for tri-states!
-
+        
         // why yes, you do have to do event handlers this way if you want them to be on the interface and not on the type... no idea why
         // (basically, automatic properties don't work as events when they are explicitly on the interface, so we use a backing variable... old-school style)
         event EventHandler<ExecutionPackage> IDebugProcessor.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
@@ -45,11 +52,17 @@ namespace Z80.Core
         event EventHandler IDebugProcessor.BeforeStart { add { _beforeStart += value; } remove { _beforeStart -= value; } }
         event EventHandler IDebugProcessor.OnStop { add { _onStop += value; } remove { _onStop -= value; } }
         event EventHandler IDebugProcessor.OnHalt { add { _onHalt += value; } remove { _onHalt -= value; } }
+        event EventHandler<TickEvent> IDebugProcessor.OnBeforeTick { add { _onBeforeTick += value; } remove { _onBeforeTick -= value; } }
+        event EventHandler<TickEvent> IDebugProcessor.OnAfterTick { add { _onAfterTick += value; } remove { _onAfterTick -= value; } }
 
-        public void Start(bool synchronous = false, ushort address = 0x0000)
+        public void Start(bool synchronous = false, ushort address = 0x0000, bool endOnHalt = false)
         {
             if (!_running)
             {
+                EndOnHalt = endOnHalt; // if set, will summarily end execution at the first HALT instruction. This is mostly for test scenarios.
+                ClockCycles = 0;
+                Ticks = 0;
+
                 _beforeStart?.Invoke(null, null);
                 Registers.PC = address; // ordinarily, execution will start at 0x0000, but this can be overridden
                 _running = true;
@@ -101,10 +114,10 @@ namespace Z80.Core
         {
             ushort value = Registers[register];
             Registers.SP--;
-            StackWriteCycle();
+            StackWriteCycle(true);
             Memory.WriteByteAt(Registers.SP, value.HighByte(), true);
             Registers.SP--;
-            StackWriteCycle();
+            StackWriteCycle(false);
             Memory.WriteByteAt(Registers.SP, value.LowByte(), true);
         }
 
@@ -112,10 +125,10 @@ namespace Z80.Core
         {
             byte high, low;
 
-            StackReadCycle();
+            StackReadCycle(true);
             low = Memory.ReadByteAt(Registers.SP, true);
             Registers.SP++;
-            StackReadCycle();
+            StackReadCycle(false);
             high = Memory.ReadByteAt(Registers.SP, true);
             Registers.SP++;
 
@@ -159,6 +172,16 @@ namespace Z80.Core
             InterruptsEnabled = true;
         }
 
+        public void RegisterDevice(string name, Func<TickEvent, Processor, bool> callback)
+        {
+            _devices.Add(name, callback);
+        }
+
+        public void DeRegisterDevice(string name)
+        {
+            if (_devices.ContainsKey(name)) _devices.Remove(name);
+        }
+
         #region machine cycle handling
         internal void MemoryReadCycle(ushort address, byte data)
         {
@@ -169,14 +192,13 @@ namespace Z80.Core
 
             int cyclesToAdd = 3;
             // some instructions have MR(4) but there's only ever one MR per instruction
-            if (_executingInstruction != null && 
-                _executingInstruction.MachineCycles.Any(x => x.Type == MachineCycleType.MemoryRead && x.ClockCycles == 4))
+            if (_executingInstruction != null && _executingInstruction.HasMemoryRead4)
             {
                 cyclesToAdd = 4;
             }
             ClockCycles += cyclesToAdd;
 
-            TickAll();
+            TickAll(new TickEvent(_executingInstruction, MachineCycleType.MemoryRead, cyclesToAdd));
             IO.MREQ.Value = false;
             IO.RD.Value = false;
         }
@@ -190,14 +212,13 @@ namespace Z80.Core
 
             int cyclesToAdd = 3;
             // some instructions have MW(5) but there's only ever one MW per instruction
-            if (_executingInstruction != null && 
-                _executingInstruction.MachineCycles.Any(x => x.Type == MachineCycleType.MemoryWrite && x.ClockCycles == 5))
+            if (_executingInstruction != null && _executingInstruction.HasMemoryWrite5)
             {
                 cyclesToAdd = 5;
             }
             ClockCycles += cyclesToAdd;
 
-            TickAll();
+            TickAll(new TickEvent(_executingInstruction, MachineCycleType.MemoryWrite, cyclesToAdd));
             IO.MREQ.Value = false;
             IO.WR.Value = false;
         }
@@ -213,7 +234,7 @@ namespace Z80.Core
         {
             IO.DATA_BUS.Value = data;
             ClockCycles += 4;
-            TickAll();
+            TickAll(new TickEvent(_executingInstruction, MachineCycleType.PortRead, 4));
             IO.IORQ.Value = false;
             IO.RD.Value = false;
         }
@@ -229,27 +250,27 @@ namespace Z80.Core
         internal void CompletePortWriteCycle()
         {
             ClockCycles += 4;
-            TickAll();
+            TickAll(new TickEvent(_executingInstruction, MachineCycleType.PortWrite, 4));
             IO.IORQ.Value = false;
             IO.WR.Value = false;
         }
 
-        internal void StackReadCycle()
+        internal void StackReadCycle(bool highByte)
         {
             ClockCycles += 3;
-            TickAll();
+            TickAll(new TickEvent(_executingInstruction, highByte ? MachineCycleType.StackReadHigh : MachineCycleType.StackReadLow, 3));
         }
 
-        internal void StackWriteCycle()
+        internal void StackWriteCycle(bool highByte)
         {
             ClockCycles += 3;
-            TickAll();
+            TickAll(new TickEvent(_executingInstruction, highByte ? MachineCycleType.StackWriteHigh : MachineCycleType.StackWriteLow, 3));
         }
 
         internal void InternalOperationCycle(int clockCycles)
         {
             ClockCycles += clockCycles;
-            TickAll();
+            TickAll(new TickEvent(_executingInstruction, MachineCycleType.InternalOperation, clockCycles));
         }
         #endregion
 
@@ -258,12 +279,14 @@ namespace Z80.Core
             while (_running)
             {
                 ExecutionPackage package = null;
+
                 if (!_halted)
                 {
                     // read next 4 bytes and decode to instruction
                     IO.M1.Value = true;
                     byte[] instructionBytes = Memory.ReadBytesAt(Registers.PC, 4, true); // we suppress the machine cycles for the memory reads as the Decode method generates these
                     package = Decode(instructionBytes, Registers.PC);
+                    _beforeExecute?.Invoke(this, package);
                     if (package.Instruction == null)
                     {
                         // in this case we should execute two consecutive NOPs to move the program counter on correctly and generate the correct ticks
@@ -279,33 +302,35 @@ namespace Z80.Core
                 }
                 else
                 {
+                    if (EndOnHalt) return;
                     // when halted, the CPU should execute NOP continuously
                     package = new ExecutionPackage(InstructionSet.NOP, new InstructionData());
                 }
 
                 // run the decoded instruction and deal with timing / ticks
-                Execute(package);
+                ExecutionResult result = Execute(package);
 
                 IO.M1.Value = false;
+                _executingInstruction = null;
+                
+                _afterExecute?.Invoke(this, result);
 
                 HandleNonMaskableInterrupts();
                 HandleMaskableInterrupts();
             }
         }
 
-        private void Execute(ExecutionPackage package)
+        private ExecutionResult Execute(ExecutionPackage package)
         {
-            this.Debug.Execute(package);
-        }
+            return this.Debug.Execute(package);
+        }        
 
         ExecutionResult IDebugProcessor.Execute(ExecutionPackage package)
         {
             _executingInstruction = package.Instruction;
 
             // run the instruction microcode implementation
-            _beforeExecute?.Invoke(this, package);
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
-            _afterExecute?.Invoke(this, result);
 
             if (result.Flags != null) Registers.Flags.Value = result.Flags.Value;
             // move the program counter on if not already set by the instruction, and not halted
@@ -314,13 +339,18 @@ namespace Z80.Core
             return result;
         }
 
-        private void TickAll()
+        private void TickAll(TickEvent tickEvent)
         {
             // TODO:
             // signal attached devices that a machine cycle has ended - provide details of the cycle
             // and provide access to CPU state and IO pins
-
-            InstructionTicks++;
+            _onBeforeTick?.Invoke(this, tickEvent);
+            Ticks++;
+            foreach(var callback in _devices.Values)
+            {
+                callback(tickEvent, this);
+            }
+            _onAfterTick?.Invoke(this, tickEvent);
         }
 
         private void OpcodeFetchCycle(ushort address, byte data, int clockCycles)
@@ -330,20 +360,19 @@ namespace Z80.Core
             IO.MREQ.Value = true;
             IO.RD.Value = true;
             ClockCycles += clockCycles;
-            TickAll();
+            TickAll(new TickEvent(_executingInstruction, MachineCycleType.OpcodeFetch, clockCycles));
             IO.MREQ.Value = false;
             IO.RD.Value = false;
         }
 
-        private void OperandDataCycle(ushort address, byte data, bool hasFourCycles = false)
+        private void OperandDataCycle(ushort address, byte data, int clockCycles)
         {
             IO.ADDRESS_BUS.Value = address;
             IO.DATA_BUS.Value = data;
             IO.MREQ.Value = true;
             IO.RD.Value = true;
-            ClockCycles += 3;
-            if (hasFourCycles) ClockCycles++; // only for CALL nn and MODE 0 interrupts
-            TickAll();
+            ClockCycles += clockCycles;
+            TickAll(new TickEvent(_executingInstruction, MachineCycleType.OperandRead, clockCycles));
             IO.MREQ.Value = false;
             IO.RD.Value = false;
         }
@@ -375,7 +404,7 @@ namespace Z80.Core
                 {
                     // extended instructions (double-prefix 'DD CB' and 'FD CB')
                     // prefix is always followed by a displacement byte or 0x00, opcode is then in *b3*
-                    instruction = InstructionSet.Find(b3, (InstructionPrefix)(prefix, b1).ToWord());
+                    instruction = InstructionSet.Instructions[(b3 | b2 << 8 | b1 << 16)];
                     
                     // there will be two opcode fetch cycles
                     OpcodeFetchCycle(address, prefix, instruction.MachineCycles[0].ClockCycles);
@@ -384,7 +413,7 @@ namespace Z80.Core
                     // only displacement arguments valid for DDCB/FDCB instructions
                     if (instruction.Argument1 == ArgumentType.Displacement)
                     {
-                        OperandDataCycle((ushort)(address + 1), b2);
+                        OperandDataCycle((ushort)(address + 1), b2, 3);
                         data.Argument1 = b2;
                     }
 
@@ -393,7 +422,7 @@ namespace Z80.Core
                 else if (prefix == 0xCB || prefix == 0xED || prefix == 0xDD || prefix == 0xFD)
                 {
                     // other extended instructions
-                    instruction = InstructionSet.Find(b1, (InstructionPrefix)prefix);
+                    instruction = InstructionSet.Instructions[(b1 | b0 << 8)];
                     if (instruction == null)
                     {
                         if (prefix == 0xED)
@@ -420,14 +449,14 @@ namespace Z80.Core
 
                     if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
                     {
-                        OperandDataCycle((ushort)(address + 1), b1);
+                        OperandDataCycle((ushort)(address + 1), b1, 3);
                         data.Argument1 = b2;
                     }
                     else if (instruction.Argument1 == ArgumentType.ImmediateWord)
                     {
-                        OperandDataCycle((ushort)(address + 1), b1);
+                        OperandDataCycle((ushort)(address + 1), b1, 3);
                         data.Argument1 = b2;
-                        OperandDataCycle((ushort)(address + 2), b2);
+                        OperandDataCycle((ushort)(address + 2), b2, 3);
                         data.Argument2 = b3;
                     }
 
@@ -436,20 +465,29 @@ namespace Z80.Core
                 else
                 {
                     // unprefixed instructions (can be 1-3 bytes only)
-                    instruction = InstructionSet.Find(b0, InstructionPrefix.Unprefixed);
+                    instruction = InstructionSet.Instructions[(b0)];
                     OpcodeFetchCycle(address, b0, instruction.MachineCycles[0].ClockCycles); // only ever 1 opcode fetch cycle
 
                     if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
                     {
-                        OperandDataCycle((ushort)(address + 1), b1);
+                        OperandDataCycle((ushort)(address + 1), b1, 3);
                         data.Argument1 = b1;
                     }
                     else if (instruction.Argument1 == ArgumentType.ImmediateWord)
                     {
-                        OperandDataCycle((ushort)(address + 1), b1);
+                        OperandDataCycle((ushort)(address + 1), b1, 3);
                         data.Argument1 = b1;
-                        // OperandReadHigh can be 4 clock cycles, need to signal to the handler that this is the case, hence the check here
-                        OperandDataCycle((ushort)(address + 2), b2, instruction.MachineCycles.Any(x => x.Type == MachineCycleType.OperandReadHigh && x.ClockCycles == 4));
+                        // OperandReadHigh can be 4 clock cycles for CALL conditional instructions but only if the condition is satisfied
+                        // need to signal to the handler that this is the case, hence the check here
+                        int clockCycles = 3;
+                        if (instruction.HasOperandDataReadHigh4)
+                        {
+                            if (instruction.Condition == null || (instruction.Condition.HasValue && Registers.Flags.SatisfyCondition(instruction.Condition.Value)))
+                            {
+                                clockCycles = 4;
+                            }
+                        }
+                        OperandDataCycle((ushort)(address + 2), b2, clockCycles);
                         data.Argument2 = b2;
                     }
 
@@ -545,8 +583,10 @@ namespace Z80.Core
 
             FlagLookup.EnablePrecalculation = enableFlagPrecalculation;
             FlagLookup.BuildFlagLookupTables();
+            var nop = InstructionSet.NOP; // this causes the whole instruction to get built now, to preserve correct timing
 
             IO = new IO(this);
+            _devices = new Dictionary<string, Func<TickEvent, Processor, bool>>();
         }
     }
 }

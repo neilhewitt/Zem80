@@ -7,6 +7,7 @@ namespace Z80.Core
     public class ExecutionResult
     {
         public Instruction Instruction { get; }
+        public InstructionData Data { get; }
         public Flags Flags { get; }
         public byte ClockCycles { get; }
         public bool InstructionSetsProgramCounter { get; }
@@ -14,6 +15,7 @@ namespace Z80.Core
         public ExecutionResult(ExecutionPackage package, Flags flags, bool conditionTrue, bool instructionSetsProgramCounter)
         {
             Instruction = package.Instruction;
+            Data = package.Data;
             Flags = flags;
             ClockCycles = (byte)(conditionTrue ?
                 package.Instruction.ClockCyclesConditional ?? package.Instruction.ClockCycles :

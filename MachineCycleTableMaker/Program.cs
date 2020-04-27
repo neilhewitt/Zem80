@@ -21,7 +21,7 @@ namespace MachineCycleTableMaker
             }
 
             List<string> ops = new List<string>();
-            foreach (Instruction i in InstructionSet.Instructions.Values.Where(x => x.Mnemonic != "NOP2"))
+            foreach (Instruction i in InstructionSet.Instructions.Values)
             {
                 string prefix = i.Prefix.ToString();
                 if (i.Prefix == InstructionPrefix.Unprefixed) prefix = "";

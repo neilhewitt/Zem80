@@ -29,7 +29,7 @@ namespace Z80.Core.Tests
 
         public ExecutionResult ExecuteInstruction(string mnemonic, byte? arg1 = null, byte? arg2 = null)
         {
-            Instruction instruction = InstructionSet.FindByMnemonic(mnemonic);
+            Instruction instruction = InstructionSet.InstructionsByMnemonic[mnemonic];
             InstructionData data = new InstructionData()
             {
                 Argument1 = arg1 ?? 0,

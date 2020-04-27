@@ -18,27 +18,22 @@ namespace Z80.Core
 
         public byte ReadByteAt(ushort offset)
         {
-            Check(offset);
             return _memory[offset];
+        }
+
+        public byte[] ReadBytesAt(ushort offset, int numberOfBytes)
+        {
+            return _memory[offset..(offset + numberOfBytes)];
         }
 
         public virtual void WriteByteAt(ushort offset, byte value)
         {
-            Check(offset);
             _memory[offset] = value;
         }
 
         public void Clear()
         {
             _memory = new byte[SizeInBytes];
-        }
-
-        private void Check(ushort offset)
-        {
-            if (offset >= SizeInBytes)
-            {
-                throw new MemorySegmentException("Specified address is outside the scope of this segment.");
-            }
         }
 
         public MemorySegment(ushort startAddress, uint sizeInBytes)

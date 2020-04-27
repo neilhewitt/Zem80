@@ -9,15 +9,15 @@ namespace Z80.Core
     {
         public const int PAGE_SIZE_IN_BYTES = 1024;
 
-        private Dictionary<int, IMemorySegment> _segmentMap = new Dictionary<int, IMemorySegment>();
+        private IMemorySegment[] _pageMap;
+
         private List<IMemorySegment> _segments = new List<IMemorySegment>();
 
         public uint SizeInBytes { get; private set; }
 
         public IMemorySegment MemoryFor(ushort address)
         {
-            _segmentMap.TryGetValue(PageFromAddress(address), out IMemorySegment segmentForPage);
-            return segmentForPage;
+            return _pageMap[PageFromAddress(address)];
         }
 
         public void Map(IMemorySegment entry, ushort startAddress, bool overwriteMappedPages = false)
@@ -37,7 +37,7 @@ namespace Z80.Core
             int startPage = PageFromAddress(startAddress);
             int endPage = startPage + (size / PAGE_SIZE_IN_BYTES) - 1;
 
-            if (!overwriteMappedPages && _segmentMap.Any(p => p.Key >= startPage && p.Key <= endPage))
+            if (!overwriteMappedPages && _pageMap[startPage..endPage].Any(p => p!= null))
             {
                 throw new MemoryMapException("Would overwrite existing mapped page/s. Specify overwriteMappedPages = true to enable masking the existing memory."); 
             }
@@ -49,14 +49,7 @@ namespace Z80.Core
 
             for (int i = startPage; i <= endPage; i++)
             {
-                if (_segmentMap.ContainsKey(i))
-                {
-                    _segmentMap[i] = entry;
-                }
-                else
-                {
-                    _segmentMap.Add(i, entry);
-                }
+                _pageMap[i] = entry;
             }
         }
 
@@ -70,12 +63,15 @@ namespace Z80.Core
 
         private int PageFromAddress(ushort address)
         {
-            int pageIndex = (int)Math.Floor((double)address / (double)(PAGE_SIZE_IN_BYTES));
+            int pageIndex = (address / PAGE_SIZE_IN_BYTES);
             return pageIndex;
         }
         public MemoryMap(uint sizeInBytes, bool autoMap = false)
         {
             SizeInBytes = sizeInBytes;
+            int pages = (int)(sizeInBytes / PAGE_SIZE_IN_BYTES);
+            _pageMap = new IMemorySegment[pages];
+
             if (autoMap) Map(new MemorySegment(0, sizeInBytes), 0); // maps a single block to the whole of memory space (you can map ROM in later)
         }
     }

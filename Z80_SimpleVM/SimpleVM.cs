@@ -13,11 +13,11 @@ namespace Z80.SimpleVM
 
         public Processor CPU => _cpu;
 
-        public void Start(ushort address = 0x0000, bool runSyncronous = false, Action<char> outputChar = null)
+        public void Start(ushort address = 0x0000, bool runSyncronous = false, bool endOnHalt = false, Action<char> outputChar = null)
         {
             if (outputChar != null) _output = outputChar;
             
-            _cpu.Start(runSyncronous, address);
+            _cpu.Start(runSyncronous, address, endOnHalt);
         }
 
         public void Stop()
@@ -39,7 +39,7 @@ namespace Z80.SimpleVM
 
         public void Load(ushort address, params byte[] code)
         {
-            _cpu.Memory.WriteBytesAt(address, code);
+            _cpu.Memory.WriteBytesAt(address, code, true);
         }
 
         private byte ReadChar()
