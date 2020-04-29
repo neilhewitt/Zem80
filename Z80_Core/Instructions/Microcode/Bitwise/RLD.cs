@@ -12,7 +12,7 @@ namespace Z80.Core
             InstructionData data = package.Data;
             Flags flags = cpu.Registers.Flags;
 
-            byte xHL = cpu.Memory.ReadByteAt(cpu.Registers.HL);
+            byte xHL = cpu.Memory.ReadByteAt(cpu.Registers.HL, false);
             byte a = cpu.Registers.A;
 
             // result = (HL) = LO: high-order bits of (HL) + HI: high-order bits of A
@@ -23,8 +23,8 @@ namespace Z80.Core
             xHL = xHL.SetHighNybble(xHL.GetLowNybble());
             xHL = xHL.SetLowNybble(lowA);
 
-            cpu.InternalOperationCycle(4);
-            cpu.Memory.WriteByteAt(cpu.Registers.HL, xHL);
+            cpu.NotifyInternalOperationCycle(4);
+            cpu.Memory.WriteByteAt(cpu.Registers.HL, xHL, false);
             cpu.Registers.A = a;
 
             flags = FlagLookup.BitwiseFlags(a, BitwiseOperation.RotateRight);

@@ -41,12 +41,12 @@ namespace Z80.Core
                     InstructionPrefix.FDCB => (ushort)(r.IY + offset),
                     _ => (ushort)0xFFFF
                 };
-                original = cpu.Memory.ReadByteAt(address);
+                original = cpu.Memory.ReadByteAt(address, false);
                 shifted = (byte)(original >> 1);
                 shifted = shifted.SetBit(7, original.GetBit(7));
                 setFlags(original, shifted);
-                if (instruction.HLIX || instruction.HLIY) cpu.InternalOperationCycle(4);
-                cpu.Memory.WriteByteAt(address, shifted);
+                if (instruction.HLIX || instruction.HLIY) cpu.NotifyInternalOperationCycle(4);
+                cpu.Memory.WriteByteAt(address, shifted, false);
             }
 
             return new ExecutionResult(package, flags, false, false);

@@ -28,10 +28,10 @@ namespace Z80.Core
                     InstructionPrefix.FDCB => (ushort)(r.IY + offset),
                     _ => (ushort)0xFFFF
                 };
-                if (instruction.HLIX || instruction.HLIY) cpu.InternalOperationCycle(5);
-                byte value = cpu.Memory.ReadByteAt(address);
+                if (instruction.HLIX || instruction.HLIY) cpu.NotifyInternalOperationCycle(5);
+                byte value = cpu.Memory.ReadByteAt(address, false);
                 value = value.SetBit(bitIndex, true);
-                cpu.Memory.WriteByteAt(address, value);
+                cpu.Memory.WriteByteAt(address, value, false);
             }
 
             return new ExecutionResult(package, cpu.Registers.Flags, false, false);

@@ -34,7 +34,7 @@ namespace Z80.SimpleVM
 
         public void Load(ushort address, string path)
         {
-            _cpu.Memory.WriteBytesAt(address, File.ReadAllBytes(path));
+            _cpu.Memory.WriteBytesAt(address, File.ReadAllBytes(path), true);
         }
 
         public void Load(ushort address, params byte[] code)

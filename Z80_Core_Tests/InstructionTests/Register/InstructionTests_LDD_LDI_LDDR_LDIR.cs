@@ -16,7 +16,7 @@ namespace Z80.Core.Tests
             Registers.BC = (ushort)data.Length; // amount of data
             Registers.DE = destinationAddress; // destination address
             if (offsetDestination) startAddress = (ushort)(startAddress - data.Length + 1); // if LDDR, we will write from (destination - data length) forwards
-            CPU.Memory.WriteBytesAt(startAddress, data); // write the data to the start address prior to copy
+            CPU.Memory.WriteBytesAt(startAddress, data, true); // write the data to the start address prior to copy
         }
 
         private (byte[] data, ushort expectedValueInHL, ushort expectedValueInDE) GetDataCopiedAndExpectedValueInHLAndDE(int byteCount, ushort fromAddress, ushort toAddress, WriteDirection direction, WriteRepeats repeats)
@@ -41,7 +41,7 @@ namespace Z80.Core.Tests
                 _ => toAddress
             };
 
-            byte[] data = CPU.Memory.ReadBytesAt(checkAddress, (ushort)byteCount);
+            byte[] data = CPU.Memory.ReadBytesAt(checkAddress, (ushort)byteCount, true);
 
             return (
                 data,

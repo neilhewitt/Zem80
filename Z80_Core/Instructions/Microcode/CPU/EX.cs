@@ -23,8 +23,8 @@ namespace Z80.Core
                             break;
                         case 0xE3: // EX (SP),HL
                             swap = r.HL;
-                            r.HL = cpu.Memory.ReadWordAt(r.SP);
-                            cpu.Memory.WriteWordAt(r.SP, swap);
+                            r.HL = cpu.Memory.ReadWordAt(r.SP, false);
+                            cpu.Memory.WriteWordAt(r.SP, swap, false);
                             break;
                         case 0xEB: // EX DE,HL
                             swap = r.DE;
@@ -39,8 +39,8 @@ namespace Z80.Core
                     {
                         case 0xE3: // EX (SP),IX
                             swap = r.IX;
-                            r.IX = cpu.Memory.ReadWordAt(r.SP);
-                            cpu.Memory.WriteWordAt(r.SP, swap);
+                            r.IX = cpu.Memory.ReadWordAt(r.SP, false);
+                            cpu.Memory.WriteWordAt(r.SP, swap, false);
                             break;
                     }
                     break;
@@ -50,8 +50,8 @@ namespace Z80.Core
                     {
                         case 0xE3: // EX (SP),IY
                             swap = r.IY;
-                            r.IY = cpu.Memory.ReadWordAt(r.SP);
-                            cpu.Memory.WriteWordAt(r.SP, swap);
+                            r.IY = cpu.Memory.ReadWordAt(r.SP, false);
+                            cpu.Memory.WriteWordAt(r.SP, swap, false);
                             break;
                     }
                     break;

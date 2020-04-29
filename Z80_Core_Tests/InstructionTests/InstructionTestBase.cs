@@ -42,32 +42,32 @@ namespace Z80.Core.Tests
 
         public byte ReadByteAtIndexAndOffset(WordRegister indexRegister, sbyte offset)
         {
-            return CPU.Memory.ReadByteAt((ushort)(Registers[indexRegister] + offset));
+            return CPU.Memory.ReadByteAt((ushort)(Registers[indexRegister] + offset), true);
         }
 
         public byte ReadByteAt(ushort address)
         {
-            return CPU.Memory.ReadByteAt(address);
+            return CPU.Memory.ReadByteAt(address, true);
         }
 
         public ushort ReadWordAt(ushort address)
         {
-            return CPU.Memory.ReadWordAt(address);
+            return CPU.Memory.ReadWordAt(address, true);
         }
 
         public void WriteByteAt(ushort address, byte value)
         {
-            CPU.Memory.WriteByteAt(address, value);
+            CPU.Memory.WriteByteAt(address, value, true);
         }
 
         public void WriteByteAtIndexAndOffset(WordRegister indexRegister, sbyte offset, byte value)
         {
-            CPU.Memory.WriteByteAt((ushort)(Registers[indexRegister] + offset), value);
+            CPU.Memory.WriteByteAt((ushort)(Registers[indexRegister] + offset), value, true);
         }
 
         public void WriteWordAt(ushort address, ushort value)
         {
-            CPU.Memory.WriteWordAt(address, value);
+            CPU.Memory.WriteWordAt(address, value, true);
         }
 
         public bool RandomBool()
@@ -80,7 +80,6 @@ namespace Z80.Core.Tests
             return Enumerable.Range(0, size).Select(x => (byte)_random.Next(0x00, 0xFF)).ToArray();
         }
     }
-
 
     public enum WriteDirection { Incrementing, Decrementing }
     public enum WriteRepeats { Repeating, NotRepeating }

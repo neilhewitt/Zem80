@@ -28,7 +28,7 @@ namespace Z80.Core
                     InstructionPrefix.FDCB => (ushort)(r.IY + offset),
                     _ => (ushort)0xFFFF
                 };
-                cpu.Memory.WriteByteAt(address, cpu.Memory.ReadByteAt(address).SetBit(bitIndex, false));
+                cpu.Memory.WriteByteAt(address, cpu.Memory.ReadByteAt(address, false).SetBit(bitIndex, false), false);
             }
 
             return new ExecutionResult(package, cpu.Registers.Flags, false, false);

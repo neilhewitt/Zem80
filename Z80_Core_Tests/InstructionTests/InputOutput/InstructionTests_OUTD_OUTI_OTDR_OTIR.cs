@@ -26,7 +26,7 @@ namespace Z80.Core.Tests
             Registers.HL = bufferAddress; // location of the buffer
             Registers.C = 0x00; // we'll use Port 0
             Registers.B = bufferLength; // size of the buffer
-            CPU.Memory.WriteBytesAt((ushort)(bufferAddress + offset), RandomBytes(bufferLength));
+            CPU.Memory.WriteBytesAt((ushort)(bufferAddress + offset), RandomBytes(bufferLength), true);
         }
 
         private (byte[] data, ushort expectedValueInHL) GetDataOutputAndExpectedValueInHL(int bufferSize, ushort bufferAddress, WriteDirection direction, WriteRepeats repeats)
@@ -47,7 +47,7 @@ namespace Z80.Core.Tests
             };
 
             return (
-                CPU.Memory.ReadBytesAt(checkAddress, (ushort)bufferSize),
+                CPU.Memory.ReadBytesAt(checkAddress, (ushort)bufferSize, true),
                 expectedValueInHL
                 );
         }

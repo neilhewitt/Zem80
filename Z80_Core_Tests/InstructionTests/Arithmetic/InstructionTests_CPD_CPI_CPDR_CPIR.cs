@@ -79,7 +79,7 @@ namespace Z80.Core.Tests
             Registers.A = input;
             Registers.HL = address; 
             Registers.BC = byteCount;
-            CPU.Memory.WriteBytesAt((ushort)(address - byteCount), buffer);
+            CPU.Memory.WriteBytesAt((ushort)(address - byteCount), buffer, true);
 
             // loop until either BC == 0 or comparison is true (Flags.Zero is true)
             Flags expectedFlags = new Flags();
@@ -128,7 +128,7 @@ namespace Z80.Core.Tests
             Registers.A = input;
             Registers.HL = address;
             Registers.BC = byteCount;
-            CPU.Memory.WriteBytesAt(address, buffer);
+            CPU.Memory.WriteBytesAt(address, buffer, true);
 
             // loop until either BC == 0 or comparison is true (Flags.Zero is true)
             Flags expectedFlags = new Flags();

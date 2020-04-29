@@ -24,7 +24,7 @@ namespace Z80.Core.Tests
                 HALT 
             }; 
 
-            CPU.Memory.WriteBytesAt(0, program);
+            CPU.Memory.WriteBytesAt(0, program, true);
             CPU.Debug.OnHalt += cpu_OnHalt;
             
             CPU.Start(true); // will start the CPU synchronously, this returns only when the CPU stops (not halts)

@@ -47,7 +47,7 @@ namespace Z80.Core
                             or(r.A);
                             break;
                         case 0xB6: // OR (HL)
-                            or(cpu.Memory.ReadByteAt(r.HL));
+                            or(cpu.Memory.ReadByteAt(r.HL, false));
                             break;
                         case 0xF6: // OR n
                             or(data.Argument1);
@@ -65,8 +65,8 @@ namespace Z80.Core
                             or(r.IXl);
                             break;
                         case 0xB6: // OR (IX+o)
-                            cpu.InternalOperationCycle(5);
-                            or(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)data.Argument1)));
+                            cpu.NotifyInternalOperationCycle(5);
+                            or(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)data.Argument1), false));
                             break;
                     }
                     break;
@@ -81,8 +81,8 @@ namespace Z80.Core
                             or(r.IYl);
                             break;
                         case 0xB6: // OR (IY+o)
-                            cpu.InternalOperationCycle(5);
-                            or(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)data.Argument1)));
+                            cpu.NotifyInternalOperationCycle(5);
+                            or(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)data.Argument1), false));
                             break;
                     }
                     break;

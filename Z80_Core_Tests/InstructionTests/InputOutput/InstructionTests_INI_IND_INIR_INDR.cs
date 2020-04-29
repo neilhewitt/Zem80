@@ -45,7 +45,7 @@ namespace Z80.Core.Tests
                 _ => bufferAddress
             };
 
-            byte[] data = CPU.Memory.ReadBytesAt(checkAddress, (ushort)bufferSize);
+            byte[] data = CPU.Memory.ReadBytesAt(checkAddress, (ushort)bufferSize, true);
 
             return (
                 data,

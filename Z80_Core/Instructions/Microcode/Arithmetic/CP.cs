@@ -46,7 +46,7 @@ namespace Z80.Core
                             cp(r.A);
                             break;
                         case 0xBE: // CP (HL)
-                            cp(cpu.Memory.ReadByteAt(r.HL));
+                            cp(cpu.Memory.ReadByteAt(r.HL, false));
                             break;
                         case 0xFE: // CP n
                             cp(data.Argument1);
@@ -65,8 +65,8 @@ namespace Z80.Core
                             cp(r.IXl);
                             break;
                         case 0xBE: // CP (IX+o)
-                            cpu.InternalOperationCycle(5);
-                            cp(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)data.Argument1)));
+                            cpu.NotifyInternalOperationCycle(5);
+                            cp(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)data.Argument1), false));
                             break;
 
                     }
@@ -82,8 +82,8 @@ namespace Z80.Core
                             cp(r.IYl);
                             break;
                         case 0xBE: // CP (IY+o)
-                            cpu.InternalOperationCycle(5);
-                            cp(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)data.Argument1)));
+                            cpu.NotifyInternalOperationCycle(5);
+                            cp(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)data.Argument1), false));
                             break;
                     }
                     break;

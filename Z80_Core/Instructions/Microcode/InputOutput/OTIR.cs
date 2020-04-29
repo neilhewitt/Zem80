@@ -14,7 +14,7 @@ namespace Z80.Core
             Registers r = cpu.Registers;
 
             Port port = cpu.Ports[r.C];
-            byte output = cpu.Memory.ReadByteAt(r.HL);
+            byte output = cpu.Memory.ReadByteAt(r.HL, false);
             r.B--;
             port.SignalWrite();
             port.WriteByte(output);

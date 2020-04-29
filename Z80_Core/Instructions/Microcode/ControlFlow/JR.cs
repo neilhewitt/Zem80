@@ -16,7 +16,7 @@ namespace Z80.Core
 
             void jr()
             {
-                cpu.InternalOperationCycle(5);
+                cpu.NotifyInternalOperationCycle(5);
                 cpu.Registers.PC = (ushort)(cpu.Registers.PC + (sbyte)data.Argument1 + instruction.SizeInBytes);
                 conditionTrue = instruction.Opcode != 0x18;
                 jumpRequired = true;

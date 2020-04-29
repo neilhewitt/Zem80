@@ -18,7 +18,7 @@ namespace Z80.Core
                 conditionTrue = true;
                 cpu.Registers.B--;
                 jump = (sbyte)data.Argument1;
-                cpu.InternalOperationCycle(5);
+                cpu.NotifyInternalOperationCycle(5);
                 cpu.Registers.PC = (ushort)(cpu.Registers.PC + jump);
             }
 

@@ -59,7 +59,7 @@ namespace Z80.Core
                             r.L = dec(r.L);
                             break;
                         case 0x35: // DEC (HL)
-                            cpu.Memory.WriteByteAt(r.HL, dec(cpu.Memory.ReadByteAt(r.HL)));
+                            cpu.Memory.WriteByteAt(r.HL, dec(cpu.Memory.ReadByteAt(r.HL, false)), false);
                             break;
                         case 0x3B: // DEC SP
                             r.SP = decw(r.SP);
@@ -84,8 +84,8 @@ namespace Z80.Core
                             r.IX = decw(r.IX);
                             break;
                         case 0x35: // DEC (IX+o)
-                            cpu.InternalOperationCycle(5);
-                            cpu.Memory.WriteByteAt((ushort)(r.IX + (sbyte)offset), dec(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)offset))));
+                            cpu.NotifyInternalOperationCycle(5);
+                            cpu.Memory.WriteByteAt((ushort)(r.IX + (sbyte)offset), dec(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)offset), false)), false);
                             break;
 
                     }
@@ -104,8 +104,8 @@ namespace Z80.Core
                             r.IY = decw(r.IY);
                             break;
                         case 0x35: // DEC (IY+o)
-                            cpu.InternalOperationCycle(5);
-                            cpu.Memory.WriteByteAt((ushort)(r.IY + (sbyte)offset), dec(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)offset))));
+                            cpu.NotifyInternalOperationCycle(5);
+                            cpu.Memory.WriteByteAt((ushort)(r.IY + (sbyte)offset), dec(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)offset), false)), false);
                             break;
                     }
                     break;

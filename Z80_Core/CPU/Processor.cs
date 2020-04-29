@@ -138,7 +138,7 @@ namespace Z80.Core
 
         public ushort Peek()
         {
-            return Memory.ReadWordAt(Registers.SP);
+            return Memory.ReadWordAt(Registers.SP, true);
         }
 
         public void SetInterruptMode(InterruptMode mode)
@@ -183,7 +183,7 @@ namespace Z80.Core
         }
 
         #region machine cycle handling
-        internal void MemoryReadCycle(ushort address, byte data)
+        internal void NotifyMemoryReadCycle(ushort address, byte data, MachineCycleType cycleType)
         {
             IO.MREQ.Value = true;
             IO.RD.Value = true;
@@ -198,12 +198,12 @@ namespace Z80.Core
             }
             ClockCycles += cyclesToAdd;
 
-            TickAll(new TickEvent(_executingInstruction, MachineCycleType.MemoryRead, cyclesToAdd));
+            TickAll(new TickEvent(_executingInstruction, cycleType, cyclesToAdd));
             IO.MREQ.Value = false;
             IO.RD.Value = false;
         }
 
-        internal void MemoryWriteCycle(ushort address, byte data)
+        internal void NotifyMemoryWriteCycle(ushort address, byte data, MachineCycleType cycleType)
         {
             IO.MREQ.Value = true;
             IO.WR.Value = true;
@@ -218,7 +218,7 @@ namespace Z80.Core
             }
             ClockCycles += cyclesToAdd;
 
-            TickAll(new TickEvent(_executingInstruction, MachineCycleType.MemoryWrite, cyclesToAdd));
+            TickAll(new TickEvent(_executingInstruction, cycleType, cyclesToAdd));
             IO.MREQ.Value = false;
             IO.WR.Value = false;
         }
@@ -255,19 +255,7 @@ namespace Z80.Core
             IO.WR.Value = false;
         }
 
-        internal void StackReadCycle(bool highByte)
-        {
-            ClockCycles += 3;
-            TickAll(new TickEvent(_executingInstruction, highByte ? MachineCycleType.StackReadHigh : MachineCycleType.StackReadLow, 3));
-        }
-
-        internal void StackWriteCycle(bool highByte)
-        {
-            ClockCycles += 3;
-            TickAll(new TickEvent(_executingInstruction, highByte ? MachineCycleType.StackWriteHigh : MachineCycleType.StackWriteLow, 3));
-        }
-
-        internal void InternalOperationCycle(int clockCycles)
+        internal void NotifyInternalOperationCycle(int clockCycles)
         {
             ClockCycles += clockCycles;
             TickAll(new TickEvent(_executingInstruction, MachineCycleType.InternalOperation, clockCycles));
@@ -284,7 +272,7 @@ namespace Z80.Core
                 {
                     // read next 4 bytes and decode to instruction
                     IO.M1.Value = true;
-                    byte[] instructionBytes = Memory.ReadBytesAt(Registers.PC, 4, true); // we suppress the machine cycles for the memory reads as the Decode method generates these
+                    byte[] instructionBytes = Memory.ReadBytesAt(Registers.PC, 4, true); 
                     package = Decode(instructionBytes, Registers.PC);
                     _beforeExecute?.Invoke(this, package);
                     if (package.Instruction == null)
@@ -341,9 +329,6 @@ namespace Z80.Core
 
         private void TickAll(TickEvent tickEvent)
         {
-            // TODO:
-            // signal attached devices that a machine cycle has ended - provide details of the cycle
-            // and provide access to CPU state and IO pins
             _onBeforeTick?.Invoke(this, tickEvent);
             Ticks++;
             foreach(var callback in _devices.Values)
@@ -351,6 +336,18 @@ namespace Z80.Core
                 callback(tickEvent, this);
             }
             _onAfterTick?.Invoke(this, tickEvent);
+        }
+
+        private void StackReadCycle(bool highByte)
+        {
+            ClockCycles += 3;
+            TickAll(new TickEvent(_executingInstruction, highByte ? MachineCycleType.StackReadHigh : MachineCycleType.StackReadLow, 3));
+        }
+
+        private void StackWriteCycle(bool highByte)
+        {
+            ClockCycles += 3;
+            TickAll(new TickEvent(_executingInstruction, highByte ? MachineCycleType.StackWriteHigh : MachineCycleType.StackWriteLow, 3));
         }
 
         private void OpcodeFetchCycle(ushort address, byte data, int clockCycles)
@@ -365,14 +362,15 @@ namespace Z80.Core
             IO.RD.Value = false;
         }
 
-        private void OperandDataCycle(ushort address, byte data, int clockCycles)
+        private void OperandDataCycle(ushort address, byte data, int clockCycles, bool wordOperand = false, bool high = false)
         {
             IO.ADDRESS_BUS.Value = address;
             IO.DATA_BUS.Value = data;
             IO.MREQ.Value = true;
             IO.RD.Value = true;
             ClockCycles += clockCycles;
-            TickAll(new TickEvent(_executingInstruction, MachineCycleType.OperandRead, clockCycles));
+            MachineCycleType cycleType = wordOperand ? high ? MachineCycleType.OperandReadHigh : MachineCycleType.OperandReadLow : MachineCycleType.OperandRead;
+            TickAll(new TickEvent(_executingInstruction, cycleType, clockCycles));
             IO.MREQ.Value = false;
             IO.RD.Value = false;
         }
@@ -475,9 +473,9 @@ namespace Z80.Core
                     }
                     else if (instruction.Argument1 == ArgumentType.ImmediateWord)
                     {
-                        OperandDataCycle((ushort)(address + 1), b1, 3);
+                        OperandDataCycle((ushort)(address + 1), b1, 3, true, false);
                         data.Argument1 = b1;
-                        // OperandReadHigh can be 4 clock cycles for CALL conditional instructions but only if the condition is satisfied
+                        // OperandReadHigh can be 4 clock cycles for CALL conditional instructions, but only if the condition is satisfied
                         // need to signal to the handler that this is the case, hence the check here
                         int clockCycles = 3;
                         if (instruction.HasOperandDataReadHigh4)
@@ -487,7 +485,7 @@ namespace Z80.Core
                                 clockCycles = 4;
                             }
                         }
-                        OperandDataCycle((ushort)(address + 2), b2, clockCycles);
+                        OperandDataCycle((ushort)(address + 2), b2, clockCycles, true, true);
                         data.Argument2 = b2;
                     }
 
@@ -538,7 +536,7 @@ namespace Z80.Core
                 switch (InterruptMode)
                 {
                     case InterruptMode.IM0: // read instruction data from data bus in 1-4 cycles and execute resulting instruction - flags are set but PC is unaffected
-                        InternalOperationCycle(6);
+                        NotifyInternalOperationCycle(6);
                         ExecutionPackage package = DecodeInterrupt(() =>
                         {
                             _interruptCallback(); // each time callback is called, device will set data bus with next instruction byte
@@ -548,17 +546,17 @@ namespace Z80.Core
                         break;
 
                     case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
-                        InternalOperationCycle(7);
+                        NotifyInternalOperationCycle(7);
                         Push(WordRegister.PC);
                         Registers.PC = 0x0038;
                         break;
 
                     case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
                         _interruptCallback(); // device must populate data bus with low byte of address
-                        InternalOperationCycle(7);
+                        NotifyInternalOperationCycle(7);
                         Push(WordRegister.PC);
                         ushort address = (ushort)((Registers.I * 256) + IO.DATA_BUS.Value);
-                        Registers.PC = Memory.ReadWordAt(address);
+                        Registers.PC = Memory.ReadWordAt(address, false);
                         break;
                 }
 

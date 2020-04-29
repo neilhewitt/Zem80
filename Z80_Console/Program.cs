@@ -27,32 +27,24 @@ namespace Z80_Console
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Starting VM...\r\n");
 
-            //vm.Load(0x05, "cpm_patch.bin"); // patch the CP/M BDOS routines out
-            //vm.Load(0x100, "zexdoc.bin");
-            List<byte> program = new List<byte>();
-            for (int i = 0; i < 10000; i++) program.AddRange(new byte[] { 0xED, 0x7B, 0x00, 0x50 }); // repeat LD SP,(0x5000) 10,000 times (timing test)
-            program.Add(0x76);
-            vm.Load(0x0100, program.ToArray());
+            vm.Load(0x05, "cpm_patch.bin"); // patch the CP/M BDOS routines out
+            vm.Load(0x100, "zexdoc.bin");
 
             Console.ForegroundColor = ConsoleColor.White;
 
             //_cpu.Debug.BeforeExecute += Before_Instruction_Execution;
             //_cpu.Debug.AfterExecute += After_Instruction_Execute;
-            _cpu.RegisterDevice("test", TickHandler);
-            while (true)
-            {
-                DateTime starts = DateTime.Now;
-                vm.Start(0x0100, true, true);
-                DateTime ends = DateTime.Now;
-                TimeSpan elapsed = ends - starts;
-                Console.WriteLine("Total elapsed: " + elapsed);
-                Console.WriteLine("CPU cycles: " + _cpu.ClockCycles);
-                Console.WriteLine("CPU ticks: " + _cpu.Ticks);
+            DateTime starts = DateTime.Now;
+            vm.Start(0x0100, true, true);
+            DateTime ends = DateTime.Now;
+            TimeSpan elapsed = ends - starts;
+            Console.WriteLine("Total elapsed: " + elapsed);
+            Console.WriteLine("CPU cycles: " + _cpu.ClockCycles);
+            Console.WriteLine("CPU ticks: " + _cpu.Ticks);
 
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine("\r\nProgram has finished. Press enter to exit.");
-                Console.ReadLine();
-            }
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("\r\nProgram has finished. Press enter to exit.");
+            Console.ReadLine();
         }
 
         private static bool TickHandler(TickEvent tick, Processor cpu)

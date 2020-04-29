@@ -13,7 +13,7 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             Registers r = cpu.Registers;
 
-            cpu.Memory.WriteByteAt(r.DE, cpu.Memory.ReadByteAt(r.HL));
+            cpu.Memory.WriteByteAt(r.DE, cpu.Memory.ReadByteAt(r.HL, false), false);
             r.HL--;
             r.DE--;
             r.BC--;
@@ -23,7 +23,7 @@ namespace Z80.Core
             flags.Subtract = false;
 
             bool conditionTrue = (r.BC == 0);
-            if (conditionTrue) cpu.InternalOperationCycle(5);
+            if (conditionTrue) cpu.NotifyInternalOperationCycle(5);
 
             return new ExecutionResult(package, flags, conditionTrue, !conditionTrue);
         }

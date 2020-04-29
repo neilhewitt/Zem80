@@ -64,7 +64,7 @@ namespace Z80.Core
                             r.SP = incw(r.SP);
                             break;
                         case 0x34: // INC (HL)
-                            cpu.Memory.WriteByteAt(r.HL, inc(cpu.Memory.ReadByteAt(r.HL)));
+                            cpu.Memory.WriteByteAt(r.HL, inc(cpu.Memory.ReadByteAt(r.HL, false)), false);
                             break;
                         case 0x3C: // INC A
                             r.A = inc(r.A);
@@ -86,8 +86,8 @@ namespace Z80.Core
                             r.IX = incw(r.IX);
                             break;
                         case 0x34: // INC (IX+o)
-                            cpu.InternalOperationCycle(5);
-                            cpu.Memory.WriteByteAt((ushort)(r.IX + (sbyte)offset), inc(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)offset))));
+                            cpu.NotifyInternalOperationCycle(5);
+                            cpu.Memory.WriteByteAt((ushort)(r.IX + (sbyte)offset), inc(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)offset), false)), false);
                             break;
 
                     }
@@ -106,8 +106,8 @@ namespace Z80.Core
                             r.IY = incw(r.IY);
                             break;
                         case 0x34: // INC (IY+o)
-                            cpu.InternalOperationCycle(5);
-                            cpu.Memory.WriteByteAt((ushort)(r.IY + (sbyte)offset), inc(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)offset))));
+                            cpu.NotifyInternalOperationCycle(5);
+                            cpu.Memory.WriteByteAt((ushort)(r.IY + (sbyte)offset), inc(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)offset), false)), false);
                             break;
                     }
                     break;

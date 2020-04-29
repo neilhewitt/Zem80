@@ -16,7 +16,7 @@ namespace Z80.Core
             Port port = cpu.Ports[r.C];
             port.SignalRead();
             byte input = port.ReadByte();
-            cpu.Memory.WriteByteAt(r.HL, input);
+            cpu.Memory.WriteByteAt(r.HL, input, false);
             r.HL--;
             r.B--;
 

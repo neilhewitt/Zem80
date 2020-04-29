@@ -21,32 +21,32 @@ namespace Z80.Core
             // local functions to keep code size down
             byte readByte(ushort address)
             {
-                return cpu.Memory.ReadByteAt(address);
+                return cpu.Memory.ReadByteAt(address, false);
             }
 
             ushort readWord(ushort address)
             {
-                return cpu.Memory.ReadWordAt(address);
+                return cpu.Memory.ReadWordAt(address, false);
             }
 
             byte readOffset(ushort address, byte offset)
             {
-                return cpu.Memory.ReadByteAt((ushort)(address + (sbyte)offset));
+                return cpu.Memory.ReadByteAt((ushort)(address + (sbyte)offset), false);
             }
 
             void writeByte(ushort address, byte value)
             {
-                cpu.Memory.WriteByteAt(address, value);
+                cpu.Memory.WriteByteAt(address, value, false);
             }
 
             void writeWord(ushort address, ushort value)
             {
-                cpu.Memory.WriteWordAt(address, value);
+                cpu.Memory.WriteWordAt(address, value, false);
             }
 
             void writeOffset(ushort address, byte offset, byte value)
             {
-                cpu.Memory.WriteByteAt((ushort)(address + (sbyte)offset), value);
+                cpu.Memory.WriteByteAt((ushort)(address + (sbyte)offset), value, false);
             }
 
             void handleIRFlags(byte input)
@@ -375,7 +375,7 @@ namespace Z80.Core
                             r.IXl = arg0;
                             break;
                         case 0x36: // LD (IX+o),n
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             writeOffset(r.IX, arg0, arg1);
                             break;
                         case 0x44: // LD B,IXh
@@ -385,7 +385,7 @@ namespace Z80.Core
                             r.B = r.IXl;
                             break;
                         case 0x46: // LD B,(IX+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             r.B = readOffset(r.IX, arg0);
                             break;
                         case 0x4C: // LD C,IXh
@@ -395,7 +395,7 @@ namespace Z80.Core
                             r.C = r.IXl;
                             break;
                         case 0x4E: // LD C,(IX+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             r.C = readOffset(r.IX, arg0);
                             break;
                         case 0x54: // LD D,IXh
@@ -405,7 +405,7 @@ namespace Z80.Core
                             r.D = r.IXl;
                             break;
                         case 0x56: // LD D,(IX+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             r.D = readOffset(r.IX, arg0);
                             break;
                         case 0x5C: // LD E,IXh
@@ -415,7 +415,7 @@ namespace Z80.Core
                             r.E = r.IXl;
                             break;
                         case 0x5E: // LD E,(IX+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             r.E = readOffset(r.IX, arg0);
                             break;
                         case 0x60: // LD IXh,B
@@ -440,7 +440,7 @@ namespace Z80.Core
                             r.IXh = r.A;
                             break;
                         case 0x66: // LD H,(IX+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             r.H = readOffset(r.IX, arg0);
                             break;
                         case 0x68: // LD IXl,B
@@ -465,35 +465,35 @@ namespace Z80.Core
                             r.IXl = r.A;
                             break;
                         case 0x6E: // LD L,(IX+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             r.L = readOffset(r.IX, arg0);
                             break;
                         case 0x70: // LD (IX+o),B
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             writeOffset(r.IX, arg0, r.B);
                             break;
                         case 0x71: // LD (IX+o),C
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             writeOffset(r.IX, arg0, r.C);
                             break;
                         case 0x72: // LD (IX+o),D
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             writeOffset(r.IX, arg0, r.D);
                             break;
                         case 0x73: // LD (IX+o),E
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             writeOffset(r.IX, arg0, r.E);
                             break;
                         case 0x74: // LD (IX+o),H
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             writeOffset(r.IX, arg0, r.H);
                             break;
                         case 0x75: // LD (IX+o),L
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             writeOffset(r.IX, arg0, r.L);
                             break;
                         case 0x77: // LD (IX+o),A
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             writeOffset(r.IX, arg0, r.A);
                             break;
                         case 0x7C: // LD A,IXh
@@ -503,7 +503,7 @@ namespace Z80.Core
                             r.A = r.IXl;
                             break;
                         case 0x7E: // LD A,(IX+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             r.A = readOffset(r.IX, arg0);
                             break;
                         case 0xF9: // LD SP,IX
@@ -532,7 +532,7 @@ namespace Z80.Core
                             r.IYl = arg0;
                             break;
                         case 0x36: // LD (IY+o),n
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             writeOffset(r.IY, arg0, arg1);
                             break;
                         case 0x44: // LD B,IYh
@@ -542,7 +542,7 @@ namespace Z80.Core
                             r.B = r.IYl;
                             break;
                         case 0x46: // LD B,(IY+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             r.B = readOffset(r.IY, arg0);
                             break;
                         case 0x4C: // LD C,IYh
@@ -552,7 +552,7 @@ namespace Z80.Core
                             r.C = r.IYl;
                             break;
                         case 0x4E: // LD C,(IY+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             r.C = readOffset(r.IY, arg0);
                             break;
                         case 0x54: // LD D,IYh
@@ -562,7 +562,7 @@ namespace Z80.Core
                             r.D = r.IYl;
                             break;
                         case 0x56: // LD D,(IY+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             r.D = readOffset(r.IY, arg0);
                             break;
                         case 0x5C: // LD E,IYh
@@ -572,7 +572,7 @@ namespace Z80.Core
                             r.E = r.IYl;
                             break;
                         case 0x5E: // LD E,(IY+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             r.E = readOffset(r.IY, arg0);
                             break;
                         case 0x60: // LD IYh,B
@@ -597,7 +597,7 @@ namespace Z80.Core
                             r.IYh = r.A;
                             break;
                         case 0x66: // LD H,(IY+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             r.H = readOffset(r.IY, arg0);
                             break;
                         case 0x68: // LD IYl,B
@@ -622,35 +622,35 @@ namespace Z80.Core
                             r.IYl = r.A;
                             break;
                         case 0x6E: // LD L,(IY+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             r.L = readOffset(r.IY, arg0);
                             break;
                         case 0x70: // LD (IY+o),B
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             writeOffset(r.IY, arg0, r.B);
                             break;
                         case 0x71: // LD (IY+o),C
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             writeOffset(r.IY, arg0, r.C);
                             break;
                         case 0x72: // LD (IY+o),D
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             writeOffset(r.IY, arg0, r.D);
                             break;
                         case 0x73: // LD (IY+o),E
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             writeOffset(r.IY, arg0, r.E);
                             break;
                         case 0x74: // LD (IY+o),H
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             writeOffset(r.IY, arg0, r.H);
                             break;
                         case 0x75: // LD (IY+o),L
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             writeOffset(r.IY, arg0, r.L);
                             break;
                         case 0x77: // LD (IY+o),A
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             writeOffset(r.IY, arg0, r.A);
                             break;
                         case 0x7C: // LD A,IYh
@@ -660,7 +660,7 @@ namespace Z80.Core
                             r.A = r.IYl;
                             break;
                         case 0x7E: // LD A,(IY+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             r.A = readOffset(r.IY, arg0);
                             break;
                         case 0xF9: // LD SP,IY

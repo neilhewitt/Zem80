@@ -15,12 +15,12 @@ namespace Z80.Core
 
             byte readByte(ushort address)
             {
-                return cpu.Memory.ReadByteAt(address);
+                return cpu.Memory.ReadByteAt(address, false);
             }
 
             byte readOffset(ushort address, sbyte offset)
             {
-                return cpu.Memory.ReadByteAt((ushort)(address + offset));
+                return cpu.Memory.ReadByteAt((ushort)(address + offset), false);
             }
 
             byte addByteWithCarry(int value)
@@ -76,23 +76,23 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x4A: // ADC HL,BC
-                            cpu.InternalOperationCycle(4);
-                            cpu.InternalOperationCycle(3);
+                            cpu.NotifyInternalOperationCycle(4);
+                            cpu.NotifyInternalOperationCycle(3);
                             r.HL = addWordWithCarry(r.BC);
                             break;
                         case 0x5A: // ADC HL,DE
-                            cpu.InternalOperationCycle(4);
-                            cpu.InternalOperationCycle(3);
+                            cpu.NotifyInternalOperationCycle(4);
+                            cpu.NotifyInternalOperationCycle(3);
                             r.HL = addWordWithCarry(r.DE);
                             break;
                         case 0x6A: // ADC HL,HL                            
-                            cpu.InternalOperationCycle(4);
-                            cpu.InternalOperationCycle(3);
+                            cpu.NotifyInternalOperationCycle(4);
+                            cpu.NotifyInternalOperationCycle(3);
                             r.HL = addWordWithCarry(r.HL);
                             break;
                         case 0x7A: // ADC HL,SP
-                            cpu.InternalOperationCycle(4);
-                            cpu.InternalOperationCycle(3);
+                            cpu.NotifyInternalOperationCycle(4);
+                            cpu.NotifyInternalOperationCycle(3);
                             r.HL = addWordWithCarry(r.SP);
                             break;
                     }
@@ -108,7 +108,7 @@ namespace Z80.Core
                             r.A = addByteWithCarry(r.IXl);
                             break;
                         case 0x8E: // ADC A,(IX+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             r.A = addByteWithCarry(readOffset(r.IX, (sbyte)data.Argument1));
                             break;
                     }
@@ -124,7 +124,7 @@ namespace Z80.Core
                             r.A = addByteWithCarry(r.IYl);
                             break;
                         case 0x8E: // ADC A,(IY+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.NotifyInternalOperationCycle(5);
                             r.A = addByteWithCarry(readOffset(r.IY, (sbyte)data.Argument1));
                             break;
                     }

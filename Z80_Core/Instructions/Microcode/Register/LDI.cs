@@ -13,7 +13,7 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             Registers r = cpu.Registers;
 
-            cpu.Memory.WriteByteAt(r.DE, cpu.Memory.ReadByteAt(r.HL));
+            cpu.Memory.WriteByteAt(r.DE, cpu.Memory.ReadByteAt(r.HL, false), false);
             r.HL++;
             r.DE++;
             r.BC--;
