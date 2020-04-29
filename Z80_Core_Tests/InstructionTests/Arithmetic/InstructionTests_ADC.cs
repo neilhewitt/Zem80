@@ -142,7 +142,7 @@ namespace Z80.Core.Tests
             Registers.HL = 0x5000;
             WriteByteAt(Registers.HL, add);
 
-            ExecutionResult executionResult = ExecuteInstruction($"ADC A,n", arg1: add);
+            ExecutionResult executionResult = ExecuteInstruction($"ADC A,(HL)");
 
             Assert.That(Registers.A, Is.EqualTo(expectedResult));
             Assert.That(executionResult.Flags.State, Is.EqualTo(expectedFlagState));

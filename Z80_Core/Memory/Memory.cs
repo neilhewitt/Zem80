@@ -77,7 +77,7 @@ namespace Z80.Core
             bytes[1] = (byte)(value / 256);
             bytes[0] = (byte)(value % 256);
             WriteByteInternal(address, bytes[0], suppressMachineCycle, MachineCycleType.MemoryWriteLow);
-            WriteByteInternal(address, bytes[1], suppressMachineCycle, MachineCycleType.MemoryWriteHigh);
+            WriteByteInternal(++address, bytes[1], suppressMachineCycle, MachineCycleType.MemoryWriteHigh);
         }
 
         public void Initialise(Processor cpu, IMemoryMap map)
