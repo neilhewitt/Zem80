@@ -27,9 +27,9 @@ namespace Z80.Core.Tests
             CPU.Memory.WriteBytesAt(0, program, true);
             CPU.Debug.OnHalt += cpu_OnHalt;
             
-            CPU.Start(true); // will start the CPU synchronously, this returns only when the CPU stops (not halts)
+            CPU.Start(synchronous: true, enableDebug: true); // will start the CPU synchronously, this returns only when the CPU stops (not halts)
 
-            void cpu_OnHalt(object sender, EventArgs e) // ever seen a local function as an event handler? 
+            void cpu_OnHalt(object sender, HaltReason reason) // ever seen a local function as an event handler? 
             {
                 halted = true;
                 CPU.Stop(); // we're done, so stop the CPU and dump out to the assert

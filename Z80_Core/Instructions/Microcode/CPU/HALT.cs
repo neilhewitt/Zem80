@@ -11,7 +11,7 @@ namespace Z80.Core
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
 
-            cpu.Halt();
+            cpu.Halt(HaltReason.HaltInstruction);
 
             return new ExecutionResult(package, cpu.Registers.Flags, false, false);
         }

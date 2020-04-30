@@ -10,14 +10,24 @@ namespace Z80.SimpleVM
     {
         private Action<char> _output;
         private Processor _cpu;
+        private ushort _address;
+        private bool _synchronous;
+        private bool _endOnHalt;
+        private bool _realTime;
+        private bool _debug;
 
         public Processor CPU => _cpu;
 
-        public void Start(ushort address = 0x0000, bool runSyncronous = false, bool endOnHalt = false, Action<char> outputChar = null)
+        public void Start(ushort address = 0x0000, bool runSynchronous = false, bool endOnHalt = false, bool realTime = false, bool debug = false, Action<char> outputChar = null)
         {
+            _address = address;
+            _synchronous = runSynchronous;
+            _endOnHalt = endOnHalt;
+            _realTime = realTime;
+            _debug = debug;
             if (outputChar != null) _output = outputChar;
-            
-            _cpu.Start(runSyncronous, address, endOnHalt);
+
+            _cpu.Start(runSynchronous, address, endOnHalt, realTime, debug);
         }
 
         public void Stop()
@@ -29,7 +39,7 @@ namespace Z80.SimpleVM
         {
             _cpu.Stop();
             _cpu.ResetAndClearMemory();
-            _cpu.Start();
+            _cpu.Start(_synchronous, _address, _endOnHalt, _realTime, _debug);
         }
 
         public void Load(ushort address, string path)
@@ -74,9 +84,9 @@ namespace Z80.SimpleVM
         {
         }
 
-        public VirtualMachine()
+        public VirtualMachine(int speed = 4)
         {
-            _cpu = Bootstrapper.BuildCPU();
+            _cpu = Bootstrapper.BuildCPU(speedInMHz: speed);
             _cpu.Ports[0].Connect(ReadChar, WriteChar, SignalRead, SignalWrite);
             _cpu.Ports[1].Connect(ReadByte, WriteByte, SignalRead, SignalWrite);
         }

@@ -1,20 +1,5 @@
-﻿using System;
-
-namespace Z80.Core
+﻿namespace Z80.Core
 {
-    public interface IDebugProcessor
-    {
-        event EventHandler<ExecutionResult> AfterExecute;
-        event EventHandler<ExecutionPackage> BeforeExecute;
-        event EventHandler BeforeStart;
-        event EventHandler OnStop;
-        event EventHandler OnHalt;
-        event EventHandler<TickEvent> OnBeforeTick;
-        event EventHandler<TickEvent> OnAfterTick;
-
-        ExecutionResult Execute(ExecutionPackage package);
-    }
-
     public class TickEvent
     {
         public Instruction Instruction { get; private set; }

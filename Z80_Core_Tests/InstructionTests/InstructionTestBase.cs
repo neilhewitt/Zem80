@@ -18,6 +18,7 @@ namespace Z80.Core.Tests
         public void Setup()
         {
             CPU = Bootstrapper.BuildCPU();
+            CPU.EnableDebug();
             _random = new Random(DateTime.Now.Millisecond);
         }
 

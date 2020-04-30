@@ -9,12 +9,13 @@ using System.Collections.Generic;
 
 namespace Z80.Core
 {
-    public class Processor : IDebugProcessor
+    public class Processor : IDebugMode
     {
         private Instruction _executingInstruction;
         private bool _running;
         private bool _halted;
         private bool _pendingInterrupt;
+        private bool _debugEnabled;
         private Action _interruptCallback;
         private bool _pendingNonMaskableInterrupt;
         private Thread _instructionCycle;
@@ -23,16 +24,29 @@ namespace Z80.Core
         private EventHandler<ExecutionResult> _afterExecute;
         private EventHandler _beforeStart;
         private EventHandler _onStop;
-        private EventHandler _onHalt;
+        private EventHandler<HaltReason> _onHalt;
         private EventHandler<TickEvent> _onBeforeTick;
         private EventHandler<TickEvent> _onAfterTick;
         private IDictionary<string, Func<TickEvent, Processor, bool>> _devices;
+        private Stopwatch _stopwatch;
+        private double _windowsTicksPerCycle;
+        private long _timingErrors;
+        private IList<TimingErrorLog> _timingLog;
 
         public IReadOnlyDictionary<string, Func<TickEvent, Processor, bool>> Devices => (IReadOnlyDictionary<string, Func<TickEvent, Processor, bool>>)_devices;
 
-        public IDebugProcessor Debug => (IDebugProcessor)this;
+        public IDebugMode Debug
+        {
+            get
+            {
+                if (_debugEnabled) return (IDebugMode)this;
+                else throw new Z80Exception("Debugging is not enabled and debug stats will be empty.");
+            }
+        }
+
         public bool Synchronous { get; private set; }
         public bool EndOnHalt { get; private set; }
+        public bool StableRealTime { get; private set; }
 
         public Registers Registers { get; private set; }
         public Memory Memory { get; private set; }
@@ -40,30 +54,38 @@ namespace Z80.Core
         public IO IO { get; private set; }
         public InterruptMode InterruptMode { get; private set; } = InterruptMode.IM0;
         public bool InterruptsEnabled { get; private set; } = true;
-        public double SpeedInMhz { get; private set; }
+        public int SpeedInMhz { get; private set; }
+        public bool RealTimeExecution { get; private set; }
         public long Ticks { get; private set; }
         public long ClockCycles { get; private set; }
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; // yay for tri-states!
         
         // why yes, you do have to do event handlers this way if you want them to be on the interface and not on the type... no idea why
         // (basically, automatic properties don't work as events when they are explicitly on the interface, so we use a backing variable... old-school style)
-        event EventHandler<ExecutionPackage> IDebugProcessor.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
-        event EventHandler<ExecutionResult> IDebugProcessor.AfterExecute { add { _afterExecute += value; } remove { _afterExecute -= value; } }
-        event EventHandler IDebugProcessor.BeforeStart { add { _beforeStart += value; } remove { _beforeStart -= value; } }
-        event EventHandler IDebugProcessor.OnStop { add { _onStop += value; } remove { _onStop -= value; } }
-        event EventHandler IDebugProcessor.OnHalt { add { _onHalt += value; } remove { _onHalt -= value; } }
-        event EventHandler<TickEvent> IDebugProcessor.OnBeforeTick { add { _onBeforeTick += value; } remove { _onBeforeTick -= value; } }
-        event EventHandler<TickEvent> IDebugProcessor.OnAfterTick { add { _onAfterTick += value; } remove { _onAfterTick -= value; } }
+        event EventHandler<ExecutionPackage> IDebugMode.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
+        event EventHandler<ExecutionResult> IDebugMode.AfterExecute { add { _afterExecute += value; } remove { _afterExecute -= value; } }
+        event EventHandler IDebugMode.BeforeStart { add { _beforeStart += value; } remove { _beforeStart -= value; } }
+        event EventHandler IDebugMode.OnStop { add { _onStop += value; } remove { _onStop -= value; } }
+        event EventHandler<HaltReason> IDebugMode.OnHalt { add { _onHalt += value; } remove { _onHalt -= value; } }
+        event EventHandler<TickEvent> IDebugMode.OnBeforeTick { add { _onBeforeTick += value; } remove { _onBeforeTick -= value; } }
+        event EventHandler<TickEvent> IDebugMode.OnAfterTick { add { _onAfterTick += value; } remove { _onAfterTick -= value; } }
 
-        public void Start(bool synchronous = false, ushort address = 0x0000, bool endOnHalt = false)
+        long IDebugMode.TimingErrors => _timingErrors;
+        IEnumerable<TimingErrorLog> IDebugMode.TimingErrorLogs => _timingLog;
+
+        public void Start(bool synchronous = false, ushort address = 0x0000, bool endOnHalt = false, bool realTimeExecution = false, bool enableDebug = false)
         {
             if (!_running)
             {
-                EndOnHalt = endOnHalt; // if set, will summarily end execution at the first HALT instruction. This is mostly for test scenarios.
+                EndOnHalt = endOnHalt; // if set, will summarily end execution at the first HALT instruction. This is mostly for test / debug scenarios.
+                _debugEnabled = enableDebug; // if this is not set, debug events will not fire even if subscribed to, timing errors will not be logged, and access to this.Debug will throw an exception
                 ClockCycles = 0;
                 Ticks = 0;
+                _timingErrors = 0;
+                _timingLog.Clear();
+                RealTimeExecution = realTimeExecution;
 
-                _beforeStart?.Invoke(null, null);
+                if (_debugEnabled) _beforeStart?.Invoke(null, null);
                 Registers.PC = address; // ordinarily, execution will start at 0x0000, but this can be overridden
                 _running = true;
 
@@ -87,18 +109,23 @@ namespace Z80.Core
             _halted = false;
             _instructionCycle?.Abort();
 
-            _onStop?.Invoke(null, null);
+            if (_debugEnabled) _onStop?.Invoke(null, null);
         }
 
-        public void Halt()
+        public void Halt(HaltReason reason = HaltReason.HaltCalledDirectly)
         {
             _halted = true;
-            _onHalt?.Invoke(null, null);
+            if (_debugEnabled) _onHalt?.Invoke(null, reason);
         }
 
         public void Resume()
         {
             _halted = false;
+        }
+
+        public void EnableDebug()
+        {
+            _debugEnabled = true;
         }
 
         public void ResetAndClearMemory()
@@ -114,10 +141,10 @@ namespace Z80.Core
         {
             ushort value = Registers[register];
             Registers.SP--;
-            StackWriteCycle(true);
+            StackWriteCycle(true, value.HighByte());
             Memory.WriteByteAt(Registers.SP, value.HighByte(), true);
             Registers.SP--;
-            StackWriteCycle(false);
+            StackWriteCycle(false, value.LowByte());
             Memory.WriteByteAt(Registers.SP, value.LowByte(), true);
         }
 
@@ -125,11 +152,13 @@ namespace Z80.Core
         {
             byte high, low;
 
-            StackReadCycle(true);
+            BeginStackReadCycle();
             low = Memory.ReadByteAt(Registers.SP, true);
+            EndStackReadCycle(false, low);
             Registers.SP++;
-            StackReadCycle(false);
+            BeginStackReadCycle();
             high = Memory.ReadByteAt(Registers.SP, true);
+            EndStackReadCycle(true, high);
             Registers.SP++;
 
             ushort value = (low, high).ToWord();
@@ -270,11 +299,20 @@ namespace Z80.Core
 
                 if (!_halted)
                 {
+                    // if the CPU is running in real time, it will attempt to time instructions
+                    // to what they should be on a real Z80 running at SpeedInMhz value
+                    // We'll use a stopwatch to count elapsed time (much better performance than TimeSpans or DateTime)
+                    StableRealTime = true;
+                    if (RealTimeExecution)
+                    {
+                        _stopwatch.Start();
+                    }
+
                     // read next 4 bytes and decode to instruction
                     IO.M1.Value = true;
                     byte[] instructionBytes = Memory.ReadBytesAt(Registers.PC, 4, true); 
                     package = Decode(instructionBytes, Registers.PC);
-                    _beforeExecute?.Invoke(this, package);
+                    if (_debugEnabled) _beforeExecute?.Invoke(this, package);
                     if (package.Instruction == null)
                     {
                         // in this case we should execute two consecutive NOPs to move the program counter on correctly and generate the correct ticks
@@ -290,7 +328,11 @@ namespace Z80.Core
                 }
                 else
                 {
-                    if (EndOnHalt) return;
+                    if (EndOnHalt)
+                    {
+                        Stop();
+                        return;
+                    }
                     // when halted, the CPU should execute NOP continuously
                     package = new ExecutionPackage(InstructionSet.NOP, new InstructionData());
                 }
@@ -300,8 +342,32 @@ namespace Z80.Core
 
                 IO.M1.Value = false;
                 _executingInstruction = null;
-                
-                _afterExecute?.Invoke(this, result);
+
+                if (_debugEnabled) _afterExecute?.Invoke(this, result);
+
+                // check if the instruction has run in less than the 'real' time, and if so, spin in a while loop until enough time has passed
+                // alternatively, if we've already run too long, up the timing error counter and log it for debug purposes
+                if (RealTimeExecution)
+                {
+                    _stopwatch.Stop();
+                    long expectedTicks = (long)(_windowsTicksPerCycle * result.ClockCycles);
+                    if (_stopwatch.ElapsedTicks > expectedTicks)
+                    {
+                        if (_debugEnabled)
+                        {
+                            _timingErrors++;
+                            _timingLog.Add(new TimingErrorLog(package.Instruction, _stopwatch.ElapsedTicks, expectedTicks));
+                        }
+                        StableRealTime = false;
+                    }
+                    else
+                    {
+                        _stopwatch.Restart();
+                        while (_stopwatch.ElapsedTicks < expectedTicks) ;
+                    }
+                    _stopwatch.Stop();
+                    _stopwatch.Reset();
+                }
 
                 HandleNonMaskableInterrupts();
                 HandleMaskableInterrupts();
@@ -309,11 +375,6 @@ namespace Z80.Core
         }
 
         private ExecutionResult Execute(ExecutionPackage package)
-        {
-            return this.Debug.Execute(package);
-        }        
-
-        ExecutionResult IDebugProcessor.Execute(ExecutionPackage package)
         {
             _executingInstruction = package.Instruction;
 
@@ -325,29 +386,50 @@ namespace Z80.Core
             Registers.PC += (ushort)((_halted || result.InstructionSetsProgramCounter) ? 0x00 : result.Instruction.SizeInBytes);
 
             return result;
+        }        
+
+        ExecutionResult IDebugMode.Execute(ExecutionPackage package)
+        {
+            return Execute(package);
         }
 
         private void TickAll(TickEvent tickEvent)
         {
-            _onBeforeTick?.Invoke(this, tickEvent);
+            if (_debugEnabled) _onBeforeTick?.Invoke(this, tickEvent);
             Ticks++;
             foreach(var callback in _devices.Values)
             {
                 callback(tickEvent, this);
             }
-            _onAfterTick?.Invoke(this, tickEvent);
+            if (_debugEnabled) _onAfterTick?.Invoke(this, tickEvent);
         }
 
-        private void StackReadCycle(bool highByte)
+        private void BeginStackReadCycle()
+        {
+            IO.MREQ.Value = true;
+            IO.RD.Value = true;
+            IO.ADDRESS_BUS.Value = Registers.SP;
+        }
+
+        private void EndStackReadCycle(bool highByte, byte data)
         {
             ClockCycles += 3;
+            IO.DATA_BUS.Value = data;
             TickAll(new TickEvent(_executingInstruction, highByte ? MachineCycleType.StackReadHigh : MachineCycleType.StackReadLow, 3));
+            IO.MREQ.Value = false;
+            IO.RD.Value = false;
         }
 
-        private void StackWriteCycle(bool highByte)
+        private void StackWriteCycle(bool highByte, byte data)
         {
+            IO.MREQ.Value = true;
+            IO.WR.Value = true;
+            IO.ADDRESS_BUS.Value = Registers.SP;
+            IO.DATA_BUS.Value = data;
             ClockCycles += 3;
             TickAll(new TickEvent(_executingInstruction, highByte ? MachineCycleType.StackWriteHigh : MachineCycleType.StackWriteLow, 3));
+            IO.MREQ.Value = false;
+            IO.WR.Value = false;
         }
 
         private void OpcodeFetchCycle(ushort address, byte data, int clockCycles)
@@ -362,7 +444,7 @@ namespace Z80.Core
             IO.RD.Value = false;
         }
 
-        private void OperandDataCycle(ushort address, byte data, int clockCycles, bool wordOperand = false, bool high = false)
+        private void OperandDataCycle(ushort address, byte data, int clockCycles, bool wordOperand, bool high)
         {
             IO.ADDRESS_BUS.Value = address;
             IO.DATA_BUS.Value = data;
@@ -402,7 +484,7 @@ namespace Z80.Core
                 {
                     // extended instructions (double-prefix 'DD CB' and 'FD CB')
                     // prefix is always followed by a displacement byte or 0x00, opcode is then in *b3*
-                    instruction = InstructionSet.Instructions[(b3 | b2 << 8 | b1 << 16)];
+                    instruction = InstructionSet.Instructions[(b3 | b1 << 8 | b0 << 16)];
                     
                     // there will be two opcode fetch cycles
                     OpcodeFetchCycle(address, prefix, instruction.MachineCycles[0].ClockCycles);
@@ -411,7 +493,7 @@ namespace Z80.Core
                     // only displacement arguments valid for DDCB/FDCB instructions
                     if (instruction.Argument1 == ArgumentType.Displacement)
                     {
-                        OperandDataCycle((ushort)(address + 1), b2, 3);
+                        OperandDataCycle((ushort)(address + 1), b2, 3, false, false);
                         data.Argument1 = b2;
                     }
 
@@ -447,14 +529,14 @@ namespace Z80.Core
 
                     if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
                     {
-                        OperandDataCycle((ushort)(address + 1), b1, 3);
+                        OperandDataCycle((ushort)(address + 1), b1, 3, false, false);
                         data.Argument1 = b2;
                     }
                     else if (instruction.Argument1 == ArgumentType.ImmediateWord)
                     {
-                        OperandDataCycle((ushort)(address + 1), b1, 3);
+                        OperandDataCycle((ushort)(address + 1), b1, 3, true, false);
                         data.Argument1 = b2;
-                        OperandDataCycle((ushort)(address + 2), b2, 3);
+                        OperandDataCycle((ushort)(address + 2), b2, 3, true, true);
                         data.Argument2 = b3;
                     }
 
@@ -468,7 +550,7 @@ namespace Z80.Core
 
                     if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
                     {
-                        OperandDataCycle((ushort)(address + 1), b1, 3);
+                        OperandDataCycle((ushort)(address + 1), b1, 3, false, false);
                         data.Argument1 = b1;
                     }
                     else if (instruction.Argument1 == ArgumentType.ImmediateWord)
@@ -567,7 +649,7 @@ namespace Z80.Core
             }
         }
 
-        internal Processor(IMemoryMap map, ushort topOfStackAddress, double speedInMHz, bool enableFlagPrecalculation = true)
+        internal Processor(IMemoryMap map, ushort topOfStackAddress, int speedInMHz, bool enableFlagPrecalculation = true)
         {
             Registers = new Registers();
             Ports = new Ports(this);
@@ -579,12 +661,20 @@ namespace Z80.Core
             _topOfStack = topOfStackAddress;
             Registers.SP = _topOfStack;
 
+            // if precalculation is enabled, all flag combinations for all input values for 8-bit operations are pre-built now (*not* 16-bit ALU operations)
+            // this is *slightly* faster than calculating them in real-time, but if you want to debug flag calculation you should
+            // disable this and attach a debugger to the flag calculation methods in FlagLookup.cs
             FlagLookup.EnablePrecalculation = enableFlagPrecalculation;
-            FlagLookup.BuildFlagLookupTables();
-            var nop = InstructionSet.NOP; // this causes the whole instruction to get built now, to preserve correct timing
+            FlagLookup.BuildFlagLookupTables(); 
+            var nop = InstructionSet.NOP; // this causes the whole instruction set to get built now, so it's not done on the first instruction run
 
             IO = new IO(this);
             _devices = new Dictionary<string, Func<TickEvent, Processor, bool>>();
+
+            _stopwatch = new Stopwatch();
+            _windowsTicksPerCycle = (double)(10 / SpeedInMhz); // @1MHz = 1 cycle per microsecond, 10 ticks per microsecond
+            _timingErrors = 0;
+            _timingLog = new List<TimingErrorLog>();
         }
     }
 }
