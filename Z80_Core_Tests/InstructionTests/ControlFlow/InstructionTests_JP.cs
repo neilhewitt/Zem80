@@ -20,7 +20,7 @@ namespace Z80.Core.Tests
         public void JP_cc_nn(Condition condition)
         {
             ushort address = 0x5000;
-            Registers.PC = 0x8000;
+            SetProgramCounter(0x8000);
             Registers.Flags.SetFromCondition(condition);
 
             ExecutionResult executionResult = ExecuteInstruction($"JP { condition },nn", arg1: address.LowByte(), arg2: address.HighByte());
@@ -35,7 +35,7 @@ namespace Z80.Core.Tests
         public void JP_nn()
         {
             ushort address = 0x5000;;
-            Registers.PC = 0x5000;;
+            SetProgramCounter(0x5000);
 
             ExecutionResult executionResult = ExecuteInstruction($"JP nn", arg1: address.LowByte(), arg2: address.HighByte());
             ushort newPC = Registers.PC;

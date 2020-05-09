@@ -8,26 +8,23 @@ namespace Z80.SimpleVM
 {
     public class VirtualMachine
     {
-        private Action<char> _output;
         private Processor _cpu;
         private ushort _address;
-        private bool _synchronous;
         private bool _endOnHalt;
-        private bool _realTime;
-        private bool _debug;
+        private TimingMode _timingMode;
+        private bool _synchronous;
 
         public Processor CPU => _cpu;
 
-        public void Start(ushort address = 0x0000, bool runSynchronous = false, bool endOnHalt = false, bool realTime = false, bool debug = false, Action<char> outputChar = null)
+        public void Start(ushort address = 0x0000, bool endOnHalt = false, TimingMode timingMode = TimingMode.FastAndFurious, bool synchronous = false)
         {
             _address = address;
-            _synchronous = runSynchronous;
             _endOnHalt = endOnHalt;
-            _realTime = realTime;
-            _debug = debug;
-            if (outputChar != null) _output = outputChar;
+            _timingMode = timingMode;
+            _synchronous = synchronous;
 
-            _cpu.Start(runSynchronous, address, endOnHalt, realTime, debug);
+            _cpu.Start(address, endOnHalt, timingMode);
+            if (synchronous) _cpu.WaitUntilStopped();
         }
 
         public void Stop()
@@ -39,7 +36,8 @@ namespace Z80.SimpleVM
         {
             _cpu.Stop();
             _cpu.ResetAndClearMemory();
-            _cpu.Start(_synchronous, _address, _endOnHalt, _realTime, _debug);
+            _cpu.Start(_address, _endOnHalt, _timingMode);
+            if (_synchronous) _cpu.WaitUntilStopped();
         }
 
         public void Load(ushort address, string path)
@@ -60,8 +58,7 @@ namespace Z80.SimpleVM
         private void WriteChar(byte input)
         {
             char c = Convert.ToChar(input);
-            if (_output != null) _output(Convert.ToChar(c));
-            else Console.Write(c);
+            Console.Write(c);
         }
 
         private byte ReadByte()
@@ -72,8 +69,7 @@ namespace Z80.SimpleVM
         private void WriteByte(byte input)
         {
             string s = input.ToString("X2");
-            if (_output != null) { _output(s[0]); _output(s[1]); }
-            else Console.Write(s);
+            Console.Write(s);
         }
 
         private void SignalWrite()

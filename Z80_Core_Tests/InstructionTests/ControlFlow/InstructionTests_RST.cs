@@ -12,7 +12,7 @@ namespace Z80.Core.Tests
         public void RST([Values(0x00, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38)] byte resetCode)
         {
             ushort address = 0x5000; // simulate being in the middle of a code block
-            Registers.PC = address;
+            SetProgramCounter(address);
             
             string resetHexCode = resetCode == 0 ? "0" : (resetCode.ToString("X2").Replace("0x", "") + "H");
             ExecutionResult executionResult = ExecuteInstruction($"RST { resetHexCode  }");
@@ -21,7 +21,7 @@ namespace Z80.Core.Tests
             ushort rst_address = (ushort)(t_index * 8);
 
             Assert.That(Registers.PC, Is.EqualTo(rst_address)); // PC should now point to reset table entry
-            Assert.That(CPU.Peek(), Is.EqualTo(address)); // stack should have previous PC address
+            Assert.That(CPU.Peek(), Is.EqualTo(address + 1)); // stack should have previous PC address + 1 byte for instruction size
         }
     }
 }

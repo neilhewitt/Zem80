@@ -17,66 +17,169 @@
 
         private Processor _cpu;
 
-        public AddressBus ADDRESS_BUS { get; } = new AddressBus();
-        public DataBus DATA_BUS { get; } = new DataBus();
+        public ushort ADDRESS_BUS { get; private set; }
+        public bool A0 { get { return ADDRESS_BUS.GetBit(0); } }
+        public bool A1 { get { return ADDRESS_BUS.GetBit(1); } }
+        public bool A2 { get { return ADDRESS_BUS.GetBit(2); } }
+        public bool A3 { get { return ADDRESS_BUS.GetBit(3); } }
+        public bool A4 { get { return ADDRESS_BUS.GetBit(4); } }
+        public bool A5 { get { return ADDRESS_BUS.GetBit(5); } }
+        public bool A6 { get { return ADDRESS_BUS.GetBit(6); } }
+        public bool A7 { get { return ADDRESS_BUS.GetBit(7); } }
+        public bool A8 { get { return ADDRESS_BUS.GetBit(8); } }
+        public bool A9 { get { return ADDRESS_BUS.GetBit(9); } }
+        public bool A10 { get { return ADDRESS_BUS.GetBit(10); } }
+        public bool A11 { get { return ADDRESS_BUS.GetBit(11); } }
+        public bool A12 { get { return ADDRESS_BUS.GetBit(12); } }
+        public bool A13 { get { return ADDRESS_BUS.GetBit(13); } }
+        public bool A14 { get { return ADDRESS_BUS.GetBit(14); } }
+        public bool A15 { get { return ADDRESS_BUS.GetBit(15); } }
 
-        public ReadOnlyPin MREQ { get; } = new ReadOnlyPin();
-        public ReadOnlyPin IORQ { get; } = new ReadOnlyPin();
-        public ReadOnlyPin RD { get; } = new ReadOnlyPin();
-        public ReadOnlyPin WR { get; } = new ReadOnlyPin();
-        public ReadOnlyPin M1 { get; } = new ReadOnlyPin();
-        public ReadWritePin WAIT { get; } = new ReadWritePin();
-        public ReadWritePin INT { get; } = new ReadWritePin();
-        public ReadWritePin NMI { get; } = new ReadWritePin();
-        public ReadWritePin RESET { get; } = new ReadWritePin();
+        public byte DATA_BUS { get; private set; }
+        public bool D0 { get { return DATA_BUS.GetBit(0); } }
+        public bool D1 { get { return DATA_BUS.GetBit(1); } }
+        public bool D2 { get { return DATA_BUS.GetBit(2); } }
+        public bool D3 { get { return DATA_BUS.GetBit(3); } }
+        public bool D4 { get { return DATA_BUS.GetBit(4); } }
+        public bool D5 { get { return DATA_BUS.GetBit(5); } }
+        public bool D6 { get { return DATA_BUS.GetBit(6); } }
+        public bool D7 { get { return DATA_BUS.GetBit(7); } }
+
+        public bool MREQ { get; private set; }
+        public bool IORQ { get; private set; }
+        public bool RD { get; private set; }
+        public bool WR { get; private set; }
+        public bool M1 { get; private set; }
+        public bool WAIT { get; private set; }
+        public bool INT { get; private set; }
+        public bool NMI { get; private set; }
+        public bool RESET { get; private set; }
+
+        public void SetOpcodeFetchState(ushort address)
+        {
+            M1 = true;
+            ADDRESS_BUS = address;
+            MREQ = true;
+            RD = true;
+        }
+
+        public void AddOpcodeFetchData(byte data)
+        {
+            DATA_BUS = data;
+        }
+
+        public void EndOpcodeFetchState()
+        {
+            MREQ = false;
+            RD = false;
+            M1 = false;
+        }
+
+        public void SetMemoryReadState(ushort address)
+        {
+            MREQ = true;
+            RD = true;
+            ADDRESS_BUS = address;
+        }
+
+        public void AddMemoryData(byte data)
+        {
+            DATA_BUS = data;
+        }
+
+        public void EndMemoryReadState()
+        {
+            MREQ = false;
+            RD = false;
+        }
+
+        public void SetMemoryWriteState(ushort address, byte data)
+        {
+            MREQ = true;
+            WR = true;
+            ADDRESS_BUS = address;
+            DATA_BUS = data;
+        }
+
+        public void EndMemoryWriteState()
+        {
+            MREQ = false;
+            WR = false;
+        }
+
+        public void SetPortReadState(ushort portAddress)
+        {
+            IORQ = true;
+            RD = true;
+            ADDRESS_BUS = portAddress;
+        }
+
+        public void AddPortReadData(byte data)
+        {
+            DATA_BUS = data;
+        }
+
+        public void EndPortReadState()
+        {
+            IORQ = false;
+            RD = false;
+        }
+
+        public void SetPortWriteState(ushort portAddress, byte data)
+        {
+            IORQ = true;
+            WR = true;
+            ADDRESS_BUS = portAddress;
+            DATA_BUS = data;
+        }
+
+        public void EndPortWriteState()
+        {
+            IORQ = false;
+            WR = false;
+        }
+
+        public void SetInterruptState()
+        {
+            INT = true;
+            M1 = true;
+            IORQ = true;
+        }
+
+        public void EndInterruptState()
+        {
+            INT = false;
+            M1 = false;
+            IORQ = false;
+        }
+
+        public void SetNMIState()
+        {
+            NMI = true;
+            M1 = true;
+            IORQ = true;
+        }
+
+        public void EndNMIState()
+        {
+            NMI = false;
+            M1 = false;
+            IORQ = false;
+        }
+
+        public void SetAddressBusValue(ushort value)
+        {
+            ADDRESS_BUS = value;
+        }
+
+        public void SetDataBusValue(byte value)
+        {
+            DATA_BUS = value;
+        }
 
         public IO(Processor cpu)
         {
             _cpu = cpu;
-        }
-        
-        public class ReadOnlyPin
-        {
-            public bool Value { get; internal set; }
-        }
-
-        public class ReadWritePin
-        {
-            public bool Value { get; set; }
-        }
-        
-        public class DataBus
-        {
-            public byte Value { get; set; }
-            public bool D0 { get { return Value.GetBit(0); } set { Value.SetBit(0, value); } }
-            public bool D1 { get { return Value.GetBit(1); } set { Value.SetBit(1, value); } }
-            public bool D2 { get { return Value.GetBit(2); } set { Value.SetBit(2, value); } }
-            public bool D3 { get { return Value.GetBit(3); } set { Value.SetBit(3, value); } }
-            public bool D4 { get { return Value.GetBit(4); } set { Value.SetBit(4, value); } }
-            public bool D5 { get { return Value.GetBit(5); } set { Value.SetBit(5, value); } }
-            public bool D6 { get { return Value.GetBit(6); } set { Value.SetBit(6, value); } }
-            public bool D7 { get { return Value.GetBit(7); } set { Value.SetBit(7, value); } }
-        }
-
-        public class AddressBus
-        {
-            public ushort Value { get; internal set; }
-            public bool A0 { get { return Value.GetBit(0); } }
-            public bool A1 { get { return Value.GetBit(1); } }
-            public bool A2 { get { return Value.GetBit(2); } }
-            public bool A3 { get { return Value.GetBit(3); } }
-            public bool A4 { get { return Value.GetBit(4); } }
-            public bool A5 { get { return Value.GetBit(5); } }
-            public bool A6 { get { return Value.GetBit(6); } }
-            public bool A7 { get { return Value.GetBit(7); } }
-            public bool A8 { get { return Value.GetBit(8); } }
-            public bool A9 { get { return Value.GetBit(9); } }
-            public bool A10 { get { return Value.GetBit(10); } }
-            public bool A11 { get { return Value.GetBit(11); } }
-            public bool A12 { get { return Value.GetBit(12); } }
-            public bool A13 { get { return Value.GetBit(13); } }
-            public bool A14 { get { return Value.GetBit(14); } }
-            public bool A15 { get { return Value.GetBit(15); } }
         }
     }
 }

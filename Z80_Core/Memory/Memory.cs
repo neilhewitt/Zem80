@@ -12,46 +12,44 @@ namespace Z80.Core
 
         public uint SizeInBytes => _map.SizeInBytes;
 
-        public byte ReadByteAt(ushort address, bool suppressMachineCycle)
-        {
-            return ReadByteInternal(address, suppressMachineCycle, MachineCycleType.MemoryRead);
-        }
-
-        private byte ReadByteInternal(ushort address, bool suppressMachineCycle, MachineCycleType cycleType)
+        public byte ReadByteAt(ushort address, bool callerHandlesIOState)
         {
             if (!_initialised) throw new MemoryException();
             IMemorySegment segment = _map.MemoryFor(address);
             byte output = (segment?.ReadByteAt((ushort)(address - segment.StartAddress)) ?? 0x00); // default value if address is unallocated
-            if (!suppressMachineCycle) _cpu.NotifyMemoryReadCycle((ushort)(address - segment.StartAddress), output, cycleType);
+            if (!callerHandlesIOState) _cpu.MemoryReadCycle((ushort)(address - segment.StartAddress), output);
             return output;
         }
 
-        public byte[] ReadBytesAt(ushort address, ushort numberOfBytes, bool suppressMachineCycle)
+        public byte[] ReadBytesAt(ushort address, ushort numberOfBytes, bool callerHandlesIOState)
         {
             uint availableBytes = numberOfBytes;
             if (address + availableBytes >= SizeInBytes) availableBytes = SizeInBytes - address; // if this read overflows the end of memory, we can read only this many bytes
-
-            byte[] bytes = new byte[numberOfBytes];
-            for (int i = 0; i < availableBytes; i++)
+            if (callerHandlesIOState)
             {
-                bytes[i] = ReadByteAt((ushort)(address + i), suppressMachineCycle);
+                // optimise for speed if we don't need to generate a read cycle per byte
+                IMemorySegment segment = _map.MemoryFor(address);
+                return segment?.ReadBytesAt((ushort)(address - segment.StartAddress), numberOfBytes) ?? new byte[numberOfBytes];
             }
-            return bytes; // bytes beyond the available byte limit (if any) will be 0x00
+            else
+            {
+                byte[] bytes = new byte[numberOfBytes];
+                for (int i = 0; i < availableBytes; i++)
+                {
+                    bytes[i] = ReadByteAt((ushort)(address + i), callerHandlesIOState);
+                }
+                return bytes; // bytes beyond the available byte limit (if any) will be 0x00
+            }
         }
 
-        public ushort ReadWordAt(ushort address, bool suppressMachineCycle)
+        public ushort ReadWordAt(ushort address, bool callerHandlesIOState)
         {
-            byte low = ReadByteInternal(address, suppressMachineCycle, MachineCycleType.MemoryReadLow);
-            byte high = ReadByteInternal(++address, suppressMachineCycle, MachineCycleType.MemoryReadHigh);
+            byte low = ReadByteAt(address, callerHandlesIOState);
+            byte high = ReadByteAt(++address, callerHandlesIOState);
             return (ushort)((high * 256) + low);
         }
 
-        public void WriteByteAt(ushort address, byte value, bool suppressMachineCycle)
-        {
-            WriteByteInternal(address, value, suppressMachineCycle, MachineCycleType.MemoryWrite);
-        }
-
-        private void WriteByteInternal(ushort address, byte value, bool suppressMachineCycle, MachineCycleType cycleType)
+        public void WriteByteAt(ushort address, byte value, bool callerHandlesIOState)
         {
             if (!_initialised) throw new MemoryException();
             IMemorySegment segment = _map.MemoryFor(address);
@@ -60,24 +58,24 @@ namespace Z80.Core
                 throw new MemoryNotPresentException("Readonly or unmapped");
             }
             segment.WriteByteAt((ushort)(address - segment.StartAddress), value);
-            if (!suppressMachineCycle) _cpu.NotifyMemoryWriteCycle((ushort)(address - segment.StartAddress), value, cycleType);
+            if (!callerHandlesIOState) _cpu.MemoryWriteCycle((ushort)(address - segment.StartAddress), value);
         }
 
-        public void WriteBytesAt(ushort address, byte[] bytes, bool suppressMachineCycle)
+        public void WriteBytesAt(ushort address, byte[] bytes, bool callerHandlesIOState)
         {
             for (ushort i = 0; i < bytes.Length; i++)
             {
-                WriteByteInternal((ushort)(address + i), bytes[i], suppressMachineCycle, MachineCycleType.MemoryWrite);
+                WriteByteAt((ushort)(address + i), bytes[i], callerHandlesIOState);
             }
         }
 
-        public void WriteWordAt(ushort address, ushort value, bool suppressMachineCycle)
+        public void WriteWordAt(ushort address, ushort value, bool callerHandlesIOState)
         {
             byte[] bytes = new byte[2];
             bytes[1] = (byte)(value / 256);
             bytes[0] = (byte)(value % 256);
-            WriteByteInternal(address, bytes[0], suppressMachineCycle, MachineCycleType.MemoryWriteLow);
-            WriteByteInternal(++address, bytes[1], suppressMachineCycle, MachineCycleType.MemoryWriteHigh);
+            WriteByteAt(address, bytes[0], callerHandlesIOState);
+            WriteByteAt(++address, bytes[1], callerHandlesIOState);
         }
 
         public void Initialise(Processor cpu, IMemoryMap map)

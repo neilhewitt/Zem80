@@ -15,11 +15,4 @@ namespace Z80.Core
         {
         }
     }
-
-    public class NOP2 : NOP
-    {
-        public NOP2() : base()
-        {
-        }
-    }
 }

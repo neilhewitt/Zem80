@@ -11,11 +11,10 @@ namespace Z80.Core
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             Flags flags = cpu.Registers.Flags;
-            cpu.Registers.PC += instruction.SizeInBytes;
 
             void jp(ushort address)
             {
-                cpu.Registers.PC = address;
+                cpu.Registers.PC = (address);
             }
 
             switch (instruction.Prefix)

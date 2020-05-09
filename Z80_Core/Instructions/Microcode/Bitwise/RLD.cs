@@ -23,7 +23,7 @@ namespace Z80.Core
             xHL = xHL.SetHighNybble(xHL.GetLowNybble());
             xHL = xHL.SetLowNybble(lowA);
 
-            cpu.NotifyInternalOperationCycle(4);
+            cpu.InternalOperationCycle(4);
             cpu.Memory.WriteByteAt(cpu.Registers.HL, xHL, false);
             cpu.Registers.A = a;
 

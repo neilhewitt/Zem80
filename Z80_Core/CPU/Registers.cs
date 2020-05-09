@@ -53,6 +53,8 @@ namespace Z80.Core
         public byte I { get { return _registers[20]; } set { _registers[20] = value; } }
         public byte R { get { return _registers[21]; } set { _registers[21] = value; } }
 
+        public ushort IR { get { return Get16BitValue(20); } }
+
         // program counter
         public ushort PC { get { return Get16BitValue(22); } set { Set16BitValue(22, value); } }
 

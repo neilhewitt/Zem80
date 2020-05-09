@@ -8,11 +8,13 @@ namespace Z80.Core
     {
         public Instruction Instruction { get; set; }
         public InstructionData Data { get; set; }
+        public ushort InstructionAddress { get; set; }
 
-        public ExecutionPackage(Instruction instruction, InstructionData data)
+        public ExecutionPackage(Instruction instruction, InstructionData data, ushort instructionAddress)
         {
             Instruction = instruction;
             Data = data;
+            InstructionAddress = instructionAddress;
         }
     }
 }

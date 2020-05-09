@@ -6,6 +6,7 @@ using System.Globalization;
 
 namespace Z80.Core
 {
+
     public class Instruction
     {
         public InstructionPrefix Prefix { get; private set; }
@@ -17,16 +18,12 @@ namespace Z80.Core
         public ModifierType Modifier { get; private set; }
         public Condition? Condition { get; private set; }
         public byte SizeInBytes { get; private set; }
-        public IReadOnlyList<MachineCycle> MachineCycles { get; private set; }
-        public byte ClockCycles { get; private set; }
-        public byte? ClockCyclesConditional { get; private set; }
+        public IReadOnlyList<MachineCycle> Timing { get; private set; }
+        public TimingExceptions TimingExceptions { get; private set; }
         public byte? BitIndex { get; private set; }
         public ByteRegister OperandRegister { get; private set; }
         public bool HLIX => Prefix == InstructionPrefix.DDCB;
         public bool HLIY => Prefix == InstructionPrefix.FDCB;
-        public bool HasOperandDataReadHigh4 { get; private set; }
-        public bool HasMemoryRead4 { get; private set; }
-        public bool HasMemoryWrite5 { get; private set; }
         public IMicrocode Microcode { get; private set; }
 
         public Instruction(string opcode, string mnemonic, ArgumentType argument1, ArgumentType argument2, ModifierType modifier, byte sizeInBytes, MachineCycle[] machineCycles, IMicrocode microcode = null)
@@ -62,15 +59,16 @@ namespace Z80.Core
                 _ => (ByteRegister)Opcode.GetByteFromBits(0, 3)
             };
 
-            MachineCycles = new List<MachineCycle>(machineCycles);
-            ClockCycles = (byte)MachineCycles.Where(x => x.IsConditional == false).Sum(x => x.ClockCycles); // sum of machine cycles (except conditional ones)
-            if (MachineCycles.Any(x => x.IsConditional == true || x.ClockCyclesAlternate.HasValue))
+            Timing = new List<MachineCycle>(machineCycles);
+            bool odh4 = false, mr4 = false, mw5 = false;
+            if (Mnemonic.StartsWith("CALL"))
             {
-                ClockCyclesConditional = (byte)MachineCycles.Sum(x => x.ClockCyclesAlternate.HasValue ? x.ClockCyclesAlternate : x.ClockCycles); // sum of all machine cycles (including conditional)
-                HasOperandDataReadHigh4 = true;
+                // specifically for CALL instructions, the high byte operand read is 4 clock cycles rather than 3 *if* the condition is true (or there is no condition)
+                odh4 = true;
             }
-            if (MachineCycles.Any(x => x.Type == MachineCycleType.MemoryRead && x.ClockCycles == 4)) HasMemoryRead4 = true;
-            if (MachineCycles.Any(x => x.Type == MachineCycleType.MemoryWrite && x.ClockCycles == 5)) HasMemoryWrite5 = true;
+            if (Timing.Any(x => x.Type == MachineCycleType.MemoryRead && x.ClockCycles == 4)) mr4 = true;
+            if (Timing.Any(x => x.Type == MachineCycleType.MemoryWrite && x.ClockCycles == 5)) mw5 = true;
+            TimingExceptions = new TimingExceptions(odh4, mr4, mw5);
 
             // this is expensive, but only done once at startup; binds the Instruction directly to the method instance implementing it
             if (microcode == null)

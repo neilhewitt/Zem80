@@ -22,7 +22,7 @@ namespace Z80.Core
             flags.ParityOverflow = (cpu.Registers.BC - 1 != 0);
 
             bool conditionTrue = (result == 0 || cpu.Registers.BC == 0);
-            if (conditionTrue) cpu.NotifyInternalOperationCycle(5);
+            if (conditionTrue) cpu.InternalOperationCycle(5);
 
             return new ExecutionResult(package, flags, conditionTrue, !conditionTrue);
         }

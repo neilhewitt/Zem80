@@ -15,7 +15,7 @@ namespace Z80.Core
             ushort address = (ushort)(t_index * 8);
 
             cpu.Push(WordRegister.PC);
-            cpu.Registers.PC = address;
+            cpu.Registers.PC = (address);
 
             return new ExecutionResult(package, cpu.Registers.Flags, false, true);
         }

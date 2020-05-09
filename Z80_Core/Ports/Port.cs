@@ -32,7 +32,6 @@ namespace Z80.Core
             // tells port that data is about to be read to data bus
             if (_signalRead != null)
             {
-                _cpu.IO.RD.Value = true;
                 _signalRead();
             }
         }
@@ -42,7 +41,6 @@ namespace Z80.Core
             // tells port to read the data bus
             if (_signalWrite != null) 
             {
-                _cpu.IO.WR.Value = true;
                 _signalWrite(); 
             }
         }

@@ -9,7 +9,7 @@ namespace Z80.Core
         public Instruction Instruction { get; }
         public InstructionData Data { get; }
         public Flags Flags { get; }
-        public byte ClockCycles { get; }
+        public bool ConditionIsTrue { get; }
         public bool InstructionSetsProgramCounter { get; }
 
         public ExecutionResult(ExecutionPackage package, Flags flags, bool conditionTrue, bool instructionSetsProgramCounter)
@@ -17,10 +17,8 @@ namespace Z80.Core
             Instruction = package.Instruction;
             Data = package.Data;
             Flags = flags;
-            ClockCycles = (byte)(conditionTrue ?
-                package.Instruction.ClockCyclesConditional ?? package.Instruction.ClockCycles :
-                package.Instruction.ClockCycles);
             InstructionSetsProgramCounter = instructionSetsProgramCounter;
+            ConditionIsTrue = conditionTrue;
         }
     }
 }

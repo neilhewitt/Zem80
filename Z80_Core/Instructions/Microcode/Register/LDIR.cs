@@ -23,7 +23,7 @@ namespace Z80.Core
             flags.Subtract = false;
 
             bool conditionTrue = (r.BC == 0);
-            if (conditionTrue) cpu.NotifyInternalOperationCycle(5);
+            if (conditionTrue) cpu.InternalOperationCycle(5);
 
             return new ExecutionResult(package, flags, conditionTrue, !conditionTrue);
         }

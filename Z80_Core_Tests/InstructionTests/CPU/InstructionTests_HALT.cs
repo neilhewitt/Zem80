@@ -9,7 +9,7 @@ namespace Z80.Core.Tests
     [TestFixture]
     public class InstructionTests_HALT : InstructionTestBase
     {
-        [Test, Timeout(500)] // if the CPU goes into an infinite loop for whatever reason, this terminates the test after 500ms
+        [Test, Timeout(5000)] // if the CPU goes into an infinite loop for whatever reason, this terminates the test after 500ms
         public void HALT()
         {
             const byte NOP = 0x00;
@@ -25,17 +25,16 @@ namespace Z80.Core.Tests
             }; 
 
             CPU.Memory.WriteBytesAt(0, program, true);
-            CPU.Debug.OnHalt += cpu_OnHalt;
-            
-            CPU.Start(synchronous: true, enableDebug: true); // will start the CPU synchronously, this returns only when the CPU stops (not halts)
-
-            void cpu_OnHalt(object sender, HaltReason reason) // ever seen a local function as an event handler? 
-            {
-                halted = true;
-                CPU.Stop(); // we're done, so stop the CPU and dump out to the assert
-            }
+            CPU.Debug.OnHalt += Debug_OnHalt;
+            CPU.Start(endOnHalt: true); // will start the CPU synchronously, this returns only when the CPU stops (not halts)
+            CPU.WaitUntilStopped();
 
             Assert.That(halted, Is.True);
+
+            void Debug_OnHalt(object sender, HaltReason e)
+            {
+                halted = true;
+            }
         }
     }
 }

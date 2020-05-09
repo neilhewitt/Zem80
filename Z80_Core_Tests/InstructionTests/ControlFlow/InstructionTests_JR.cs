@@ -15,8 +15,8 @@ namespace Z80.Core.Tests
         [TestCase(Condition.NC)]
         public void JR_cc_o(Condition condition)
         {
-            sbyte jump = 0x7F;
-            Registers.PC = 0x5000;
+            sbyte jump = 0x50;
+            SetProgramCounter(0x5000);
             ushort address = Registers.PC;
 
             Registers.Flags.SetFromCondition(condition);
@@ -28,9 +28,9 @@ namespace Z80.Core.Tests
         }
 
         [Test]
-        public void JR_o([Values(0, 127, -127)] sbyte jump)
+        public void JR_o([Values(0, 127, -128)] sbyte jump)
         {
-            Registers.PC = 0x5000;
+            SetProgramCounter(0x5000);
             ushort address = Registers.PC;
 
             ExecutionResult executionResult = ExecuteInstruction($"JR o", arg1: (byte)jump);

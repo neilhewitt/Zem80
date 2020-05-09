@@ -24,7 +24,6 @@
 ; along with this program; if not, write to the Free Software
 ; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	aseg
 	org	100h
 
 	jp	start
@@ -55,15 +54,6 @@ msbtlo	equ	msbt & 0ffh
 ;	the expected crc,
 ;	a short descriptive message.
 ;
-
-; <adc,sbc> hl,<bc,de,hl,sp> (38,912 cycles)
-adc16:	db	0c7h		; flag mask
-	tstr	0edh,042h,0,0,0832ch,04f88h,0f22bh,0b339h,07e1fh,01563h,0d3h,089h,0465eh
-	tstr	0,038h,0,0,0,0,0,0f821h,0,0,0,0,0	; (1024 cycles)
-	tstr	0,0,0,0,0,0,0,-1,-1,-1,0d7h,0,-1	; (38 cycles)
-	db	0f8h,0b4h,0eah,0a9h			; expected crc
-	tmsg	'<adc,sbc> hl,<bc,de,hl,sp>....'
-
 ; The flag mask byte is used to prevent undefined flag bits from
 ; influencing the results.  Documented flags are as per Mostek Z80
 ; Technical Manual.
@@ -262,14 +252,6 @@ alu8r:	db	0d7h		; flag mask
 	db	0feh,043h,0b0h,016h			; expected crc
 	tmsg	'aluop a,<b,c,d,e,h,l,(hl),a>..'
 
-
-
-
-
-
-
-
-
 ; aluop a,<ixh,ixl,iyh,iyl> (376,832 cycles)
 alu8rx:	db	0d7h		; flag mask
 	tstr	0ddh,084h,0,0,0d6f7h,0c76eh,0accfh,02847h,022ddh,0c035h,0c5h,038h,0234bh
@@ -277,15 +259,6 @@ alu8rx:	db	0d7h		; flag mask
 	tstr	0,0,0,0,0ffh,0,0,0,-1,-1,0d7h,0,0	; (46 cycles)
 	db	0a4h,002h,06dh,05ah			; expected crc
 	tmsg	'aluop a,<ixh,ixl,iyh,iyl>.....'
-
-
-
-
-
-
-
-
-
 
 ; aluop a,(<ix,iy>+1) (229,376 cycles)
 alu8x:	db	0d7h		; flag mask

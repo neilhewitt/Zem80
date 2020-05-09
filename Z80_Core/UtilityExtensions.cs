@@ -7,9 +7,10 @@ namespace Z80.Core
 {
     public static class UtilityExtensions
     {
-        public static MachineCycle IOCycle(this IEnumerable<MachineCycle> machineCycles)
+        public static IEnumerable<MachineCycle> CyclesByType(this IEnumerable<MachineCycle> machineCycles, params MachineCycleType[] cycleTypes)
         {
-            return machineCycles.Single(x => x.Type == MachineCycleType.InternalOperation); // there can be only one :-)
+            IList<MachineCycleType> types = cycleTypes.ToList();
+            return machineCycles.Where(x => types.Contains(x.Type));
         }
     }
 }

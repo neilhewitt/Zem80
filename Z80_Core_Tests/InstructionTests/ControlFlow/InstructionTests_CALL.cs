@@ -14,7 +14,7 @@ namespace Z80.Core.Tests
             ushort expectedPCAddress = 0x3000;
             ushort originalPCAddress = 0x5000;
 
-            Registers.PC = originalPCAddress;
+            SetProgramCounter(originalPCAddress);
             ExecutionResult executionResult = ExecuteInstruction("CALL nn", arg1: expectedPCAddress.LowByte(), arg2: expectedPCAddress.HighByte());
 
             ushort stackStoredPCAddress = (ushort)(CPU.Peek() - 3); ; // peek current stack value and remove 3 bytes for the length of the CALL instruction itself
@@ -37,7 +37,7 @@ namespace Z80.Core.Tests
             ushort expectedPCAddress = 0x3000;
             ushort originalPCAddress = 0x5000;
             
-            Registers.PC = originalPCAddress;
+            SetProgramCounter(originalPCAddress);
             Registers.Flags.SetFromCondition(condition);
             ExecutionResult executionResult = ExecuteInstruction($"CALL { condition },nn", arg1: expectedPCAddress.LowByte(), arg2: expectedPCAddress.HighByte());
 

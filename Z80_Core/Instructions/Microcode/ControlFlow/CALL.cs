@@ -16,7 +16,6 @@ namespace Z80.Core
 
             void call()
             {
-                cpu.Registers.PC += 3;
                 cpu.Push(WordRegister.PC);
                 cpu.Registers.PC = data.ArgumentsAsWord;
                 conditionTrue = instruction.Opcode != 0xCD;

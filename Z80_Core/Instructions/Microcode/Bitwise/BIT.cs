@@ -24,7 +24,7 @@ namespace Z80.Core
             {
                 ushort address = instruction.HLIX ? r.IX : instruction.HLIY ? r.IY : r.HL; // BIT b, (HL / IX+o / IY+o)
                 sbyte offset = (instruction.HLIY || instruction.HLIY) ? (sbyte)data.Argument1 : (sbyte)0;
-                if (instruction.HLIX || instruction.HLIY) cpu.NotifyInternalOperationCycle(5);
+                if (instruction.HLIX || instruction.HLIY) cpu.InternalOperationCycle(5);
                 value = cpu.Memory.ReadByteAt((ushort)(address + offset), false);
             }
            
