@@ -18,8 +18,4 @@
     <ProjectReference Include="..\Z80_SimpleVM\Z80_SimpleVM.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Zexall\CPM\" />
-  </ItemGroup>
-
 </Project>

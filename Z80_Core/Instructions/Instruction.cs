@@ -66,8 +66,8 @@ namespace Z80.Core
                 // specifically for CALL instructions, the high byte operand read is 4 clock cycles rather than 3 *if* the condition is true (or there is no condition)
                 odh4 = true;
             }
-            if (Timing.Any(x => x.Type == MachineCycleType.MemoryRead && x.ClockCycles == 4)) mr4 = true;
-            if (Timing.Any(x => x.Type == MachineCycleType.MemoryWrite && x.ClockCycles == 5)) mw5 = true;
+            if (Timing.Any(x => x.Type == MachineCycleType.MemoryRead && x.TStates == 4)) mr4 = true;
+            if (Timing.Any(x => x.Type == MachineCycleType.MemoryWrite && x.TStates == 5)) mw5 = true;
             TimingExceptions = new TimingExceptions(odh4, mr4, mw5);
 
             // this is expensive, but only done once at startup; binds the Instruction directly to the method instance implementing it

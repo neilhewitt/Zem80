@@ -30,7 +30,7 @@ namespace Z80_Console
 
             //vm.Load(0x05, "cpm_patch.bin"); // patch the CP/M BDOS routines out
             //vm.Load(0x100, "zexdoc.bin");
-            
+
             byte[] program = new byte[10001];
             for (int i = 0; i < 10000; i++) program[i] = 0x80;
             program[10000] = 0x76;
@@ -48,12 +48,13 @@ namespace Z80_Console
                     int row = tm == TimingMode.FastAndFurious ? 0 : 6;
                     Console.SetCursorPosition(0, row);
                     TimeSpan elapsed = _cpu.Elapsed;
-                    TimeSpan expected = TimeSpan.FromTicks((long)((double)_cpu.EmulatedClockCycles * (double)((double)10 / (double)_cpu.FrequencyInMHz)));
+                    TimeSpan expected = TimeSpan.FromTicks((long)((double)_cpu.EmulatedTStates * (double)((double)10 / (double)_cpu.FrequencyInMHz)));
                     TimeSpan difference = elapsed.Subtract(expected);
+                    Console.WriteLine(tm.ToString());
                     Console.WriteLine("Elapsed: " + elapsed + "                         ");
                     Console.WriteLine("Expected: " + expected + "                         ");
                     Console.WriteLine("Difference: " + difference + "                         ");
-                    Console.WriteLine("Emulated clock ticks: " + _cpu.EmulatedClockCycles + "                         ");
+                    Console.WriteLine("Emulated clock ticks: " + _cpu.EmulatedTStates + "                         ");
                     Console.ForegroundColor = ConsoleColor.White;
                     //Console.WriteLine("\r\nProgram has finished. Press enter to exit.");
                     //Console.ReadLine();

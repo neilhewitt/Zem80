@@ -26,6 +26,7 @@ binary-debuggable-source
 0000 0000 s ; along with this program; if not, write to the Free Software
 0000 0000 s ; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 0000 0000 s 
+0000 0000 s 	aseg
 0100 0100 s 	org	100h
 0100 0100 s 
 0100 0100 d c31301

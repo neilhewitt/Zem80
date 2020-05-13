@@ -55,7 +55,7 @@
         public bool NMI { get; private set; }
         public bool RESET { get; private set; }
 
-        public void SetOpcodeFetchState(ushort address)
+        internal void SetOpcodeFetchState(ushort address)
         {
             M1 = true;
             ADDRESS_BUS = address;
@@ -63,37 +63,37 @@
             RD = true;
         }
 
-        public void AddOpcodeFetchData(byte data)
+        internal void AddOpcodeFetchData(byte data)
         {
             DATA_BUS = data;
         }
 
-        public void EndOpcodeFetchState()
+        internal void EndOpcodeFetchState()
         {
             MREQ = false;
             RD = false;
             M1 = false;
         }
 
-        public void SetMemoryReadState(ushort address)
+        internal void SetMemoryReadState(ushort address)
         {
             MREQ = true;
             RD = true;
             ADDRESS_BUS = address;
         }
 
-        public void AddMemoryData(byte data)
+        internal void AddMemoryData(byte data)
         {
             DATA_BUS = data;
         }
 
-        public void EndMemoryReadState()
+        internal void EndMemoryReadState()
         {
             MREQ = false;
             RD = false;
         }
 
-        public void SetMemoryWriteState(ushort address, byte data)
+        internal void SetMemoryWriteState(ushort address, byte data)
         {
             MREQ = true;
             WR = true;
@@ -101,31 +101,31 @@
             DATA_BUS = data;
         }
 
-        public void EndMemoryWriteState()
+        internal void EndMemoryWriteState()
         {
             MREQ = false;
             WR = false;
         }
 
-        public void SetPortReadState(ushort portAddress)
+        internal void SetPortReadState(ushort portAddress)
         {
             IORQ = true;
             RD = true;
             ADDRESS_BUS = portAddress;
         }
 
-        public void AddPortReadData(byte data)
+        internal void AddPortReadData(byte data)
         {
             DATA_BUS = data;
         }
 
-        public void EndPortReadState()
+        internal void EndPortReadState()
         {
             IORQ = false;
             RD = false;
         }
 
-        public void SetPortWriteState(ushort portAddress, byte data)
+        internal void SetPortWriteState(ushort portAddress, byte data)
         {
             IORQ = true;
             WR = true;
@@ -133,51 +133,51 @@
             DATA_BUS = data;
         }
 
-        public void EndPortWriteState()
+        internal void EndPortWriteState()
         {
             IORQ = false;
             WR = false;
         }
 
-        public void SetInterruptState()
+        internal void SetInterruptState()
         {
             INT = true;
             M1 = true;
             IORQ = true;
         }
 
-        public void EndInterruptState()
+        internal void EndInterruptState()
         {
             INT = false;
             M1 = false;
             IORQ = false;
         }
 
-        public void SetNMIState()
+        internal void SetNMIState()
         {
             NMI = true;
             M1 = true;
             IORQ = true;
         }
 
-        public void EndNMIState()
+        internal void EndNMIState()
         {
             NMI = false;
             M1 = false;
             IORQ = false;
         }
 
-        public void SetAddressBusValue(ushort value)
+        internal void SetAddressBusValue(ushort value)
         {
             ADDRESS_BUS = value;
         }
 
-        public void SetDataBusValue(byte value)
+        internal void SetDataBusValue(byte value)
         {
             DATA_BUS = value;
         }
 
-        public IO(Processor cpu)
+        internal IO(Processor cpu)
         {
             _cpu = cpu;
         }

@@ -6,7 +6,7 @@ namespace Z80.Core
 {
     public enum TimingMode
     {
-        PseudoRealTime,
-        FastAndFurious
+        FastAndFurious,
+        PseudoRealTime
     }
 }

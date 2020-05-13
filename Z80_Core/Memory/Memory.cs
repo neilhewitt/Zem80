@@ -12,20 +12,22 @@ namespace Z80.Core
 
         public uint SizeInBytes => _map.SizeInBytes;
 
-        public byte ReadByteAt(ushort address, bool callerHandlesIOState)
+        public byte ReadByteAt(ushort address, bool noTiming)
         {
             if (!_initialised) throw new MemoryException();
             IMemorySegment segment = _map.MemoryFor(address);
             byte output = (segment?.ReadByteAt((ushort)(address - segment.StartAddress)) ?? 0x00); // default value if address is unallocated
-            if (!callerHandlesIOState) _cpu.MemoryReadCycle((ushort)(address - segment.StartAddress), output);
+            if (!noTiming) _cpu.MemoryReadCycle((ushort)(address - segment.StartAddress), output);
             return output;
         }
 
-        public byte[] ReadBytesAt(ushort address, ushort numberOfBytes, bool callerHandlesIOState)
+        public byte[] ReadBytesAt(ushort address, ushort numberOfBytes, bool noTiming)
         {
+            if (!_initialised) throw new MemoryException();
+
             uint availableBytes = numberOfBytes;
             if (address + availableBytes >= SizeInBytes) availableBytes = SizeInBytes - address; // if this read overflows the end of memory, we can read only this many bytes
-            if (callerHandlesIOState)
+            if (noTiming)
             {
                 // optimise for speed if we don't need to generate a read cycle per byte
                 IMemorySegment segment = _map.MemoryFor(address);
@@ -36,20 +38,22 @@ namespace Z80.Core
                 byte[] bytes = new byte[numberOfBytes];
                 for (int i = 0; i < availableBytes; i++)
                 {
-                    bytes[i] = ReadByteAt((ushort)(address + i), callerHandlesIOState);
+                    bytes[i] = ReadByteAt((ushort)(address + i), noTiming);
                 }
                 return bytes; // bytes beyond the available byte limit (if any) will be 0x00
             }
         }
 
-        public ushort ReadWordAt(ushort address, bool callerHandlesIOState)
+        public ushort ReadWordAt(ushort address, bool noTiming)
         {
-            byte low = ReadByteAt(address, callerHandlesIOState);
-            byte high = ReadByteAt(++address, callerHandlesIOState);
+            if (!_initialised) throw new MemoryException();
+
+            byte low = ReadByteAt(address, noTiming);
+            byte high = ReadByteAt(++address, noTiming);
             return (ushort)((high * 256) + low);
         }
 
-        public void WriteByteAt(ushort address, byte value, bool callerHandlesIOState)
+        public void WriteByteAt(ushort address, byte value, bool noTiming)
         {
             if (!_initialised) throw new MemoryException();
             IMemorySegment segment = _map.MemoryFor(address);
@@ -58,24 +62,26 @@ namespace Z80.Core
                 throw new MemoryNotPresentException("Readonly or unmapped");
             }
             segment.WriteByteAt((ushort)(address - segment.StartAddress), value);
-            if (!callerHandlesIOState) _cpu.MemoryWriteCycle((ushort)(address - segment.StartAddress), value);
+            if (!noTiming) _cpu.MemoryWriteCycle((ushort)(address - segment.StartAddress), value);
         }
 
-        public void WriteBytesAt(ushort address, byte[] bytes, bool callerHandlesIOState)
+        public void WriteBytesAt(ushort address, byte[] bytes, bool noTiming)
         {
             for (ushort i = 0; i < bytes.Length; i++)
             {
-                WriteByteAt((ushort)(address + i), bytes[i], callerHandlesIOState);
+                WriteByteAt((ushort)(address + i), bytes[i], noTiming);
             }
         }
 
-        public void WriteWordAt(ushort address, ushort value, bool callerHandlesIOState)
+        public void WriteWordAt(ushort address, ushort value, bool noTiming)
         {
+            if (!_initialised) throw new MemoryException();
+
             byte[] bytes = new byte[2];
             bytes[1] = (byte)(value / 256);
             bytes[0] = (byte)(value % 256);
-            WriteByteAt(address, bytes[0], callerHandlesIOState);
-            WriteByteAt(++address, bytes[1], callerHandlesIOState);
+            WriteByteAt(address, bytes[0], noTiming);
+            WriteByteAt(++address, bytes[1], noTiming);
         }
 
         public void Initialise(Processor cpu, IMemoryMap map)

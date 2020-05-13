@@ -1,23 +1,25 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.Threading;
 using System.Linq;
-using System.Threading.Tasks;
-using System.Timers;
 using System.Diagnostics;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace Z80.Core
 {
     public class Processor : IDebugMode
     {
+        public const int OPCODE_FETCH_TSTATES = 4;
+        public const int NMI_INTERRUPT_ACKNOWLEDGE_TSTATES = 5;
+        public const int IM0_INTERRUPT_ACKNOWLEDGE_TSTATES = 6;
+        public const int IM1_INTERRUPT_ACKNOWLEDGE_TSTATES = 7;
+        public const int IM2_INTERRUPT_ACKNOWLEDGE_TSTATES = 7;
+
         private ExecutionPackage _executingPackage;
 
         private bool _running;
         private bool _halted;
+        private bool _suspendMachineCycles;
         private ushort _topOfStack;
-        private long _emulatedClockCycles;
+        private long _emulatedTStates;
 
         private ExternalClock _clock;
         private bool _clockSemaphore;
@@ -46,9 +48,9 @@ namespace Z80.Core
         public InterruptMode InterruptMode { get; private set; } = InterruptMode.IM0;
         public bool InterruptsEnabled { get; private set; } = true;
         public int FrequencyInMHz { get; private set; }
-        public TimingMode TimingMode { get; private set; }
+        public TimingMode TimingMode { get; private set; } = TimingMode.FastAndFurious;
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; 
-        public long EmulatedClockCycles => _emulatedClockCycles;
+        public long EmulatedTStates => _emulatedTStates;
         public TimeSpan Elapsed => _startStopTimer.Elapsed;
 
         public event EventHandler<ExecutionPackage> OnClockTick;
@@ -67,7 +69,7 @@ namespace Z80.Core
             {
                 EndOnHalt = endOnHalt; // if set, will summarily end execution at the first HALT instruction. This is mostly for test / debug scenarios.
                 TimingMode = timingMode;
-                _emulatedClockCycles = 0;
+                _emulatedTStates = 0;
 
                 _beforeStart?.Invoke(null, null);
                 Registers.PC = address; // ordinarily, execution will start at 0x0000, but this can be overridden
@@ -296,10 +298,10 @@ namespace Z80.Core
             WaitForNextClockTick();
         }
 
-        internal void BeginInterruptRequestAcknowledgeCycle(int cycles)
+        internal void BeginInterruptRequestAcknowledgeCycle(int tStates)
         {
             IO.SetInterruptState();
-            for (int i = 0; i < cycles; i++)
+            for (int i = 0; i < tStates; i++)
             {
                 WaitForNextClockTick();
             }
@@ -310,9 +312,9 @@ namespace Z80.Core
             IO.EndInterruptState();
         }
 
-        internal void InternalOperationCycle(int clockCycles)
+        internal void InternalOperationCycle(int tStates)
         {
-            for (int i = 0; i < clockCycles; i++)
+            for (int i = 0; i < tStates; i++)
             {
                 WaitForNextClockTick();
             }
@@ -345,11 +347,13 @@ namespace Z80.Core
                         return;
                     }
                     // when halted, the CPU should execute NOP continuously
+                    OpcodeFetchCycle(Registers.PC, InstructionSet.NOP.Opcode); // we still need to generate the right ticks + wait cycles for a NOP
                     package = new ExecutionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
                 }
 
                 // run the decoded instruction and deal with timing / ticks
                 ExecutionResult result = Execute(package);
+                Registers.R++; // R is incremented after every instruction as a memory refresh initiator
                 _executingPackage = null;
 
                 HandleNonMaskableInterrupts();
@@ -386,7 +390,7 @@ namespace Z80.Core
             b0 = OpcodeFetch(); // 4 ticks, always, but may add more below
             Registers.PC++;
 
-            if (b0 == 0xCB || b0 == 0xDD || b0 == 0xED || b0 == 0xFD)
+            if (b0 == 0xCB || b0 == 0xDD || b0 == 0xED || b0 == 0xFD) // is byte 0 a prefix code?
             {
                 b1 = Memory.ReadByteAt(Registers.PC, true); // peek ahead
                 if (b1 == 0xDD || b1 == 0xFD)
@@ -396,10 +400,10 @@ namespace Z80.Core
                     Registers.PC++;
                     return new ExecutionPackage(InstructionSet.NOP, data, instructionAddress);
                 }
-                else if (b1 == 0xCB)
+                else if ((b0 == 0xDD || b0 == 0xFD) && b1 == 0xCB)
                 {
-                    // four-byte opcode = two prefix bytes + one displacement byte + one opcode byte - *no* four-byte instruction has operand values
-                    data.Argument1 = DisplacementByteFetch();
+                    // DDCB / FDCB: four-byte opcode = two prefix bytes + one displacement byte + one opcode byte - no four-byte instruction has any operand values
+                    data.Argument1 = OperandFetch();
                     Registers.PC++;
                     b3 = OpcodeFetch();
                     Registers.PC++;
@@ -410,33 +414,35 @@ namespace Z80.Core
 
                     return new ExecutionPackage(instruction, data, instructionAddress);
                 }
-                else // all other prefixed instructions are a two-byte opcode + up to 2 operand bytes
+                else // all other prefixed instructions: a two-byte opcode + up to 2 operand bytes
                 {
                     b1 = OpcodeFetch(); // Note: while we already have this value from peeking ahead above, we need to do this to generate the right IO state and ticks
                     Registers.PC++;
                     if (!InstructionSet.Instructions.TryGetValue(b1 | b0 << 8, out instruction))
                     {
-                        if (b0 == 0xED)
+                        if (b0 == 0xED || b0 == 0xDD || b0 == 0xFD)
                         {
                             byte[] undocumentedED = new byte[] { 0x4C, 0x4E, 0x54, 0x55, 0x5C, 0x5D, 0x64, 0x65, 0x6C, 0x6D, 0x6E, 0x71, 0x74, 0x75, 0x76, 0x77, 0x7C, 0x7D, 0x7E };
                             // NOTES: these specific ED-prefix instructions are not implemented separately here, hence the attempt to look them up fails,
                             // but are functionally the equivalent of the *unprefixed* instruction without the ED prefix,
                             // just taking 4 ticks longer. In this case we should behave as per the unprefixed instruction, because we already added the 4 ticks getting here.
-                            if (!undocumentedED.Contains(b1))
+                            if (b0 != 0xED || undocumentedED.Contains(b1))
                             {
-                                return new ExecutionPackage(InstructionSet.NOP, data, instructionAddress);
-                            }
-                            else
-                            {
-                                // ignore the prefix and use the unprefixed instruction: there are many holes in the ED instruction set
+                                // ignore the prefix and use the unprefixed instruction: there are many holes in the ED/DD/FD instruction sets
                                 // and some code uses this technique to consume extra cycles for synchronisation but expects the unprefixed instruction to run as normal
                                 Registers.PC++;
                                 return DecodeInstruction();
                             }
+                            else
+                            {
+                                return new ExecutionPackage(InstructionSet.NOP, data, instructionAddress);
+                            }
                         }
-
-                        // any other failed instruction lookup generates a 2-NOP
-                        return new ExecutionPackage(InstructionSet.NOP, data, instructionAddress);
+                        else
+                        {
+                            // any other failed instruction lookup generates a 2-NOP
+                            return new ExecutionPackage(InstructionSet.NOP, data, instructionAddress);
+                        }
                     }
                     else
                     {
@@ -444,14 +450,14 @@ namespace Z80.Core
 
                         if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
                         {
-                            data.Argument1 = OperandFetch(false, false);
+                            data.Argument1 = OperandFetch();
                             Registers.PC++;
                         }
                         else if (instruction.Argument1 == ArgumentType.ImmediateWord)
                         {
-                            data.Argument1 = OperandFetch(true, true);
+                            data.Argument1 = OperandFetch();
                             Registers.PC++;
-                            data.Argument2 = OperandFetch(true, false);
+                            data.Argument2 = OperandFetch();
                             Registers.PC++;
                         }
 
@@ -471,12 +477,12 @@ namespace Z80.Core
 
                 if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
                 {
-                    data.Argument1 = OperandFetch(false, false);
+                    data.Argument1 = OperandFetch();
                     Registers.PC++;
                 }
                 else if (instruction.Argument1 == ArgumentType.ImmediateWord)
                 {
-                    data.Argument1 = OperandFetch(true, true);
+                    data.Argument1 = OperandFetch();
                     Registers.PC++;
                     // some instructions (OK, just CALL) have a prolonged high byte operand read (4 clocks instead of 3)
                     // but ONLY if a) it's CALL nn or b) if the condition (CALL NZ, for example) is satisfied (ie Flags.NZ is true)
@@ -490,7 +496,7 @@ namespace Z80.Core
                         }
                     }
 
-                    data.Argument2 = OperandFetch(true, false);
+                    data.Argument2 = OperandFetch();
                     Registers.PC++;
                 }
 
@@ -502,21 +508,21 @@ namespace Z80.Core
                 // normal opcode fetch cycle is 4 clock cycles, BUT some instructions have longer opcode fetch cycles - 
                 // this is either a long *first* opcode fetch (followed by a normal *second* opcode fetch, if any)
                 // OR a normal first opcode fetch and a long *second* opcode fetch, never both
-                int extraCycles = extraClockCyclesFor(instruction.Timing.CyclesByType(MachineCycleType.OpcodeFetch).First());
-                if (extraCycles == 0) extraCycles = extraClockCyclesFor(instruction.Timing.CyclesByType(MachineCycleType.OpcodeFetch).Last());
+                int extraTStates = extraTStatesFor(instruction.Timing.CyclesByType(MachineCycleType.OpcodeFetch).First());
+                if (extraTStates == 0) extraTStates = extraTStatesFor(instruction.Timing.CyclesByType(MachineCycleType.OpcodeFetch).Last());
 
-                if (extraCycles > 0)
+                if (extraTStates > 0)
                 {
-                    for (int i = 0; i < extraCycles; i++)
+                    for (int i = 0; i < extraTStates; i++)
                     {
                         WaitForNextClockTick();
                     }
                 }
             }
 
-            int extraClockCyclesFor(MachineCycle machineCycle)
+            int extraTStatesFor(MachineCycle machineCycle)
             {
-                return (MachineCycle.OPCODE_FETCH_STANDARD_CYCLES - machineCycle.ClockCycles);
+                return (machineCycle.TStates - OPCODE_FETCH_TSTATES);
             }
         }
 
@@ -524,7 +530,7 @@ namespace Z80.Core
         {
             if (TimingMode == TimingMode.FastAndFurious)
             {
-                _emulatedClockCycles++;
+                _emulatedTStates++;
                 OnClockTick?.Invoke(this, _executingPackage);
                 return;
             }
@@ -532,9 +538,14 @@ namespace Z80.Core
             {
                 while (_clockSemaphore == false);
                 _clockSemaphore = false;
-                _emulatedClockCycles++;
+                _emulatedTStates++;
                 OnClockTick?.Invoke(this, _executingPackage);
             }
+        }
+
+        private void WhenTheClockTicks(object sender, EventArgs e)
+        {
+            _clockSemaphore = true;
         }
 
         private void InsertWaitCycles()
@@ -548,32 +559,22 @@ namespace Z80.Core
         private byte OpcodeFetch()
         {
             byte opcode = Memory.ReadByteAt(Registers.PC, true);
-            OpcodeFetchCycle(Registers.PC, opcode);
+            if (!_suspendMachineCycles) OpcodeFetchCycle(Registers.PC, opcode);
             return opcode;
         }
 
-        private byte MemoryFetch(ushort address)
+        private byte OperandFetch()
         {
-            byte data = Memory.ReadByteAt(address, true);
-            MemoryReadCycle(address, data);
-            return data;
-        }
-
-        private byte OperandFetch(bool wordOperand, bool highByte)
-        {
-            return MemoryFetch(Registers.PC);
-        }
-
-        private byte DisplacementByteFetch()
-        {
-            return MemoryFetch(Registers.PC);
+            byte operand = Memory.ReadByteAt(Registers.PC, true);
+            if (!_suspendMachineCycles) MemoryReadCycle(Registers.PC, operand);
+            return operand;
         }
 
         private void HandleNonMaskableInterrupts()
         {
             if (IO.NMI)
             {
-                BeginInterruptRequestAcknowledgeCycle(MachineCycle.NMI_INTA_CYCLES);
+                BeginInterruptRequestAcknowledgeCycle(NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
 
                 Push(WordRegister.PC);
                 Registers.PC = 0x0066;
@@ -583,6 +584,35 @@ namespace Z80.Core
             }
 
             IO.EndNMIState();
+        }
+
+        private ExecutionPackage DecodeInterrupt()
+        {
+            // In IM0, when an interrupt is generated, the CPU will ask the device
+            // to send one to four bytes which are decoded into an instruction, which will then be executed.
+            // To emulate this without heavily re-writing the decode loop, we will temporarily copy 
+            // the last 4 bytes of RAM to an array, use those 4 bytes for the interrupt decode, then restore them
+            // and fix up the program counter. Sneaky, eh?
+
+            ushort address = (ushort)(Memory.SizeInBytes - 5);
+            byte[] lastFour = Memory.ReadBytesAt(address, 4, true);
+            ushort pc = Registers.PC;
+            Registers.PC = address;
+
+            _suspendMachineCycles = true;
+            for (int i = 0; i < 4; i++)
+            {
+                _interruptCallback();
+                Memory.WriteByteAt((ushort)(address + i), IO.DATA_BUS, true);
+            }
+
+            ExecutionPackage package = DecodeInstruction();
+            _suspendMachineCycles = false;
+
+            Registers.PC = pc;
+            Memory.WriteBytesAt(address, lastFour, true);
+
+            return package;
         }
 
         private void HandleMaskableInterrupts()
@@ -596,25 +626,23 @@ namespace Z80.Core
 
                 switch (InterruptMode)
                 {
-                    case InterruptMode.IM0: // read instruction data from data bus in 1-4 cycles and execute resulting instruction - flags are set but PC is unaffected
-                        BeginInterruptRequestAcknowledgeCycle(MachineCycle.IM0_INTA_CYCLES);
-                        //ExecutionPackage package = DecodeInterrupt(() =>
-                        //{
-                        //    _interruptCallback(); // each time callback is called, device will set data bus with next instruction byte
-                        //    return IO.DATA_BUS;
-                        //});
-                        //Execute(package); // instruction is *usually* RST which diverts execution, but can be any valid instruction
+                    case InterruptMode.IM0: // read instruction data from data bus in 1-4 opcode fetch cycles and execute resulting instruction - flags are set but PC is unaffected
+                        BeginInterruptRequestAcknowledgeCycle(IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        ExecutionPackage package = DecodeInterrupt();
+                        Push(WordRegister.PC);
+                        Execute(package);
+                        Pop(WordRegister.PC);
                         break;
 
                     case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
-                        BeginInterruptRequestAcknowledgeCycle(MachineCycle.IM1_INTA_CYCLES);
+                        BeginInterruptRequestAcknowledgeCycle(IM1_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         Push(WordRegister.PC);
                         Registers.PC = 0x0038;
                         break;
 
                     case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
                         _interruptCallback(); // device must populate data bus with low byte of address
-                        BeginInterruptRequestAcknowledgeCycle(MachineCycle.IM2_INTA_CYCLES);
+                        BeginInterruptRequestAcknowledgeCycle(IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         Push(WordRegister.PC);
                         ushort address = (ushort)((Registers.I * 256) + IO.DATA_BUS);
                         Registers.PC = Memory.ReadWordAt(address, false);
@@ -645,15 +673,10 @@ namespace Z80.Core
             // disable this and attach a debugger to the flag calculation methods in FlagLookup.cs
             FlagLookup.EnablePrecalculation = enableFlagPrecalculation;
             FlagLookup.BuildFlagLookupTables(); 
-            var nop = InstructionSet.NOP; // this causes the whole instruction set to get built now, so it's not done on the first instruction run
+            var nop = InstructionSet.NOP; // this causes the whole instruction set to get built now, so it's not done on each instruction's first run
 
             _clock = new ExternalClock(frequencyInMHz);
             _clock.OnTick += WhenTheClockTicks;
-        }
-
-        private void WhenTheClockTicks(object sender, EventArgs e)
-        {
-            _clockSemaphore = true;
         }
     }
 }

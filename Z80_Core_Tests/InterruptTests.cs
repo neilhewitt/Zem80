@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Z80.Core.Instructions
+namespace Z80_Core.Tests
 {
-    class InstructionTiming
+    class InterruptTests
     {
     }
 }

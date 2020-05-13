@@ -9,7 +9,7 @@ namespace Z80.Core.Tests
     [TestFixture]
     public class InstructionTests_HALT : InstructionTestBase
     {
-        [Test, Timeout(5000)] // if the CPU goes into an infinite loop for whatever reason, this terminates the test after 500ms
+        [Test, Timeout(5000)] // if the CPU goes into an infinite loop for whatever reason, this terminates the test after 5s
         public void HALT()
         {
             const byte NOP = 0x00;

@@ -10,15 +10,6 @@ namespace Z80.Core.Tests
     [TestFixture]
     public class InstructionTests_INC : InstructionTestBase
     {
-        private (byte, Flags) GetExpectedResultAndFlags(byte input)
-        {
-            Flags flags = new Flags();
-            sbyte subtract = -1;
-            int result = input - 1;
-            flags = FlagLookup.ByteArithmeticFlags(input, (byte)subtract, false, true);
-            return ((byte)result, flags);
-        }
-
         [Test]
         [TestCase(0x00, 0x01, FlagState.None)]
         [TestCase(0x0F, 0x10, FlagState.HalfCarry)]
