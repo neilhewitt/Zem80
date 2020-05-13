@@ -1,5 +1,0 @@
-[TestCase(0x01, 0x02, FlagState.None)]
-[TestCase(0x03, 0x06, FlagState.ParityOverflow)]
-[TestCase(0x00, 0x00, FlagState.ParityOverflow | FlagState. Zero)]
-[TestCase(0x40, 0x80, FlagState.Carry | FlagState. Sign)]
-[TestCase(0x41, 0x82, FlagState.Carry | FlagState. ParityOverflow | FlagState. Sign)]
