@@ -43,7 +43,7 @@ namespace Z80.Core
                 original = cpu.Memory.ReadByteAt(address, false);
                 shifted = (byte)(original << 1);
                 setFlags(original, shifted);
-                if (instruction.HLIX || instruction.HLIY) cpu.InternalOperationCycle(4);
+                if (instruction.HLIX || instruction.HLIY) cpu.Timing.InternalOperationCycle(4);
                 cpu.Memory.WriteByteAt(address, shifted, false);
             }
 

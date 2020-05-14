@@ -71,7 +71,7 @@ namespace Z80.Core
                             r.A = subByte(r.IXl);
                             break;
                         case 0x96: // SUB (IX+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.Timing.InternalOperationCycle(5);
                             r.A = subByte(readByte((ushort)(r.IX + (sbyte)data.Argument1)));
                             break;
                     }
@@ -87,7 +87,7 @@ namespace Z80.Core
                             r.A = subByte(r.IYl);
                             break;
                         case 0x96: // SUB (IY+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.Timing.InternalOperationCycle(5);
                             r.A = subByte(readByte((ushort)(r.IY + (sbyte)data.Argument1)));
                             break;
                     }

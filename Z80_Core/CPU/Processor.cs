@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace Z80.Core
 {
-    public class Processor : IDebugMode
+    public class Processor : IDebug, ITiming
     {
         public const int OPCODE_FETCH_TSTATES = 4;
         public const int NMI_INTERRUPT_ACKNOWLEDGE_TSTATES = 5;
@@ -35,7 +35,8 @@ namespace Z80.Core
         
         private Action _interruptCallback;
 
-        public IDebugMode Debug => (IDebugMode)this;
+        public IDebug Debug => this;
+        internal ITiming Timing => this;
        
         public bool EndOnHalt { get; private set; }
 
@@ -57,11 +58,11 @@ namespace Z80.Core
         
         // why yes, you do have to do event handlers this way if you want them to be on the interface and not on the type... no idea why
         // (basically, automatic properties don't work as events when they are explicitly on the interface, so we use a backing variable... old-school style)
-        event EventHandler<ExecutionPackage> IDebugMode.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
-        event EventHandler<ExecutionResult> IDebugMode.AfterExecute { add { _afterExecute += value; } remove { _afterExecute -= value; } }
-        event EventHandler IDebugMode.BeforeStart { add { _beforeStart += value; } remove { _beforeStart -= value; } }
-        event EventHandler IDebugMode.OnStop { add { _onStop += value; } remove { _onStop -= value; } }
-        event EventHandler<HaltReason> IDebugMode.OnHalt { add { _onHalt += value; } remove { _onHalt -= value; } }
+        event EventHandler<ExecutionPackage> IDebug.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
+        event EventHandler<ExecutionResult> IDebug.AfterExecute { add { _afterExecute += value; } remove { _afterExecute -= value; } }
+        event EventHandler IDebug.BeforeStart { add { _beforeStart += value; } remove { _beforeStart -= value; } }
+        event EventHandler IDebug.OnStop { add { _onStop += value; } remove { _onStop -= value; } }
+        event EventHandler<HaltReason> IDebug.OnHalt { add { _onHalt += value; } remove { _onHalt -= value; } }
 
         public void Start(ushort address = 0x0000, bool endOnHalt = false, TimingMode timingMode = TimingMode.FastAndFurious)
         {
@@ -124,11 +125,11 @@ namespace Z80.Core
         {
             ushort value = Registers[register];
             Registers.SP--;
-            StackWriteCycle(true, value.HighByte());
+            Timing.StackWriteCycle(true, value.HighByte());
             Memory.WriteByteAt(Registers.SP, value.HighByte(), true);
 
             Registers.SP--;
-            StackWriteCycle(false, value.LowByte());
+            Timing.StackWriteCycle(false, value.LowByte());
             Memory.WriteByteAt(Registers.SP, value.LowByte(), true);
         }
 
@@ -136,14 +137,14 @@ namespace Z80.Core
         {
             byte high, low;
 
-            BeginStackReadCycle();
+            Timing.BeginStackReadCycle();
             low = Memory.ReadByteAt(Registers.SP, true);
-            EndStackReadCycle(false, low);
+            Timing.EndStackReadCycle(false, low);
             Registers.SP++;
 
-            BeginStackReadCycle();
+            Timing.BeginStackReadCycle();
             high = Memory.ReadByteAt(Registers.SP, true);
-            EndStackReadCycle(true, high);
+            Timing.EndStackReadCycle(true, high);
             Registers.SP++;
 
             ushort value = (low, high).ToWord();
@@ -184,142 +185,6 @@ namespace Z80.Core
             InterruptsEnabled = true;
         }
 
-        internal void OpcodeFetchCycle(ushort address, byte data)
-        {
-            IO.SetOpcodeFetchState(address);
-            WaitForNextClockTick();
-            IO.AddOpcodeFetchData(data);
-            WaitForNextClockTick();
-            InsertWaitCycles();
-
-            IO.EndOpcodeFetchState();
-            IO.SetAddressBusValue(Registers.IR);
-            IO.SetDataBusValue(0x00);
-
-            WaitForNextClockTick();
-            WaitForNextClockTick();
-        }
-
-        internal void MemoryReadCycle(ushort address, byte data)
-        {
-            IO.SetMemoryReadState(address);
-            WaitForNextClockTick();
-
-            IO.AddMemoryData(data);
-            WaitForNextClockTick();
-            InsertWaitCycles();
-
-            IO.EndMemoryReadState();
-            WaitForNextClockTick();
-
-            if (ExecutingPackage != null &&
-                ExecutingPackage.Instruction.TimingExceptions.HasMemoryRead4)
-            {
-                WaitForNextClockTick();
-            }
-        }
-
-        internal void MemoryWriteCycle(ushort address, byte data)
-        {
-            IO.SetMemoryWriteState(address, data);
-            WaitForNextClockTick();
-            WaitForNextClockTick();
-            InsertWaitCycles();
-
-            IO.EndMemoryWriteState();
-            WaitForNextClockTick();
-
-            if (ExecutingPackage != null &&
-                ExecutingPackage.Instruction.TimingExceptions.HasMemoryWrite5)
-            {
-                WaitForNextClockTick();
-                WaitForNextClockTick();
-            }
-        }
-
-        internal void BeginStackReadCycle()
-        {
-            IO.SetMemoryReadState(Registers.SP);
-            WaitForNextClockTick();
-        }
-
-
-        internal void EndStackReadCycle(bool highByte, byte data)
-        {
-            IO.AddMemoryData(data);
-            WaitForNextClockTick();
-            InsertWaitCycles();
-
-            IO.EndMemoryReadState();
-            WaitForNextClockTick();
-        }
-
-        internal void StackWriteCycle(bool highByte, byte data)
-        {
-            IO.SetMemoryWriteState(Registers.SP, data);
-            WaitForNextClockTick();
-            WaitForNextClockTick();
-            InsertWaitCycles();
-
-            IO.EndMemoryWriteState();
-            WaitForNextClockTick();
-        }
-
-        internal void BeginPortReadCycle()
-        {
-            IO.SetPortReadState((Registers.B, Registers.C).ToWord());
-            WaitForNextClockTick();
-        }
-
-        internal void CompletePortReadCycle(byte data)
-        {
-            IO.AddPortReadData(data);
-            WaitForNextClockTick();
-            InsertWaitCycles();
-
-            WaitForNextClockTick();
-            IO.EndPortReadState();
-            WaitForNextClockTick();
-        }
-
-        internal void BeginPortWriteCycle(byte data)
-        {
-            IO.SetPortWriteState((Registers.B, Registers.C).ToWord(), data);
-            WaitForNextClockTick();
-        }
-
-        internal void CompletePortWriteCycle()
-        {
-            WaitForNextClockTick();
-            InsertWaitCycles();
-
-            WaitForNextClockTick();
-            IO.EndPortWriteState();
-            WaitForNextClockTick();
-        }
-
-        internal void BeginInterruptRequestAcknowledgeCycle(int tStates)
-        {
-            IO.SetInterruptState();
-            for (int i = 0; i < tStates; i++)
-            {
-                WaitForNextClockTick();
-            }
-        }
-
-        internal void EndInterruptRequestAcknowledgeCycle()
-        {
-            IO.EndInterruptState();
-        }
-
-        internal void InternalOperationCycle(int tStates)
-        {
-            for (int i = 0; i < tStates; i++)
-            {
-                WaitForNextClockTick();
-            }
-        }
-
         private void InstructionCycle()
         {
 
@@ -347,7 +212,7 @@ namespace Z80.Core
                         return;
                     }
                     // when halted, the CPU should execute NOP continuously
-                    OpcodeFetchCycle(Registers.PC, InstructionSet.NOP.Opcode); // we still need to generate the right ticks + wait cycles for a NOP
+                    Timing.OpcodeFetchCycle(Registers.PC, InstructionSet.NOP.Opcode); // we still need to generate the right ticks + wait cycles for a NOP
                     package = new ExecutionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
                 }
 
@@ -374,7 +239,7 @@ namespace Z80.Core
             return result;
         }        
 
-        ExecutionResult IDebugMode.Execute(ExecutionPackage package)
+        ExecutionResult IDebug.Execute(ExecutionPackage package)
         {
             Registers.PC += package.Instruction.SizeInBytes; // simulate the decode cycle effect on PC
             return Execute(package);
@@ -559,14 +424,14 @@ namespace Z80.Core
         private byte OpcodeFetch()
         {
             byte opcode = Memory.ReadByteAt(Registers.PC, true);
-            if (!_suspendMachineCycles) OpcodeFetchCycle(Registers.PC, opcode);
+            if (!_suspendMachineCycles) Timing.OpcodeFetchCycle(Registers.PC, opcode);
             return opcode;
         }
 
         private byte OperandFetch()
         {
             byte operand = Memory.ReadByteAt(Registers.PC, true);
-            if (!_suspendMachineCycles) MemoryReadCycle(Registers.PC, operand);
+            if (!_suspendMachineCycles) Timing.MemoryReadCycle(Registers.PC, operand);
             return operand;
         }
 
@@ -574,13 +439,13 @@ namespace Z80.Core
         {
             if (IO.NMI)
             {
-                BeginInterruptRequestAcknowledgeCycle(NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                Timing.BeginInterruptRequestAcknowledgeCycle(NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
 
                 Push(WordRegister.PC);
                 Registers.PC = 0x0066;
                 _halted = false;
 
-                EndInterruptRequestAcknowledgeCycle();
+                Timing.EndInterruptRequestAcknowledgeCycle();
             }
 
             IO.EndNMIState();
@@ -627,7 +492,7 @@ namespace Z80.Core
                 switch (InterruptMode)
                 {
                     case InterruptMode.IM0: // read instruction data from data bus in 1-4 opcode fetch cycles and execute resulting instruction - flags are set but PC is unaffected
-                        BeginInterruptRequestAcknowledgeCycle(IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        Timing.BeginInterruptRequestAcknowledgeCycle(IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         ExecutionPackage package = DecodeInterrupt();
                         Push(WordRegister.PC);
                         Execute(package);
@@ -635,14 +500,14 @@ namespace Z80.Core
                         break;
 
                     case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
-                        BeginInterruptRequestAcknowledgeCycle(IM1_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        Timing.BeginInterruptRequestAcknowledgeCycle(IM1_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         Push(WordRegister.PC);
                         Registers.PC = 0x0038;
                         break;
 
                     case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
                         _interruptCallback(); // device must populate data bus with low byte of address
-                        BeginInterruptRequestAcknowledgeCycle(IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        Timing.BeginInterruptRequestAcknowledgeCycle(IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         Push(WordRegister.PC);
                         ushort address = (ushort)((Registers.I * 256) + IO.DATA_BUS);
                         Registers.PC = Memory.ReadWordAt(address, false);
@@ -651,9 +516,147 @@ namespace Z80.Core
 
                 _halted = false;
 
-                EndInterruptRequestAcknowledgeCycle();
+                Timing.EndInterruptRequestAcknowledgeCycle();
             }
         }
+
+        #region ITiming
+        void ITiming.OpcodeFetchCycle(ushort address, byte data)
+        {
+            IO.SetOpcodeFetchState(address);
+            WaitForNextClockTick();
+            IO.AddOpcodeFetchData(data);
+            WaitForNextClockTick();
+            InsertWaitCycles();
+
+            IO.EndOpcodeFetchState();
+            IO.SetAddressBusValue(Registers.IR);
+            IO.SetDataBusValue(0x00);
+
+            WaitForNextClockTick();
+            WaitForNextClockTick();
+        }
+
+        void ITiming.MemoryReadCycle(ushort address, byte data)
+        {
+            IO.SetMemoryReadState(address);
+            WaitForNextClockTick();
+
+            IO.AddMemoryData(data);
+            WaitForNextClockTick();
+            InsertWaitCycles();
+
+            IO.EndMemoryReadState();
+            WaitForNextClockTick();
+
+            if (ExecutingPackage != null &&
+                ExecutingPackage.Instruction.TimingExceptions.HasMemoryRead4)
+            {
+                WaitForNextClockTick();
+            }
+        }
+
+        void ITiming.MemoryWriteCycle(ushort address, byte data)
+        {
+            IO.SetMemoryWriteState(address, data);
+            WaitForNextClockTick();
+            WaitForNextClockTick();
+            InsertWaitCycles();
+
+            IO.EndMemoryWriteState();
+            WaitForNextClockTick();
+
+            if (ExecutingPackage != null &&
+                ExecutingPackage.Instruction.TimingExceptions.HasMemoryWrite5)
+            {
+                WaitForNextClockTick();
+                WaitForNextClockTick();
+            }
+        }
+
+        void ITiming.BeginStackReadCycle()
+        {
+            IO.SetMemoryReadState(Registers.SP);
+            WaitForNextClockTick();
+        }
+
+
+        void ITiming.EndStackReadCycle(bool highByte, byte data)
+        {
+            IO.AddMemoryData(data);
+            WaitForNextClockTick();
+            InsertWaitCycles();
+
+            IO.EndMemoryReadState();
+            WaitForNextClockTick();
+        }
+
+        void ITiming.StackWriteCycle(bool highByte, byte data)
+        {
+            IO.SetMemoryWriteState(Registers.SP, data);
+            WaitForNextClockTick();
+            WaitForNextClockTick();
+            InsertWaitCycles();
+
+            IO.EndMemoryWriteState();
+            WaitForNextClockTick();
+        }
+
+        void ITiming.BeginPortReadCycle()
+        {
+            IO.SetPortReadState((Registers.B, Registers.C).ToWord());
+            WaitForNextClockTick();
+        }
+
+        void ITiming.CompletePortReadCycle(byte data)
+        {
+            IO.AddPortReadData(data);
+            WaitForNextClockTick();
+            InsertWaitCycles();
+
+            WaitForNextClockTick();
+            IO.EndPortReadState();
+            WaitForNextClockTick();
+        }
+
+        void ITiming.BeginPortWriteCycle(byte data)
+        {
+            IO.SetPortWriteState((Registers.B, Registers.C).ToWord(), data);
+            WaitForNextClockTick();
+        }
+
+        void ITiming.CompletePortWriteCycle()
+        {
+            WaitForNextClockTick();
+            InsertWaitCycles();
+
+            WaitForNextClockTick();
+            IO.EndPortWriteState();
+            WaitForNextClockTick();
+        }
+
+        void ITiming.BeginInterruptRequestAcknowledgeCycle(int tStates)
+        {
+            IO.SetInterruptState();
+            for (int i = 0; i < tStates; i++)
+            {
+                WaitForNextClockTick();
+            }
+        }
+
+        void ITiming.EndInterruptRequestAcknowledgeCycle()
+        {
+            IO.EndInterruptState();
+        }
+
+        void ITiming.InternalOperationCycle(int tStates)
+        {
+            for (int i = 0; i < tStates; i++)
+            {
+                WaitForNextClockTick();
+            }
+        }
+        #endregion  
 
         internal Processor(IMemoryMap map, ushort topOfStackAddress, int frequencyInMHz = 4, bool enableFlagPrecalculation = true)
         {

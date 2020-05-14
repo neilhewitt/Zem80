@@ -14,17 +14,17 @@ namespace Z80.Core
 
         public byte ReadByte()
         {
-            _cpu.BeginPortReadCycle();
+            _cpu.Timing.BeginPortReadCycle();
             byte input = (byte)((_read != null) ? _read() : 0);
-            _cpu.CompletePortReadCycle(input);
+            _cpu.Timing.CompletePortReadCycle(input);
             return input;
         }
 
         public void WriteByte(byte output)
         {
-            _cpu.BeginPortWriteCycle(output);
+            _cpu.Timing.BeginPortWriteCycle(output);
             if (_write != null) _write(output);
-            _cpu.CompletePortWriteCycle();
+            _cpu.Timing.CompletePortWriteCycle();
         }
 
         public void SignalRead()

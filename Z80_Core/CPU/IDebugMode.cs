@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Z80.Core
 {
-    public interface IDebugMode
+    public interface IDebug
     {
         event EventHandler<ExecutionResult> AfterExecute;
         event EventHandler<ExecutionPackage> BeforeExecute;

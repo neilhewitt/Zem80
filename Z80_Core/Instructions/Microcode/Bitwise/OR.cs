@@ -65,7 +65,7 @@ namespace Z80.Core
                             or(r.IXl);
                             break;
                         case 0xB6: // OR (IX+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.Timing.InternalOperationCycle(5);
                             or(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)data.Argument1), false));
                             break;
                     }
@@ -81,7 +81,7 @@ namespace Z80.Core
                             or(r.IYl);
                             break;
                         case 0xB6: // OR (IY+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.Timing.InternalOperationCycle(5);
                             or(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)data.Argument1), false));
                             break;
                     }

@@ -17,7 +17,7 @@ namespace Z80.Core
             if (!_initialised) throw new MemoryException();
             IMemorySegment segment = _map.MemoryFor(address);
             byte output = (segment?.ReadByteAt((ushort)(address - segment.StartAddress)) ?? 0x00); // default value if address is unallocated
-            if (!noTiming) _cpu.MemoryReadCycle((ushort)(address - segment.StartAddress), output);
+            if (!noTiming) _cpu.Timing.MemoryReadCycle((ushort)(address - segment.StartAddress), output);
             return output;
         }
 
@@ -62,7 +62,7 @@ namespace Z80.Core
                 throw new MemoryNotPresentException("Readonly or unmapped");
             }
             segment.WriteByteAt((ushort)(address - segment.StartAddress), value);
-            if (!noTiming) _cpu.MemoryWriteCycle((ushort)(address - segment.StartAddress), value);
+            if (!noTiming) _cpu.Timing.MemoryWriteCycle((ushort)(address - segment.StartAddress), value);
         }
 
         public void WriteBytesAt(ushort address, byte[] bytes, bool noTiming)

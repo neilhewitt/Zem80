@@ -43,23 +43,23 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x09: // ADD HL,BC
-                            cpu.InternalOperationCycle(4);
-                            cpu.InternalOperationCycle(3);
+                            cpu.Timing.InternalOperationCycle(4);
+                            cpu.Timing.InternalOperationCycle(3);
                             r.HL = addWord(r.HL, r.BC);
                             break;
                         case 0x19: // ADD HL,DE
-                            cpu.InternalOperationCycle(4);
-                            cpu.InternalOperationCycle(3);
+                            cpu.Timing.InternalOperationCycle(4);
+                            cpu.Timing.InternalOperationCycle(3);
                             r.HL = addWord(r.HL, r.DE);
                             break;
                         case 0x29: // ADD HL,HL
-                            cpu.InternalOperationCycle(4);
-                            cpu.InternalOperationCycle(3);
+                            cpu.Timing.InternalOperationCycle(4);
+                            cpu.Timing.InternalOperationCycle(3);
                             r.HL = addWord(r.HL, r.HL);
                             break;
                         case 0x39: // ADD HL,SP
-                            cpu.InternalOperationCycle(4);
-                            cpu.InternalOperationCycle(3);
+                            cpu.Timing.InternalOperationCycle(4);
+                            cpu.Timing.InternalOperationCycle(3);
                             r.HL = addWord(r.HL, r.SP);
                             break;
                         case 0x80: // ADD A,B
@@ -97,23 +97,23 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x09: // ADD IX,BC
-                            cpu.InternalOperationCycle(4);
-                            cpu.InternalOperationCycle(3);
+                            cpu.Timing.InternalOperationCycle(4);
+                            cpu.Timing.InternalOperationCycle(3);
                             r.IX = addWord(r.IX, r.BC);
                             break;
                         case 0x19: // ADD IX,DE
-                            cpu.InternalOperationCycle(4);
-                            cpu.InternalOperationCycle(3);
+                            cpu.Timing.InternalOperationCycle(4);
+                            cpu.Timing.InternalOperationCycle(3);
                             r.IX = addWord(r.IX, r.DE);
                             break;
                         case 0x29: // ADD IX,IX
-                            cpu.InternalOperationCycle(4);
-                            cpu.InternalOperationCycle(3);
+                            cpu.Timing.InternalOperationCycle(4);
+                            cpu.Timing.InternalOperationCycle(3);
                             r.IX = addWord(r.IX, r.IX);
                             break;
                         case 0x39: // ADD IX,SP
-                            cpu.InternalOperationCycle(4);
-                            cpu.InternalOperationCycle(3);
+                            cpu.Timing.InternalOperationCycle(4);
+                            cpu.Timing.InternalOperationCycle(3);
                             r.IX = addWord(r.IX, r.SP);
                             break;
                         case 0x84: // ADD A,IXh
@@ -123,7 +123,7 @@ namespace Z80.Core
                             r.A = addByte(r.IXl);
                             break;
                         case 0x86: // ADD A,(IX+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.Timing.InternalOperationCycle(5);
                             r.A = addByte(readOffset(r.IX, (sbyte)data.Argument1));
                             break;
                     }
@@ -133,23 +133,23 @@ namespace Z80.Core
                     switch (instruction.Opcode)
                     {
                         case 0x09: // ADD IY,BC
-                            cpu.InternalOperationCycle(4);
-                            cpu.InternalOperationCycle(3);
+                            cpu.Timing.InternalOperationCycle(4);
+                            cpu.Timing.InternalOperationCycle(3);
                             r.IY = addWord(r.IY, r.BC);
                             break;
                         case 0x19: // ADD IY,DE
-                            cpu.InternalOperationCycle(4);
-                            cpu.InternalOperationCycle(3);
+                            cpu.Timing.InternalOperationCycle(4);
+                            cpu.Timing.InternalOperationCycle(3);
                             r.IY = addWord(r.IY, r.DE);
                             break;
                         case 0x29: // ADD IY,IY
-                            cpu.InternalOperationCycle(4);
-                            cpu.InternalOperationCycle(3);
+                            cpu.Timing.InternalOperationCycle(4);
+                            cpu.Timing.InternalOperationCycle(3);
                             r.IY = addWord(r.IY, r.IY);
                             break;
                         case 0x39: // ADD IY,SP
-                            cpu.InternalOperationCycle(4);
-                            cpu.InternalOperationCycle(3);
+                            cpu.Timing.InternalOperationCycle(4);
+                            cpu.Timing.InternalOperationCycle(3);
                             r.IY = addWord(r.IY, r.SP);
                             break;
                         case 0x84: // ADD A,IYh
@@ -159,7 +159,7 @@ namespace Z80.Core
                             r.A = addByte(r.IYl);
                             break;
                         case 0x86: // ADD A,(IY+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.Timing.InternalOperationCycle(5);
                             r.A = addByte(readOffset(r.IY, (sbyte)data.Argument1));
                             break;
                     }

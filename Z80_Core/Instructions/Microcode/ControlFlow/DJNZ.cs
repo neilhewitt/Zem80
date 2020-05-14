@@ -15,7 +15,7 @@ namespace Z80.Core
             sbyte jump = 0;
             if (cpu.Registers.B > 0)
             {
-                cpu.InternalOperationCycle(5);
+                cpu.Timing.InternalOperationCycle(5);
 
                 conditionTrue = true;
                 cpu.Registers.B--;

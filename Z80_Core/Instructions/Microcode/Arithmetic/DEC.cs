@@ -84,7 +84,7 @@ namespace Z80.Core
                             r.IX = decw(r.IX);
                             break;
                         case 0x35: // DEC (IX+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.Timing.InternalOperationCycle(5);
                             cpu.Memory.WriteByteAt((ushort)(r.IX + (sbyte)offset), dec(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)offset), false)), false);
                             break;
 
@@ -104,7 +104,7 @@ namespace Z80.Core
                             r.IY = decw(r.IY);
                             break;
                         case 0x35: // DEC (IY+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.Timing.InternalOperationCycle(5);
                             cpu.Memory.WriteByteAt((ushort)(r.IY + (sbyte)offset), dec(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)offset), false)), false);
                             break;
                     }

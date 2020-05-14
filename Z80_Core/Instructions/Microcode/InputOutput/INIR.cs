@@ -17,7 +17,7 @@ namespace Z80.Core
             port.SignalRead();
             byte input = port.ReadByte();
             cpu.Memory.WriteByteAt(r.HL, input, false);
-            cpu.InternalOperationCycle(5);
+            cpu.Timing.InternalOperationCycle(5);
             r.HL++;
             r.B--;
 

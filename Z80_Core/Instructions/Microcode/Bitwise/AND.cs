@@ -67,7 +67,7 @@ namespace Z80.Core
                             r.A = and(r.IXl);
                             break;
                         case 0xA6: // AND (IX+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.Timing.InternalOperationCycle(5);
                             r.A = and(cpu.Memory.ReadByteAt((ushort)(r.IX + offset), false));
                             break;
                     }
@@ -83,7 +83,7 @@ namespace Z80.Core
                             r.A = and(r.IYl);
                             break;
                         case 0xA6: // AND (IY+o)
-                            cpu.InternalOperationCycle(5);
+                            cpu.Timing.InternalOperationCycle(5);
                             r.A = and(cpu.Memory.ReadByteAt((ushort)(r.IY + offset), false));
                             break;
                     }
