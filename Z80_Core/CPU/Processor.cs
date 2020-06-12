@@ -21,6 +21,8 @@ namespace Z80.Core
         private ushort _topOfStack;
         private long _emulatedTStates;
 
+        private int _pendingWaitCycles;
+
         private ExternalClock _clock;
         private bool _clockSemaphore;
         private Stopwatch _startStopTimer = new Stopwatch();
@@ -33,7 +35,7 @@ namespace Z80.Core
         private EventHandler _onStop;
         private EventHandler<HaltReason> _onHalt;
         
-        private Action _interruptCallback;
+        private Func<byte> _interruptCallback;
 
         public IDebug Debug => this;
         internal ITiming Timing => this;
@@ -48,7 +50,7 @@ namespace Z80.Core
         
         public InterruptMode InterruptMode { get; private set; } = InterruptMode.IM0;
         public bool InterruptsEnabled { get; private set; } = true;
-        public int FrequencyInMHz { get; private set; }
+        public double FrequencyInMHz { get; private set; }
         public TimingMode TimingMode { get; private set; } = TimingMode.FastAndFurious;
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; 
         public long EmulatedTStates => _emulatedTStates;
@@ -107,7 +109,7 @@ namespace Z80.Core
             _halted = false;
         }
 
-        public void WaitUntilStopped()
+        public void RunUntilStopped()
         {
             while (_running) Thread.Sleep(0);
         }
@@ -161,7 +163,7 @@ namespace Z80.Core
             InterruptMode = mode;
         }
 
-        public void RaiseInterrupt(Action instructionReadCallback = null)
+        public void RaiseInterrupt(Func<byte> instructionReadCallback = null)
         {
             IO.SetInterruptState();
             if (InterruptsEnabled)
@@ -183,6 +185,11 @@ namespace Z80.Core
         public void EnableInterrupts()
         {
             InterruptsEnabled = true;
+        }
+
+        public void AddWaitCycles(int waitCycles)
+        {
+            _pendingWaitCycles = waitCycles;
         }
 
         private void InstructionCycle()
@@ -268,6 +275,8 @@ namespace Z80.Core
                 else if ((b0 == 0xDD || b0 == 0xFD) && b1 == 0xCB)
                 {
                     // DDCB / FDCB: four-byte opcode = two prefix bytes + one displacement byte + one opcode byte - no four-byte instruction has any operand values
+                    b1 = OpcodeFetch();
+                    Registers.PC++;
                     data.Argument1 = OperandFetch();
                     Registers.PC++;
                     b3 = OpcodeFetch();
@@ -281,8 +290,7 @@ namespace Z80.Core
                 }
                 else // all other prefixed instructions: a two-byte opcode + up to 2 operand bytes
                 {
-                    b1 = OpcodeFetch(); // Note: while we already have this value from peeking ahead above, we need to do this to generate the right IO state and ticks
-                    Registers.PC++;
+                    Registers.PC++; // advance PC to position of b1
                     if (!InstructionSet.Instructions.TryGetValue(b1 | b0 << 8, out instruction))
                     {
                         if (b0 == 0xED || b0 == 0xDD || b0 == 0xFD)
@@ -291,11 +299,11 @@ namespace Z80.Core
                             // NOTES: these specific ED-prefix instructions are not implemented separately here, hence the attempt to look them up fails,
                             // but are functionally the equivalent of the *unprefixed* instruction without the ED prefix,
                             // just taking 4 ticks longer. In this case we should behave as per the unprefixed instruction, because we already added the 4 ticks getting here.
+                            
                             if (b0 != 0xED || undocumentedED.Contains(b1))
                             {
                                 // ignore the prefix and use the unprefixed instruction: there are many holes in the ED/DD/FD instruction sets
                                 // and some code uses this technique to consume extra cycles for synchronisation but expects the unprefixed instruction to run as normal
-                                Registers.PC++;
                                 return DecodeInstruction();
                             }
                             else
@@ -311,19 +319,18 @@ namespace Z80.Core
                     }
                     else
                     {
-                        addTicksIfNeededForOpcodeFetch();
+                        b1 = OpcodeFetch(); // Note: while we already have this value from peeking ahead above, we need to do this to generate the right IO state and ticks
+                        addTicksIfNeededForOpcodeFetch(); // some specific opcodes have longer opcode fetch cycles than normal
 
-                        if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
+                        if (instruction.Argument1 != ArgumentType.None)
                         {
                             data.Argument1 = OperandFetch();
                             Registers.PC++;
-                        }
-                        else if (instruction.Argument1 == ArgumentType.ImmediateWord)
-                        {
-                            data.Argument1 = OperandFetch();
-                            Registers.PC++;
-                            data.Argument2 = OperandFetch();
-                            Registers.PC++;
+                            if (instruction.Argument2 != ArgumentType.None)
+                            {
+                                data.Argument2 = OperandFetch();
+                                Registers.PC++;
+                            }
                         }
 
                         return new ExecutionPackage(instruction, data, instructionAddress);
@@ -349,7 +356,7 @@ namespace Z80.Core
                 {
                     data.Argument1 = OperandFetch();
                     Registers.PC++;
-                    // some instructions (OK, just CALL) have a prolonged high byte operand read (4 clocks instead of 3)
+                    // some instructions (OK, just CALL) have a prolonged high byte operand read 
                     // but ONLY if a) it's CALL nn or b) if the condition (CALL NZ, for example) is satisfied (ie Flags.NZ is true)
                     // otherwise it's the standard size. Timing oddities like this are noted in the TimingExceptions structure,
                     // but this is the only one that affects the instruction decode cycle (the others affect Memory Read cycles)
@@ -415,7 +422,7 @@ namespace Z80.Core
 
         private void InsertWaitCycles()
         {
-            while (IO.WAIT)
+            while (_pendingWaitCycles-- > 0)
             {
                 WaitForNextClockTick();
             }
@@ -467,8 +474,9 @@ namespace Z80.Core
             _suspendMachineCycles = true;
             for (int i = 0; i < 4; i++)
             {
-                _interruptCallback();
-                Memory.WriteByteAt((ushort)(address + i), IO.DATA_BUS, true);
+                byte value = _interruptCallback();
+                IO.SetDataBusValue(value); // set this directly as there are no machine cycles currently
+                Memory.WriteByteAt((ushort)(address + i), value, true);
             }
 
             ExecutionPackage package = DecodeInstruction();
@@ -494,9 +502,9 @@ namespace Z80.Core
                     case InterruptMode.IM0: // read instruction data from data bus in 1-4 opcode fetch cycles and execute resulting instruction - flags are set but PC is unaffected
                         Timing.BeginInterruptRequestAcknowledgeCycle(IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         ExecutionPackage package = DecodeInterrupt();
-                        Push(WordRegister.PC);
+                        ushort pc = Registers.PC;
                         Execute(package);
-                        Pop(WordRegister.PC);
+                        Registers.PC = pc;
                         break;
 
                     case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
@@ -658,7 +666,7 @@ namespace Z80.Core
         }
         #endregion  
 
-        internal Processor(IMemoryMap map, ushort topOfStackAddress, int frequencyInMHz = 4, bool enableFlagPrecalculation = true)
+        internal Processor(IMemoryMap map, ushort topOfStackAddress, double frequencyInMHz = 4, bool enableFlagPrecalculation = true)
         {
             FrequencyInMHz = frequencyInMHz;
 
@@ -671,12 +679,12 @@ namespace Z80.Core
             _topOfStack = topOfStackAddress;
             Registers.SP = _topOfStack;
 
-            // if precalculation is enabled, all flag combinations for all input values for 8-bit ALU / bitwise operations are pre-built now (*not* 16-bit ALU operations)
+            // if precalculation is enabled, all flag combinations for all input values for 8-bit ALU / bitwise operations are pre-built now (not 16-bit ALU operations, far too big!)
             // this is *slightly* faster than calculating them in real-time, but if you want to debug flag calculation you should
             // disable this and attach a debugger to the flag calculation methods in FlagLookup.cs
             FlagLookup.EnablePrecalculation = enableFlagPrecalculation;
-            FlagLookup.BuildFlagLookupTables(); 
-            var nop = InstructionSet.NOP; // this causes the whole instruction set to get built now, so it's not done on each instruction's first run
+            FlagLookup.BuildFlagLookupTables();
+            InstructionSet.Build();
 
             _clock = new ExternalClock(frequencyInMHz);
             _clock.OnTick += WhenTheClockTicks;

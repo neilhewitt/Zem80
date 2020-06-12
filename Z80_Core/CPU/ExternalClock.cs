@@ -15,7 +15,7 @@ namespace Z80.Core
 
         private Thread _clockThread;
         
-        public int FrequencyInMhz { get; private set; }
+        public double FrequencyInMhz { get; private set; }
         public int TicksSinceStart { get; private set; }
         public bool Started => _running;
 
@@ -45,7 +45,7 @@ namespace Z80.Core
             }
         }
 
-        public ExternalClock(int frequencyInMhz)
+        public ExternalClock(double frequencyInMhz)
         {
             _windowsTickPerClockTick = ((double)(10 / frequencyInMhz));
             _stopwatch = new Stopwatch();

@@ -13,12 +13,12 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             Registers r = cpu.Registers;
             sbyte offset = (sbyte)(data.Argument1);
-            ByteRegister register = instruction.OperandRegister;
+            ByteRegister register = instruction.GetByteRegister();
 
             void setFlags(byte original, byte shifted)
             {
-                flags = FlagLookup.BitwiseFlags(original, BitwiseOperation.ShiftLeft);
-                flags.Carry = shifted.GetBit(7);
+                flags = FlagLookup.BitwiseFlags(shifted, BitwiseOperation.ShiftLeft);
+                flags.Carry = original.GetBit(7);
                 flags.HalfCarry = false;
                 flags.Subtract = false;
             }

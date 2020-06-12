@@ -23,8 +23,11 @@ namespace Z80.Core
             byte inc(byte value)
             {
                 ushort result = (ushort)(value + 1);
+                bool carry = flags.Carry;
                 flags = FlagLookup.ByteArithmeticFlags(value, 1, false, false);
-                if (result > 0xFF) result = 0;
+                flags.ParityOverflow = (value == 0x7F);
+                flags.Carry = carry; // always unaffected
+                flags.Subtract = false;
                 return (byte)result;
             }
 

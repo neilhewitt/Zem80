@@ -11,13 +11,14 @@ namespace Z80.Core
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             Registers r = cpu.Registers;
-            byte bitIndex = instruction.BitIndex ?? 0xFF;
+            byte bitIndex = instruction.GetBitIndex();
             sbyte offset = (sbyte)(data.Argument1);
-            ByteRegister register = instruction.OperandRegister;
+            ByteRegister register = instruction.GetByteRegister();
 
             if (register != ByteRegister.None)
             {
-                r[register] = r[register].SetBit(bitIndex, false);
+                byte value = r[register].SetBit(bitIndex, false);
+                r[register] = value;
             }
             else
             {
@@ -31,7 +32,7 @@ namespace Z80.Core
                 cpu.Memory.WriteByteAt(address, cpu.Memory.ReadByteAt(address, false).SetBit(bitIndex, false), false);
             }
 
-            return new ExecutionResult(package, cpu.Registers.Flags, false, false);
+            return new ExecutionResult(package, null, false, false);
         }
 
         public RES()

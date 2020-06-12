@@ -12,6 +12,7 @@ namespace Z80.Core
         byte ReadByteAt(ushort offset);
         byte[] ReadBytesAt(ushort offset, int bytes);
         void WriteByteAt(ushort offset, byte value);
+        void WriteBytesAt(ushort offset, byte[] bytes);
 
         void Clear();
     }

@@ -31,6 +31,14 @@ namespace Z80.Core
             _memory[offset] = value;
         }
 
+        public virtual void WriteBytesAt(ushort offset, byte[] bytes)
+        {
+            for (int i = offset; i < offset + bytes.Length; i++)
+            {
+                _memory[i] = bytes[i];
+            }
+        }
+
         public void Clear()
         {
             _memory = new byte[SizeInBytes];

@@ -41,6 +41,7 @@ namespace Z80.Core
 
             flags.Zero = (A == 0);
             flags.HalfCarry = ((byte)(r.A ^ A)).GetBit(4);
+            flags.ParityOverflow = A.EvenParity();
 
             r.A = A;
 

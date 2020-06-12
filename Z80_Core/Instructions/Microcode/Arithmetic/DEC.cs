@@ -22,7 +22,11 @@ namespace Z80.Core
             byte dec(byte value)
             {
                 int result = value - 1;
+                bool carry = flags.Carry;
                 flags = FlagLookup.ByteArithmeticFlags(value, 1, false, true);
+                flags.ParityOverflow = (value == 0x80);
+                flags.Carry = carry; // always unaffected
+                flags.Subtract = true;
                 return (byte)result;
             }
 

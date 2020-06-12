@@ -6,7 +6,6 @@ using System.Globalization;
 
 namespace Z80.Core
 {
-
     public class Instruction
     {
         public InstructionPrefix Prefix { get; private set; }
@@ -15,50 +14,38 @@ namespace Z80.Core
         public string Mnemonic { get; private set; }
         public ArgumentType Argument1 { get; private set; }
         public ArgumentType Argument2 { get; private set; }
-        public ModifierType Modifier { get; private set; }
         public Condition? Condition { get; private set; }
         public byte SizeInBytes { get; private set; }
         public IReadOnlyList<MachineCycle> Timing { get; private set; }
         public TimingExceptions TimingExceptions { get; private set; }
-        public byte? BitIndex { get; private set; }
-        public ByteRegister OperandRegister { get; private set; }
-        public bool HLIX => Prefix == InstructionPrefix.DDCB;
-        public bool HLIY => Prefix == InstructionPrefix.FDCB;
+        public bool HLIX => Prefix == InstructionPrefix.DD || Prefix == InstructionPrefix.DDCB;
+        public bool HLIY => Prefix == InstructionPrefix.FD || Prefix == InstructionPrefix.FDCB;
         public IMicrocode Microcode { get; private set; }
 
-        public Instruction(string opcode, string mnemonic, ArgumentType argument1, ArgumentType argument2, ModifierType modifier, byte sizeInBytes, MachineCycle[] machineCycles, IMicrocode microcode = null)
+        public Instruction(string opcode, string mnemonic, ArgumentType argument1, ArgumentType argument2, byte sizeInBytes, MachineCycle[] machineCycles, IMicrocode microcode = null)
         {
+            // opcode comes in as a string in the format (example) '0xDDCB48' which would be a DDCB prefix + 48 opcode byte
+            // break this down into three forms: a 'full' opcode as a hex integer, a prefix type (enum), and an opcode byte
             FullOpcode = int.Parse(opcode, NumberStyles.HexNumber);
             Prefix = opcode.Length == 2 ? InstructionPrefix.Unprefixed : (InstructionPrefix)Enum.Parse(typeof(InstructionPrefix), opcode[..^2], true);
             Opcode = byte.Parse(opcode[^2..], NumberStyles.HexNumber); ;
+            
             Mnemonic = mnemonic;
-            if (mnemonic.Contains(' '))
+            Argument1 = argument1;
+            Argument2 = argument2;
+            SizeInBytes = sizeInBytes;
+
+            // add condition for conditional instructions - relying on the mnemonic string is a bit of a hack... but it works
+            if (mnemonic.Contains(' ') && new string[] { "RET", "JP", "JR", "CALL" }.Any(x => mnemonic.StartsWith(x)))
             {
-                string right = mnemonic.Split(' ',',')[1];
+                string right = mnemonic.Split(' ', ',')[1];
                 if (Enum.TryParse<Condition>(right, out Condition condition))
                 {
                     Condition = condition;
                 }
             }
 
-            Argument1 = argument1;
-            Argument2 = argument2;
-            Modifier = modifier;
-            SizeInBytes = sizeInBytes;
-
-            BitIndex = Modifier switch
-            {
-                var m when (m == ModifierType.Bit || m == ModifierType.BitAndRegister) => Opcode.GetByteFromBits(3, 3),
-                _ => null
-            };
-
-            OperandRegister = Modifier switch
-            {
-                var m when (m == ModifierType.Bit || m == ModifierType.WordRegister || m == ModifierType.None) => ByteRegister.None,
-                ModifierType.InputRegister => (ByteRegister)Opcode.GetByteFromBits(3, 3),
-                _ => (ByteRegister)Opcode.GetByteFromBits(0, 3)
-            };
-
+            // deal with timing + any exceptions
             Timing = new List<MachineCycle>(machineCycles);
             bool odh4 = false, mr4 = false, mw5 = false;
             if (Mnemonic.StartsWith("CALL"))

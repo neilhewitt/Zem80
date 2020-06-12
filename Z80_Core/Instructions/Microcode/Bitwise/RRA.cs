@@ -20,6 +20,7 @@ namespace Z80.Core
             flags.HalfCarry = false;
             flags.Subtract = false;
             flags.Carry = carry;
+
             r.A = value;
 
             return new ExecutionResult(package, flags, false, false);

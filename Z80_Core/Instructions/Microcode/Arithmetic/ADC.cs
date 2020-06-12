@@ -13,30 +13,6 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             Registers r = cpu.Registers;
 
-            byte readByte(ushort address)
-            {
-                return cpu.Memory.ReadByteAt(address, false);
-            }
-
-            byte readOffset(ushort address, sbyte offset)
-            {
-                return cpu.Memory.ReadByteAt((ushort)(address + offset), false);
-            }
-
-            byte addByteWithCarry(int value)
-            {
-                int result = cpu.Registers.A + value + (flags.Carry ? 1 : 0);
-                flags = FlagLookup.ByteArithmeticFlags(cpu.Registers.A, value, flags.Carry, false);
-                return (byte)result;
-            }
-
-            ushort addWordWithCarry(int value)
-            {
-                int result = cpu.Registers.HL + value + (flags.Carry ? 1 : 0);
-                flags = FlagLookup.WordArithmeticFlags(flags, cpu.Registers.HL, value, flags.Carry, true, false);
-                return (ushort)result;
-            }
-
             switch (instruction.Prefix)
             {
                 case InstructionPrefix.Unprefixed:
@@ -132,6 +108,30 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(package, flags, false, false);
+
+            byte readByte(ushort address)
+            {
+                return cpu.Memory.ReadByteAt(address, false);
+            }
+
+            byte readOffset(ushort address, sbyte offset)
+            {
+                return cpu.Memory.ReadByteAt((ushort)(address + offset), false);
+            }
+
+            byte addByteWithCarry(int value)
+            {
+                int result = cpu.Registers.A + value + (flags.Carry ? 1 : 0);
+                flags = FlagLookup.ByteArithmeticFlags(cpu.Registers.A, value, flags.Carry, false);
+                return (byte)result;
+            }
+
+            ushort addWordWithCarry(int value)
+            {
+                int result = cpu.Registers.HL + value + (flags.Carry ? 1 : 0);
+                flags = FlagLookup.WordArithmeticFlags(flags, cpu.Registers.HL, value, flags.Carry, true, false);
+                return (ushort)result;
+            }
         }
 
         public ADC()

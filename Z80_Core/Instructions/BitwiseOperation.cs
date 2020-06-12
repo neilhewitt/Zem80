@@ -2,6 +2,6 @@
 {
     public enum BitwiseOperation
     {
-        ShiftLeft, ShiftRight, RotateLeft, RotateRight
+        ShiftLeft, ShiftRight, RotateLeft, RotateRight, None
     }
 }

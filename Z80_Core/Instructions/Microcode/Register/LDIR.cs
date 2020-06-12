@@ -24,6 +24,8 @@ namespace Z80.Core
 
             bool conditionTrue = (r.BC == 0);
             if (conditionTrue) cpu.Timing.InternalOperationCycle(5);
+            else r.PC = package.InstructionAddress;
+            
 
             return new ExecutionResult(package, flags, conditionTrue, !conditionTrue);
         }

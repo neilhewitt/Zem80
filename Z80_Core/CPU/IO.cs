@@ -167,6 +167,16 @@
             IORQ = false;
         }
 
+        internal void SetWaitState()
+        {
+            WAIT = true;
+        }
+
+        internal void EndWaitState()
+        {
+            WAIT = false;
+        }
+
         internal void SetAddressBusValue(ushort value)
         {
             ADDRESS_BUS = value;

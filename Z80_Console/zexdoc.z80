@@ -25,7 +25,7 @@
 ; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 	aseg
-	org	100h
+	.org	100h
 
 	jp	start
 
@@ -87,7 +87,7 @@ msbtlo	equ	msbt & 0ffh
 ; hand using a binary search of the test space.
 
 
-start:	ld	hl,(6)
+start:	ld	hl,8000h
 	ld	sp,hl
 	ld	de,msg1
 	ld	c,9
@@ -105,7 +105,7 @@ loop:	ld	a,(hl)		; end of list ?
 done:	ld	de,msg2
 	ld	c,9
 	call	bdos
-	jp	0		; warm boot
+	halt		; warm boot
 
 tests:
 	dw	adc16
@@ -771,7 +771,7 @@ stt:	push	hl
 	ld	de,msbt		; copy initial machine state
 	ld	bc,16
 	ldir
-	ld	de,20+20+4	; skip incmask, scanmask and expcrc
+	ld	de,62	; skip incmask, scanmask and expcrc
 	add	hl,de
 	ex	de,hl
 	ld	c,9
@@ -1257,13 +1257,13 @@ crclp:	ld	a,(de)
 	inc	hl
 	dec	c
 	jp	nz,crclp
-      if	0
+      ;if	0
 	ld	hl,crcval
 	call	phex8
 	ld	de,crlf
 	ld	c,9
 	call	bdos
-      endif
+      ;endif
 	pop	hl
 	pop	de
 	pop	bc

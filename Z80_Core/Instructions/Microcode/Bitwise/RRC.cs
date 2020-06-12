@@ -13,7 +13,7 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             Registers r = cpu.Registers;
             sbyte offset = (sbyte)(data.Argument1);
-            ByteRegister register = instruction.OperandRegister;
+            ByteRegister register = instruction.GetByteRegister();
 
             byte original, shifted;
             if (register != ByteRegister.None)
@@ -44,6 +44,7 @@ namespace Z80.Core
             byte setFlags(byte original, byte shifted)
             {
                 flags = FlagLookup.BitwiseFlags(original, BitwiseOperation.RotateRight);
+                flags.Carry = original.GetBit(0);
                 flags.HalfCarry = false;
                 flags.Subtract = false;
                 return shifted;

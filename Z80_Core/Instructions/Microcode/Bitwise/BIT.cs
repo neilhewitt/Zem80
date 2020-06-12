@@ -14,11 +14,11 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             InstructionPrefix prefix = instruction.Prefix;
 
-            byte bitIndex = instruction.BitIndex.Value;
+            byte bitIndex = instruction.GetBitIndex();
             byte value;
-            if (instruction.OperandRegister != ByteRegister.None)
+            if (instruction.GetByteRegister() != ByteRegister.None)
             {
-                value = r[instruction.OperandRegister]; // BIT b, r
+                value = r[instruction.GetByteRegister()]; // BIT b, r
             }
             else
             {
@@ -27,7 +27,8 @@ namespace Z80.Core
                 if (instruction.HLIX || instruction.HLIY) cpu.Timing.InternalOperationCycle(5);
                 value = cpu.Memory.ReadByteAt((ushort)(address + offset), false);
             }
-           
+
+            flags.Sign = ((sbyte)(value)) < 0;
             flags.Zero = value.GetBit(bitIndex) == false;
             flags.HalfCarry = true;
             flags.Subtract = false;

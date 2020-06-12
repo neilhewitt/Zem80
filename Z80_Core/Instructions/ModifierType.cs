@@ -4,10 +4,18 @@
     {
         None,
         ByteRegister,
+        FromAddress,
+        ByteRegisterPair,
+        ByteRegisterFromAddress,
+        ByteRegisterFromImmediate,
+        AddressFromByteRegister,
         WordRegister,
-        InputRegister,
-        Bit,
-        BitAndRegister,
+        WordRegisterPair,
+        WordRegisterFromAddress,
+        WordRegisterFromImmediate,
+        IORegister,
+        BitAtAddress,
+        BitOfRegister,
         IndexRegister,
         IndexRegisterHalf
     }

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using System.Runtime.ExceptionServices;
+using System.Reflection;
 
 namespace Z80.Core
 {
@@ -112,8 +114,8 @@ namespace Z80.Core
             int result = subtract ? startingValue - addOrSubtractValue - (carry ? 1 : 0) : 
                                     startingValue + addOrSubtractValue + (carry ? 1 : 0);
 
-            flags.Carry = result > 0xFFFF;
-            flags.HalfCarry = HalfCarry(startingValue, (ushort)addOrSubtractValue, subtract);
+            flags.Carry = ((result & 0x10000) != 0);
+            flags.HalfCarry = HalfCarry(startingValue, (ushort)addOrSubtractValue, carry, subtract);
             flags.Subtract = subtract;
 
             // some 16-bit arithmetic operations preserve flags from the
@@ -121,7 +123,7 @@ namespace Z80.Core
             if (setSignZeroParityOverflow)
             {
                 flags.Zero = ((byte)result == 0);
-                flags.ParityOverflow = (Overflows(startingValue, (ushort)addOrSubtractValue));
+                flags.ParityOverflow = Overflows(startingValue, (ushort)addOrSubtractValue, carry, subtract);
                 flags.Sign = ((short)result < 0);
             }
 
@@ -136,10 +138,10 @@ namespace Z80.Core
                                     startingValue + addOrSubtractValue + (carry ? 1 : 0);
 
             flags.Zero = ((byte)result == 0);
-            flags.Carry = result > 0xFF;
+            flags.Carry = ((result & 0x100) != 0);
             flags.Sign = ((sbyte)result < 0);
-            flags.ParityOverflow = (Overflows(startingValue, addOrSubtractValue));
-            flags.HalfCarry = HalfCarry(startingValue, addOrSubtractValue, subtract);
+            flags.ParityOverflow = Overflows(startingValue, addOrSubtractValue, carry, subtract);
+            flags.HalfCarry = HalfCarry(startingValue, addOrSubtractValue, carry, subtract);
             flags.Subtract = subtract; // don't forget to override
             return flags;
         }
@@ -157,11 +159,11 @@ namespace Z80.Core
             };
 
             flags.Zero = ((byte)result == 0x00);
+            flags.Carry = false;
             flags.Sign = (((sbyte)result) < 0);
-            flags.ParityOverflow = (((byte)result).CountBits(true) % 2 == 0);
+            flags.ParityOverflow = ((byte)result).EvenParity();
             flags.HalfCarry = operation == LogicalOperation.And;
             flags.Subtract = false;
-            flags.Carry = false;
             return flags;
         }
 
@@ -175,45 +177,48 @@ namespace Z80.Core
                 BitwiseOperation.ShiftRight => value >> 1,
                 BitwiseOperation.RotateLeft => ((byte)(value << 1)).SetBit(0, value.GetBit(7)),
                 BitwiseOperation.RotateRight => ((byte)(value >> 1)).SetBit(7, value.GetBit(0)),
-                _ => 0x00
+                _ => value
             };
 
             flags.Zero = ((byte)result == 0x00);
+            flags.Carry = ((byte)value).GetBit(7);
             flags.Sign = (((sbyte)result) < 0);
-            flags.ParityOverflow = (((byte)result).CountBits(true) % 2 == 0);
+            flags.ParityOverflow = ((byte)result).EvenParity();
             flags.HalfCarry = false;
             flags.Subtract = false;
-            flags.Carry = ((byte)value).GetBit(7);
             return flags;
         }
 
-        private static bool HalfCarry(byte first, byte second, bool isSubtraction)
+        private static bool HalfCarry(byte first, byte second, bool carry, bool isSubtraction)
         {
-            if (isSubtraction)
-            {
-                return (((first & 0x0F) - (second & 0x0F)) < 0);
-            }
-            else
-            {
-                return (((first & 0x0F) + (second & 0x0F)) & 0x10) == 0x10;
-            }
+            int c = carry ? 1 : 0;
+            return (isSubtraction) ? (((first & 0x0F) - (second & 0x0F) - c) & 0x10) != 0 :
+                                     (((first & 0x0F) + (second & 0x0F) + c) & 0x10) != 0;
         }
 
-        private static bool HalfCarry(ushort first, ushort second, bool isSubtraction)
+        private static bool HalfCarry(ushort first, ushort second, bool carry, bool isSubtraction)
         {
-            return HalfCarry(first.HighByte(), second.HighByte(), isSubtraction);
+            int c = carry ? 1 : 0;
+            return (isSubtraction) ? (((first & 0x0FFF) - (second & 0x0FFF) - c) & 0x1000) != 0 :
+                                     (((first & 0x0FFF) + (second & 0x0FFF) + c) & 0x1000) != 0;
         }
 
-        private static bool Overflows(byte first, byte second)
+        private static bool Overflows(byte first, byte second, bool carry, bool isSubtraction)
         {
-            int result = ((sbyte)first + (sbyte)second);
-            return (result >= 0x80 || result <= -0x80);
+            byte c = (byte)(carry ? 1 : 0);
+            byte result = (byte)(isSubtraction ? (first - second - c) : (first + second + c));
+
+            return (isSubtraction) ? ((first ^ ~second) & (first ^ result) & 0x80) != 0 :
+                                     ((first ^ second) & (first ^ result) & 0x80) != 0;
         }
 
-        private static bool Overflows(ushort first, ushort second)
+        private static bool Overflows(ushort first, ushort second, bool carry, bool isSubtraction)
         {
-            int result = ((short)first + (short)second);
-            return (result >= 0x8000 || result <= -0x8000);
+            ushort c = (ushort)(carry ? 1 : 0);
+            ushort result = (ushort)(isSubtraction ? (first - second - c) : (first + second + c));
+
+            return (isSubtraction) ? ((first ^ ~second) & (first ^ result) & 0x8000) != 0 :
+                                     ((first ^ second) & (first ^ result) & 0x8000) != 0;
         }
     }
 }

@@ -27,7 +27,7 @@ namespace Z80.Core
             }
             else
             {
-                @out(r.C, ByteRegister.B, instruction.OperandRegister);
+                @out(r.C, ByteRegister.B, instruction.GetIOByteRegister());
             }
 
             return new ExecutionResult(package, flags, false, false);

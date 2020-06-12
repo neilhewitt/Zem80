@@ -14,14 +14,20 @@ namespace Z80.Core
             throw new MemoryNotWritableException();
         }
 
+        public override void WriteBytesAt(ushort offset, byte[] bytes)
+        {
+            throw new MemoryNotWritableException();
+        }
+
         new public void Clear()
         {
             // do nothing - we're read-only
         }
 
-        public ReadOnlyMemorySegment(ushort address, ushort sizeInBytes)
-            : base(address, sizeInBytes)
+        public ReadOnlyMemorySegment(ushort address, byte[] contents)
+            : base(address, (uint)contents.Length)
         {
+            base.WriteBytesAt(0, contents);
         }
     }
 }

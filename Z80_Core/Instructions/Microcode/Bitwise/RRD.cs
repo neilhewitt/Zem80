@@ -27,9 +27,13 @@ namespace Z80.Core
             cpu.Memory.WriteByteAt(cpu.Registers.HL, xHL, false);
             cpu.Registers.A = a;
 
-            flags = FlagLookup.BitwiseFlags(a, BitwiseOperation.RotateRight);
+            // bitwise flag lookup doesn't work for this instruction
+            flags.Sign = ((sbyte)a < 0);
+            flags.Zero = (a == 0);
+            flags.ParityOverflow = a.EvenParity();
             flags.HalfCarry = false;
             flags.Subtract = false;
+            // leave carry alone
 
             return new ExecutionResult(package, cpu.Registers.Flags, false, false);
         }

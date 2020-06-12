@@ -325,6 +325,7 @@ XOR (IY+n)     3  FD AE XX        19     ***P00  A=Ax[IY+n]
 XOR r          1  A8+rb            4     ***P00  A=Axr
 XOR N          2  EE XX            7     ***P00  A=AxN
 
+                                         SZHPNC
 
 The flag field contains one of the following:
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Z80.Core
@@ -12,30 +13,6 @@ namespace Z80.Core
             InstructionData data = package.Data;
             Flags flags = cpu.Registers.Flags;
             Registers r = cpu.Registers;
-
-            byte readByte(ushort address)
-            {
-                return cpu.Memory.ReadByteAt(address, false);
-            }
-
-            byte readOffset(ushort address, sbyte offset)
-            {
-                return cpu.Memory.ReadByteAt((ushort)(address + offset), false);
-            }
-
-            byte addByte(byte value)
-            {
-                int result = cpu.Registers.A + value;
-                flags = FlagLookup.ByteArithmeticFlags(cpu.Registers.A, value, false, false);
-                return (byte)result;
-            }
-
-            ushort addWord(ushort first, ushort second)
-            {
-                int result = first + second;
-                flags = FlagLookup.WordArithmeticFlags(flags, first, second, false, false, false);
-                return (ushort)result;
-            }
 
             switch (instruction.Prefix)
             {
@@ -167,6 +144,30 @@ namespace Z80.Core
             }
 
             return new ExecutionResult(package, flags, false, false);
+
+            byte readByte(ushort address)
+            {
+                return cpu.Memory.ReadByteAt(address, false);
+            }
+
+            byte readOffset(ushort address, sbyte offset)
+            {
+                return cpu.Memory.ReadByteAt((ushort)(address + offset), false);
+            }
+
+            byte addByte(byte value)
+            {
+                int result = cpu.Registers.A + value;
+                flags = FlagLookup.ByteArithmeticFlags(cpu.Registers.A, value, false, false);
+                return (byte)result;
+            }
+
+            ushort addWord(ushort first, ushort second)
+            {
+                int result = first + second;
+                flags = FlagLookup.WordArithmeticFlags(flags, first, second, false, false, false);
+                return (ushort)result;
+            }
         }
 
         public ADD()

@@ -4,7 +4,7 @@
     {
         uint SizeInBytes { get; }
 
-        void Map(IMemorySegment memory, ushort startAddress, bool overwriteMappedPages = false);
+        void Map(IMemorySegment memory, bool overwriteMappedPages = false);
         void ClearAllWritableMemory();
         IMemorySegment MemoryFor(ushort address);
     }

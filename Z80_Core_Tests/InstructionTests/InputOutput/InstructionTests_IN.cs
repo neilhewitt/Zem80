@@ -36,7 +36,7 @@ namespace Z80.Core.Tests
 
             bool sign = (sbyte)data < 0;
             bool zero = data == 0;
-            bool parity = data.CountBits(true) % 2 == 0;
+            bool parity = data.EvenParity();
 
             Assert.That(Registers.B, Is.EqualTo(data));
             Assert.That(executionResult.Flags.Check(

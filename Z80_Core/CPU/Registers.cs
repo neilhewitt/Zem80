@@ -87,7 +87,7 @@ namespace Z80.Core
 
         public Registers Snapshot()
         {
-            return new Registers(_registers, _accumulator, _altAccumulator, _flags, _altFlags);
+            return new Registers((byte[])_registers.Clone(), _accumulator, _altAccumulator, new Flags(_flags.Value), new Flags(_altFlags.Value));
         }
 
         public void Clear()
@@ -99,31 +99,39 @@ namespace Z80.Core
             _altAccumulator = 0x00;
         }
 
-        private byte GetRegister(ByteRegister index)
+        private byte GetRegister(ByteRegister register)
         {
-            if (index == ByteRegister.None) return 0xFF;
+            if (register == ByteRegister.None) return 0xFF;
 
-            if (index == ByteRegister.A)
+            if (register == ByteRegister.A)
             {
                 return _accumulator;
             }
-            else
+            else if ((int)register < 14)
             {
-                return _registers[_offset + (int)index];
+                return _registers[_offset + (int)register];
+            }
+            else 
+            {
+                return _registers[(int)register];
             }
         }
 
-        private ushort GetRegisterPair(WordRegister index)
+        private ushort GetRegisterPair(WordRegister registerPair)
         {
-            if (index == WordRegister.None) return 0xFF;
+            if (registerPair == WordRegister.None) return 0xFF;
 
-            if (index == WordRegister.AF)
+            if (registerPair == WordRegister.AF)
             {
                 return GetWord(_accumulator, _flags.Value);
             }
+            else if ((int)registerPair < 14)
+            {
+                return Get16BitValue(_offset + (int)registerPair);
+            }
             else
             {
-                return Get16BitValue(_offset + (int)index);
+                return Get16BitValue((int)registerPair);
             }
         }
 
@@ -135,9 +143,13 @@ namespace Z80.Core
                 {
                     _accumulator = value;
                 }
-                else
+                else if ((int)register < 14)
                 {
                     _registers[_offset + (int)register] = value;
+                }
+                else
+                {
+                    _registers[(int)register] = value;
                 }
             }
         }
@@ -151,9 +163,13 @@ namespace Z80.Core
                     _accumulator = value.HighByte();
                     _flags.Value = value.LowByte();
                 }
-                else
+                else if ((int)registerPair < 14)
                 {
                     Set16BitValue(_offset + (int)registerPair, value);
+                }
+                else
+                {
+                    Set16BitValue((int)registerPair, value);
                 }
             }
         }

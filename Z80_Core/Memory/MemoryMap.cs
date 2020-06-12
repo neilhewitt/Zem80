@@ -20,9 +20,10 @@ namespace Z80.Core
             return _pageMap[PageFromAddress(address)];
         }
 
-        public void Map(IMemorySegment entry, ushort startAddress, bool overwriteMappedPages = false)
+        public void Map(IMemorySegment entry, bool overwriteMappedPages = false)
         {
             int size = (int)entry.SizeInBytes;
+            ushort startAddress = entry.StartAddress;
 
             if (startAddress % PAGE_SIZE_IN_BYTES > 0)
             {
@@ -72,7 +73,7 @@ namespace Z80.Core
             int pages = (int)(sizeInBytes / PAGE_SIZE_IN_BYTES);
             _pageMap = new IMemorySegment[pages];
 
-            if (autoMap) Map(new MemorySegment(0, sizeInBytes), 0); // maps a single block to the whole of memory space (you can map ROM in later)
+            if (autoMap) Map(new MemorySegment(0, sizeInBytes)); // maps a single block to the whole of memory space (you can map ROM in later)
         }
     }
 }

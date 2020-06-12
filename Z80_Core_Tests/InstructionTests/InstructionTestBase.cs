@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using NUnit.Framework.Constraints;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,8 +18,15 @@ namespace Z80.Core.Tests
         [OneTimeSetUp]
         public void Setup()
         {
-            CPU = Bootstrapper.BuildCPU();
-            _random = new Random(DateTime.Now.Millisecond);
+            try
+            {
+                CPU = Bootstrapper.BuildCPU(speedInMHz: 3.5);
+                _random = new Random(DateTime.Now.Millisecond);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
 
         [SetUp]

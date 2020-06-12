@@ -121,6 +121,10 @@ namespace Z80.Core
             return bits;
         }
 
+        public static bool EvenParity(this byte input)
+        {
+            return input.CountBits(true) % 2 == 0;
+        }
 
         public static ushort ToWord(this (byte low, byte high) bytePair)
         {

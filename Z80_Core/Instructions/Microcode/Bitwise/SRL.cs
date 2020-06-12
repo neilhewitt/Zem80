@@ -13,15 +13,14 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             Registers r = cpu.Registers;
             sbyte offset = (sbyte)(data.Argument1);
-            ByteRegister register = instruction.OperandRegister;
+            ByteRegister register = instruction.GetByteRegister();
 
-            byte setFlags(byte original, byte shifted)
+            void setFlags(byte original, byte shifted)
             {
-                flags = FlagLookup.BitwiseFlags(original, BitwiseOperation.ShiftRight);
-                flags.Carry = shifted.GetBit(0);
+                flags = FlagLookup.BitwiseFlags(shifted, BitwiseOperation.ShiftRight);
+                flags.Carry = original.GetBit(0);
                 flags.HalfCarry = false;
                 flags.Subtract = false;
-                return shifted;
             }
 
             byte original, shifted;
@@ -29,7 +28,7 @@ namespace Z80.Core
             {
                 original = r[register];
                 shifted = (byte)(original >> 1);
-                shifted = setFlags(original, shifted);
+                setFlags(original, shifted);
                 r[register] = shifted;
             }
             else
@@ -43,7 +42,7 @@ namespace Z80.Core
                 };
                 original = cpu.Memory.ReadByteAt(address, false);
                 shifted = (byte)(original >> 1);
-                shifted = setFlags(original, shifted);
+                setFlags(original, shifted);
                 if (instruction.HLIX || instruction.HLIY) cpu.Timing.InternalOperationCycle(4);
                 cpu.Memory.WriteByteAt(address, shifted, false);
             }

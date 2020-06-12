@@ -1,0 +1,16 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="276" d:DesignHeight="256"
+        Width="276" Height="256"
+        x:Class="Z80.ZXSpectrumUI.MainWindow"
+        Title="ZXSpectrumUI">
+  <DockPanel>
+    <Button DockPanel.Dock="Bottom">Reset</Button>
+    <Button DockPanel.Dock="Bottom">Exit</Button>
+    <Panel>
+      <Image Width="256" Height="192" Name="Display" />
+    </Panel>
+  </DockPanel>
+</Window>
