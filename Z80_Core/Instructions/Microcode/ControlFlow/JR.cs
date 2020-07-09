@@ -10,10 +10,8 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            bool conditionTrue = false;
-            bool jumpRequired = false;
 
-            void jr()
+            if (instruction.Condition == Condition.None || cpu.Registers.Flags.SatisfyCondition(instruction.Condition))
             {
                 cpu.Timing.InternalOperationCycle(5);
                 ushort address = (ushort)(cpu.Registers.PC - 2); // wind back to the address of the JR instruction as PC has already moved on
@@ -25,35 +23,9 @@ namespace Z80.Core
                 address = (ushort)(address + (sbyte)data.Argument1 + 2);
 
                 cpu.Registers.PC = (address);
-                conditionTrue = instruction.Opcode != 0x18;
-                jumpRequired = true;
             }
 
-            switch (instruction.Prefix)
-            {
-                case InstructionPrefix.Unprefixed:
-                    switch (instruction.Opcode)
-                    {
-                        case 0x18: // JR o
-                            jr();
-                            break;
-                        case 0x20: // JR NZ,o
-                            if (!cpu.Registers.Flags.Zero) jr();
-                            break;
-                        case 0x28: // JR Z,o
-                            if (cpu.Registers.Flags.Zero) jr();
-                            break;
-                        case 0x30: // JR NC,o
-                            if (!cpu.Registers.Flags.Carry) jr();
-                            break;
-                        case 0x38: // JR C,o
-                            if (cpu.Registers.Flags.Carry) jr();
-                            break;
-                    }
-                    break;
-            }
-
-            return new ExecutionResult(package, cpu.Registers.Flags, conditionTrue, jumpRequired);
+            return new ExecutionResult(package, cpu.Registers.Flags);
         }
 
         public JR()

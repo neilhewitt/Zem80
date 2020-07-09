@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Z80.Core
@@ -11,53 +12,31 @@ namespace Z80.Core
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             Registers r = cpu.Registers;
-            ushort swap;
 
-            switch (instruction.Prefix)
+            if (instruction.Opcode == 0x08)
             {
-                case InstructionPrefix.Unprefixed:
-                    switch (instruction.Opcode)
-                    {
-                        case 0x08: // EX AF,AF'
-                            r.ExchangeAF();
-                            break;
-                        case 0xE3: // EX (SP),HL
-                            swap = r.HL;
-                            r.HL = cpu.Memory.ReadWordAt(r.SP, false);
-                            cpu.Memory.WriteWordAt(r.SP, swap, false);
-                            break;
-                        case 0xEB: // EX DE,HL
-                            swap = r.DE;
-                            r.DE = r.HL;
-                            r.HL = swap;
-                            break;
-                    }
-                    break;
-
-                case InstructionPrefix.DD:
-                    switch (instruction.Opcode)
-                    {
-                        case 0xE3: // EX (SP),IX
-                            swap = r.IX;
-                            r.IX = cpu.Memory.ReadWordAt(r.SP, false);
-                            cpu.Memory.WriteWordAt(r.SP, swap, false);
-                            break;
-                    }
-                    break;
-
-                case InstructionPrefix.FD:
-                    switch (instruction.Opcode)
-                    {
-                        case 0xE3: // EX (SP),IY
-                            swap = r.IY;
-                            r.IY = cpu.Memory.ReadWordAt(r.SP, false);
-                            cpu.Memory.WriteWordAt(r.SP, swap, false);
-                            break;
-                    }
-                    break;
+                // EX AF,AF'
+                r.ExchangeAF();
+            }
+            else
+            {
+                if (instruction.Target == InstructionElement.AddressFromSP)
+                {
+                    // EX (SP),HL/IX+o/IY+o
+                    ushort value = instruction.MarshalSourceWord(data, cpu, out ushort address);
+                    r.HL = value;
+                    cpu.Memory.WriteWordAt(r.SP, value, false);
+                }
+                else
+                {
+                    // EX DE,HL
+                    ushort de = r.DE;
+                    r.DE = r.HL;
+                    r.HL = de;
+                }
             }
 
-            return new ExecutionResult(package, null, false, false);
+            return new ExecutionResult(package, null);;
         }
 
         public EX()

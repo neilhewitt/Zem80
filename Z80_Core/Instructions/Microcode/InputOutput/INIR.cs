@@ -25,8 +25,7 @@ namespace Z80.Core
             flags.Sign = false;
             flags.Subtract = true;
 
-            bool conditionTrue = (r.B == 0);
-            return new ExecutionResult(package, flags, conditionTrue, !conditionTrue);
+            return new ExecutionResult(package, flags);
         }
 
         public INIR()

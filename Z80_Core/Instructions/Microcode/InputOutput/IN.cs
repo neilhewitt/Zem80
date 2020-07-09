@@ -13,7 +13,7 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             Registers r = cpu.Registers;
 
-            byte @in(byte portNumber, ByteRegister fromRegister, ByteRegister toRegister)
+            byte @in(byte portNumber, ByteRegister toRegister)
             {
                 Port port = cpu.Ports[portNumber];
                 port.SignalRead();
@@ -25,12 +25,12 @@ namespace Z80.Core
             if (instruction.Prefix == InstructionPrefix.Unprefixed)
             {
                 // IN A,(n)
-                @in(data.Argument1, ByteRegister.A, ByteRegister.A);
+                @in(data.Argument1, ByteRegister.A);
             }
             else
             {
                 // IN r,(C)
-                byte input = @in(r.C, ByteRegister.B, instruction.GetIOByteRegister());
+                byte input = @in(r.C, instruction.Target.AsByteRegister());
                 flags.Sign = ((sbyte)input < 0);
                 flags.Zero = (input == 0);
                 flags.ParityOverflow = input.EvenParity();
@@ -38,7 +38,7 @@ namespace Z80.Core
                 flags.Subtract = false;
             }
 
-            return new ExecutionResult(package, flags, false, false);
+            return new ExecutionResult(package, flags);
         }
 
         public IN()

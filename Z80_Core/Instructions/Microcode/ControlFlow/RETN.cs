@@ -9,7 +9,7 @@ namespace Z80.Core
         public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             cpu.Pop(WordRegister.PC);
-            return new ExecutionResult(package, cpu.Registers.Flags, false, true);
+            return new ExecutionResult(package, cpu.Registers.Flags);
         }
 
         public RETN()

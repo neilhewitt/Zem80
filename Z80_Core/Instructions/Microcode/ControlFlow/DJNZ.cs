@@ -10,16 +10,12 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            bool conditionTrue = false;
 
             sbyte jump = 0;
             if (cpu.Registers.B > 0)
             {
                 cpu.Timing.InternalOperationCycle(5);
-
-                conditionTrue = true;
                 cpu.Registers.B--;
-
                 ushort address = (ushort)(cpu.Registers.PC - 2); // wind back to the address of the DJNZ instruction as PC has already moved on
 
                 // the jump is relative to the address of the DJNZ instruction but the jump *displacement* is calculated from the start of the *next* instruction. 
@@ -30,7 +26,7 @@ namespace Z80.Core
                 cpu.Registers.PC = address;
             }
 
-            return new ExecutionResult(package, cpu.Registers.Flags, conditionTrue, jump != 0);
+            return new ExecutionResult(package, cpu.Registers.Flags);
         }
 
         public DJNZ()

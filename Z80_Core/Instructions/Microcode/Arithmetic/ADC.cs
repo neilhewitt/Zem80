@@ -13,125 +13,29 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             Registers r = cpu.Registers;
 
-            switch (instruction.Prefix)
+            if (instruction.TargetsWordRegister)
             {
-                case InstructionPrefix.Unprefixed:
-                    switch (instruction.Opcode)
-                    {
-                        case 0x88: // ADC A,B
-                            r.A = addByteWithCarry(r.B);
-                            break;
-                        case 0x89: // ADC A,C
-                            r.A = addByteWithCarry(r.C);
-                            break;
-                        case 0x8A: // ADC A,D
-                            r.A = addByteWithCarry(r.D);
-                            break;
-                        case 0x8B: // ADC A,E
-                            r.A = addByteWithCarry(r.E);
-                            break;
-                        case 0x8C: // ADC A,H
-                            r.A = addByteWithCarry(r.H);
-                            break;
-                        case 0x8D: // ADC A,L
-                            r.A = addByteWithCarry(r.L);
-                            break;
-                        case 0x8F: // ADC A,A
-                            r.A = addByteWithCarry(r.A);
-                            break;
-                        case 0x8E: // ADC A,(HL)
-                            r.A = addByteWithCarry(readByte(r.HL));
-                            break;
-                        case 0xCE: // ADC A,n
-                            r.A = addByteWithCarry(data.Argument1);
-                            break;
-                    }
-                    break;
+                ushort left = r.HL;
+                cpu.Timing.InternalOperationCycle(4);
+                cpu.Timing.InternalOperationCycle(3);
+                ushort right = instruction.MarshalSourceWord(data, cpu, out ushort address);
 
-                case InstructionPrefix.ED:
-                    switch (instruction.Opcode)
-                    {
-                        case 0x4A: // ADC HL,BC
-                            cpu.Timing.InternalOperationCycle(4);
-                            cpu.Timing.InternalOperationCycle(3);
-                            r.HL = addWordWithCarry(r.BC);
-                            break;
-                        case 0x5A: // ADC HL,DE
-                            cpu.Timing.InternalOperationCycle(4);
-                            cpu.Timing.InternalOperationCycle(3);
-                            r.HL = addWordWithCarry(r.DE);
-                            break;
-                        case 0x6A: // ADC HL,HL                            
-                            cpu.Timing.InternalOperationCycle(4);
-                            cpu.Timing.InternalOperationCycle(3);
-                            r.HL = addWordWithCarry(r.HL);
-                            break;
-                        case 0x7A: // ADC HL,SP
-                            cpu.Timing.InternalOperationCycle(4);
-                            cpu.Timing.InternalOperationCycle(3);
-                            r.HL = addWordWithCarry(r.SP);
-                            break;
-                    }
-                    break;
-
-                case InstructionPrefix.DD:
-                    switch (instruction.Opcode)
-                    {
-                        case 0x8C: // ADC A,IXh
-                            r.A = addByteWithCarry(r.IXh);
-                            break;
-                        case 0x8D: // ADC A,IXl
-                            r.A = addByteWithCarry(r.IXl);
-                            break;
-                        case 0x8E: // ADC A,(IX+o)
-                            cpu.Timing.InternalOperationCycle(5);
-                            r.A = addByteWithCarry(readOffset(r.IX, (sbyte)data.Argument1));
-                            break;
-                    }
-                    break;
-
-                case InstructionPrefix.FD:
-                    switch (instruction.Opcode)
-                    {
-                        case 0x8C: // ADC A,IYh
-                            r.A = addByteWithCarry(r.IYh);
-                            break;
-                        case 0x8D: // ADC A,IYl
-                            r.A = addByteWithCarry(r.IYl);
-                            break;
-                        case 0x8E: // ADC A,(IY+o)
-                            cpu.Timing.InternalOperationCycle(5);
-                            r.A = addByteWithCarry(readOffset(r.IY, (sbyte)data.Argument1));
-                            break;
-                    }
-                    break;
+                var addition = ALUOperations.Add(left, right, flags.Carry, true, flags);
+                r.HL = addition.Result;
+                flags = addition.Flags;
             }
-
-            return new ExecutionResult(package, flags, false, false);
-
-            byte readByte(ushort address)
+            else
             {
-                return cpu.Memory.ReadByteAt(address, false);
-            }
+                byte left = r.A;
+                if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
+                byte right = instruction.MarshalSourceByte(data, cpu, out ushort address);
 
-            byte readOffset(ushort address, sbyte offset)
-            {
-                return cpu.Memory.ReadByteAt((ushort)(address + offset), false);
+                var addition = ALUOperations.Add(left, right, flags.Carry);
+                r.A = addition.Result;
+                flags = addition.Flags;
             }
-
-            byte addByteWithCarry(int value)
-            {
-                int result = cpu.Registers.A + value + (flags.Carry ? 1 : 0);
-                flags = FlagLookup.ByteArithmeticFlags(cpu.Registers.A, value, flags.Carry, false);
-                return (byte)result;
-            }
-
-            ushort addWordWithCarry(int value)
-            {
-                int result = cpu.Registers.HL + value + (flags.Carry ? 1 : 0);
-                flags = FlagLookup.WordArithmeticFlags(flags, cpu.Registers.HL, value, flags.Carry, true, false);
-                return (ushort)result;
-            }
+          
+            return new ExecutionResult(package, flags);
         }
 
         public ADC()

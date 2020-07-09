@@ -14,18 +14,20 @@ namespace Z80.Core
 
             byte a = cpu.Registers.A;
             byte b = cpu.Memory.ReadByteAt(cpu.Registers.HL, false);
-            int result = a - b;
             cpu.Registers.HL--;
             cpu.Registers.BC--;
 
-            flags = FlagLookup.ByteArithmeticFlags(a, b, false, true);
-            flags.ParityOverflow = (cpu.Registers.BC - 1 != 0);
+            flags.Sign = (byte)(a - b) < 0;
+            flags.Zero = a - b == 0; 
+            flags.HalfCarry = FlagLookup.HalfCarry(a, b, false, true);
+            flags.ParityOverflow = ((ushort)(cpu.Registers.BC - 1) != 0);
+            flags.Subtract = true;
 
-            bool conditionTrue = (result == 0 || cpu.Registers.BC == 0);
+            bool conditionTrue = (flags.Zero || cpu.Registers.BC == 0);
             if (conditionTrue) cpu.Timing.InternalOperationCycle(5);
             else cpu.Registers.PC = package.InstructionAddress;
 
-            return new ExecutionResult(package, flags, conditionTrue, !conditionTrue);
+            return new ExecutionResult(package, flags);
         }
 
         public CPDR()

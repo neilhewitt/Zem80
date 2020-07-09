@@ -13,7 +13,7 @@ namespace Z80.Core
 
             cpu.Halt(HaltReason.HaltInstruction);
 
-            return new ExecutionResult(package, cpu.Registers.Flags, false, false);
+            return new ExecutionResult(package, cpu.Registers.Flags);
         }
 
         public HALT()

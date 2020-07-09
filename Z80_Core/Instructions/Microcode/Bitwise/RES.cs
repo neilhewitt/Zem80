@@ -13,7 +13,7 @@ namespace Z80.Core
             Registers r = cpu.Registers;
             byte bitIndex = instruction.GetBitIndex();
             sbyte offset = (sbyte)(data.Argument1);
-            ByteRegister register = instruction.GetByteRegister();
+            ByteRegister register = instruction.Target.AsByteRegister();
 
             if (register != ByteRegister.None)
             {
@@ -32,7 +32,7 @@ namespace Z80.Core
                 cpu.Memory.WriteByteAt(address, cpu.Memory.ReadByteAt(address, false).SetBit(bitIndex, false), false);
             }
 
-            return new ExecutionResult(package, null, false, false);
+            return new ExecutionResult(package, null);;
         }
 
         public RES()

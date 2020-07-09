@@ -189,21 +189,21 @@ namespace Z80.Core
             return flags;
         }
 
-        private static bool HalfCarry(byte first, byte second, bool carry, bool isSubtraction)
+        public static bool HalfCarry(byte first, byte second, bool carry, bool isSubtraction)
         {
             int c = carry ? 1 : 0;
             return (isSubtraction) ? (((first & 0x0F) - (second & 0x0F) - c) & 0x10) != 0 :
                                      (((first & 0x0F) + (second & 0x0F) + c) & 0x10) != 0;
         }
 
-        private static bool HalfCarry(ushort first, ushort second, bool carry, bool isSubtraction)
+        public static bool HalfCarry(ushort first, ushort second, bool carry, bool isSubtraction)
         {
             int c = carry ? 1 : 0;
             return (isSubtraction) ? (((first & 0x0FFF) - (second & 0x0FFF) - c) & 0x1000) != 0 :
                                      (((first & 0x0FFF) + (second & 0x0FFF) + c) & 0x1000) != 0;
         }
 
-        private static bool Overflows(byte first, byte second, bool carry, bool isSubtraction)
+        public static bool Overflows(byte first, byte second, bool carry, bool isSubtraction)
         {
             byte c = (byte)(carry ? 1 : 0);
             byte result = (byte)(isSubtraction ? (first - second - c) : (first + second + c));
@@ -212,7 +212,7 @@ namespace Z80.Core
                                      ((first ^ second) & (first ^ result) & 0x80) != 0;
         }
 
-        private static bool Overflows(ushort first, ushort second, bool carry, bool isSubtraction)
+        public static bool Overflows(ushort first, ushort second, bool carry, bool isSubtraction)
         {
             ushort c = (ushort)(carry ? 1 : 0);
             ushort result = (ushort)(isSubtraction ? (first - second - c) : (first + second + c));

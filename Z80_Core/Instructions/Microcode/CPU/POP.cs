@@ -9,11 +9,11 @@ namespace Z80.Core
         public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             Instruction instruction = package.Instruction;
-            
-            WordRegister register = instruction.GetWordRegister();
+
+            WordRegister register = instruction.Target.AsWordRegister();
             cpu.Pop(register);
 
-            return new ExecutionResult(package, cpu.Registers.Flags, false, false);
+            return new ExecutionResult(package, cpu.Registers.Flags);
         }
 
         public POP()

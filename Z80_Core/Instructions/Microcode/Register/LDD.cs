@@ -22,7 +22,7 @@ namespace Z80.Core
             flags.ParityOverflow = (r.BC != 0);
             flags.Subtract = false;
 
-            return new ExecutionResult(package, flags, false, false);
+            return new ExecutionResult(package, flags);
         }
 
         public LDD()

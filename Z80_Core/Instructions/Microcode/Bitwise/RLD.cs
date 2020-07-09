@@ -35,7 +35,7 @@ namespace Z80.Core
             flags.Subtract = false;
             // leave carry alone
 
-            return new ExecutionResult(package, cpu.Registers.Flags, false, false);
+            return new ExecutionResult(package, cpu.Registers.Flags);
         }
 
         public RLD()

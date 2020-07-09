@@ -162,9 +162,9 @@ namespace Z80_Console
             if (mnemonic.Contains("o")) mnemonic = mnemonic.Replace("o", "0x" + e.Data.Argument1.ToString("X2"));
             Console.Write(e.InstructionAddress.ToString("X4") + ": " + mnemonic.PadRight(20));
             regValue(ByteRegister.A); wregValue(WordRegister.BC); wregValue(WordRegister.DE); wregValue(WordRegister.HL); wregValue(WordRegister.SP); wregValue(WordRegister.PC);
-            if (e.Instruction.Condition.HasValue)
+            if (e.Instruction.Condition != Condition.None)
             {
-                Console.Write(e.Instruction.Condition.ToString() + ": " + (_cpu.Registers.Flags.SatisfyCondition(e.Instruction.Condition.Value) ? "true" : "false"));
+                Console.Write(e.Instruction.Condition.ToString() + ": " + (_cpu.Registers.Flags.SatisfyCondition(e.Instruction.Condition) ? "true" : "false"));
             }
 
             _lastRegisters = _cpu.Registers.Snapshot();

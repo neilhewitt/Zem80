@@ -8,54 +8,42 @@ namespace Z80.Core
 {
     public class Instruction
     {
+        private bool HLIX => Prefix == InstructionPrefix.DD || Prefix == InstructionPrefix.DDCB;
+        private bool HLIY => Prefix == InstructionPrefix.FD || Prefix == InstructionPrefix.FDCB;
+
         public InstructionPrefix Prefix { get; private set; }
         public byte Opcode { get; private set; }
-        public int FullOpcode { get; private set; }
         public string Mnemonic { get; private set; }
-        public ArgumentType Argument1 { get; private set; }
-        public ArgumentType Argument2 { get; private set; }
-        public Condition? Condition { get; private set; }
+        public Condition Condition { get; private set; }
         public byte SizeInBytes { get; private set; }
         public IReadOnlyList<MachineCycle> Timing { get; private set; }
         public TimingExceptions TimingExceptions { get; private set; }
-        public bool HLIX => Prefix == InstructionPrefix.DD || Prefix == InstructionPrefix.DDCB;
-        public bool HLIY => Prefix == InstructionPrefix.FD || Prefix == InstructionPrefix.FDCB;
+        public bool IsIndexed => HLIX || HLIY;
+        public bool IsConditional => Condition != Condition.None;
         public IMicrocode Microcode { get; private set; }
+        public InstructionElement Target { get; private set; }
+        public InstructionElement Source { get; private set; }
+        public InstructionElement Argument1 { get; private set; }
+        public InstructionElement Argument2 { get; private set; }
+        public bool TargetsByteRegister => Target >= InstructionElement.A && Target <= InstructionElement.IYl;
+        public bool TargetsWordRegister => Target >= InstructionElement.AF && Target <= InstructionElement.SP;
+        public bool TargetsByteInMemory => (Target >= InstructionElement.AddressFromHL && Target <= InstructionElement.AddressFromIYAndOffset);
 
-        public Instruction(string opcode, string mnemonic, ArgumentType argument1, ArgumentType argument2, byte sizeInBytes, MachineCycle[] machineCycles, IMicrocode microcode = null)
+        internal int FullOpcode { get; private set; }
+
+        public Instruction(string opcode, string mnemonic, Condition condition, InstructionElement target, InstructionElement source, InstructionElement arg1, InstructionElement arg2, byte sizeInBytes, MachineCycle[] machineCycles, IMicrocode microcode = null)
         {
-            // opcode comes in as a string in the format (example) '0xDDCB48' which would be a DDCB prefix + 48 opcode byte
-            // break this down into three forms: a 'full' opcode as a hex integer, a prefix type (enum), and an opcode byte
             FullOpcode = int.Parse(opcode, NumberStyles.HexNumber);
             Prefix = opcode.Length == 2 ? InstructionPrefix.Unprefixed : (InstructionPrefix)Enum.Parse(typeof(InstructionPrefix), opcode[..^2], true);
-            Opcode = byte.Parse(opcode[^2..], NumberStyles.HexNumber); ;
+            Opcode = byte.Parse(opcode[^2..], NumberStyles.HexNumber);
             
             Mnemonic = mnemonic;
-            Argument1 = argument1;
-            Argument2 = argument2;
             SizeInBytes = sizeInBytes;
-
-            // add condition for conditional instructions - relying on the mnemonic string is a bit of a hack... but it works
-            if (mnemonic.Contains(' ') && new string[] { "RET", "JP", "JR", "CALL" }.Any(x => mnemonic.StartsWith(x)))
-            {
-                string right = mnemonic.Split(' ', ',')[1];
-                if (Enum.TryParse<Condition>(right, out Condition condition))
-                {
-                    Condition = condition;
-                }
-            }
-
-            // deal with timing + any exceptions
-            Timing = new List<MachineCycle>(machineCycles);
-            bool odh4 = false, mr4 = false, mw5 = false;
-            if (Mnemonic.StartsWith("CALL"))
-            {
-                // specifically for CALL instructions, the high byte operand read is 4 clock cycles rather than 3 *if* the condition is true (or there is no condition)
-                odh4 = true;
-            }
-            if (Timing.Any(x => x.Type == MachineCycleType.MemoryRead && x.TStates == 4)) mr4 = true;
-            if (Timing.Any(x => x.Type == MachineCycleType.MemoryWrite && x.TStates == 5)) mw5 = true;
-            TimingExceptions = new TimingExceptions(odh4, mr4, mw5);
+            Target = target;
+            Source = source;
+            Argument1 = arg1;
+            Argument2 = arg2;
+            Condition = condition;
 
             // this is expensive, but only done once at startup; binds the Instruction directly to the method instance implementing it
             if (microcode == null)
@@ -67,6 +55,18 @@ namespace Z80.Core
             {
                 Microcode = microcode;
             }
+
+            // deal with timing + any exceptions
+            Timing = new List<MachineCycle>(machineCycles);
+            bool odh4 = false, mr4 = false, mw5 = false;
+            if (Microcode is CALL)
+            {
+                // specifically for CALL instructions, the high byte operand read is 4 clock cycles rather than 3 *if* the condition is true (or there is no condition)
+                odh4 = true;
+            }
+            if (Timing.Any(x => x.Type == MachineCycleType.MemoryRead && x.TStates == 4)) mr4 = true;
+            if (Timing.Any(x => x.Type == MachineCycleType.MemoryWrite && x.TStates == 5)) mw5 = true;
+            TimingExceptions = new TimingExceptions(odh4, mr4, mw5);
         }
     }
 }

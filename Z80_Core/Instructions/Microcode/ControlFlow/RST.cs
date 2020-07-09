@@ -17,7 +17,7 @@ namespace Z80.Core
             cpu.Push(WordRegister.PC);
             cpu.Registers.PC = (address);
 
-            return new ExecutionResult(package, cpu.Registers.Flags, false, true);
+            return new ExecutionResult(package, cpu.Registers.Flags);
         }
 
         public RST()

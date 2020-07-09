@@ -9,7 +9,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Z80_Core\Z80_Core.csproj" />
     <ProjectReference Include="..\Z80_SimpleVM\Z80_SimpleVM.csproj" />
-    <ProjectReference Include="..\ZXSpectrumVM\ZXSpectrumVM.csproj" />
   </ItemGroup>
 
   <ItemGroup>

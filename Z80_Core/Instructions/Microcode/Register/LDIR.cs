@@ -27,7 +27,7 @@ namespace Z80.Core
             else r.PC = package.InstructionAddress;
             
 
-            return new ExecutionResult(package, flags, conditionTrue, !conditionTrue);
+            return new ExecutionResult(package, flags);
         }
 
         public LDIR()

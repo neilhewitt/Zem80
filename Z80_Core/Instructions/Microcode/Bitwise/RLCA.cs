@@ -21,7 +21,7 @@ namespace Z80.Core
             flags.Subtract = false;
             r.A = value;
 
-            return new ExecutionResult(package, flags, false, false);
+            return new ExecutionResult(package, flags);
         }
 
         public RLCA()

@@ -2,6 +2,6 @@
 {
     public enum Condition
     {
-        Z, NZ, C, NC, PO, PE, M, P
+        Z, NZ, C, NC, PO, PE, M, P, None
     }
 }

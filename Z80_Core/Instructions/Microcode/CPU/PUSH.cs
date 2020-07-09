@@ -10,10 +10,10 @@ namespace Z80.Core
         {
             Instruction instruction = package.Instruction;
 
-            WordRegister register = instruction.GetWordRegister();
+            WordRegister register = instruction.Target.AsWordRegister();
             cpu.Push(register);
 
-            return new ExecutionResult(package, cpu.Registers.Flags, false, false);
+            return new ExecutionResult(package, cpu.Registers.Flags);
         }
 
         public PUSH()

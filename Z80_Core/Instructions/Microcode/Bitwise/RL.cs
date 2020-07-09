@@ -14,7 +14,7 @@ namespace Z80.Core
             Registers r = cpu.Registers;
 
             sbyte offset = (sbyte)(data.Argument1);
-            ByteRegister register = instruction.GetByteRegister();
+            ByteRegister register = instruction.Target.AsByteRegister();
             bool previousCarry = flags.Carry;
 
             byte original, shifted;
@@ -39,7 +39,7 @@ namespace Z80.Core
                 shifted = (byte)(original << 1);
                 shifted = shifted.SetBit(0, previousCarry);
                 setFlags(original, shifted);
-                if (instruction.HLIX || instruction.HLIY) cpu.Timing.InternalOperationCycle(4);
+                if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(4);
                 cpu.Memory.WriteByteAt(address, shifted, false);
             }
 
@@ -51,7 +51,7 @@ namespace Z80.Core
                 flags.Subtract = false;
             }
 
-            return new ExecutionResult(package, flags, false, false);
+            return new ExecutionResult(package, flags);
         }
 
         public RL()

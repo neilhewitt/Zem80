@@ -14,108 +14,38 @@ namespace Z80.Core
             byte offset = data.Argument1;
             Flags flags = cpu.Registers.Flags;
 
-            ushort decw(ushort value)
+            if (instruction.TargetsWordRegister)
             {
-                return (ushort)(value - 1);
+                //dec 16 - bit
+                WordRegister register = instruction.Target.AsWordRegister();
+                ushort value = r[register];
+                r[register] = (ushort)(value - 1);
             }
-
-            byte dec(byte value)
+            else
             {
-                int result = value - 1;
+                byte value = 0;
+                if (instruction.TargetsByteInMemory)
+                {
+                    // dec byte in memory
+                    if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
+                    value = instruction.MarshalSourceByte(data, cpu, out ushort address);
+                    cpu.Memory.WriteByteAt(address, (byte)(value - 1), false);
+                }
+                else
+                {
+                    // it's an 8-bit dec
+                    ByteRegister register = instruction.Target.AsByteRegister();
+                    value = r[register];
+                    r[register] = (byte)(value - 1);
+                }
+
                 bool carry = flags.Carry;
                 flags = FlagLookup.ByteArithmeticFlags(value, 1, false, true);
                 flags.ParityOverflow = (value == 0x80);
                 flags.Carry = carry; // always unaffected
-                flags.Subtract = true;
-                return (byte)result;
             }
 
-            switch (instruction.Prefix)
-            {
-                case InstructionPrefix.Unprefixed:
-                    switch (instruction.Opcode)
-                    {
-                        case 0x05: // DEC B
-                            r.B = dec(r.B);
-                            break;
-                        case 0x0B: // DEC BC
-                            r.BC = decw(r.BC);
-                            break;
-                        case 0x0D: // DEC C
-                            r.C = dec(r.C);
-                            break;
-                        case 0x15: // DEC D
-                            r.D = dec(r.D);
-                            break;
-                        case 0x1B: // DEC DE
-                            r.DE = decw(r.DE);
-                            break;
-                        case 0x1D: // DEC E
-                            r.E = dec(r.E);
-                            break;
-                        case 0x25: // DEC H
-                            r.H = dec(r.H);
-                            break;
-                        case 0x2B: // DEC HL
-                            r.HL = decw(r.HL);
-                            break;
-                        case 0x2D: // DEC L
-                            r.L = dec(r.L);
-                            break;
-                        case 0x35: // DEC (HL)
-                            cpu.Memory.WriteByteAt(r.HL, dec(cpu.Memory.ReadByteAt(r.HL, false)), false);
-                            break;
-                        case 0x3B: // DEC SP
-                            r.SP = decw(r.SP);
-                            break;
-                        case 0x3D: // DEC A
-                            r.A = dec(r.A);
-                            break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.DD:
-                    switch (instruction.Opcode)
-                    {
-                        case 0x25: // DEC IXh
-                            r.IXh = dec(r.IXh);
-                            break;
-                        case 0x2D: // DEC IXl
-                            r.IXl = dec(r.IXl);
-                            break;
-                        case 0x2B: // DEC IX
-                            r.IX = decw(r.IX);
-                            break;
-                        case 0x35: // DEC (IX+o)
-                            cpu.Timing.InternalOperationCycle(5);
-                            cpu.Memory.WriteByteAt((ushort)(r.IX + (sbyte)offset), dec(cpu.Memory.ReadByteAt((ushort)(r.IX + (sbyte)offset), false)), false);
-                            break;
-
-                    }
-                    break;
-
-                case InstructionPrefix.FD:
-                    switch (instruction.Opcode)
-                    {
-                        case 0x25: // DEC IYh
-                            r.IYh = dec(r.IYh);
-                            break;
-                        case 0x2D: // DEC IYl
-                            r.IYl = dec(r.IYl);
-                            break;
-                        case 0x2B: // DEC IY
-                            r.IY = decw(r.IY);
-                            break;
-                        case 0x35: // DEC (IY+o)
-                            cpu.Timing.InternalOperationCycle(5);
-                            cpu.Memory.WriteByteAt((ushort)(r.IY + (sbyte)offset), dec(cpu.Memory.ReadByteAt((ushort)(r.IY + (sbyte)offset), false)), false);
-                            break;
-                    }
-                    break;
-            }
-
-            return new ExecutionResult(package, flags, false, false);
+            return new ExecutionResult(package, flags);
         }
 
         public DEC()

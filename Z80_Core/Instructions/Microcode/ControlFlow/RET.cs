@@ -11,53 +11,13 @@ namespace Z80.Core
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             Flags flags = cpu.Registers.Flags;
-            bool conditionTrue = false;
-            bool retRequired = false;
 
-            void ret()
+            if (instruction.Condition == Condition.None || flags.SatisfyCondition(instruction.Condition))
             {
                 cpu.Pop(WordRegister.PC);
-                conditionTrue = instruction.Opcode != 0xC9;
-                retRequired = true;
             }
 
-            switch (instruction.Prefix)
-            {
-                case InstructionPrefix.Unprefixed:
-                    switch (instruction.Opcode)
-                    {
-                        case 0xC0: // RET NZ
-                            if (!flags.Zero) ret();
-                            break;
-                        case 0xC8: // RET Z
-                            if (flags.Zero) ret();
-                            break;
-                        case 0xC9: // RET
-                            ret();
-                            break;
-                        case 0xD0: // RET NC
-                            if (!flags.Carry) ret();
-                            break;
-                        case 0xD8: // RET C
-                            if (flags.Carry) ret();
-                            break;
-                        case 0xE0: // RET PO
-                            if (!flags.ParityOverflow) ret();
-                            break;
-                        case 0xE8: // RET PE
-                            if (flags.ParityOverflow) ret();
-                            break;
-                        case 0xF0: // RET P
-                            if (!flags.Sign) ret();
-                            break;
-                        case 0xF8: // RET M
-                            if (flags.Sign) ret();
-                            break;
-                    }
-                    break;
-            }
-
-            return new ExecutionResult(package, cpu.Registers.Flags, conditionTrue, retRequired);
+            return new ExecutionResult(package, cpu.Registers.Flags);
         }
 
         public RET()

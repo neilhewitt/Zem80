@@ -128,10 +128,10 @@ binary-debuggable-source
 0137 0137 s 	halt		; warm boot
 0138 0138 s 
 0138 0138 s tests:
-0138 0138 d 5e17
-0138 0138 s 	dw	rotxy
-013a 013a d be17
-013a 013a s 	dw  rotz80
+0138 0138 d fe04
+0138 0138 s 	dw	cpd1
+013a 013a d 5e05
+013a 013a s 	dw	cpi1
 013c 013c d 0000
 013c 013c s 	dw	0
 013e 013e s 
@@ -5826,23 +5826,24 @@ binary-debuggable-source
 041f a ?b0031
 035f a ?b0023
 029f a ?b0015
+04fe a cpd1
 01df a ?b0007
-047f a ?b0035
 03bf a ?b0027
 02ff a ?b0019
-04fe a cpd1
+047f a ?b0035
+055e a cpi1
 013f a ?n0000
 0153 a ?n0001
 0167 a ?n0002
 019f a ?n0004
 01b3 a ?n0005
 01c7 a ?n0006
-0227 a ?n0010
 01ff a ?n0008
 0213 a ?n0009
-025f a ?n0012
+0227 a ?n0010
 1d42 a msg1
 1d61 a msg2
+025f a ?n0012
 0273 a ?n0013
 0287 a ?n0014
 02bf a ?n0016
@@ -5863,14 +5864,13 @@ binary-debuggable-source
 049f a ?n0036
 04b3 a ?n0037
 04c7 a ?n0038
-04df a ?b0039
 013e a adc16
 019e a add16
+04df a ?b0039
 04ff a ?n0040
 0513 a ?n0041
 0527 a ?n0042
 053f a ?b0043
-055e a cpi1
 055f a ?n0044
 0573 a ?n0045
 0587 a ?n0046
@@ -6029,7 +6029,6 @@ binary-debuggable-source
 0ff3 a ?n0157
 1007 a ?n0158
 101f a ?b0159
-17be a rotz80
 103e a ld16im
 103f a ?n0160
 1053 a ?n0161
@@ -6044,7 +6043,6 @@ binary-debuggable-source
 10ff a ?n0168
 1113 a ?n0169
 1127 a ?n0170
-175e a rotxy
 113f a ?b0171
 115e a ld8im
 115f a ?n0172
@@ -6060,9 +6058,9 @@ binary-debuggable-source
 1233 a ?n0181
 1247 a ?n0182
 125f a ?b0183
-11be a ld8imx
 127e a ld8ix2
 127f a ?n0184
+11be a ld8imx
 1293 a ?n0185
 12a7 a ?n0186
 12bf a ?b0187
@@ -6072,11 +6070,11 @@ binary-debuggable-source
 1307 a ?n0190
 131f a ?b0191
 133f a ?n0192
-133e a ld8ixy
 1353 a ?n0193
-037e a alu8rx
 1367 a ?n0194
+133e a ld8ixy
 137f a ?b0195
+037e a alu8rx
 139e a ld8rr
 139f a ?n0196
 13b3 a ?n0197
@@ -6109,9 +6107,9 @@ binary-debuggable-source
 15de a ldi2
 15df a ?n0220
 15f3 a ?n0221
-0001 v msbthi
 1607 a ?n0222
 161f a ?b0223
+0001 v msbthi
 163e a negop
 163f a ?n0224
 1653 a ?n0225
@@ -6119,19 +6117,21 @@ binary-debuggable-source
 167f a ?b0227
 169e a rldop
 169f a ?n0228
-0003 v msbtlo
 16b3 a ?n0229
 16c7 a ?n0230
+0003 v msbtlo
 16df a ?b0231
 16fe a rot8080
 16ff a ?n0232
 1713 a ?n0233
 1727 a ?n0234
 173f a ?b0235
+175e a rotxy
 175f a ?n0236
 1773 a ?n0237
 1787 a ?n0238
 179f a ?b0239
+17be a rotz80
 17bf a ?n0240
 17d3 a ?n0241
 17e7 a ?n0242

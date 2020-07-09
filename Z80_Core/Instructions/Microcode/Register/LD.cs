@@ -12,13 +12,12 @@ namespace Z80.Core
             InstructionData data = package.Data;
             Flags flags = cpu.Registers.Flags;
 
-            // shortcuts to keep code size down
             Registers r = cpu.Registers;
             byte arg0 = data.Argument1;
             byte arg1 = data.Argument2;
             ushort argWord = data.ArgumentsAsWord;
-
-            // local functions to keep code size down
+            
+            //local functions to keep code size down
             byte readByte(ushort address)
             {
                 return cpu.Memory.ReadByteAt(address, false);
@@ -670,7 +669,7 @@ namespace Z80.Core
                     break;
             }
 
-            return new ExecutionResult(package, flags, false, false);
+            return new ExecutionResult(package, flags);
         }
 
         public LD()

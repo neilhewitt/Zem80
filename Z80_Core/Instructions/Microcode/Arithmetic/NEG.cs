@@ -19,7 +19,7 @@ namespace Z80.Core
             flags.Carry = r.A != 0x00;
             r.A = (byte)result;
 
-            return new ExecutionResult(package, flags, false, false);
+            return new ExecutionResult(package, flags);
         }
 
         public NEG()

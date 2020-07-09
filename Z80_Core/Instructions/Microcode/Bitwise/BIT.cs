@@ -16,16 +16,15 @@ namespace Z80.Core
 
             byte bitIndex = instruction.GetBitIndex();
             byte value;
-            if (instruction.GetByteRegister() != ByteRegister.None)
+            ByteRegister register = instruction.Target.AsByteRegister();
+            if (register != ByteRegister.None)
             {
-                value = r[instruction.GetByteRegister()]; // BIT b, r
+                value = r[register]; // BIT b, r
             }
             else
             {
-                ushort address = instruction.HLIX ? r.IX : instruction.HLIY ? r.IY : r.HL; // BIT b, (HL / IX+o / IY+o)
-                sbyte offset = (instruction.HLIY || instruction.HLIY) ? (sbyte)data.Argument1 : (sbyte)0;
-                if (instruction.HLIX || instruction.HLIY) cpu.Timing.InternalOperationCycle(5);
-                value = cpu.Memory.ReadByteAt((ushort)(address + offset), false);
+                if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
+                value = instruction.MarshalSourceByte(data, cpu, out ushort address);
             }
 
             flags.Sign = ((sbyte)(value)) < 0;
@@ -33,7 +32,7 @@ namespace Z80.Core
             flags.HalfCarry = true;
             flags.Subtract = false;
 
-            return new ExecutionResult(package, flags, false, false);
+            return new ExecutionResult(package, flags);
         }
 
         public BIT()

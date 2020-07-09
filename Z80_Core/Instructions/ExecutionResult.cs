@@ -9,18 +9,14 @@ namespace Z80.Core
         public Instruction Instruction { get; }
         public InstructionData Data { get; }
         public Flags Flags { get; }
-        public bool ConditionIsTrue { get; }
-        public bool InstructionSetsProgramCounter { get; }
         public ushort InstructionAddress { get; }
 
-        public ExecutionResult(ExecutionPackage package, Flags flags, bool conditionTrue, bool instructionSetsProgramCounter)
+        public ExecutionResult(ExecutionPackage package, Flags flags)
         {
             InstructionAddress = package.InstructionAddress;
             Instruction = package.Instruction;
             Data = package.Data;
             Flags = flags;
-            InstructionSetsProgramCounter = instructionSetsProgramCounter;
-            ConditionIsTrue = conditionTrue;
         }
     }
 }

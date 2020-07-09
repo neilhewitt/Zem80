@@ -108,8 +108,8 @@
  108:  167+4	0137  76      		halt		; warm boot
  109:				
  110:     -	0138          	tests:
- 111:     -	0138  5E17    		dw	rotxy
- 112:     -	013A  BE17    		dw  rotz80
+ 111:     -	0138  FE04    		dw	cpd1
+ 112:     -	013A  5E05    		dw	cpi1
  113:     -	013C  0000    		dw	0
  114:				
  115:				; jgh: macro syntax changed for ZMAC and MAXAM
@@ -203,8 +203,8 @@
 	              2B
 	        1AC3s 0111611D
 	              0E09CD36
-	              1D765E17
-	              BE170000
+	              1D76FE04
+	              5E050000
 	              C7ED4200
 	              002C8388
 	              4F2BF239

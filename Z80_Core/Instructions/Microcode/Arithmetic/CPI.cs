@@ -14,14 +14,16 @@ namespace Z80.Core
 
             byte a = cpu.Registers.A;
             byte b = cpu.Memory.ReadByteAt(cpu.Registers.HL, false);
-            int result = a - b;
             cpu.Registers.HL++;
             cpu.Registers.BC--;
 
-            flags = FlagLookup.ByteArithmeticFlags(a, b, false, true);
-            flags.ParityOverflow = (cpu.Registers.BC - 1 != 0);
+            flags.Sign = (byte)(a - b) < 0;
+            flags.Zero = a - b == 0; 
+            flags.HalfCarry = FlagLookup.HalfCarry(a, b, false, true);
+            flags.ParityOverflow = ((ushort)(cpu.Registers.BC - 1) != 0);
+            flags.Subtract = true;
 
-            return new ExecutionResult(package, flags, false, false);
+            return new ExecutionResult(package, flags);
         }
 
         public CPI()

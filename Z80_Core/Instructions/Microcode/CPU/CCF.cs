@@ -11,7 +11,7 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             flags.Carry = !cpu.Registers.Flags.Carry;
             flags.Subtract = false;
-            return new ExecutionResult(package, flags, false, false);
+            return new ExecutionResult(package, flags);
         }
 
         public CCF()

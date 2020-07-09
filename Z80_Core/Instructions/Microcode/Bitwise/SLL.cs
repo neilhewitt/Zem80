@@ -13,7 +13,7 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             Registers r = cpu.Registers;
             sbyte offset = (sbyte)(data.Argument1);
-            ByteRegister register = instruction.GetByteRegister();
+            ByteRegister register = instruction.Target.AsByteRegister();
 
             void setFlags(byte original, byte shifted)
             {
@@ -46,7 +46,7 @@ namespace Z80.Core
                 cpu.Memory.WriteByteAt(address, shifted, false);
             }
 
-            return new ExecutionResult(package, flags, false, false);
+            return new ExecutionResult(package, flags);
         }
 
         public SLL()

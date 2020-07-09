@@ -322,11 +322,11 @@ namespace Z80.Core
                         b1 = OpcodeFetch(); // Note: while we already have this value from peeking ahead above, we need to do this to generate the right IO state and ticks
                         addTicksIfNeededForOpcodeFetch(); // some specific opcodes have longer opcode fetch cycles than normal
 
-                        if (instruction.Argument1 != ArgumentType.None)
+                        if (instruction.Argument1 != InstructionElement.None)
                         {
                             data.Argument1 = OperandFetch();
                             Registers.PC++;
-                            if (instruction.Argument2 != ArgumentType.None)
+                            if (instruction.Argument2 != InstructionElement.None)
                             {
                                 data.Argument2 = OperandFetch();
                                 Registers.PC++;
@@ -347,29 +347,27 @@ namespace Z80.Core
                     
                 addTicksIfNeededForOpcodeFetch();
 
-                if (instruction.Argument1 == ArgumentType.Displacement || instruction.Argument1 == ArgumentType.Immediate)
+                if (instruction.Argument1 != InstructionElement.None)
                 {
                     data.Argument1 = OperandFetch();
                     Registers.PC++;
-                }
-                else if (instruction.Argument1 == ArgumentType.ImmediateWord)
-                {
-                    data.Argument1 = OperandFetch();
-                    Registers.PC++;
-                    // some instructions (OK, just CALL) have a prolonged high byte operand read 
-                    // but ONLY if a) it's CALL nn or b) if the condition (CALL NZ, for example) is satisfied (ie Flags.NZ is true)
-                    // otherwise it's the standard size. Timing oddities like this are noted in the TimingExceptions structure,
-                    // but this is the only one that affects the instruction decode cycle (the others affect Memory Read cycles)
-                    if (instruction.TimingExceptions.HasConditionalOperandDataReadHigh4)
+                    if (instruction.Argument2 != InstructionElement.None)
                     {
-                        if (instruction.Condition == null || Registers.Flags.SatisfyCondition(instruction.Condition.Value))
+                        // some instructions (OK, just CALL) have a prolonged high byte operand read 
+                        // but ONLY if a) it's CALL nn or b) if the condition (CALL NZ, for example) is satisfied (ie Flags.NZ is true)
+                        // otherwise it's the standard size. Timing oddities like this are noted in the TimingExceptions structure,
+                        // but this is the only one that affects the instruction decode cycle (the others affect Memory Read cycles)
+                        if (instruction.TimingExceptions.HasConditionalOperandDataReadHigh4)
                         {
-                            WaitForNextClockTick();
+                            if (instruction.Condition == Condition.None || Registers.Flags.SatisfyCondition(instruction.Condition))
+                            {
+                                WaitForNextClockTick();
+                            }
                         }
-                    }
 
-                    data.Argument2 = OperandFetch();
-                    Registers.PC++;
+                        data.Argument2 = OperandFetch();
+                        Registers.PC++;
+                    }
                 }
 
                 return new ExecutionPackage(instruction, data, instructionAddress);
