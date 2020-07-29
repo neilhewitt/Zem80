@@ -13,34 +13,45 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             Registers r = cpu.Registers;
             byte A = r.A;
-            byte correction = 0x00;
-
-            if (A > 0x99 || flags.Carry)
-            {
-                correction = 0x60;
-                flags.Carry = true;
-            }
-            else
-            {
-                flags.Carry = false;
-            }
+            int mode = 0;
 
             if ((A & 0x0F) > 0x09 || flags.HalfCarry)
             {
-                correction += 0x06;
+                mode++;
             }
 
-            if (flags.Subtract)
+            if (A > 0x99 || flags.Carry)
             {
-                A -= correction;
+                mode += 2;
+                flags.Carry = true;
+            }
+
+            if (flags.Subtract && !flags.HalfCarry)
+            {
+                flags.HalfCarry = false;
             }
             else
             {
-                A += correction;
+                if (flags.Subtract && flags.HalfCarry)
+                {
+                    flags.HalfCarry = (A & 0x0F) < 0x06;
+                }
+                else
+                {
+                    flags.HalfCarry = (A & 0x0F) >= 0x0A;
+                }
             }
 
+            A = mode switch
+            {
+                1 => (byte)(A + (byte)(flags.Subtract ? 0xFA : 0x06)),
+                2 => (byte)(A + (byte)(flags.Subtract ? 0xA0 : 0x60)),
+                3 => (byte)(A + (byte)(flags.Subtract ? 0x9A : 0x66)),
+                _ => A
+            };
+
+            flags.Sign = (A & 0x80) > 0;
             flags.Zero = (A == 0);
-            flags.HalfCarry = ((byte)(r.A ^ A)).GetBit(4);
             flags.ParityOverflow = A.EvenParity();
 
             r.A = A;

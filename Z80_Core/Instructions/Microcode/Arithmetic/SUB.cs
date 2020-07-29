@@ -14,7 +14,7 @@ namespace Z80.Core
             Registers r = cpu.Registers;
 
             byte left = r.A;
-            byte right = instruction.MarshalSourceByte(data, cpu, out ushort address);
+            byte right = instruction.MarshalSourceByte(data, cpu, out ushort address, out ByteRegister source);
 
             if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
             var sub = ALUOperations.Subtract(left, right, false);

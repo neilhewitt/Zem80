@@ -15,7 +15,7 @@ namespace Z80.Core
             sbyte offset = (sbyte)data.Argument1;
 
             if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-            byte operand = instruction.MarshalSourceByte(data, cpu, out ushort address);
+            byte operand = instruction.MarshalSourceByte(data, cpu, out ushort address, out ByteRegister source);
             int result = (r.A & operand);
             flags = FlagLookup.LogicalFlags(r.A, operand, LogicalOperation.And);
             r.A = (byte)result;            

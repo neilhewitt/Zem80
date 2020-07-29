@@ -9,7 +9,9 @@ namespace Z80.Core
         public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
         {
             Flags flags = cpu.Registers.Flags;
-            flags.Carry = !cpu.Registers.Flags.Carry;
+            bool carry = flags.Carry;
+            flags.Carry = !carry;
+            flags.HalfCarry = carry;
             flags.Subtract = false;
             return new ExecutionResult(package, flags);
         }

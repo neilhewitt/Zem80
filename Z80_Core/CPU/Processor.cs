@@ -290,7 +290,6 @@ namespace Z80.Core
                 }
                 else // all other prefixed instructions: a two-byte opcode + up to 2 operand bytes
                 {
-                    Registers.PC++; // advance PC to position of b1
                     if (!InstructionSet.Instructions.TryGetValue(b1 | b0 << 8, out instruction))
                     {
                         if (b0 == 0xED || b0 == 0xDD || b0 == 0xFD)
@@ -320,6 +319,7 @@ namespace Z80.Core
                     else
                     {
                         b1 = OpcodeFetch(); // Note: while we already have this value from peeking ahead above, we need to do this to generate the right IO state and ticks
+                        Registers.PC++; // advance PC to position of b1
                         addTicksIfNeededForOpcodeFetch(); // some specific opcodes have longer opcode fetch cycles than normal
 
                         if (instruction.Argument1 != InstructionElement.None)

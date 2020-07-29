@@ -28,7 +28,7 @@ namespace Z80.Core
                 {
                     // dec byte in memory
                     if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-                    value = instruction.MarshalSourceByte(data, cpu, out ushort address);
+                    value = instruction.MarshalSourceByte(data, cpu, out ushort address, out ByteRegister source);
                     cpu.Memory.WriteByteAt(address, (byte)(value - 1), false);
                 }
                 else

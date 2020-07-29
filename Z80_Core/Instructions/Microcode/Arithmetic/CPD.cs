@@ -12,16 +12,21 @@ namespace Z80.Core
             InstructionData data = package.Data;
             Flags flags = cpu.Registers.Flags;
 
+            bool carry = flags.Carry;
             byte a = cpu.Registers.A;
             byte b = cpu.Memory.ReadByteAt(cpu.Registers.HL, false);
-            cpu.Registers.HL--;
-            cpu.Registers.BC--;
 
-            flags.Sign = (byte)(a - b) < 0;
-            flags.Zero = a - b == 0;
-            flags.HalfCarry = FlagLookup.HalfCarry(a, b, false, true);
-            flags.ParityOverflow = ((ushort)(cpu.Registers.BC - 1) != 0);
+            var compare = ALUOperations.Subtract(a, b, false);
+            flags = compare.Flags;
+            flags.Carry = carry;
+
+            cpu.Registers.BC--;
+            flags.ParityOverflow = (cpu.Registers.BC != 0);
+
+            cpu.Registers.HL--;
+
             flags.Subtract = true;
+            flags.Carry = carry;
 
             return new ExecutionResult(package, flags);
         }

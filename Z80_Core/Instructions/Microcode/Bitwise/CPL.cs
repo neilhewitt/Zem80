@@ -11,7 +11,7 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             flags.HalfCarry = true;
             flags.Subtract = true;
-            cpu.Registers.A ^= cpu.Registers.A;
+            cpu.Registers.A = (byte)(~cpu.Registers.A);
 
             return new ExecutionResult(package, flags);
         }

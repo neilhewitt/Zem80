@@ -12,13 +12,13 @@ namespace Z80.Core
             return instruction.Opcode.GetByteFromBits(3, 3);
         }
 
-        public static byte MarshalSourceByte(this Instruction instruction, InstructionData data, Processor cpu, out ushort address)
+        public static byte MarshalSourceByte(this Instruction instruction, InstructionData data, Processor cpu, out ushort address, out ByteRegister source)
         {
             Registers r = cpu.Registers;
             address = 0x0000;
 
             byte value;
-            ByteRegister source = instruction.Source.AsByteRegister();
+            source = instruction.Source.AsByteRegister();
             if (source != ByteRegister.None)
             {
                 value = r[source];
@@ -28,6 +28,17 @@ namespace Z80.Core
                 if (instruction.Argument1 == InstructionElement.ByteValue)
                 {
                     value = data.Argument1;
+                }
+                else if (instruction.Source == InstructionElement.None)
+                {
+                    address = instruction.Target.AsWordRegister() switch
+                    {
+                        WordRegister.IX => (ushort)(r.IX + (sbyte)data.Argument1),
+                        WordRegister.IY => (ushort)(r.IY + (sbyte)data.Argument1),
+                        _ => r.HL
+                    };
+
+                    value = cpu.Memory.ReadByteAt(address, false);
                 }
                 else
                 {

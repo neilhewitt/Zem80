@@ -24,7 +24,7 @@ namespace Z80.Core
             else
             {
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-                value = instruction.MarshalSourceByte(data, cpu, out ushort address);
+                value = instruction.MarshalSourceByte(data, cpu, out ushort address, out ByteRegister source);
             }
 
             flags.Sign = ((sbyte)(value)) < 0;
