@@ -244,7 +244,21 @@ namespace Z80.Core
             _afterExecute?.Invoke(this, result);
             
             return result;
-        }        
+        } 
+        
+        ExecutionResult IDebug.Execute(byte[] opcode)
+        {
+            Memory.WriteBytesAt(Registers.PC, opcode, true);
+            ExecutionPackage package = DecodeInstruction();
+            if (package == null)
+            {
+                // only happens if we reach the end of memory mid-instruction, if so we bail out
+                Stop();
+                return null;
+            }
+
+            return Execute(package);
+        }
 
         ExecutionResult IDebug.Execute(ExecutionPackage package)
         {
@@ -265,7 +279,7 @@ namespace Z80.Core
             if (b0 == 0xCB || b0 == 0xDD || b0 == 0xED || b0 == 0xFD) // is byte 0 a prefix code?
             {
                 b1 = Memory.ReadByteAt(Registers.PC, true); // peek ahead
-                if (b1 == 0xDD || b1 == 0xFD)
+                if ((b0 == 0xDD || b0 == 0xFD) && (b1 == 0xDD || b1 == 0xFD))
                 {
                     // sequences of 0xDD / 0xFD / either / or count as NOP until the final 0xDD / 0xFD which is then the prefix byte
                     b1 = OpcodeFetch(); // to generate correct ticks
@@ -283,7 +297,10 @@ namespace Z80.Core
                     Registers.PC++;
                     if (!InstructionSet.Instructions.TryGetValue(b3 | b1 << 8 | b0 << 16, out instruction))
                     {
-                        return new ExecutionPackage(InstructionSet.NOP, data, (ushort)(instructionAddress));
+                        //if (!InstructionSet.Instructions.TryGetValue(b1 | b0 << 8, out instruction))
+                        //{
+                            return new ExecutionPackage(InstructionSet.NOP, data, (ushort)(instructionAddress));
+                        //}
                     }
 
                     return new ExecutionPackage(instruction, data, instructionAddress);

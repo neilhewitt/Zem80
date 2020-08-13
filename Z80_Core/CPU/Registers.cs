@@ -29,7 +29,7 @@ namespace Z80.Core
         public byte L { get { return _registers[_offset + 5]; } set { _registers[_offset + 5] = value; } }
 
         // Registers as 16-bit pairs
-        public ushort AF { get { return GetWord(_accumulator, _flags.Value); } }
+        public ushort AF { get { return GetWord(_accumulator, _flags.Value); } set { _accumulator = value.HighByte(); _flags.Value = value.LowByte(); } }
 
         public ushort BC { get { return Get16BitValue(_offset); } set { Set16BitValue(_offset, value); } }
         public ushort DE { get { return Get16BitValue(_offset + 2); } set { Set16BitValue(_offset + 2, value); } }

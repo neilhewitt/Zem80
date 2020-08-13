@@ -21,12 +21,12 @@ namespace Z80.Core
 
         public static (ushort Result, Flags Flags) Add(ushort left, ushort right, bool carry, bool setSZPV, Flags currentFlags)
         {
-            Flags flags = FlagLookup.WordArithmeticFlags(currentFlags, left, right, carry, setSZPV, false);
+            Flags flags = FlagLookup.GetWordArithmeticFlags(currentFlags, left, right, carry, setSZPV, false);
             return ((ushort)(left + right + (carry ? 1 : 0)), flags);
         }
         public static (ushort Result, Flags Flags) Subtract(ushort left, ushort right, bool carry, bool setSZPV, Flags currentFlags)
         {
-            Flags flags = FlagLookup.WordArithmeticFlags(currentFlags, left, right, carry, setSZPV, true);
+            Flags flags = FlagLookup.GetWordArithmeticFlags(currentFlags, left, right, carry, setSZPV, true);
             return ((ushort)(left - right - (carry ? 1 : 0)), flags);
         }
     }

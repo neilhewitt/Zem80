@@ -31,9 +31,9 @@ namespace Z80.Core
             {
                 // it's an 8-bit add to A
                 byte left = r.A;
+                if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
                 byte right = instruction.MarshalSourceByte(data, cpu, out ushort address, out ByteRegister source);
 
-                if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
                 var sum = ALUOperations.Add(left, right, false);
                 r.A = sum.Result;
                 flags = sum.Flags;

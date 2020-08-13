@@ -52,14 +52,18 @@ namespace Z80.Core
                     }
                 }
 
-                _bitwiseFlags = new byte[256, 4];
+                _bitwiseFlags = new byte[256, 8];
                 for (int i = 0; i < 256; i++)
                 {
                     Flags flags = new Flags();
-                    _bitwiseFlags[i, 0] = GetBitwiseFlags((byte)i, BitwiseOperation.ShiftLeft).Value;
-                    _bitwiseFlags[i, 1] = GetBitwiseFlags((byte)i, BitwiseOperation.ShiftRight).Value;
-                    _bitwiseFlags[i, 2] = GetBitwiseFlags((byte)i, BitwiseOperation.RotateLeft).Value;
-                    _bitwiseFlags[i, 3] = GetBitwiseFlags((byte)i, BitwiseOperation.RotateRight).Value;
+                    _bitwiseFlags[i, 0] = GetBitwiseFlags((byte)i, BitwiseOperation.ShiftLeft, false).Value;
+                    _bitwiseFlags[i, 1] = GetBitwiseFlags((byte)i, BitwiseOperation.ShiftRight, false).Value;
+                    _bitwiseFlags[i, 2] = GetBitwiseFlags((byte)i, BitwiseOperation.RotateLeft, false).Value;
+                    _bitwiseFlags[i, 3] = GetBitwiseFlags((byte)i, BitwiseOperation.RotateRight, false).Value;
+                    _bitwiseFlags[i, 4] = GetBitwiseFlags((byte)i, BitwiseOperation.ShiftLeft, true).Value;
+                    _bitwiseFlags[i, 5] = GetBitwiseFlags((byte)i, BitwiseOperation.ShiftRight, true).Value;
+                    _bitwiseFlags[i, 6] = GetBitwiseFlags((byte)i, BitwiseOperation.RotateLeft, true).Value;
+                    _bitwiseFlags[i, 7] = GetBitwiseFlags((byte)i, BitwiseOperation.RotateRight, true).Value;
                 }
 
                 _initialised = true;
@@ -93,7 +97,7 @@ namespace Z80.Core
             }
         }
 
-        public static Flags BitwiseFlags(byte value, BitwiseOperation operation)
+        public static Flags BitwiseFlags(byte value, BitwiseOperation operation, bool previousCarry)
         {
             if (EnablePrecalculation)
             {
@@ -101,13 +105,13 @@ namespace Z80.Core
             }
             else
             {
-                return GetBitwiseFlags(value, operation);
+                return GetBitwiseFlags(value, operation, previousCarry);
             }
         }
 
         // the state space of 16 x 16 bit numbers is too large to pre-calculate the flags in a reasonable time
         // TODO: run the code to completion and store output in a file?
-        public static Flags WordArithmeticFlags(Flags flags, ushort startingValue, int addOrSubtractValue, bool carry, bool setSignZeroParityOverflow, bool subtract) 
+        public static Flags GetWordArithmeticFlags(Flags flags, ushort startingValue, int addOrSubtractValue, bool carry, bool setSignZeroParityOverflow, bool subtract) 
         {
             if (flags == null) flags = new Flags();
 
@@ -122,7 +126,7 @@ namespace Z80.Core
             // last instruction - if not, then set the remaining flags here
             if (setSignZeroParityOverflow)
             {
-                flags.Zero = ((byte)result == 0);
+                flags.Zero = ((ushort)result == 0);
                 flags.ParityOverflow = Overflows(startingValue, (ushort)addOrSubtractValue, carry, subtract);
                 flags.Sign = ((short)result < 0);
             }
@@ -167,7 +171,7 @@ namespace Z80.Core
             return flags;
         }
 
-        private static Flags GetBitwiseFlags(byte value, BitwiseOperation operation)
+        private static Flags GetBitwiseFlags(byte value, BitwiseOperation operation, bool previousCarry)
         {
             Flags flags = new Flags();
 
@@ -177,11 +181,19 @@ namespace Z80.Core
                 BitwiseOperation.ShiftRight => value >> 1,
                 BitwiseOperation.RotateLeft => ((byte)(value << 1)).SetBit(0, value.GetBit(7)),
                 BitwiseOperation.RotateRight => ((byte)(value >> 1)).SetBit(7, value.GetBit(0)),
+                BitwiseOperation.RotateLeftThroughCarry => ((byte)(value << 1)).SetBit(0, previousCarry),
+                BitwiseOperation.RotateRightThroughCarry => ((byte)(value >> 1)).SetBit(7, previousCarry),
                 _ => value
             };
 
+            flags.Carry = operation switch
+            {
+                BitwiseOperation.RotateLeftThroughCarry => value.GetBit(7),
+                BitwiseOperation.RotateRightThroughCarry => value.GetBit(0),
+                _ => flags.Carry
+            };
+
             flags.Zero = ((byte)result == 0x00);
-            flags.Carry = ((byte)value).GetBit(7);
             flags.Sign = (((sbyte)result) < 0);
             flags.ParityOverflow = ((byte)result).EvenParity();
             flags.HalfCarry = false;
@@ -205,20 +217,26 @@ namespace Z80.Core
 
         public static bool Overflows(byte first, byte second, bool carry, bool isSubtraction)
         {
-            byte c = (byte)(carry ? 1 : 0);
-            byte result = (byte)(isSubtraction ? (first - second - c) : (first + second + c));
+            int c = (byte)(carry ? 1 : 0);
+            int result = (isSubtraction ? (first - second - c) : (first + second + c));
 
-            return (isSubtraction) ? ((first ^ ~second) & (first ^ result) & 0x80) != 0 :
-                                     ((first ^ second) & (first ^ result) & 0x80) != 0;
+            sbyte f = (sbyte)first;
+            sbyte s = (sbyte)(isSubtraction ? -second : second);
+            sbyte r = (sbyte)result;
+
+            return ((f >= 0 && s >= 0 && s < 0) || (f < 0 && s < 0 && r > 0));
         }
 
         public static bool Overflows(ushort first, ushort second, bool carry, bool isSubtraction)
         {
-            ushort c = (ushort)(carry ? 1 : 0);
-            ushort result = (ushort)(isSubtraction ? (first - second - c) : (first + second + c));
+            int c = (ushort)(carry ? 1 : 0);
+            int result = isSubtraction ? (first - second - c) : (first + second + c);
 
-            return (isSubtraction) ? ((first ^ ~second) & (first ^ result) & 0x8000) != 0 :
-                                     ((first ^ second) & (first ^ result) & 0x8000) != 0;
+            short f = (short)first;
+            short s = (short)(isSubtraction ? -second : second);
+            short r = (short)result;
+
+            return ((f >= 0 && s >= 0 && r < 0) || (f < 0 && s < 0 && r > 0));
         }
     }
 }

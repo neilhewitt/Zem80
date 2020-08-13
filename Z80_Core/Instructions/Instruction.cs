@@ -28,12 +28,19 @@ namespace Z80.Core
         public bool TargetsByteRegister => Target >= InstructionElement.A && Target <= InstructionElement.IYl;
         public bool TargetsWordRegister => Target >= InstructionElement.AF && Target <= InstructionElement.SP;
         public bool TargetsByteInMemory => (Target >= InstructionElement.AddressFromHL && Target <= InstructionElement.AddressFromIYAndOffset);
+        public string FullOpcode { get; private set; }
+        public byte[] FullOpcodeBytes { get; private set; }
 
-        internal int FullOpcode { get; private set; }
+        internal int OpcodeAsInt => int.Parse(FullOpcode, NumberStyles.HexNumber);
 
         public Instruction(string opcode, string mnemonic, Condition condition, InstructionElement target, InstructionElement source, InstructionElement arg1, InstructionElement arg2, byte sizeInBytes, MachineCycle[] machineCycles, IMicrocode microcode = null)
         {
-            FullOpcode = int.Parse(opcode, NumberStyles.HexNumber);
+            FullOpcode = opcode;
+            FullOpcodeBytes = new byte[FullOpcode.Length / 2];
+            FullOpcodeBytes[0] = byte.Parse(opcode.Substring(0,2), NumberStyles.HexNumber);
+            if (opcode.Length == 4) FullOpcodeBytes[1] = byte.Parse(opcode.Substring(2,2), NumberStyles.HexNumber);
+            if (opcode.Length == 6) FullOpcodeBytes[2] = byte.Parse(opcode.Substring(4,2), NumberStyles.HexNumber);
+
             Prefix = opcode.Length == 2 ? InstructionPrefix.Unprefixed : (InstructionPrefix)Enum.Parse(typeof(InstructionPrefix), opcode[..^2], true);
             Opcode = byte.Parse(opcode[^2..], NumberStyles.HexNumber);
             

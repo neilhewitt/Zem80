@@ -89,9 +89,9 @@
   89:				
   90:   10+10	0113  210080  	start:	ld	hl,8000h
   91:   20+6	0116  F9      		ld	sp,hl
-  92:   26+10	0117  11C21D  		ld	de,msg1
+  92:   26+10	0117  11C41D  		ld	de,msg1
   93:   36+7	011A  0E09    		ld	c,9
-  94:   43+17	011C  CDB61D  		call	bdos
+  94:   43+17	011C  CDB81D  		call	bdos
   95:				
   96:   60+10	011F  213801  		ld	hl,tests	; first test case
   97:   70+7	0122  7E      	loop:	ld	a,(hl)		; end of list ?
@@ -102,9 +102,9 @@
  102:  106+17	0129  CDDE1A  		call	stt
  103:  123+10	012C  C32201  		jp	loop
  104:					
- 105:  133+10	012F  11E11D  	done:	ld	de,msg2
+ 105:  133+10	012F  11E31D  	done:	ld	de,msg2
  106:  143+7	0132  0E09    		ld	c,9
- 107:  150+17	0134  CDB61D  		call	bdos
+ 107:  150+17	0134  CDB81D  		call	bdos
  108:  167+4	0137  76      		halt		; warm boot
  109:				
  110:     -	0138          	tests:
@@ -223,13 +223,13 @@
 	              FFFFFFFF
 	              D700FFFF
  213:     -	01FB  F8B4EAA9		db	0f8h,0b4h,0eah,0a9h			; expected crc
- 214:     -	80F9  C21D0E09		tmsg	'<adc,sbc> hl,<bc,de,hl,sp>....'
-	              CDB61D21
+ 214:     -	80F9  C41D0E09		tmsg	'<adc,sbc> hl,<bc,de,hl,sp>....'
+	              CDB81D21
 	              38017E23
 	              B6CA2F01
 	              2B
-	        1AC3h 0111E11D
-	              0E09CDB6
+	        1AC3h 0111E31D
+	              0E09CDB8
 	              1D76BE01
 	              1E027E02
 	              DE023E03
@@ -3518,7 +3518,7 @@
  748:  195+7	1AE1  66      		ld	h,(hl)
  749:  202+4	1AE2  6F      		ld	l,a
  750:  206+7	1AE3  7E      		ld	a,(hl)		; flag mask
- 751:  213+13	1AE4  32611D  		ld	(flgmsk+1),a
+ 751:  213+13	1AE4  32631D  		ld	(flgmsk+1),a
  752:  226+6	1AE7  23      		inc	hl
  753:  232+11	1AE8  E5      		push	hl
  754:  243+10	1AE9  111400  		ld	de,20
@@ -3535,7 +3535,7 @@
  765:  370+10	1B02  3601    		ld	(hl),1		; first bit
  766:  380+10	1B04  E1      		pop	hl
  767:  390+11	1B05  E5      		push	hl
- 768:  401+10	1B06  113E1D  		ld	de,iut		; copy initial instruction under test
+ 768:  401+10	1B06  113F1D  		ld	de,iut		; copy initial instruction under test
  769:  411+10	1B09  010400  		ld	bc,4
  770:  421+16+5	1B0C  EDB0    		ldir
  771:  437+10	1B0E  110301  		ld	de,msbt		; copy initial machine state
@@ -3545,16 +3545,16 @@
  775:  483+11	1B19  19      		add	hl,de
  776:  494+4	1B1A  EB      		ex	de,hl
  777:  498+7	1B1B  0E09    		ld	c,9
- 778:  505+17	1B1D  CDB61D  		call	bdos		; show test name
- 779:  522+17	1B20  CD5B1E  		call	initcrc		; initialise crc
+ 778:  505+17	1B1D  CDB81D  		call	bdos		; show test name
+ 779:  522+17	1B20  CD5D1E  		call	initcrc		; initialise crc
  780:				; test loop
- 781:  539+13	1B23  3A3E1D  	tlp:	ld	a,(iut)
+ 781:  539+13	1B23  3A3F1D  	tlp:	ld	a,(iut)
  782:  552+7	1B26  FE76    		cp	076h		; pragmatically avoid halt intructions
  783:  559+10	1B28  CA3A1B  		jp	z,tlp2
  784:  569+7	1B2B  E6DF    		and	a,0dfh
  785:  576+7	1B2D  FEDD    		cp	0ddh
  786:  583+10	1B2F  C2371B  		jp	nz,tlp1
- 787:  593+13	1B32  3A3F1D  		ld	a,(iut+1)
+ 787:  593+13	1B32  3A401D  		ld	a,(iut+1)
  788:  606+7	1B35  FE76    		cp	076h
  789:  613+10+7	1B37  C4261D  	tlp1:	call	nz,test		; execute the test instruction
  790:  623+17	1B3A  CD851C  	tlp2:	call	count		; increment the counter
@@ -3563,21 +3563,21 @@
  793:  660+10	1B41  CA761B  		jp	z,tlp3		; done if shift returned NZ
  794:  670+10	1B44  113C00  		ld	de,20+20+20
  795:  680+11	1B47  19      		add	hl,de		; point to expected crc
- 796:  691+17	1B48  CD1C1E  		call	cmpcrc
- 797:  708+10	1B4B  11F21D  		ld	de,okmsg
+ 796:  691+17	1B48  CD1E1E  		call	cmpcrc
+ 797:  708+10	1B4B  11F41D  		ld	de,okmsg
  798:  718+10	1B4E  CA6D1B  		jp	z,tlpok
- 799:  728+10	1B51  11F91D  		ld	de,ermsg1
+ 799:  728+10	1B51  11FB1D  		ld	de,ermsg1
  800:  738+7	1B54  0E09    		ld	c,9
- 801:  745+17	1B56  CDB61D  		call	bdos
- 802:  762+17	1B59  CD951D  		call	phex8
- 803:  779+10	1B5C  11141E  		ld	de,ermsg2
+ 801:  745+17	1B56  CDB81D  		call	bdos
+ 802:  762+17	1B59  CD971D  		call	phex8
+ 803:  779+10	1B5C  11161E  		ld	de,ermsg2
  804:  789+7	1B5F  0E09    		ld	c,9
- 805:  796+17	1B61  CDB61D  		call	bdos
- 806:  813+10	1B64  216F1E  		ld	hl,crcval
- 807:  823+17	1B67  CD951D  		call	phex8
- 808:  840+10	1B6A  11EF1D  		ld	de,crlf
+ 805:  796+17	1B61  CDB81D  		call	bdos
+ 806:  813+10	1B64  21711E  		ld	hl,crcval
+ 807:  823+17	1B67  CD971D  		call	phex8
+ 808:  840+10	1B6A  11F11D  		ld	de,crlf
  809:  850+7	1B6D  0E09    	tlpok:	ld	c,9
- 810:  857+17	1B6F  CDB61D  		call	bdos
+ 810:  857+17	1B6F  CDB81D  		call	bdos
  811:  874+10	1B72  E1      		pop	hl
  812:  884+6	1B73  23      		inc	hl
  813:  890+6	1B74  23      		inc	hl
@@ -3595,7 +3595,7 @@
  825: 1002+7	1B8B  0604    		ld	b,4		; bytes in iut field
  826: 1009+10	1B8D  E1      		pop	hl		; pointer to test case
  827: 1019+11	1B8E  E5      		push	hl
- 828: 1030+10	1B8F  113E1D  		ld	de,iut
+ 828: 1030+10	1B8F  113F1D  		ld	de,iut
  829: 1040+17	1B92  CDA01B  		call	setup		; setup iut
  830: 1057+7	1B95  0610    		ld	b,16		; bytes in machine state
  831: 1064+10	1B97  110301  		ld	de,msbt
@@ -3847,7 +3847,7 @@
 1077:     -	0000          	      if	0
 1090:				      endif	
 1091: 2764+4	1D2A  F3      		di			; disable interrupts
-1092: 2768+20	1D2B  ED73891D		ld	(spsav),sp	; save stack pointer
+1092: 2768+20	1D2B  ED738B1D		ld	(spsav),sp	; save stack pointer
 1093: 2788+10	1D2F  310501  		ld	sp,msbt+2	; point to test-case machine state
 1094: 2798+14	1D32  FDE1    		pop	iy		; and load all regs
 1095: 2812+14	1D34  DDE1    		pop	ix
@@ -3856,97 +3856,99 @@
 1098: 2846+10	1D38  C1      		pop	bc
 1099: 2856+10	1D39  F1      		pop	af
 1100: 2866+20	1D3A  ED7B1101		ld	sp,(spbt)
-1101:     -	1D3E          	iut:	ds	4		; max 4 byte instruction under test
-1102: 2886+20	1D42  ED73871D		ld	(spat),sp	; save stack pointer
-1103: 2906+10	1D46  31871D  		ld	sp,spat
-1104: 2916+11	1D49  F5      		push	af		; save other registers
-1105: 2927+11	1D4A  C5      		push	bc
-1106: 2938+11	1D4B  D5      		push	de
-1107: 2949+11	1D4C  E5      		push	hl
-1108: 2960+15	1D4D  DDE5    		push	ix
-1109: 2975+15	1D4F  FDE5    		push	iy
-1110: 2990+20	1D51  ED7B891D		ld	sp,(spsav)	; restore stack pointer
-1111: 3010+4	1D55  FB      		ei			; enable interrupts
-1112: 3014+16	1D56  2A0301  		ld	hl,(msbt)	; copy memory operand
-1113: 3030+16	1D59  22791D  		ld	(msat),hl
-1114: 3046+10	1D5C  21851D  		ld	hl,flgsat	; flags after test
-1115: 3056+7	1D5F  7E      		ld	a,(hl)
-1116: 3063+7	1D60  E6D7    	flgmsk:	and	a,0d7h		; mask-out irrelevant bits (self-modified code!)
-1117: 3070+7	1D62  77      		ld	(hl),a
-1118: 3077+7	1D63  0610    		ld	b,16		; total of 16 bytes of state
-1119: 3084+10	1D65  11791D  		ld	de,msat
-1120: 3094+10	1D68  216F1E  		ld	hl,crcval
-1121: 3104+7	1D6B  1A      	tcrc:	ld	a,(de)
-1122: 3111+6	1D6C  13      		inc	de
-1123: 3117+17	1D6D  CD331E  		call	updcrc		; accumulate crc of this test case
-1124: 3134+4	1D70  05      		dec	b
-1125: 3138+10	1D71  C26B1D  		jp	nz,tcrc
-1126:     -	0000          	      if	0
-1141:				      endif
-1142: 3148+10	1D74  E1      		pop	hl
-1143: 3158+10	1D75  D1      		pop	de
-1144: 3168+10	1D76  C1      		pop	bc
-1145: 3178+10	1D77  F1      		pop	af
-1146: 3188+10	1D78  C9      		ret
-1147:				
-1148:				; machine state after test
-1149:     -	1D79          	msat:	ds	14	; memop,iy,ix,hl,de,bc,af
-1150:     -	1D87          	spat:	ds	2	; stack pointer after test
-1151:				; ZMAC/MAXAM doesn't like ':' after label with EQUs
-1152:     -	1D85          	flgsat	equ	spat-2	; flags
-1153:				
-1154:     -	1D89          	spsav:	ds	2	; saved stack pointer
+1101: 2886+4	1D3E  00      		nop
+1102:     -	1D3F          	iut:	ds	4		; max 4 byte instruction under test
+1103: 2890+4	1D43  00      		nop
+1104: 2894+20	1D44  ED73891D		ld	(spat),sp	; save stack pointer
+1105: 2914+10	1D48  31891D  		ld	sp,spat
+1106: 2924+11	1D4B  F5      		push	af		; save other registers
+1107: 2935+11	1D4C  C5      		push	bc
+1108: 2946+11	1D4D  D5      		push	de
+1109: 2957+11	1D4E  E5      		push	hl
+1110: 2968+15	1D4F  DDE5    		push	ix
+1111: 2983+15	1D51  FDE5    		push	iy
+1112: 2998+20	1D53  ED7B8B1D		ld	sp,(spsav)	; restore stack pointer
+1113: 3018+4	1D57  FB      		ei			; enable interrupts
+1114: 3022+16	1D58  2A0301  		ld	hl,(msbt)	; copy memory operand
+1115: 3038+16	1D5B  227B1D  		ld	(msat),hl
+1116: 3054+10	1D5E  21871D  		ld	hl,flgsat	; flags after test
+1117: 3064+7	1D61  7E      		ld	a,(hl)
+1118: 3071+7	1D62  E6D7    	flgmsk:	and	a,0d7h		; mask-out irrelevant bits (self-modified code!)
+1119: 3078+7	1D64  77      		ld	(hl),a
+1120: 3085+7	1D65  0610    		ld	b,16		; total of 16 bytes of state
+1121: 3092+10	1D67  117B1D  		ld	de,msat
+1122: 3102+10	1D6A  21711E  		ld	hl,crcval
+1123: 3112+7	1D6D  1A      	tcrc:	ld	a,(de)
+1124: 3119+6	1D6E  13      		inc	de
+1125: 3125+17	1D6F  CD351E  		call	updcrc		; accumulate crc of this test case
+1126: 3142+4	1D72  05      		dec	b
+1127: 3146+10	1D73  C26D1D  		jp	nz,tcrc
+1128:     -	0000          	      if	0
+1143:				      endif
+1144: 3156+10	1D76  E1      		pop	hl
+1145: 3166+10	1D77  D1      		pop	de
+1146: 3176+10	1D78  C1      		pop	bc
+1147: 3186+10	1D79  F1      		pop	af
+1148: 3196+10	1D7A  C9      		ret
+1149:				
+1150:				; machine state after test
+1151:     -	1D7B          	msat:	ds	14	; memop,iy,ix,hl,de,bc,af
+1152:     -	1D89          	spat:	ds	2	; stack pointer after test
+1153:				; ZMAC/MAXAM doesn't like ':' after label with EQUs
+1154:     -	1D87          	flgsat	equ	spat-2	; flags
 1155:				
-1156:				; display hex string (pointer in hl, byte count in b)
-1157: 3198+7	1D8B  7E      	hexstr:	ld	a,(hl)
-1158: 3205+17	1D8C  CDA71D  		call	phex2
-1159: 3222+6	1D8F  23      		inc	hl
-1160: 3228+4	1D90  05      		dec	b
-1161: 3232+10	1D91  C28B1D  		jp	nz,hexstr
-1162: 3242+10	1D94  C9      		ret
-1163:				
-1164:				; display hex
-1165:				; display the big-endian 32-bit value pointed to by hl
-1166: 3252+11	1D95  F5      	phex8:	push	af
-1167: 3263+11	1D96  C5      		push	bc
-1168: 3274+11	1D97  E5      		push	hl
-1169: 3285+7	1D98  0604    		ld	b,4
-1170: 3292+7	1D9A  7E      	ph8lp:	ld	a,(hl)
-1171: 3299+17	1D9B  CDA71D  		call	phex2
-1172: 3316+6	1D9E  23      		inc	hl
-1173: 3322+4	1D9F  05      		dec	b
-1174: 3326+10	1DA0  C29A1D  		jp	nz,ph8lp
-1175: 3336+10	1DA3  E1      		pop	hl
-1176: 3346+10	1DA4  C1      		pop	bc
-1177: 3356+10	1DA5  F1      		pop	af
-1178: 3366+10	1DA6  C9      		ret
-1179:				
-1180:				; display byte in a
-1181: 3376+11	1DA7  F5      	phex2:	push	af
-1182: 3387+11	1DA8  C5      		push	bc
-1183: 3398+11	1DA9  D5      		push	de
-1184: 3409+11	1DAA  E5      		push	hl
-1185: 3420+4	1DAB  5F      		ld	e,a
-1186: 3424+7	1DAC  0E03    		ld	c,3
-1187: 3431+17	1DAE  CDB61D  		call	bdos
-1188: 3448+10	1DB1  E1      		pop	hl
-1189: 3458+10	1DB2  D1      		pop	de
-1190: 3468+10	1DB3  C1      		pop	bc
-1191: 3478+10	1DB4  F1      		pop	af
-1192: 3488+10	1DB5  C9      		ret
-1193:				
-1194: 3498+11	1DB6  F5      	bdos:	push	af
-1195: 3509+11	1DB7  C5      		push	bc
-1196: 3520+11	1DB8  D5      		push	de
-1197: 3531+11	1DB9  E5      		push	hl
-1198: 3542+17	1DBA  CD0500  		call	5
-1199: 3559+10	1DBD  E1      		pop	hl
-1200: 3569+10	1DBE  D1      		pop	de
-1201: 3579+10	1DBF  C1      		pop	bc
-1202: 3589+10	1DC0  F1      		pop	af
-1203: 3599+10	1DC1  C9      		ret
-1204:				
-1205:     -	1DC2  5A383064	msg1:	db	'Z80doc instruction exerciser',10,13,'$'
+1156:     -	1D8B          	spsav:	ds	2	; saved stack pointer
+1157:				
+1158:				; display hex string (pointer in hl, byte count in b)
+1159: 3206+7	1D8D  7E      	hexstr:	ld	a,(hl)
+1160: 3213+17	1D8E  CDA91D  		call	phex2
+1161: 3230+6	1D91  23      		inc	hl
+1162: 3236+4	1D92  05      		dec	b
+1163: 3240+10	1D93  C28D1D  		jp	nz,hexstr
+1164: 3250+10	1D96  C9      		ret
+1165:				
+1166:				; display hex
+1167:				; display the big-endian 32-bit value pointed to by hl
+1168: 3260+11	1D97  F5      	phex8:	push	af
+1169: 3271+11	1D98  C5      		push	bc
+1170: 3282+11	1D99  E5      		push	hl
+1171: 3293+7	1D9A  0604    		ld	b,4
+1172: 3300+7	1D9C  7E      	ph8lp:	ld	a,(hl)
+1173: 3307+17	1D9D  CDA91D  		call	phex2
+1174: 3324+6	1DA0  23      		inc	hl
+1175: 3330+4	1DA1  05      		dec	b
+1176: 3334+10	1DA2  C29C1D  		jp	nz,ph8lp
+1177: 3344+10	1DA5  E1      		pop	hl
+1178: 3354+10	1DA6  C1      		pop	bc
+1179: 3364+10	1DA7  F1      		pop	af
+1180: 3374+10	1DA8  C9      		ret
+1181:				
+1182:				; display byte in a
+1183: 3384+11	1DA9  F5      	phex2:	push	af
+1184: 3395+11	1DAA  C5      		push	bc
+1185: 3406+11	1DAB  D5      		push	de
+1186: 3417+11	1DAC  E5      		push	hl
+1187: 3428+4	1DAD  5F      		ld	e,a
+1188: 3432+7	1DAE  0E03    		ld	c,3
+1189: 3439+17	1DB0  CDB81D  		call	bdos
+1190: 3456+10	1DB3  E1      		pop	hl
+1191: 3466+10	1DB4  D1      		pop	de
+1192: 3476+10	1DB5  C1      		pop	bc
+1193: 3486+10	1DB6  F1      		pop	af
+1194: 3496+10	1DB7  C9      		ret
+1195:				
+1196: 3506+11	1DB8  F5      	bdos:	push	af
+1197: 3517+11	1DB9  C5      		push	bc
+1198: 3528+11	1DBA  D5      		push	de
+1199: 3539+11	1DBB  E5      		push	hl
+1200: 3550+17	1DBC  CD0500  		call	5
+1201: 3567+10	1DBF  E1      		pop	hl
+1202: 3577+10	1DC0  D1      		pop	de
+1203: 3587+10	1DC1  C1      		pop	bc
+1204: 3597+10	1DC2  F1      		pop	af
+1205: 3607+10	1DC3  C9      		ret
+1206:				
+1207:     -	1DC4  5A383064	msg1:	db	'Z80doc instruction exerciser',10,13,'$'
 	              6F632069
 	              6E737472
 	              75637469
@@ -3954,353 +3956,353 @@
 	              78657263
 	              69736572
 	              0A0D24
-1206:     -	1DE1  54657374	msg2:	db	'Tests complete'
+1208:     -	1DE3  54657374	msg2:	db	'Tests complete'
 	              7320636F
 	              6D706C65
 	              7465
-1207:     -	1DEF  0A0D24  	crlf:	db	10,13,'$'
-1208:     -	1DF2  20204F4B	okmsg:	db	'  OK',10,13,'$'
+1209:     -	1DF1  0A0D24  	crlf:	db	10,13,'$'
+1210:     -	1DF4  20204F4B	okmsg:	db	'  OK',10,13,'$'
 	              0A0D24
-1209:     -	1DF9  20204552	ermsg1:	db	'  ERROR **** crc expected:$'
+1211:     -	1DFB  20204552	ermsg1:	db	'  ERROR **** crc expected:$'
 	              524F5220
 	              2A2A2A2A
 	              20637263
 	              20657870
 	              65637465
 	              643A24
-1210:     -	1E14  20666F75	ermsg2:	db	' found:$'
+1212:     -	1E16  20666F75	ermsg2:	db	' found:$'
 	              6E643A24
-1211:				
-1212:				; compare crc
-1213:				; hl points to value to compare to crcval
-1214: 3609+11	1E1C  C5      	cmpcrc:	push	bc
-1215: 3620+11	1E1D  D5      		push	de
-1216: 3631+11	1E1E  E5      		push	hl
-1217: 3642+10	1E1F  116F1E  		ld	de,crcval
-1218: 3652+7	1E22  0604    		ld	b,4
-1219: 3659+7	1E24  1A      	cclp:	ld	a,(de)
-1220: 3666+7	1E25  BE      		cp	a,(hl)
-1221: 3673+10	1E26  C22F1E  		jp	nz,cce
-1222: 3683+6	1E29  23      		inc	hl
-1223: 3689+6	1E2A  13      		inc	de
-1224: 3695+4	1E2B  05      		dec	b
-1225: 3699+10	1E2C  C2241E  		jp	nz,cclp
-1226: 3709+10	1E2F  E1      	cce:	pop	hl
-1227: 3719+10	1E30  D1      		pop	de
-1228: 3729+10	1E31  C1      		pop	bc
-1229: 3739+10	1E32  C9      		ret
-1230:				
-1231:				; 32-bit crc routine
-1232:				; entry: a contains next byte, hl points to crc
-1233:				; exit:  crc updated
-1234: 3749+11	1E33  F5      	updcrc:	push	af
-1235: 3760+11	1E34  C5      		push	bc
-1236: 3771+11	1E35  D5      		push	de
-1237: 3782+11	1E36  E5      		push	hl
-1238: 3793+11	1E37  E5      		push	hl
-1239: 3804+10	1E38  110300  		ld	de,3
-1240: 3814+11	1E3B  19      		add	hl,de	; point to low byte of old crc
-1241: 3825+7	1E3C  AE      		xor	a,(hl)	; xor with new byte
-1242: 3832+4	1E3D  6F      		ld	l,a
-1243: 3836+7	1E3E  2600    		ld	h,0
-1244: 3843+11	1E40  29      		add	hl,hl	; use result as index into table of 4 byte entries
-1245: 3854+11	1E41  29      		add	hl,hl
-1246: 3865+4	1E42  EB      		ex	de,hl
-1247: 3869+10	1E43  21731E  		ld	hl,crctab
-1248: 3879+11	1E46  19      		add	hl,de	; point to selected entry in crctab
-1249: 3890+4	1E47  EB      		ex	de,hl
-1250: 3894+10	1E48  E1      		pop	hl
-1251: 3904+10	1E49  010400  		ld	bc,4	; c = byte count, b = accumulator
-1252: 3914+7	1E4C  1A      	crclp:	ld	a,(de)
-1253: 3921+4	1E4D  A8      		xor	a,b
-1254: 3925+7	1E4E  46      		ld	b,(hl)
-1255: 3932+7	1E4F  77      		ld	(hl),a
-1256: 3939+6	1E50  13      		inc	de
-1257: 3945+6	1E51  23      		inc	hl
-1258: 3951+4	1E52  0D      		dec	c
-1259: 3955+10	1E53  C24C1E  		jp	nz,crclp
-1260:     -	0000          	      if	0
-1266:				      endif
-1267: 3965+10	1E56  E1      		pop	hl
-1268: 3975+10	1E57  D1      		pop	de
-1269: 3985+10	1E58  C1      		pop	bc
-1270: 3995+10	1E59  F1      		pop	af
-1271: 4005+10	1E5A  C9      		ret
-1272:				
-1273: 4015+11	1E5B  F5      	initcrc:push	af
-1274: 4026+11	1E5C  C5      		push	bc
-1275: 4037+11	1E5D  E5      		push	hl
-1276: 4048+10	1E5E  216F1E  		ld	hl,crcval
-1277: 4058+7	1E61  3EFF    		ld	a,0ffh
-1278: 4065+7	1E63  0604    		ld	b,4
-1279: 4072+7	1E65  77      	icrclp:	ld	(hl),a
-1280: 4079+6	1E66  23      		inc	hl
-1281: 4085+4	1E67  05      		dec	b
-1282: 4089+10	1E68  C2651E  		jp	nz,icrclp
-1283: 4099+10	1E6B  E1      		pop	hl
-1284: 4109+10	1E6C  C1      		pop	bc
-1285: 4119+10	1E6D  F1      		pop	af
-1286: 4129+10	1E6E  C9      		ret
-1287:				
-1288:     -	1E6F          	crcval	ds	4
+1213:				
+1214:				; compare crc
+1215:				; hl points to value to compare to crcval
+1216: 3617+11	1E1E  C5      	cmpcrc:	push	bc
+1217: 3628+11	1E1F  D5      		push	de
+1218: 3639+11	1E20  E5      		push	hl
+1219: 3650+10	1E21  11711E  		ld	de,crcval
+1220: 3660+7	1E24  0604    		ld	b,4
+1221: 3667+7	1E26  1A      	cclp:	ld	a,(de)
+1222: 3674+7	1E27  BE      		cp	a,(hl)
+1223: 3681+10	1E28  C2311E  		jp	nz,cce
+1224: 3691+6	1E2B  23      		inc	hl
+1225: 3697+6	1E2C  13      		inc	de
+1226: 3703+4	1E2D  05      		dec	b
+1227: 3707+10	1E2E  C2261E  		jp	nz,cclp
+1228: 3717+10	1E31  E1      	cce:	pop	hl
+1229: 3727+10	1E32  D1      		pop	de
+1230: 3737+10	1E33  C1      		pop	bc
+1231: 3747+10	1E34  C9      		ret
+1232:				
+1233:				; 32-bit crc routine
+1234:				; entry: a contains next byte, hl points to crc
+1235:				; exit:  crc updated
+1236: 3757+11	1E35  F5      	updcrc:	push	af
+1237: 3768+11	1E36  C5      		push	bc
+1238: 3779+11	1E37  D5      		push	de
+1239: 3790+11	1E38  E5      		push	hl
+1240: 3801+11	1E39  E5      		push	hl
+1241: 3812+10	1E3A  110300  		ld	de,3
+1242: 3822+11	1E3D  19      		add	hl,de	; point to low byte of old crc
+1243: 3833+7	1E3E  AE      		xor	a,(hl)	; xor with new byte
+1244: 3840+4	1E3F  6F      		ld	l,a
+1245: 3844+7	1E40  2600    		ld	h,0
+1246: 3851+11	1E42  29      		add	hl,hl	; use result as index into table of 4 byte entries
+1247: 3862+11	1E43  29      		add	hl,hl
+1248: 3873+4	1E44  EB      		ex	de,hl
+1249: 3877+10	1E45  21751E  		ld	hl,crctab
+1250: 3887+11	1E48  19      		add	hl,de	; point to selected entry in crctab
+1251: 3898+4	1E49  EB      		ex	de,hl
+1252: 3902+10	1E4A  E1      		pop	hl
+1253: 3912+10	1E4B  010400  		ld	bc,4	; c = byte count, b = accumulator
+1254: 3922+7	1E4E  1A      	crclp:	ld	a,(de)
+1255: 3929+4	1E4F  A8      		xor	a,b
+1256: 3933+7	1E50  46      		ld	b,(hl)
+1257: 3940+7	1E51  77      		ld	(hl),a
+1258: 3947+6	1E52  13      		inc	de
+1259: 3953+6	1E53  23      		inc	hl
+1260: 3959+4	1E54  0D      		dec	c
+1261: 3963+10	1E55  C24E1E  		jp	nz,crclp
+1262:     -	0000          	      if	0
+1268:				      endif
+1269: 3973+10	1E58  E1      		pop	hl
+1270: 3983+10	1E59  D1      		pop	de
+1271: 3993+10	1E5A  C1      		pop	bc
+1272: 4003+10	1E5B  F1      		pop	af
+1273: 4013+10	1E5C  C9      		ret
+1274:				
+1275: 4023+11	1E5D  F5      	initcrc:push	af
+1276: 4034+11	1E5E  C5      		push	bc
+1277: 4045+11	1E5F  E5      		push	hl
+1278: 4056+10	1E60  21711E  		ld	hl,crcval
+1279: 4066+7	1E63  3EFF    		ld	a,0ffh
+1280: 4073+7	1E65  0604    		ld	b,4
+1281: 4080+7	1E67  77      	icrclp:	ld	(hl),a
+1282: 4087+6	1E68  23      		inc	hl
+1283: 4093+4	1E69  05      		dec	b
+1284: 4097+10	1E6A  C2671E  		jp	nz,icrclp
+1285: 4107+10	1E6D  E1      		pop	hl
+1286: 4117+10	1E6E  C1      		pop	bc
+1287: 4127+10	1E6F  F1      		pop	af
+1288: 4137+10	1E70  C9      		ret
 1289:				
-1290:     -	1E73  00000000	crctab:	db	000h,000h,000h,000h
-1291:     -	1E77  77073096		db	077h,007h,030h,096h
-1292:     -	1E7B  EE0E612C		db	0eeh,00eh,061h,02ch
-1293:     -	1E7F  990951BA		db	099h,009h,051h,0bah
-1294:     -	1E83  076DC419		db	007h,06dh,0c4h,019h
-1295:     -	1E87  706AF48F		db	070h,06ah,0f4h,08fh
-1296:     -	1E8B  E963A535		db	0e9h,063h,0a5h,035h
-1297:     -	1E8F  9E6495A3		db	09eh,064h,095h,0a3h
-1298:     -	1E93  0EDB8832		db	00eh,0dbh,088h,032h
-1299:     -	1E97  79DCB8A4		db	079h,0dch,0b8h,0a4h
-1300:     -	1E9B  E0D5E91E		db	0e0h,0d5h,0e9h,01eh
-1301:     -	1E9F  97D2D988		db	097h,0d2h,0d9h,088h
-1302:     -	1EA3  09B64C2B		db	009h,0b6h,04ch,02bh
-1303:     -	1EA7  7EB17CBD		db	07eh,0b1h,07ch,0bdh
-1304:     -	1EAB  E7B82D07		db	0e7h,0b8h,02dh,007h
-1305:     -	1EAF  90BF1D91		db	090h,0bfh,01dh,091h
-1306:     -	1EB3  1DB71064		db	01dh,0b7h,010h,064h
-1307:     -	1EB7  6AB020F2		db	06ah,0b0h,020h,0f2h
-1308:     -	1EBB  F3B97148		db	0f3h,0b9h,071h,048h
-1309:     -	1EBF  84BE41DE		db	084h,0beh,041h,0deh
-1310:     -	1EC3  1ADAD47D		db	01ah,0dah,0d4h,07dh
-1311:     -	1EC7  6DDDE4EB		db	06dh,0ddh,0e4h,0ebh
-1312:     -	1ECB  F4D4B551		db	0f4h,0d4h,0b5h,051h
-1313:     -	1ECF  83D385C7		db	083h,0d3h,085h,0c7h
-1314:     -	1ED3  136C9856		db	013h,06ch,098h,056h
-1315:     -	1ED7  646BA8C0		db	064h,06bh,0a8h,0c0h
-1316:     -	1EDB  FD62F97A		db	0fdh,062h,0f9h,07ah
-1317:     -	1EDF  8A65C9EC		db	08ah,065h,0c9h,0ech
-1318:     -	1EE3  14015C4F		db	014h,001h,05ch,04fh
-1319:     -	1EE7  63066CD9		db	063h,006h,06ch,0d9h
-1320:     -	1EEB  FA0F3D63		db	0fah,00fh,03dh,063h
-1321:     -	1EEF  8D080DF5		db	08dh,008h,00dh,0f5h
-1322:     -	1EF3  3B6E20C8		db	03bh,06eh,020h,0c8h
-1323:     -	1EF7  4C69105E		db	04ch,069h,010h,05eh
-1324:     -	1EFB  D56041E4		db	0d5h,060h,041h,0e4h
-1325:     -	1EFF  A2677172		db	0a2h,067h,071h,072h
-1326:     -	1F03  3C03E4D1		db	03ch,003h,0e4h,0d1h
-1327:     -	1F07  4B04D447		db	04bh,004h,0d4h,047h
-1328:     -	1F0B  D20D85FD		db	0d2h,00dh,085h,0fdh
-1329:     -	1F0F  A50AB56B		db	0a5h,00ah,0b5h,06bh
-1330:     -	1F13  35B5A8FA		db	035h,0b5h,0a8h,0fah
-1331:     -	1F17  42B2986C		db	042h,0b2h,098h,06ch
-1332:     -	1F1B  DBBBC9D6		db	0dbh,0bbh,0c9h,0d6h
-1333:     -	1F1F  ACBCF940		db	0ach,0bch,0f9h,040h
-1334:     -	1F23  32D86CE3		db	032h,0d8h,06ch,0e3h
-1335:     -	1F27  45DF5C75		db	045h,0dfh,05ch,075h
-1336:     -	1F2B  DCD60DCF		db	0dch,0d6h,00dh,0cfh
-1337:     -	1F2F  ABD13D59		db	0abh,0d1h,03dh,059h
-1338:     -	1F33  26D930AC		db	026h,0d9h,030h,0ach
-1339:     -	1F37  51DE003A		db	051h,0deh,000h,03ah
-1340:     -	1F3B  C8D75180		db	0c8h,0d7h,051h,080h
-1341:     -	1F3F  BFD06116		db	0bfh,0d0h,061h,016h
-1342:     -	1F43  21B4F4B5		db	021h,0b4h,0f4h,0b5h
-1343:     -	1F47  56B3C423		db	056h,0b3h,0c4h,023h
-1344:     -	1F4B  CFBA9599		db	0cfh,0bah,095h,099h
-1345:     -	1F4F  B8BDA50F		db	0b8h,0bdh,0a5h,00fh
-1346:     -	1F53  2802B89E		db	028h,002h,0b8h,09eh
-1347:     -	1F57  5F058808		db	05fh,005h,088h,008h
-1348:     -	1F5B  C60CD9B2		db	0c6h,00ch,0d9h,0b2h
-1349:     -	1F5F  B10BE924		db	0b1h,00bh,0e9h,024h
-1350:     -	1F63  2F6F7C87		db	02fh,06fh,07ch,087h
-1351:     -	1F67  58684C11		db	058h,068h,04ch,011h
-1352:     -	1F6B  C1611DAB		db	0c1h,061h,01dh,0abh
-1353:     -	1F6F  B6662D3D		db	0b6h,066h,02dh,03dh
-1354:     -	1F73  76DC4190		db	076h,0dch,041h,090h
-1355:     -	1F77  01DB7106		db	001h,0dbh,071h,006h
-1356:     -	1F7B  98D220BC		db	098h,0d2h,020h,0bch
-1357:     -	1F7F  EFD5102A		db	0efh,0d5h,010h,02ah
-1358:     -	1F83  71B18589		db	071h,0b1h,085h,089h
-1359:     -	1F87  06B6B51F		db	006h,0b6h,0b5h,01fh
-1360:     -	1F8B  9FBFE4A5		db	09fh,0bfh,0e4h,0a5h
-1361:     -	1F8F  E8B8D433		db	0e8h,0b8h,0d4h,033h
-1362:     -	1F93  7807C9A2		db	078h,007h,0c9h,0a2h
-1363:     -	1F97  0F00F934		db	00fh,000h,0f9h,034h
-1364:     -	1F9B  9609A88E		db	096h,009h,0a8h,08eh
-1365:     -	1F9F  E10E9818		db	0e1h,00eh,098h,018h
-1366:     -	1FA3  7F6A0DBB		db	07fh,06ah,00dh,0bbh
-1367:     -	1FA7  086D3D2D		db	008h,06dh,03dh,02dh
-1368:     -	1FAB  91646C97		db	091h,064h,06ch,097h
-1369:     -	1FAF  E6635C01		db	0e6h,063h,05ch,001h
-1370:     -	1FB3  6B6B51F4		db	06bh,06bh,051h,0f4h
-1371:     -	1FB7  1C6C6162		db	01ch,06ch,061h,062h
-1372:     -	1FBB  856530D8		db	085h,065h,030h,0d8h
-1373:     -	1FBF  F262004E		db	0f2h,062h,000h,04eh
-1374:     -	1FC3  6C0695ED		db	06ch,006h,095h,0edh
-1375:     -	1FC7  1B01A57B		db	01bh,001h,0a5h,07bh
-1376:     -	1FCB  8208F4C1		db	082h,008h,0f4h,0c1h
-1377:     -	1FCF  F50FC457		db	0f5h,00fh,0c4h,057h
-1378:     -	1FD3  65B0D9C6		db	065h,0b0h,0d9h,0c6h
-1379:     -	1FD7  12B7E950		db	012h,0b7h,0e9h,050h
-1380:     -	1FDB  8BBEB8EA		db	08bh,0beh,0b8h,0eah
-1381:     -	1FDF  FCB9887C		db	0fch,0b9h,088h,07ch
-1382:     -	1FE3  62DD1DDF		db	062h,0ddh,01dh,0dfh
-1383:     -	1FE7  15DA2D49		db	015h,0dah,02dh,049h
-1384:     -	1FEB  8CD37CF3		db	08ch,0d3h,07ch,0f3h
-1385:     -	1FEF  FBD44C65		db	0fbh,0d4h,04ch,065h
-1386:     -	1FF3  4DB26158		db	04dh,0b2h,061h,058h
-1387:     -	1FF7  3AB551CE		db	03ah,0b5h,051h,0ceh
-1388:     -	1FFB  A3BC0074		db	0a3h,0bch,000h,074h
-1389:     -	1FFF  D4BB30E2		db	0d4h,0bbh,030h,0e2h
-1390:     -	2003  4ADFA541		db	04ah,0dfh,0a5h,041h
-1391:     -	2007  3DD895D7		db	03dh,0d8h,095h,0d7h
-1392:     -	200B  A4D1C46D		db	0a4h,0d1h,0c4h,06dh
-1393:     -	200F  D3D6F4FB		db	0d3h,0d6h,0f4h,0fbh
-1394:     -	2013  4369E96A		db	043h,069h,0e9h,06ah
-1395:     -	2017  346ED9FC		db	034h,06eh,0d9h,0fch
-1396:     -	201B  AD678846		db	0adh,067h,088h,046h
-1397:     -	201F  DA60B8D0		db	0dah,060h,0b8h,0d0h
-1398:     -	2023  44042D73		db	044h,004h,02dh,073h
-1399:     -	2027  33031DE5		db	033h,003h,01dh,0e5h
-1400:     -	202B  AA0A4C5F		db	0aah,00ah,04ch,05fh
-1401:     -	202F  DD0D7CC9		db	0ddh,00dh,07ch,0c9h
-1402:     -	2033  5005713C		db	050h,005h,071h,03ch
-1403:     -	2037  270241AA		db	027h,002h,041h,0aah
-1404:     -	203B  BE0B1010		db	0beh,00bh,010h,010h
-1405:     -	203F  C90C2086		db	0c9h,00ch,020h,086h
-1406:     -	2043  5768B525		db	057h,068h,0b5h,025h
-1407:     -	2047  206F85B3		db	020h,06fh,085h,0b3h
-1408:     -	204B  B966D409		db	0b9h,066h,0d4h,009h
-1409:     -	204F  CE61E49F		db	0ceh,061h,0e4h,09fh
-1410:     -	2053  5EDEF90E		db	05eh,0deh,0f9h,00eh
-1411:     -	2057  29D9C998		db	029h,0d9h,0c9h,098h
-1412:     -	205B  B0D09822		db	0b0h,0d0h,098h,022h
-1413:     -	205F  C7D7A8B4		db	0c7h,0d7h,0a8h,0b4h
-1414:     -	2063  59B33D17		db	059h,0b3h,03dh,017h
-1415:     -	2067  2EB40D81		db	02eh,0b4h,00dh,081h
-1416:     -	206B  B7BD5C3B		db	0b7h,0bdh,05ch,03bh
-1417:     -	206F  C0BA6CAD		db	0c0h,0bah,06ch,0adh
-1418:     -	2073  EDB88320		db	0edh,0b8h,083h,020h
-1419:     -	2077  9ABFB3B6		db	09ah,0bfh,0b3h,0b6h
-1420:     -	207B  03B6E20C		db	003h,0b6h,0e2h,00ch
-1421:     -	207F  74B1D29A		db	074h,0b1h,0d2h,09ah
-1422:     -	2083  EAD54739		db	0eah,0d5h,047h,039h
-1423:     -	2087  9DD277AF		db	09dh,0d2h,077h,0afh
-1424:     -	208B  04DB2615		db	004h,0dbh,026h,015h
-1425:     -	208F  73DC1683		db	073h,0dch,016h,083h
-1426:     -	2093  E3630B12		db	0e3h,063h,00bh,012h
-1427:     -	2097  94643B84		db	094h,064h,03bh,084h
-1428:     -	209B  0D6D6A3E		db	00dh,06dh,06ah,03eh
-1429:     -	209F  7A6A5AA8		db	07ah,06ah,05ah,0a8h
-1430:     -	20A3  E40ECF0B		db	0e4h,00eh,0cfh,00bh
-1431:     -	20A7  9309FF9D		db	093h,009h,0ffh,09dh
-1432:     -	20AB  0A00AE27		db	00ah,000h,0aeh,027h
-1433:     -	20AF  7D079EB1		db	07dh,007h,09eh,0b1h
-1434:     -	20B3  F00F9344		db	0f0h,00fh,093h,044h
-1435:     -	20B7  8708A3D2		db	087h,008h,0a3h,0d2h
-1436:     -	20BB  1E01F268		db	01eh,001h,0f2h,068h
-1437:     -	20BF  6906C2FE		db	069h,006h,0c2h,0feh
-1438:     -	20C3  F762575D		db	0f7h,062h,057h,05dh
-1439:     -	20C7  806567CB		db	080h,065h,067h,0cbh
-1440:     -	20CB  196C3671		db	019h,06ch,036h,071h
-1441:     -	20CF  6E6B06E7		db	06eh,06bh,006h,0e7h
-1442:     -	20D3  FED41B76		db	0feh,0d4h,01bh,076h
-1443:     -	20D7  89D32BE0		db	089h,0d3h,02bh,0e0h
-1444:     -	20DB  10DA7A5A		db	010h,0dah,07ah,05ah
-1445:     -	20DF  67DD4ACC		db	067h,0ddh,04ah,0cch
-1446:     -	20E3  F9B9DF6F		db	0f9h,0b9h,0dfh,06fh
-1447:     -	20E7  8EBEEFF9		db	08eh,0beh,0efh,0f9h
-1448:     -	20EB  17B7BE43		db	017h,0b7h,0beh,043h
-1449:     -	20EF  60B08ED5		db	060h,0b0h,08eh,0d5h
-1450:     -	20F3  D6D6A3E8		db	0d6h,0d6h,0a3h,0e8h
-1451:     -	20F7  A1D1937E		db	0a1h,0d1h,093h,07eh
-1452:     -	20FB  38D8C2C4		db	038h,0d8h,0c2h,0c4h
-1453:     -	20FF  4FDFF252		db	04fh,0dfh,0f2h,052h
-1454:     -	2103  D1BB67F1		db	0d1h,0bbh,067h,0f1h
-1455:     -	2107  A6BC5767		db	0a6h,0bch,057h,067h
-1456:     -	210B  3FB506DD		db	03fh,0b5h,006h,0ddh
-1457:     -	210F  48B2364B		db	048h,0b2h,036h,04bh
-1458:     -	2113  D80D2BDA		db	0d8h,00dh,02bh,0dah
-1459:     -	2117  AF0A1B4C		db	0afh,00ah,01bh,04ch
-1460:     -	211B  36034AF6		db	036h,003h,04ah,0f6h
-1461:     -	211F  41047A60		db	041h,004h,07ah,060h
-1462:     -	2123  DF60EFC3		db	0dfh,060h,0efh,0c3h
-1463:     -	2127  A867DF55		db	0a8h,067h,0dfh,055h
-1464:     -	212B  316E8EEF		db	031h,06eh,08eh,0efh
-1465:     -	212F  4669BE79		db	046h,069h,0beh,079h
-1466:     -	2133  CB61B38C		db	0cbh,061h,0b3h,08ch
-1467:     -	2137  BC66831A		db	0bch,066h,083h,01ah
-1468:     -	213B  256FD2A0		db	025h,06fh,0d2h,0a0h
-1469:     -	213F  5268E236		db	052h,068h,0e2h,036h
-1470:     -	2143  CC0C7795		db	0cch,00ch,077h,095h
-1471:     -	2147  BB0B4703		db	0bbh,00bh,047h,003h
-1472:     -	214B  220216B9		db	022h,002h,016h,0b9h
-1473:     -	214F  5505262F		db	055h,005h,026h,02fh
-1474:     -	2153  C5BA3BBE		db	0c5h,0bah,03bh,0beh
-1475:     -	2157  B2BD0B28		db	0b2h,0bdh,00bh,028h
-1476:     -	215B  2BB45A92		db	02bh,0b4h,05ah,092h
-1477:     -	215F  5CB36A04		db	05ch,0b3h,06ah,004h
-1478:     -	2163  C2D7FFA7		db	0c2h,0d7h,0ffh,0a7h
-1479:     -	2167  B5D0CF31		db	0b5h,0d0h,0cfh,031h
-1480:     -	216B  2CD99E8B		db	02ch,0d9h,09eh,08bh
-1481:     -	216F  5BDEAE1D		db	05bh,0deh,0aeh,01dh
-1482:     -	2173  9B64C2B0		db	09bh,064h,0c2h,0b0h
-1483:     -	2177  EC63F226		db	0ech,063h,0f2h,026h
-1484:     -	217B  756AA39C		db	075h,06ah,0a3h,09ch
-1485:     -	217F  026D930A		db	002h,06dh,093h,00ah
-1486:     -	2183  9C0906A9		db	09ch,009h,006h,0a9h
-1487:     -	2187  EB0E363F		db	0ebh,00eh,036h,03fh
-1488:     -	218B  72076785		db	072h,007h,067h,085h
-1489:     -	218F  05005713		db	005h,000h,057h,013h
-1490:     -	2193  95BF4A82		db	095h,0bfh,04ah,082h
-1491:     -	2197  E2B87A14		db	0e2h,0b8h,07ah,014h
-1492:     -	219B  7BB12BAE		db	07bh,0b1h,02bh,0aeh
-1493:     -	219F  0CB61B38		db	00ch,0b6h,01bh,038h
-1494:     -	21A3  92D28E9B		db	092h,0d2h,08eh,09bh
-1495:     -	21A7  E5D5BE0D		db	0e5h,0d5h,0beh,00dh
-1496:     -	21AB  7CDCEFB7		db	07ch,0dch,0efh,0b7h
-1497:     -	21AF  0BDBDF21		db	00bh,0dbh,0dfh,021h
-1498:     -	21B3  86D3D2D4		db	086h,0d3h,0d2h,0d4h
-1499:     -	21B7  F1D4E242		db	0f1h,0d4h,0e2h,042h
-1500:     -	21BB  68DDB3F8		db	068h,0ddh,0b3h,0f8h
-1501:     -	21BF  1FDA836E		db	01fh,0dah,083h,06eh
-1502:     -	21C3  81BE16CD		db	081h,0beh,016h,0cdh
-1503:     -	21C7  F6B9265B		db	0f6h,0b9h,026h,05bh
-1504:     -	21CB  6FB077E1		db	06fh,0b0h,077h,0e1h
-1505:     -	21CF  18B74777		db	018h,0b7h,047h,077h
-1506:     -	21D3  88085AE6		db	088h,008h,05ah,0e6h
-1507:     -	21D7  FF0F6A70		db	0ffh,00fh,06ah,070h
-1508:     -	21DB  66063BCA		db	066h,006h,03bh,0cah
-1509:     -	21DF  11010B5C		db	011h,001h,00bh,05ch
-1510:     -	21E3  8F659EFF		db	08fh,065h,09eh,0ffh
-1511:     -	21E7  F862AE69		db	0f8h,062h,0aeh,069h
-1512:     -	21EB  616BFFD3		db	061h,06bh,0ffh,0d3h
-1513:     -	21EF  166CCF45		db	016h,06ch,0cfh,045h
-1514:     -	21F3  A00AE278		db	0a0h,00ah,0e2h,078h
-1515:     -	21F7  D70DD2EE		db	0d7h,00dh,0d2h,0eeh
-1516:     -	21FB  4E048354		db	04eh,004h,083h,054h
-1517:     -	21FF  3903B3C2		db	039h,003h,0b3h,0c2h
-1518:     -	2203  A7672661		db	0a7h,067h,026h,061h
-1519:     -	2207  D06016F7		db	0d0h,060h,016h,0f7h
-1520:     -	220B  4969474D		db	049h,069h,047h,04dh
-1521:     -	220F  3E6E77DB		db	03eh,06eh,077h,0dbh
-1522:     -	2213  AED16A4A		db	0aeh,0d1h,06ah,04ah
-1523:     -	2217  D9D65ADC		db	0d9h,0d6h,05ah,0dch
-1524:     -	221B  40DF0B66		db	040h,0dfh,00bh,066h
-1525:     -	221F  37D83BF0		db	037h,0d8h,03bh,0f0h
-1526:     -	2223  A9BCAE53		db	0a9h,0bch,0aeh,053h
-1527:     -	2227  DEBB9EC5		db	0deh,0bbh,09eh,0c5h
-1528:     -	222B  47B2CF7F		db	047h,0b2h,0cfh,07fh
-1529:     -	222F  30B5FFE9		db	030h,0b5h,0ffh,0e9h
-1530:     -	2233  BDBDF21C		db	0bdh,0bdh,0f2h,01ch
-1531:     -	2237  CABAC28A		db	0cah,0bah,0c2h,08ah
-1532:     -	223B  53B39330		db	053h,0b3h,093h,030h
-1533:     -	223F  24B4A3A6		db	024h,0b4h,0a3h,0a6h
-1534:     -	2243  BAD03605		db	0bah,0d0h,036h,005h
-1535:     -	2247  CDD70693		db	0cdh,0d7h,006h,093h
-1536:     -	224B  54DE5729		db	054h,0deh,057h,029h
-1537:     -	224F  23D967BF		db	023h,0d9h,067h,0bfh
-1538:     -	2253  B3667A2E		db	0b3h,066h,07ah,02eh
-1539:     -	2257  C4614AB8		db	0c4h,061h,04ah,0b8h
-1540:     -	225B  5D681B02		db	05dh,068h,01bh,002h
-1541:     -	225F  2A6F2B94		db	02ah,06fh,02bh,094h
-1542:     -	2263  B40BBE37		db	0b4h,00bh,0beh,037h
-1543:     -	2267  C30C8EA1		db	0c3h,00ch,08eh,0a1h
-1544:     -	226B  5A05DF1B		db	05ah,005h,0dfh,01bh
-1545:     -	226F  2D02EF8D		db	02dh,002h,0efh,08dh
-1546:				
+1290:     -	1E71          	crcval	ds	4
+1291:				
+1292:     -	1E75  00000000	crctab:	db	000h,000h,000h,000h
+1293:     -	1E79  77073096		db	077h,007h,030h,096h
+1294:     -	1E7D  EE0E612C		db	0eeh,00eh,061h,02ch
+1295:     -	1E81  990951BA		db	099h,009h,051h,0bah
+1296:     -	1E85  076DC419		db	007h,06dh,0c4h,019h
+1297:     -	1E89  706AF48F		db	070h,06ah,0f4h,08fh
+1298:     -	1E8D  E963A535		db	0e9h,063h,0a5h,035h
+1299:     -	1E91  9E6495A3		db	09eh,064h,095h,0a3h
+1300:     -	1E95  0EDB8832		db	00eh,0dbh,088h,032h
+1301:     -	1E99  79DCB8A4		db	079h,0dch,0b8h,0a4h
+1302:     -	1E9D  E0D5E91E		db	0e0h,0d5h,0e9h,01eh
+1303:     -	1EA1  97D2D988		db	097h,0d2h,0d9h,088h
+1304:     -	1EA5  09B64C2B		db	009h,0b6h,04ch,02bh
+1305:     -	1EA9  7EB17CBD		db	07eh,0b1h,07ch,0bdh
+1306:     -	1EAD  E7B82D07		db	0e7h,0b8h,02dh,007h
+1307:     -	1EB1  90BF1D91		db	090h,0bfh,01dh,091h
+1308:     -	1EB5  1DB71064		db	01dh,0b7h,010h,064h
+1309:     -	1EB9  6AB020F2		db	06ah,0b0h,020h,0f2h
+1310:     -	1EBD  F3B97148		db	0f3h,0b9h,071h,048h
+1311:     -	1EC1  84BE41DE		db	084h,0beh,041h,0deh
+1312:     -	1EC5  1ADAD47D		db	01ah,0dah,0d4h,07dh
+1313:     -	1EC9  6DDDE4EB		db	06dh,0ddh,0e4h,0ebh
+1314:     -	1ECD  F4D4B551		db	0f4h,0d4h,0b5h,051h
+1315:     -	1ED1  83D385C7		db	083h,0d3h,085h,0c7h
+1316:     -	1ED5  136C9856		db	013h,06ch,098h,056h
+1317:     -	1ED9  646BA8C0		db	064h,06bh,0a8h,0c0h
+1318:     -	1EDD  FD62F97A		db	0fdh,062h,0f9h,07ah
+1319:     -	1EE1  8A65C9EC		db	08ah,065h,0c9h,0ech
+1320:     -	1EE5  14015C4F		db	014h,001h,05ch,04fh
+1321:     -	1EE9  63066CD9		db	063h,006h,06ch,0d9h
+1322:     -	1EED  FA0F3D63		db	0fah,00fh,03dh,063h
+1323:     -	1EF1  8D080DF5		db	08dh,008h,00dh,0f5h
+1324:     -	1EF5  3B6E20C8		db	03bh,06eh,020h,0c8h
+1325:     -	1EF9  4C69105E		db	04ch,069h,010h,05eh
+1326:     -	1EFD  D56041E4		db	0d5h,060h,041h,0e4h
+1327:     -	1F01  A2677172		db	0a2h,067h,071h,072h
+1328:     -	1F05  3C03E4D1		db	03ch,003h,0e4h,0d1h
+1329:     -	1F09  4B04D447		db	04bh,004h,0d4h,047h
+1330:     -	1F0D  D20D85FD		db	0d2h,00dh,085h,0fdh
+1331:     -	1F11  A50AB56B		db	0a5h,00ah,0b5h,06bh
+1332:     -	1F15  35B5A8FA		db	035h,0b5h,0a8h,0fah
+1333:     -	1F19  42B2986C		db	042h,0b2h,098h,06ch
+1334:     -	1F1D  DBBBC9D6		db	0dbh,0bbh,0c9h,0d6h
+1335:     -	1F21  ACBCF940		db	0ach,0bch,0f9h,040h
+1336:     -	1F25  32D86CE3		db	032h,0d8h,06ch,0e3h
+1337:     -	1F29  45DF5C75		db	045h,0dfh,05ch,075h
+1338:     -	1F2D  DCD60DCF		db	0dch,0d6h,00dh,0cfh
+1339:     -	1F31  ABD13D59		db	0abh,0d1h,03dh,059h
+1340:     -	1F35  26D930AC		db	026h,0d9h,030h,0ach
+1341:     -	1F39  51DE003A		db	051h,0deh,000h,03ah
+1342:     -	1F3D  C8D75180		db	0c8h,0d7h,051h,080h
+1343:     -	1F41  BFD06116		db	0bfh,0d0h,061h,016h
+1344:     -	1F45  21B4F4B5		db	021h,0b4h,0f4h,0b5h
+1345:     -	1F49  56B3C423		db	056h,0b3h,0c4h,023h
+1346:     -	1F4D  CFBA9599		db	0cfh,0bah,095h,099h
+1347:     -	1F51  B8BDA50F		db	0b8h,0bdh,0a5h,00fh
+1348:     -	1F55  2802B89E		db	028h,002h,0b8h,09eh
+1349:     -	1F59  5F058808		db	05fh,005h,088h,008h
+1350:     -	1F5D  C60CD9B2		db	0c6h,00ch,0d9h,0b2h
+1351:     -	1F61  B10BE924		db	0b1h,00bh,0e9h,024h
+1352:     -	1F65  2F6F7C87		db	02fh,06fh,07ch,087h
+1353:     -	1F69  58684C11		db	058h,068h,04ch,011h
+1354:     -	1F6D  C1611DAB		db	0c1h,061h,01dh,0abh
+1355:     -	1F71  B6662D3D		db	0b6h,066h,02dh,03dh
+1356:     -	1F75  76DC4190		db	076h,0dch,041h,090h
+1357:     -	1F79  01DB7106		db	001h,0dbh,071h,006h
+1358:     -	1F7D  98D220BC		db	098h,0d2h,020h,0bch
+1359:     -	1F81  EFD5102A		db	0efh,0d5h,010h,02ah
+1360:     -	1F85  71B18589		db	071h,0b1h,085h,089h
+1361:     -	1F89  06B6B51F		db	006h,0b6h,0b5h,01fh
+1362:     -	1F8D  9FBFE4A5		db	09fh,0bfh,0e4h,0a5h
+1363:     -	1F91  E8B8D433		db	0e8h,0b8h,0d4h,033h
+1364:     -	1F95  7807C9A2		db	078h,007h,0c9h,0a2h
+1365:     -	1F99  0F00F934		db	00fh,000h,0f9h,034h
+1366:     -	1F9D  9609A88E		db	096h,009h,0a8h,08eh
+1367:     -	1FA1  E10E9818		db	0e1h,00eh,098h,018h
+1368:     -	1FA5  7F6A0DBB		db	07fh,06ah,00dh,0bbh
+1369:     -	1FA9  086D3D2D		db	008h,06dh,03dh,02dh
+1370:     -	1FAD  91646C97		db	091h,064h,06ch,097h
+1371:     -	1FB1  E6635C01		db	0e6h,063h,05ch,001h
+1372:     -	1FB5  6B6B51F4		db	06bh,06bh,051h,0f4h
+1373:     -	1FB9  1C6C6162		db	01ch,06ch,061h,062h
+1374:     -	1FBD  856530D8		db	085h,065h,030h,0d8h
+1375:     -	1FC1  F262004E		db	0f2h,062h,000h,04eh
+1376:     -	1FC5  6C0695ED		db	06ch,006h,095h,0edh
+1377:     -	1FC9  1B01A57B		db	01bh,001h,0a5h,07bh
+1378:     -	1FCD  8208F4C1		db	082h,008h,0f4h,0c1h
+1379:     -	1FD1  F50FC457		db	0f5h,00fh,0c4h,057h
+1380:     -	1FD5  65B0D9C6		db	065h,0b0h,0d9h,0c6h
+1381:     -	1FD9  12B7E950		db	012h,0b7h,0e9h,050h
+1382:     -	1FDD  8BBEB8EA		db	08bh,0beh,0b8h,0eah
+1383:     -	1FE1  FCB9887C		db	0fch,0b9h,088h,07ch
+1384:     -	1FE5  62DD1DDF		db	062h,0ddh,01dh,0dfh
+1385:     -	1FE9  15DA2D49		db	015h,0dah,02dh,049h
+1386:     -	1FED  8CD37CF3		db	08ch,0d3h,07ch,0f3h
+1387:     -	1FF1  FBD44C65		db	0fbh,0d4h,04ch,065h
+1388:     -	1FF5  4DB26158		db	04dh,0b2h,061h,058h
+1389:     -	1FF9  3AB551CE		db	03ah,0b5h,051h,0ceh
+1390:     -	1FFD  A3BC0074		db	0a3h,0bch,000h,074h
+1391:     -	2001  D4BB30E2		db	0d4h,0bbh,030h,0e2h
+1392:     -	2005  4ADFA541		db	04ah,0dfh,0a5h,041h
+1393:     -	2009  3DD895D7		db	03dh,0d8h,095h,0d7h
+1394:     -	200D  A4D1C46D		db	0a4h,0d1h,0c4h,06dh
+1395:     -	2011  D3D6F4FB		db	0d3h,0d6h,0f4h,0fbh
+1396:     -	2015  4369E96A		db	043h,069h,0e9h,06ah
+1397:     -	2019  346ED9FC		db	034h,06eh,0d9h,0fch
+1398:     -	201D  AD678846		db	0adh,067h,088h,046h
+1399:     -	2021  DA60B8D0		db	0dah,060h,0b8h,0d0h
+1400:     -	2025  44042D73		db	044h,004h,02dh,073h
+1401:     -	2029  33031DE5		db	033h,003h,01dh,0e5h
+1402:     -	202D  AA0A4C5F		db	0aah,00ah,04ch,05fh
+1403:     -	2031  DD0D7CC9		db	0ddh,00dh,07ch,0c9h
+1404:     -	2035  5005713C		db	050h,005h,071h,03ch
+1405:     -	2039  270241AA		db	027h,002h,041h,0aah
+1406:     -	203D  BE0B1010		db	0beh,00bh,010h,010h
+1407:     -	2041  C90C2086		db	0c9h,00ch,020h,086h
+1408:     -	2045  5768B525		db	057h,068h,0b5h,025h
+1409:     -	2049  206F85B3		db	020h,06fh,085h,0b3h
+1410:     -	204D  B966D409		db	0b9h,066h,0d4h,009h
+1411:     -	2051  CE61E49F		db	0ceh,061h,0e4h,09fh
+1412:     -	2055  5EDEF90E		db	05eh,0deh,0f9h,00eh
+1413:     -	2059  29D9C998		db	029h,0d9h,0c9h,098h
+1414:     -	205D  B0D09822		db	0b0h,0d0h,098h,022h
+1415:     -	2061  C7D7A8B4		db	0c7h,0d7h,0a8h,0b4h
+1416:     -	2065  59B33D17		db	059h,0b3h,03dh,017h
+1417:     -	2069  2EB40D81		db	02eh,0b4h,00dh,081h
+1418:     -	206D  B7BD5C3B		db	0b7h,0bdh,05ch,03bh
+1419:     -	2071  C0BA6CAD		db	0c0h,0bah,06ch,0adh
+1420:     -	2075  EDB88320		db	0edh,0b8h,083h,020h
+1421:     -	2079  9ABFB3B6		db	09ah,0bfh,0b3h,0b6h
+1422:     -	207D  03B6E20C		db	003h,0b6h,0e2h,00ch
+1423:     -	2081  74B1D29A		db	074h,0b1h,0d2h,09ah
+1424:     -	2085  EAD54739		db	0eah,0d5h,047h,039h
+1425:     -	2089  9DD277AF		db	09dh,0d2h,077h,0afh
+1426:     -	208D  04DB2615		db	004h,0dbh,026h,015h
+1427:     -	2091  73DC1683		db	073h,0dch,016h,083h
+1428:     -	2095  E3630B12		db	0e3h,063h,00bh,012h
+1429:     -	2099  94643B84		db	094h,064h,03bh,084h
+1430:     -	209D  0D6D6A3E		db	00dh,06dh,06ah,03eh
+1431:     -	20A1  7A6A5AA8		db	07ah,06ah,05ah,0a8h
+1432:     -	20A5  E40ECF0B		db	0e4h,00eh,0cfh,00bh
+1433:     -	20A9  9309FF9D		db	093h,009h,0ffh,09dh
+1434:     -	20AD  0A00AE27		db	00ah,000h,0aeh,027h
+1435:     -	20B1  7D079EB1		db	07dh,007h,09eh,0b1h
+1436:     -	20B5  F00F9344		db	0f0h,00fh,093h,044h
+1437:     -	20B9  8708A3D2		db	087h,008h,0a3h,0d2h
+1438:     -	20BD  1E01F268		db	01eh,001h,0f2h,068h
+1439:     -	20C1  6906C2FE		db	069h,006h,0c2h,0feh
+1440:     -	20C5  F762575D		db	0f7h,062h,057h,05dh
+1441:     -	20C9  806567CB		db	080h,065h,067h,0cbh
+1442:     -	20CD  196C3671		db	019h,06ch,036h,071h
+1443:     -	20D1  6E6B06E7		db	06eh,06bh,006h,0e7h
+1444:     -	20D5  FED41B76		db	0feh,0d4h,01bh,076h
+1445:     -	20D9  89D32BE0		db	089h,0d3h,02bh,0e0h
+1446:     -	20DD  10DA7A5A		db	010h,0dah,07ah,05ah
+1447:     -	20E1  67DD4ACC		db	067h,0ddh,04ah,0cch
+1448:     -	20E5  F9B9DF6F		db	0f9h,0b9h,0dfh,06fh
+1449:     -	20E9  8EBEEFF9		db	08eh,0beh,0efh,0f9h
+1450:     -	20ED  17B7BE43		db	017h,0b7h,0beh,043h
+1451:     -	20F1  60B08ED5		db	060h,0b0h,08eh,0d5h
+1452:     -	20F5  D6D6A3E8		db	0d6h,0d6h,0a3h,0e8h
+1453:     -	20F9  A1D1937E		db	0a1h,0d1h,093h,07eh
+1454:     -	20FD  38D8C2C4		db	038h,0d8h,0c2h,0c4h
+1455:     -	2101  4FDFF252		db	04fh,0dfh,0f2h,052h
+1456:     -	2105  D1BB67F1		db	0d1h,0bbh,067h,0f1h
+1457:     -	2109  A6BC5767		db	0a6h,0bch,057h,067h
+1458:     -	210D  3FB506DD		db	03fh,0b5h,006h,0ddh
+1459:     -	2111  48B2364B		db	048h,0b2h,036h,04bh
+1460:     -	2115  D80D2BDA		db	0d8h,00dh,02bh,0dah
+1461:     -	2119  AF0A1B4C		db	0afh,00ah,01bh,04ch
+1462:     -	211D  36034AF6		db	036h,003h,04ah,0f6h
+1463:     -	2121  41047A60		db	041h,004h,07ah,060h
+1464:     -	2125  DF60EFC3		db	0dfh,060h,0efh,0c3h
+1465:     -	2129  A867DF55		db	0a8h,067h,0dfh,055h
+1466:     -	212D  316E8EEF		db	031h,06eh,08eh,0efh
+1467:     -	2131  4669BE79		db	046h,069h,0beh,079h
+1468:     -	2135  CB61B38C		db	0cbh,061h,0b3h,08ch
+1469:     -	2139  BC66831A		db	0bch,066h,083h,01ah
+1470:     -	213D  256FD2A0		db	025h,06fh,0d2h,0a0h
+1471:     -	2141  5268E236		db	052h,068h,0e2h,036h
+1472:     -	2145  CC0C7795		db	0cch,00ch,077h,095h
+1473:     -	2149  BB0B4703		db	0bbh,00bh,047h,003h
+1474:     -	214D  220216B9		db	022h,002h,016h,0b9h
+1475:     -	2151  5505262F		db	055h,005h,026h,02fh
+1476:     -	2155  C5BA3BBE		db	0c5h,0bah,03bh,0beh
+1477:     -	2159  B2BD0B28		db	0b2h,0bdh,00bh,028h
+1478:     -	215D  2BB45A92		db	02bh,0b4h,05ah,092h
+1479:     -	2161  5CB36A04		db	05ch,0b3h,06ah,004h
+1480:     -	2165  C2D7FFA7		db	0c2h,0d7h,0ffh,0a7h
+1481:     -	2169  B5D0CF31		db	0b5h,0d0h,0cfh,031h
+1482:     -	216D  2CD99E8B		db	02ch,0d9h,09eh,08bh
+1483:     -	2171  5BDEAE1D		db	05bh,0deh,0aeh,01dh
+1484:     -	2175  9B64C2B0		db	09bh,064h,0c2h,0b0h
+1485:     -	2179  EC63F226		db	0ech,063h,0f2h,026h
+1486:     -	217D  756AA39C		db	075h,06ah,0a3h,09ch
+1487:     -	2181  026D930A		db	002h,06dh,093h,00ah
+1488:     -	2185  9C0906A9		db	09ch,009h,006h,0a9h
+1489:     -	2189  EB0E363F		db	0ebh,00eh,036h,03fh
+1490:     -	218D  72076785		db	072h,007h,067h,085h
+1491:     -	2191  05005713		db	005h,000h,057h,013h
+1492:     -	2195  95BF4A82		db	095h,0bfh,04ah,082h
+1493:     -	2199  E2B87A14		db	0e2h,0b8h,07ah,014h
+1494:     -	219D  7BB12BAE		db	07bh,0b1h,02bh,0aeh
+1495:     -	21A1  0CB61B38		db	00ch,0b6h,01bh,038h
+1496:     -	21A5  92D28E9B		db	092h,0d2h,08eh,09bh
+1497:     -	21A9  E5D5BE0D		db	0e5h,0d5h,0beh,00dh
+1498:     -	21AD  7CDCEFB7		db	07ch,0dch,0efh,0b7h
+1499:     -	21B1  0BDBDF21		db	00bh,0dbh,0dfh,021h
+1500:     -	21B5  86D3D2D4		db	086h,0d3h,0d2h,0d4h
+1501:     -	21B9  F1D4E242		db	0f1h,0d4h,0e2h,042h
+1502:     -	21BD  68DDB3F8		db	068h,0ddh,0b3h,0f8h
+1503:     -	21C1  1FDA836E		db	01fh,0dah,083h,06eh
+1504:     -	21C5  81BE16CD		db	081h,0beh,016h,0cdh
+1505:     -	21C9  F6B9265B		db	0f6h,0b9h,026h,05bh
+1506:     -	21CD  6FB077E1		db	06fh,0b0h,077h,0e1h
+1507:     -	21D1  18B74777		db	018h,0b7h,047h,077h
+1508:     -	21D5  88085AE6		db	088h,008h,05ah,0e6h
+1509:     -	21D9  FF0F6A70		db	0ffh,00fh,06ah,070h
+1510:     -	21DD  66063BCA		db	066h,006h,03bh,0cah
+1511:     -	21E1  11010B5C		db	011h,001h,00bh,05ch
+1512:     -	21E5  8F659EFF		db	08fh,065h,09eh,0ffh
+1513:     -	21E9  F862AE69		db	0f8h,062h,0aeh,069h
+1514:     -	21ED  616BFFD3		db	061h,06bh,0ffh,0d3h
+1515:     -	21F1  166CCF45		db	016h,06ch,0cfh,045h
+1516:     -	21F5  A00AE278		db	0a0h,00ah,0e2h,078h
+1517:     -	21F9  D70DD2EE		db	0d7h,00dh,0d2h,0eeh
+1518:     -	21FD  4E048354		db	04eh,004h,083h,054h
+1519:     -	2201  3903B3C2		db	039h,003h,0b3h,0c2h
+1520:     -	2205  A7672661		db	0a7h,067h,026h,061h
+1521:     -	2209  D06016F7		db	0d0h,060h,016h,0f7h
+1522:     -	220D  4969474D		db	049h,069h,047h,04dh
+1523:     -	2211  3E6E77DB		db	03eh,06eh,077h,0dbh
+1524:     -	2215  AED16A4A		db	0aeh,0d1h,06ah,04ah
+1525:     -	2219  D9D65ADC		db	0d9h,0d6h,05ah,0dch
+1526:     -	221D  40DF0B66		db	040h,0dfh,00bh,066h
+1527:     -	2221  37D83BF0		db	037h,0d8h,03bh,0f0h
+1528:     -	2225  A9BCAE53		db	0a9h,0bch,0aeh,053h
+1529:     -	2229  DEBB9EC5		db	0deh,0bbh,09eh,0c5h
+1530:     -	222D  47B2CF7F		db	047h,0b2h,0cfh,07fh
+1531:     -	2231  30B5FFE9		db	030h,0b5h,0ffh,0e9h
+1532:     -	2235  BDBDF21C		db	0bdh,0bdh,0f2h,01ch
+1533:     -	2239  CABAC28A		db	0cah,0bah,0c2h,08ah
+1534:     -	223D  53B39330		db	053h,0b3h,093h,030h
+1535:     -	2241  24B4A3A6		db	024h,0b4h,0a3h,0a6h
+1536:     -	2245  BAD03605		db	0bah,0d0h,036h,005h
+1537:     -	2249  CDD70693		db	0cdh,0d7h,006h,093h
+1538:     -	224D  54DE5729		db	054h,0deh,057h,029h
+1539:     -	2251  23D967BF		db	023h,0d9h,067h,0bfh
+1540:     -	2255  B3667A2E		db	0b3h,066h,07ah,02eh
+1541:     -	2259  C4614AB8		db	0c4h,061h,04ah,0b8h
+1542:     -	225D  5D681B02		db	05dh,068h,01bh,002h
+1543:     -	2261  2A6F2B94		db	02ah,06fh,02bh,094h
+1544:     -	2265  B40BBE37		db	0b4h,00bh,0beh,037h
+1545:     -	2269  C30C8EA1		db	0c3h,00ch,08eh,0a1h
+1546:     -	226D  5A05DF1B		db	05ah,005h,0dfh,01bh
+1547:     -	2271  2D02EF8D		db	02dh,002h,0efh,08dh
+1548:				
 
 
 
@@ -4309,7 +4311,7 @@ Statistics:
      4	passes
      0	jr promotions
    408	symbols
-  8435	bytes
+  8437	bytes
 
    268	macro calls
    260	macro bytes
@@ -4595,13 +4597,13 @@ alu8i            33e
 alu8r            39e     
 alu8rx           3fe     
 alu8x            45e     
-bdos            1db6     
+bdos            1db8     
 bitx             4be     
 bitz80           51e     
-cce             1e2f     
-cclp            1e24     
+cce             1e31     
+cclp            1e26     
 clrmem          1c34     
-cmpcrc          1e1c     
+cmpcrc          1e1e     
 cntbit          1bec     
 cntbyt          1bed     
 cntend          1ca0     
@@ -4611,18 +4613,18 @@ count           1c85
 counter         1cd6     
 cpd1             57e     
 cpi1             5de     
-crclp           1e4c     
-crctab          1e73     
-crcval          1e6f     
-crlf            1def     
+crclp           1e4e     
+crctab          1e75     
+crcval          1e71     
+crlf            1df1     
 daaop            63e     
 done             12f     
-ermsg1          1df9     
-ermsg2          1e14     
-flgmsk          1d60     
-flgsat         =1d85     
-hexstr          1d8b     
-icrclp          1e65     
+ermsg1          1dfb     
+ermsg2          1e16     
+flgmsk          1d62     
+flgsat         =1d87     
+hexstr          1d8d     
+icrclp          1e67     
 imlp            1c54     
 imlp1           1c55     
 imlp2           1c5b     
@@ -4646,9 +4648,9 @@ incxh            c3e
 incxl            c9e     
 incyh            cfe     
 incyl            d5e     
-initcrc         1e5b     
+initcrc         1e5d     
 initmask        1c45     
-iut             1d3e     
+iut             1d3f     
 ld161            dbe     
 ld162            e1e     
 ld163            e7e     
@@ -4674,21 +4676,21 @@ ldd2            159e
 ldi1            15fe     
 ldi2            165e     
 loop             122     
-msat            1d79     
+msat            1d7b     
 msbt             103     
 msbthi         =   1     
 msbtlo         =   3     
-msg1            1dc2     
-msg2            1de1     
+msg1            1dc4     
+msg2            1de3     
 ncb1            1c08     
 negop           16be     
 nsb1            1c2c     
 nxtcbit         1bef     
 nxtsbit         1c13     
-okmsg           1df2     
-ph8lp           1d9a     
-phex2           1da7     
-phex8           1d95     
+okmsg           1df4     
+ph8lp           1d9c     
+phex2           1da9     
+phex8           1d97     
 rldop           171e     
 rot8080         177e     
 rotxy           17de     
@@ -4703,9 +4705,9 @@ shflp2          1ccb
 shift           1ca9     
 shifter         1cfe     
 shlpe           1ccd     
-spat            1d87     
+spat            1d89     
 spbt             111     
-spsav           1d89     
+spsav           1d8b     
 srz80           189e     
 srzx            18fe     
 st8ix1          195e     
@@ -4718,7 +4720,7 @@ subclp          1bb9
 subshf          1bca     
 substr          1be5     
 subyte          1ba9     
-tcrc            1d6b     
+tcrc            1d6d     
 test            1d26     
 tests            138     
 tlp             1b23     
@@ -4726,4 +4728,4 @@ tlp1            1b37
 tlp2            1b3a     
 tlp3            1b76     
 tlpok           1b6d     
-updcrc          1e33     
+updcrc          1e35     

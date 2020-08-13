@@ -109,9 +109,6 @@ done:	ld	de,msg2
 
 tests:
 	dw	cpd1
-	dw	rotxy
-	dw	rotz80
-	dw	srz80
 	dw	0
 
 ; jgh: macro syntax changed for ZMAC and MAXAM

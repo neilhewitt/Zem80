@@ -15,9 +15,9 @@ namespace Z80.Core
             sbyte offset = (sbyte)(data.Argument1);
             ByteRegister register = instruction.Target.AsByteRegister();
 
-            void setFlags(byte original, byte shifted)
+            void setFlags(byte original)
             {
-                flags = FlagLookup.BitwiseFlags(shifted, BitwiseOperation.ShiftLeft);
+                flags = FlagLookup.BitwiseFlags(original, BitwiseOperation.ShiftLeft, flags.Carry);
                 flags.Carry = original.GetBit(7);
                 flags.HalfCarry = false;
                 flags.Subtract = false;
@@ -28,7 +28,7 @@ namespace Z80.Core
             {
                 original = r[register];
                 shifted = (byte)((original << 1) + 1); // bit 0 is always set, adding 1 does this quicker than calling SetBit
-                setFlags(original, shifted);
+                setFlags(original);
                 r[register] = shifted;
             }
             else
@@ -41,8 +41,8 @@ namespace Z80.Core
                     _ => (ushort)0xFFFF
                 };
                 original = cpu.Memory.ReadByteAt(address, false);
-                shifted = (byte)(original << 1);
-                setFlags(original, shifted);
+                shifted = (byte)((original << 1) + 1);
+                setFlags(original);
                 cpu.Memory.WriteByteAt(address, shifted, false);
             }
 
