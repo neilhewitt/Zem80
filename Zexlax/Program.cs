@@ -19,7 +19,7 @@ namespace Zexlax
 
             File.Delete("output.txt");
             vm.Start(address: 0x0100, timingMode: TimingMode.FastAndFurious, endOnHalt: true, synchronous: true, 
-                debugOutput: false, outputLogPath: "output.txt");
+                debugOutput: true, outputLogPath: "output.txt");
 
             Console.WriteLine("Program ended. Press ENTER to quit.");
             Console.ReadLine();

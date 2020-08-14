@@ -36,6 +36,8 @@ namespace Z80.Core
                 flags.ParityOverflow = input.EvenParity();
                 flags.HalfCarry = false;
                 flags.Subtract = false;
+                flags.X = (input & 0x08) > 0; // copy bit 3
+                flags.Y = (input & 0x20) > 0; // copy bit 5
             }
 
             return new ExecutionResult(package, flags);

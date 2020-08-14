@@ -21,7 +21,7 @@ namespace Z80.Core
                 original = r[register];
                 shifted = (byte)(original >> 1);
                 shifted = shifted.SetBit(7, original.GetBit(0));
-                setFlags(original);
+                setFlags(original, shifted);
                 r[register] = shifted;
             }
             else
@@ -36,12 +36,16 @@ namespace Z80.Core
                 original = cpu.Memory.ReadByteAt(address, false);
                 shifted = (byte)(original >> 1);
                 shifted = shifted.SetBit(7, original.GetBit(0));
-                setFlags(original);
+                setFlags(original, shifted);
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(4);
                 cpu.Memory.WriteByteAt(address, shifted, false);
+                if (instruction.CopyResultTo != ByteRegister.None)
+                {
+                    r[instruction.CopyResultTo.Value] = shifted;
+                }
             }
 
-            void setFlags(byte original)
+            void setFlags(byte original, byte shifted)
             {
                 flags = FlagLookup.BitwiseFlags(original, BitwiseOperation.RotateRight, flags.Carry);
                 flags.Carry = original.GetBit(0);

@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <AssemblyName>zxrun</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,6 +12,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="test_output.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="zexall.com">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="zexall.zxl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="zexall.zxl.zip">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="zexall_output.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="zexdoc.zxl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

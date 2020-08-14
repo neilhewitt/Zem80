@@ -26,6 +26,11 @@ namespace Z80.Core
                 var sum = ALUOperations.Add(left, right, false, false, flags);
                 r[destination] = sum.Result;
                 flags = sum.Flags;
+                if (destination == WordRegister.HL)
+                {
+                    flags.X = (left & 0x08) > 0; // copy bit 3
+                    flags.Y = (left & 0x20) > 0; // copy bit 5
+                }
             }
             else
             {

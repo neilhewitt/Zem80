@@ -825,6 +825,38 @@ namespace Z80.Core
 
                 foreach (Instruction instruction in instructions)
                 {
+                    // Generate undocumented extended instructions for DDCB / FDCB opcodes, which copy the result to a register
+                    if (instruction.Prefix == InstructionPrefix.DDCB || instruction.Prefix == InstructionPrefix.FDCB)
+                    {
+                        for (int i = 0; i <= 7; i++)
+                        {
+                            if (i != 6)
+                            {
+                                byte opcode = instruction.Opcode;
+                                opcode = opcode.SetBits(0, false, false, false);
+                                opcode += (byte)i;
+
+                                string opcodeAsString = instruction.FullOpcode.Substring(0, 4);
+                                opcodeAsString += opcode.ToString("X2");
+                                
+                                Instruction undocumentedInstruction = new Instruction(
+                                    opcodeAsString,
+                                    instruction.Mnemonic + "," + ((ByteRegister)i).ToString(),
+                                    Condition.None,
+                                    instruction.Target,
+                                    instruction.Source,
+                                    instruction.Argument1,
+                                    instruction.Argument2,
+                                    instruction.SizeInBytes,
+                                    instruction.Timing.ToArray(),
+                                    (instruction.Mnemonic.StartsWith("BIT ") ? ByteRegister.None : (ByteRegister)i) // BIT instructions have no result to store
+                                    );
+                                Instructions.Add(undocumentedInstruction.OpcodeAsInt, undocumentedInstruction);
+                                InstructionsByMnemonic.Add(undocumentedInstruction.Mnemonic, undocumentedInstruction);
+                            }
+                        }
+                    }
+
                     Instructions.Add(instruction.OpcodeAsInt, instruction);
                     InstructionsByMnemonic.Add(instruction.Mnemonic, instruction);
                 }

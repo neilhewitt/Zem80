@@ -53,6 +53,8 @@ namespace Z80.Core
             flags.Sign = (A & 0x80) > 0;
             flags.Zero = (A == 0);
             flags.ParityOverflow = A.EvenParity();
+            flags.X = (A & 0x08) > 0; // copy bit 3
+            flags.Y = (A & 0x20) > 0; // copy bit 5
 
             r.A = A;
 

@@ -16,15 +16,20 @@ namespace Z80.Core
 
             byte bitIndex = instruction.GetBitIndex();
             byte value;
-            ByteRegister register = instruction.Target.AsByteRegister();
+            ByteRegister register = instruction.Source.AsByteRegister();
             if (register != ByteRegister.None)
             {
                 value = r[register]; // BIT b, r
+                flags.X = (value & 0x08) > 0; // copy bit 3
+                flags.Y = (value & 0x20) > 0; // copy bit 5
             }
             else
             {
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
                 value = instruction.MarshalSourceByte(data, cpu, out ushort address, out ByteRegister source);
+                byte valueXY = address.HighByte();
+                flags.X = (valueXY & 0x08) > 0; // copy bit 3
+                flags.Y = (valueXY & 0x20) > 0; // copy bit 5
             }
 
             flags.Sign = ((sbyte)(value)) < 0;

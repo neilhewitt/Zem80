@@ -18,7 +18,6 @@ namespace Z80.Core
 
             var compare = ALUOperations.Subtract(a, b, false);
             flags = compare.Flags;
-            flags.Carry = carry;
 
             cpu.Registers.BC--;
             flags.ParityOverflow = (cpu.Registers.BC != 0);
@@ -27,6 +26,10 @@ namespace Z80.Core
 
             flags.Subtract = true;
             flags.Carry = carry;
+
+            byte valueXY = (byte)(a - b - (flags.HalfCarry ? 1 : 0));
+            flags.X = (valueXY & 0x08) > 0; // copy bit 3
+            flags.Y = (valueXY & 0x20) > 0; // copy bit 5
 
             bool conditionTrue = (compare.Result == 0 || cpu.Registers.BC == 0);
             if (conditionTrue) cpu.Timing.InternalOperationCycle(5);

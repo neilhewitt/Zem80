@@ -47,6 +47,10 @@ namespace Z80.Core
                 setFlags(original);
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(4);
                 cpu.Memory.WriteByteAt(address, shifted, false);
+                if (instruction.CopyResultTo != ByteRegister.None)
+                {
+                    r[instruction.CopyResultTo.Value] = shifted;
+                }
             }
 
             return new ExecutionResult(package, flags);

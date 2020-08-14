@@ -10,9 +10,9 @@ namespace Z80.Core
 
         public bool Sign { get { return _flags.GetBit(7); } set { _flags = _flags.SetBit(7, value); } }
         public bool Zero { get { return _flags.GetBit(6); } set { _flags = _flags.SetBit(6, value); } }
-        public bool Five { get { return _flags.GetBit(5); } set { _flags = _flags.SetBit(5, value); } }
+        public bool Y { get { return _flags.GetBit(5); } set { _flags = _flags.SetBit(5, value); } }
         public bool HalfCarry { get { return _flags.GetBit(4); } set { _flags = _flags.SetBit(4, value); } }
-        public bool Three { get { return _flags.GetBit(3); } set { _flags = _flags.SetBit(3, value); } }
+        public bool X { get { return _flags.GetBit(3); } set { _flags = _flags.SetBit(3, value); } }
         public bool ParityOverflow { get { return _flags.GetBit(2); } set { _flags = _flags.SetBit(2, value); } }
         public bool Subtract { get { return _flags.GetBit(1); } set { _flags = _flags.SetBit(1, value); } }
         public bool Carry { get { return _flags.GetBit(0); } set { _flags = _flags.SetBit(0, value); } }
@@ -87,6 +87,8 @@ namespace Z80.Core
             if (ParityOverflow) state = state | FlagState.ParityOverflow;
             if (Subtract) state = state | FlagState.Subtract;
             if (Carry) state = state | FlagState.Carry;
+            if (X) state = state | FlagState.X;
+            if (Y) state = state | FlagState.Y;
             return state;
         }
 

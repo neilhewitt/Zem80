@@ -7,11 +7,27 @@ using System.Text;
 
 namespace ZexNext.Core
 {
+    public struct TestStateDiff
+    {
+        public bool Opcode;
+        public bool A;
+        public bool F;
+        public bool BC;
+        public bool DE;
+        public bool HL;
+        public bool IX;
+        public bool IY;
+        public bool SP;
+        public bool PC;
+    }
+
     public class TestState
     {
         public byte[] Opcode { get; private set; }
         public string OpcodeString { get; private set; }
         public string Mnemonic { get; private set; }
+        public byte[] Data { get; private set; }
+        public ushort DataAddress => 0x103;
         public byte A => (byte)(AF / 256);
         public byte F => (byte)(AF % 256);
         public ushort AF { get; private set; }
@@ -44,6 +60,22 @@ namespace ZexNext.Core
                    PC == state.PC;
         }
 
+        public TestStateDiff Diff(TestState state)
+        {
+            TestStateDiff diff = new TestStateDiff();
+            diff.Opcode = !(Opcode.SequenceEqual(state.Opcode));
+            diff.A = state.A != A;
+            diff.F = state.F != F;
+            diff.BC = state.BC != BC;
+            diff.DE = state.DE != DE;
+            diff.HL = state.HL != HL;
+            diff.IX = state.IX != IX;
+            diff.IY = state.IY != IY;
+            diff.SP = state.SP != SP;
+            diff.PC = state.PC != PC;
+            return diff;
+        }
+
         public override int GetHashCode()
         {
             HashCode hash = new HashCode();
@@ -63,7 +95,7 @@ namespace ZexNext.Core
         {
             StringBuilder output = new StringBuilder();
             output.Append(Mnemonic);
-            output.Append("; ");
+            output.Append(" >> ");
             addValue(output, nameof(AF), AF);
             addValue(output, nameof(BC), BC);
             addValue(output, nameof(DE), DE);
@@ -85,11 +117,11 @@ namespace ZexNext.Core
         }
 
         public TestState(TestState original) : 
-            this(original.Opcode, original.Mnemonic, original.AF, original.BC, original.DE, original.HL, original.IX, original.IY, original.SP, original.PC)
+            this(original.Opcode, original.Mnemonic, original.Data, original.AF, original.BC, original.DE, original.HL, original.IX, original.IY, original.SP, original.PC)
         {
         }
 
-        public TestState(byte[] opcode, string mnemonic, ushort af, ushort bc, ushort de, ushort hl, ushort ix, ushort iy, ushort sp, ushort pc)
+        public TestState(byte[] opcode, string mnemonic, byte[] data, ushort af, ushort bc, ushort de, ushort hl, ushort ix, ushort iy, ushort sp, ushort pc)
         {
             Opcode = new byte[4];
             Array.Copy(opcode, Opcode, opcode.Length <= 4 ? opcode.Length : 4);
@@ -106,6 +138,7 @@ namespace ZexNext.Core
 
             OpcodeString = String.Join(null, opcode.Select(x => x.ToString("X2")));
             Mnemonic = mnemonic;
+            Data = data;
 
             AF = af;
             BC = bc;

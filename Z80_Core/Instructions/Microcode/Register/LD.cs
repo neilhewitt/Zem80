@@ -30,7 +30,11 @@ namespace Z80.Core
 
             byte readOffset(ushort address, byte offset)
             {
-                return cpu.Memory.ReadByteAt((ushort)(address + (sbyte)offset), false);
+                address = (ushort)(address + (sbyte)offset);
+                byte value = cpu.Memory.ReadByteAt(address, false);
+                flags.X = (address & 0x08) > 0; // copy bit 3
+                flags.Y = (address & 0x20) > 0; // copy bit 5
+                return value;
             }
 
             void writeByte(ushort address, byte value)
@@ -53,6 +57,8 @@ namespace Z80.Core
                 flags.Zero = (input == 0x00);
                 flags.Sign = ((sbyte)input < 0);
                 flags.ParityOverflow = (cpu.InterruptMode != InterruptMode.IM0);
+                flags.X = (input & 0x08) > 0; // copy bit 3
+                flags.Y = (input & 0x20) > 0; // copy bit 5
             }
 
             switch (instruction.Prefix)

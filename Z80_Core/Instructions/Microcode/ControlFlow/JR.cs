@@ -23,6 +23,8 @@ namespace Z80.Core
                 address = (ushort)(address + (sbyte)data.Argument1 + 2);
 
                 cpu.Registers.PC = (address);
+                cpu.Registers.Flags.X = (address & 0x08) > 0; // copy bit 3
+                cpu.Registers.Flags.Y = (address & 0x20) > 0; // copy bit 5
             }
 
             return new ExecutionResult(package, cpu.Registers.Flags);

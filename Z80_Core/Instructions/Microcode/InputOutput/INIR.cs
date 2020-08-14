@@ -24,6 +24,8 @@ namespace Z80.Core
             flags.Zero = true;
             flags.Sign = false;
             flags.Subtract = true;
+            flags.X = (input & 0x08) > 0; // copy bit 3
+            flags.Y = (input & 0x20) > 0; // copy bit 5
 
             return new ExecutionResult(package, flags);
         }

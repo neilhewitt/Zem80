@@ -13,7 +13,7 @@ namespace Z80.Core
             Registers r = cpu.Registers;
             byte bitIndex = instruction.GetBitIndex();
             sbyte offset = (sbyte)(data.Argument1);
-            ByteRegister register = instruction.Target.AsByteRegister();
+            ByteRegister register = instruction.Source.AsByteRegister();
 
             if (register != ByteRegister.None)
             {
@@ -29,7 +29,15 @@ namespace Z80.Core
                     InstructionPrefix.FDCB => (ushort)(r.IY + offset),
                     _ => (ushort)0xFFFF
                 };
-                cpu.Memory.WriteByteAt(address, cpu.Memory.ReadByteAt(address, false).SetBit(bitIndex, false), false);
+                if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
+
+                byte value = cpu.Memory.ReadByteAt(address, false);
+                value = value.SetBit(bitIndex, false);
+                cpu.Memory.WriteByteAt(address, value, false);
+                if (instruction.CopyResultTo != ByteRegister.None)
+                {
+                    r[instruction.CopyResultTo.Value] = value;
+                }
             }
 
             return new ExecutionResult(package, null);;

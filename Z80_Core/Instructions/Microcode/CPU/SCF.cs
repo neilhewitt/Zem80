@@ -12,6 +12,8 @@ namespace Z80.Core
             flags.Carry = true;
             flags.HalfCarry = false;
             flags.Subtract = false;
+            flags.X = (cpu.Registers.A & 0x08) > 0; // copy bit 3
+            flags.Y = (cpu.Registers.A & 0x20) > 0; // copy bit 5
             return new ExecutionResult(package, flags);
         }
 

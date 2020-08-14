@@ -1,0 +1,48 @@
+﻿InstructionSet.Build();
+
+List<string> data = new List<string>(File.ReadAllLines("test_output.txt"));
+List<string> output = new List<string>();
+foreach (string line in data)
+{
+    string opcode = line.Substring(3, line.IndexOf(']') - 3);
+    string[] opcodeParts = opcode.Split(',');
+    byte[] opcodeBytes = new byte[opcodeParts.Length];
+    for (int i = 0; i < opcodeBytes.Length; i++)
+    {
+        opcodeBytes[i] = byte.Parse(opcodeParts[i], System.Globalization.NumberStyles.HexNumber);
+    }
+
+    if (opcodeBytes.Length == 4)
+    {
+        byte[] opcodeBytesShort = new byte[3] { opcodeBytes[0], opcodeBytes[1], opcodeBytes[3] };
+        opcodeBytes = opcodeBytesShort;
+    }
+
+    string opcodeString = "";
+    string newLine = null;
+    Instruction instruction = null;
+    foreach (byte b in opcodeBytes)
+    {
+        opcodeString += b.ToString("X2");
+        int key = int.Parse(opcodeString, System.Globalization.NumberStyles.HexNumber);
+        if (InstructionSet.Instructions.ContainsKey(key))
+        {
+            instruction = InstructionSet.Instructions[key];
+        }
+    }
+
+    if (instruction != null)
+    {
+        newLine = line.Substring(0, 2) + "\"" + instruction.Mnemonic + "\"," + line.Substring(2);
+    }
+    else
+    {
+        newLine = line.Substring(0, 2) + "\"NOP\"" + line.Substring(2);
+    }
+
+    output.Add(newLine);
+}
+
+File.WriteAllLines("zexall.zxl", output);
+
+return;

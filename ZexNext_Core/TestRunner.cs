@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -7,29 +8,29 @@ namespace ZexNext.Core
 {
     public class TestRunner
     {
-        public TestSet TestSet { get; private set; }
+        public IEnumerable<TestSet> TestSets { get; private set; }
 
-        public IEnumerable<TestResult> RunAll(Func<TestState, TestState> testExecutor, Func<TestResult, bool> afterCycle = null)
+        public IEnumerable<TestResult> RunAll(Func<TestState, TestState> testExecutor, bool useFlagMasks, Func<TestResult, bool> afterCycle = null)
         {
             List<TestResult> results = new List<TestResult>();
             
-            foreach(Test test in TestSet.Tests)
+            foreach(Test test in TestSets.SelectMany(x => x.Tests))
             {
                 foreach(TestCycle cycle in test.Cycles)
                 {
-                    results.Add(ExecuteTest(test, cycle, testExecutor, afterCycle));
+                    results.Add(ExecuteTest(test, cycle, testExecutor, useFlagMasks, afterCycle));
                 }
             }
 
             return results;
         }
 
-        public IEnumerable<TestResult> Run(string testName, Func<TestState, TestState> testExecutor, Func<TestResult, bool> afterCycle = null)
+        public IEnumerable<TestResult> Run(string testName, Func<TestState, TestState> testExecutor, bool useFlagMasks, Func<TestResult, bool> afterCycle = null)
         {
-            Test test = TestSet.Tests.SingleOrDefault(x => x.Name.ToLower() == testName.ToLower());
+            Test test = TestSets.SelectMany(x => x.Tests).SingleOrDefault(x => x.Name.ToLower() == testName.ToLower());
             if (test != null)
             {
-                return Run(test, testExecutor, afterCycle);
+                return Run(test, testExecutor, useFlagMasks, afterCycle);
             }
             else
             {
@@ -37,27 +38,33 @@ namespace ZexNext.Core
             }
         }
 
-        public IEnumerable<TestResult> Run(Test test, Func<TestState, TestState> testExecutor, Func<TestResult, bool> afterCycle = null)
+        public IEnumerable<TestResult> Run(Test test, Func<TestState, TestState> testExecutor, bool useFlagMasks, Func<TestResult, bool> afterCycle = null)
         {
             List<TestResult> results = new List<TestResult>();
 
             foreach (TestCycle cycle in test.Cycles)
             {
-                results.Add(ExecuteTest(test, cycle, testExecutor, afterCycle));
+                results.Add(ExecuteTest(test, cycle, testExecutor, useFlagMasks, afterCycle));
             }
 
             return results;
         }
 
-        private TestResult ExecuteTest(Test test, TestCycle cycle, Func<TestState, TestState> testExecutor, Func<TestResult, bool> afterCycle = null)
+        private TestResult ExecuteTest(Test test, TestCycle cycle, Func<TestState, TestState> testExecutor, bool useFlagMasks, Func<TestResult, bool> afterCycle = null)
         {
             TestState input = new TestState(cycle.BeforeState);
             TestState expected = new TestState(cycle.AfterState);
-            input.MaskFlags(test.Mask);
-            expected.MaskFlags(test.Mask);
+            if (useFlagMasks)
+            {
+                input.MaskFlags(test.Mask);
+                expected.MaskFlags(test.Mask);
+            }
 
             TestState actual = testExecutor(input);
-            actual.MaskFlags(test.Mask);
+            if (useFlagMasks)
+            {
+                actual.MaskFlags(test.Mask);
+            }
             bool passed = actual.Equals(expected);
 
             TestResult result = new TestResult(test.Name, cycle.Mnemonic, passed, input, expected, actual);
@@ -69,14 +76,21 @@ namespace ZexNext.Core
             return result;
         }
 
-        public TestRunner(string testSetPath)
+        public TestRunner(params string[] testSetPaths)
         {
-            TestSet = new TestSet(testSetPath);
+            List<TestSet> testSets = new List<TestSet>();
+            foreach(string testSetPath in testSetPaths)
+            {
+                testSets.Add(new TestSet(Path.GetFileName(testSetPath), testSetPath));
+
+            }
+
+            TestSets = testSets;
         }
 
-        public TestRunner(TestSet tests)
+        public TestRunner(params TestSet[] testSets)
         {
-            TestSet = tests;
+            TestSets = testSets;
         }
     }
 }

@@ -297,11 +297,8 @@ namespace Z80.Core
                     Registers.PC++;
                     if (!InstructionSet.Instructions.TryGetValue(b3 | b1 << 8 | b0 << 16, out instruction))
                     {
-                        //if (!InstructionSet.Instructions.TryGetValue(b1 | b0 << 8, out instruction))
-                        //{
-                            return new ExecutionPackage(InstructionSet.NOP, data, (ushort)(instructionAddress));
-                        //}
-                    }
+                        return new ExecutionPackage(InstructionSet.NOP, data, (ushort)(instructionAddress));
+                    }                    
 
                     return new ExecutionPackage(instruction, data, instructionAddress);
                 }
@@ -309,29 +306,7 @@ namespace Z80.Core
                 {
                     if (!InstructionSet.Instructions.TryGetValue(b1 | b0 << 8, out instruction))
                     {
-                        if (b0 == 0xED || b0 == 0xDD || b0 == 0xFD)
-                        {
-                            byte[] undocumentedED = new byte[] { 0x4C, 0x4E, 0x54, 0x55, 0x5C, 0x5D, 0x64, 0x65, 0x6C, 0x6D, 0x6E, 0x71, 0x74, 0x75, 0x76, 0x77, 0x7C, 0x7D, 0x7E };
-                            // NOTES: these specific ED-prefix instructions are not implemented separately here, hence the attempt to look them up fails,
-                            // but are functionally the equivalent of the *unprefixed* instruction without the ED prefix,
-                            // just taking 4 ticks longer. In this case we should behave as per the unprefixed instruction, because we already added the 4 ticks getting here.
-                            
-                            if (b0 != 0xED || undocumentedED.Contains(b1))
-                            {
-                                // ignore the prefix and use the unprefixed instruction: there are many holes in the ED/DD/FD instruction sets
-                                // and some code uses this technique to consume extra cycles for synchronisation but expects the unprefixed instruction to run as normal
-                                return DecodeInstruction();
-                            }
-                            else
-                            {
-                                return new ExecutionPackage(InstructionSet.NOP, data, instructionAddress);
-                            }
-                        }
-                        else
-                        {
-                            // any other failed instruction lookup generates a 2-NOP
-                            return new ExecutionPackage(InstructionSet.NOP, data, instructionAddress);
-                        }
+                        return new ExecutionPackage(InstructionSet.NOP, data, instructionAddress);
                     }
                     else
                     {

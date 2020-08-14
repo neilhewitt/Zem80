@@ -19,6 +19,8 @@ namespace Z80.Core
 
             var sub = ALUOperations.Subtract(left, right, false);
             flags = sub.Flags;
+            flags.X = (right & 0x08) > 0; // copy bit 3 of operand, not result
+            flags.Y = (right & 0x20) > 0; // copy bit 5 of operand, not result
 
             return new ExecutionResult(package, flags);
         }

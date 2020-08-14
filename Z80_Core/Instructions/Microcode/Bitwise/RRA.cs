@@ -20,6 +20,8 @@ namespace Z80.Core
             flags.HalfCarry = false;
             flags.Subtract = false;
             flags.Carry = carry;
+            flags.X = (value & 0x08) > 0; // copy bit 3
+            flags.Y = (value & 0x20) > 0; // copy bit 5
 
             r.A = value;
 
