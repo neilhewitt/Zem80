@@ -153,10 +153,8 @@ namespace ZexNext_Runner
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Expected: " + result.ExpectedState.ToString() + " | Actual: " + result.ActualState.ToString());
 
-            if (!result.Passed)
+            if (!result.Passed && _pauseOnFailure)
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.ForegroundColor = ConsoleColor.White;
                 Flags e = new Flags(result.ExpectedState.F);
                 Flags a = new Flags(result.ActualState.F);
                 Console.ReadKey();
