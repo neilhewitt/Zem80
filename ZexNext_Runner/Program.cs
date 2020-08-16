@@ -25,9 +25,9 @@ namespace ZexNext_Runner
             Console.WriteLine("ZexNext Console Test Runner (C)2020 Neil Hewitt (All Rights Reserved)\n");
 
             _cpu = Bootstrapper.BuildCPU(enableFlagPrecalculation: false);
-            _cpu.Memory.WriteBytesAt(0x100, File.ReadAllBytes("zexall.com"), true);
 
-            string path = "zexdoc.zxl";// args.FirstOrDefault();
+            string path = args.FirstOrDefault();
+            if (path == null) path = "zexall.zxl";
             string[] testFilePaths = GetTestFiles(path);
 
             Console.Write("Show full test cycle results (y/n)? ");
@@ -46,7 +46,9 @@ namespace ZexNext_Runner
             bool useFlagMasks = input.KeyChar == 'y' || input.KeyChar == 'Y';
 
             Console.WriteLine("\n\nCompiling tests...\n");
-            TestRunner runner = new TestRunner(testFilePaths);
+            TestRunner runner = new TestRunner(
+                (address, data) => _cpu.Memory.WriteBytesAt(address, data, true), 
+                testFilePaths);
 
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.White;

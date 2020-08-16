@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net.Http.Headers;
@@ -9,8 +10,21 @@ namespace ZexNext.Core
 {
     public class TestSet
     {
+        private ushort? _patchAddress;
+        private byte[] _patchData;
+        private bool _hasPatch;
+
         public string Name { get; private set; }
         public IReadOnlyList<Test> Tests { get; private set; }
+        public bool ContainsMemoryPatch => _hasPatch;
+        
+        public void PatchMemory(Action<ushort, byte[]> memoryPatcher)
+        {
+            if (_hasPatch)
+            {
+                memoryPatcher(_patchAddress.Value, _patchData);
+            }
+        }
 
         private IReadOnlyList<Test> Setup(string dataPath)
         {
@@ -28,7 +42,19 @@ namespace ZexNext.Core
                 TestState before = null, after = null;
                 foreach (string line in file)
                 {
-                    if (line.StartsWith("T:"))
+                    if (line.StartsWith("P:") && !_hasPatch)
+                    {
+                        _hasPatch = true; // can only be one patch
+                        string[] patchParts = line.Substring(2).Split("|");
+                        _patchAddress = ushort.Parse(patchParts[0], System.Globalization.NumberStyles.HexNumber);
+                        string[] patchDataParts = patchParts[1].Split(',');
+                        _patchData = new byte[patchDataParts.Length];
+                        for (int i = 0; i < patchDataParts.Length; i++)
+                        {
+                            _patchData[i] = byte.Parse(patchDataParts[i], System.Globalization.NumberStyles.HexNumber);
+                        }
+                    }
+                    else if (line.StartsWith("T:"))
                     {
                         // it's a section title
                         string[] testNameParts = line.Split('|');

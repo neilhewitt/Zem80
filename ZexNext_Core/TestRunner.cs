@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace ZexNext.Core
 {
@@ -76,20 +75,19 @@ namespace ZexNext.Core
             return result;
         }
 
-        public TestRunner(params string[] testSetPaths)
+        public TestRunner(Action<ushort, byte[]> memoryPatcher, params string[] testSetPaths)
         {
             List<TestSet> testSets = new List<TestSet>();
             foreach(string testSetPath in testSetPaths)
             {
-                testSets.Add(new TestSet(Path.GetFileName(testSetPath), testSetPath));
-
+                TestSet testSet = new TestSet(Path.GetFileName(testSetPath), testSetPath);
+                if (testSet.ContainsMemoryPatch)
+                {
+                    testSet.PatchMemory(memoryPatcher);
+                }
+                testSets.Add(testSet);
             }
 
-            TestSets = testSets;
-        }
-
-        public TestRunner(params TestSet[] testSets)
-        {
             TestSets = testSets;
         }
     }
