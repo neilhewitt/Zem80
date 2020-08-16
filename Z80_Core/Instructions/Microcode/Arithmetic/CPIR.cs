@@ -29,7 +29,7 @@ namespace Z80.Core
 
             byte valueXY = (byte)(a - b - (flags.HalfCarry ? 1 : 0));
             flags.X = (valueXY & 0x08) > 0; // copy bit 3
-            flags.Y = (valueXY & 0x20) > 0; // copy bit 5
+            flags.Y = (valueXY & 0x02) > 0; // copy bit 1 (note: non-standard behaviour)
 
             bool conditionTrue = (compare.Result == 0 || cpu.Registers.BC == 0);
             if (conditionTrue) cpu.Timing.InternalOperationCycle(5);

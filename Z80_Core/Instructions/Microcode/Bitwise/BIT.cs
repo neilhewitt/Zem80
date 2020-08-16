@@ -20,20 +20,21 @@ namespace Z80.Core
             if (register != ByteRegister.None)
             {
                 value = r[register]; // BIT b, r
-                flags.X = (value & 0x08) > 0; // copy bit 3
-                flags.Y = (value & 0x20) > 0; // copy bit 5
             }
             else
             {
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
                 value = instruction.MarshalSourceByte(data, cpu, out ushort address, out ByteRegister source);
-                byte valueXY = address.HighByte();
+                byte valueXY = instruction.IsIndexed ? address.HighByte() : r.HL.HighByte();
                 flags.X = (valueXY & 0x08) > 0; // copy bit 3
                 flags.Y = (valueXY & 0x20) > 0; // copy bit 5
             }
 
-            flags.Sign = ((sbyte)(value)) < 0;
-            flags.Zero = value.GetBit(bitIndex) == false;
+            bool set = value.GetBit(bitIndex);
+
+            flags.Sign = bitIndex == 7 && set;
+            flags.Zero = !set;
+            flags.ParityOverflow = flags.Zero;
             flags.HalfCarry = true;
             flags.Subtract = false;
 

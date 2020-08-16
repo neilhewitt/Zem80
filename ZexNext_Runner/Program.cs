@@ -20,53 +20,6 @@ namespace ZexNext_Runner
         private static bool _pauseOnFailure = false;
         private static int _cycles;
 
-        private static string[] GetTestFiles(string path)
-        {
-            List<string> paths = new List<string>();
-            if (path == null)
-            {
-                path = ".";
-            }
-
-            path = Path.GetFullPath(path); // expand from relative path if needed
-
-            if (path.EndsWith(".zip") && File.Exists(path))
-            {
-                paths = UnzipArchive(path);
-            }
-            else if (Directory.Exists(path))
-            {
-                foreach (string filePath in Directory.GetFiles(path).Where(x => x.EndsWith(".zxl")))
-                {
-                    paths.Add(filePath);
-                }
-            }
-            else if (File.Exists(path))
-            {
-                paths.Add(path);
-            }
-
-            return paths.ToArray();
-        }
-
-        private static List<string> UnzipArchive(string path)
-        {
-            List<string> filePaths = new List<string>();
-            // unzip into the same folder and look for .zxl files           
-            ZipArchive zip = ZipFile.OpenRead(path);
-            string extractPath = Path.GetDirectoryName(path);
-            foreach (ZipArchiveEntry entry in zip.Entries)
-            {
-                if (entry.Name.EndsWith(".zxl"))
-                {
-                    string filePath = Path.Combine(extractPath, entry.Name);
-                    entry.ExtractToFile(filePath, true);
-                    filePaths.Add(filePath);
-                }
-            }
-            return filePaths;
-        }
-
         static void Main(string[] args)
         {
             Console.WriteLine("ZexNext Console Test Runner (C)2020 Neil Hewitt (All Rights Reserved)\n");
@@ -202,6 +155,8 @@ namespace ZexNext_Runner
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.ForegroundColor = ConsoleColor.White;
+                Flags e = new Flags(result.ExpectedState.F);
+                Flags a = new Flags(result.ActualState.F);
                 Console.ReadKey();
             }
 
@@ -237,6 +192,53 @@ namespace ZexNext_Runner
             );
 
             return afterExecution;
+        }
+
+        private static string[] GetTestFiles(string path)
+        {
+            List<string> paths = new List<string>();
+            if (path == null)
+            {
+                path = ".";
+            }
+
+            path = Path.GetFullPath(path); // expand from relative path if needed
+
+            if (path.EndsWith(".zip") && File.Exists(path))
+            {
+                paths = UnzipArchive(path);
+            }
+            else if (Directory.Exists(path))
+            {
+                foreach (string filePath in Directory.GetFiles(path).Where(x => x.EndsWith(".zxl")))
+                {
+                    paths.Add(filePath);
+                }
+            }
+            else if (File.Exists(path))
+            {
+                paths.Add(path);
+            }
+
+            return paths.ToArray();
+        }
+
+        private static List<string> UnzipArchive(string path)
+        {
+            List<string> filePaths = new List<string>();
+            // unzip into the same folder and look for .zxl files           
+            ZipArchive zip = ZipFile.OpenRead(path);
+            string extractPath = Path.GetDirectoryName(path);
+            foreach (ZipArchiveEntry entry in zip.Entries)
+            {
+                if (entry.Name.EndsWith(".zxl"))
+                {
+                    string filePath = Path.Combine(extractPath, entry.Name);
+                    entry.ExtractToFile(filePath, true);
+                    filePaths.Add(filePath);
+                }
+            }
+            return filePaths;
         }
     }
 }

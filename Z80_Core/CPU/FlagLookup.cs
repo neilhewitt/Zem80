@@ -121,8 +121,10 @@ namespace Z80.Core
             flags.Carry = ((result & 0x10000) != 0);
             flags.HalfCarry = HalfCarry(startingValue, (ushort)addOrSubtractValue, carry, subtract);
             flags.Subtract = subtract;
-            flags.X = (result & 0x0800) > 0; // copy bit 3
-            flags.Y = (result & 0x2000) > 0; // copy bit 5
+            
+            byte r = ((ushort)result).HighByte();
+            flags.X = (r & 0x08) > 0; // copy bit 3
+            flags.Y = (r & 0x20) > 0; // copy bit 5
 
             // some 16-bit arithmetic operations preserve flags from the
             // last instruction - if not, then set the remaining flags here
@@ -215,18 +217,18 @@ namespace Z80.Core
         {
             int c = carry ? 1 : 0;
             int result = (isSubtraction ? (first - second - c) : (first + second + c));
+            byte r = (byte)(result & 0xFF);
 
-            return (isSubtraction) ? (((first & 0x0F) - (result & 0x0F) - c) & 0x10) != 0 :
-                                     (((first & 0x0F) + (second & 0x0F) + c) & 0x10) != 0;
-        }
+            return ((first ^ r ^ second) & 0x10) != 0;
+        }  
 
         public static bool HalfCarry(ushort first, ushort second, bool carry, bool isSubtraction)
         {
             int c = carry ? 1 : 0;
             int result = (isSubtraction ? (first - second - c) : (first + second + c));
+            short r = (short)(result & 0xFFFF);
 
-            return (isSubtraction) ? (((first & 0x0F00) - (result & 0x0F00) - c) & 0x1000) != 0 :
-                                     (((first & 0x0F00) + (second & 0x0F00) + c) & 0x1000) != 0;
+            return ((first ^ r ^ second) & 0x1000) != 0;
         }
 
         public static bool Overflows(byte first, byte second, bool carry, bool isSubtraction)
