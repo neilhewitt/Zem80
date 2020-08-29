@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Z80.Core
 {
-    public class Registers
+    public class Registers : IDebugRegisters
     {
         private byte[] _registers;
         private byte _offset = 0;
@@ -18,9 +18,11 @@ namespace Z80.Core
         public byte this[ByteRegister register] { get { return GetRegister(register); } set { SetRegister(register, value); } }
         public ushort this[WordRegister registerPair] { get { return GetRegisterPair(registerPair); } set { SetRegisterPair(registerPair, value); } }
 
+        public IDebugRegisters Debug => this;
+
         // 8-bit registers
         public byte A { get { return _accumulator; } set { _accumulator = value; } }
-        public byte F { get { return _flags.Value; } } // flags register - shouldn't set F or AF directly, use Flags property instead
+        public byte F { get { return _flags.Value; } } // flags register - shouldn't set F directly
         public byte B { get { return _registers[_offset]; } set { _registers[_offset] = value; } }
         public byte C { get { return _registers[_offset + 1]; } set { _registers[_offset + 1] = value; } }
         public byte D { get { return _registers[_offset + 2]; } set { _registers[_offset + 2] = value; } }
@@ -29,7 +31,8 @@ namespace Z80.Core
         public byte L { get { return _registers[_offset + 5]; } set { _registers[_offset + 5] = value; } }
 
         // Registers as 16-bit pairs
-        public ushort AF { get { return GetWord(_accumulator, _flags.Value); } set { _accumulator = value.HighByte(); _flags.Value = value.LowByte(); } }
+        public ushort AF { get { return GetWord(_accumulator, _flags.Value); } }
+        ushort IDebugRegisters.AF { set { _accumulator = value.HighByte(); _flags.Value = value.LowByte(); } }
 
         public ushort BC { get { return Get16BitValue(_offset); } set { Set16BitValue(_offset, value); } }
         public ushort DE { get { return Get16BitValue(_offset + 2); } set { Set16BitValue(_offset + 2, value); } }
@@ -62,7 +65,7 @@ namespace Z80.Core
 
         public void ExchangeAF()
         {
-            lock(this)
+            lock (this)
             {
                 // The reason for storing A & F in fields rather than in the byte array is because we need to store the flags
                 // as a Flags instance and not as a byte value, because the constant conversion back and forth
@@ -111,7 +114,7 @@ namespace Z80.Core
             {
                 return _registers[_offset + (int)register];
             }
-            else 
+            else
             {
                 return _registers[(int)register];
             }
@@ -181,7 +184,7 @@ namespace Z80.Core
 
         private ushort GetWord(byte high, byte low)
         {
-            return (ushort)((high * 256) + low); 
+            return (ushort)((high * 256) + low);
         }
 
         private void Set16BitValue(int offset, ushort value)
@@ -203,7 +206,7 @@ namespace Z80.Core
             {
                 throw new ArgumentOutOfRangeException("Invalid format. Size of array registerValues must be 24 bytes.");
             }
-            
+
             _registers = registerValues;
             _accumulator = accumulator;
             _altAccumulator = altAccumulator;

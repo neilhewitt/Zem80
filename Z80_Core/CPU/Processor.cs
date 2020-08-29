@@ -114,13 +114,13 @@ namespace Z80.Core
             while (_running) Thread.Sleep(0);
         }
 
-        public void ResetAndClearMemory()
+        public void ResetAndClearMemory(bool restartAfterReset = true)
         {
-            if (State != ProcessorState.Stopped) throw new Z80Exception("Cannot reset the processor unless it is stopped. Call Stop() first.");
-
+            Stop();
             Memory.Clear();
             Registers.Clear();
             Registers.SP = _topOfStack;
+            if (restartAfterReset) Start(0, this.EndOnHalt, this.TimingMode);
         }
 
         public void Push(WordRegister register)
@@ -194,7 +194,6 @@ namespace Z80.Core
 
         private void InstructionCycle()
         {
-
             while (_running)
             {
                 ExecutionPackage package = null;
@@ -288,10 +287,10 @@ namespace Z80.Core
                 }
                 else if ((b0 == 0xDD || b0 == 0xFD) && b1 == 0xCB)
                 {
-                    // DDCB / FDCB: four-byte opcode = two prefix bytes + one displacement byte + one opcode byte - no four-byte instruction has any operand values
+                    // DDCB / FDCB: four-byte opcode = two prefix bytes + one displacement byte + one opcode byte - no four-byte instruction has any actual operand values
                     b1 = OpcodeFetch();
                     Registers.PC++;
-                    data.Argument1 = OperandFetch();
+                    data.Argument1 = OperandFetch(); // displacement byte is the only 'operand'
                     Registers.PC++;
                     b3 = OpcodeFetch();
                     Registers.PC++;

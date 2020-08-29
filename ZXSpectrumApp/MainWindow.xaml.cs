@@ -40,11 +40,11 @@ namespace Z80.ZXSpectrumApp
             _vm.OnUpdateDisplay += UpdateDisplay;
             //_vm.OnAfterExecuteInstruction += _vm_OnAfterExecuteInstruction;
 
-            _code = new CodeWindow();
-            _code.Show();
+            //_code = new CodeWindow();
+           // _code.Show();
 
-            _asm = new BindingList<string>();
-            _code.AssemblyListing.ItemsSource = _asm;
+            //_asm = new BindingList<string>();
+            //_code.AssemblyListing.ItemsSource = _asm;
             
             _vm.Start();
         }

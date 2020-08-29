@@ -11,7 +11,6 @@ namespace Z80.Core
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
 
-            sbyte jump = 0;
             if (cpu.Registers.B > 0)
             {
                 cpu.Timing.InternalOperationCycle(5);

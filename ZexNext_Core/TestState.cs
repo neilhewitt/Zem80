@@ -24,7 +24,6 @@ namespace ZexNext.Core
     public class TestState
     {
         public byte[] Opcode { get; private set; }
-        public string OpcodeString { get; private set; }
         public string Mnemonic { get; private set; }
         public byte[] Data { get; private set; }
         public ushort DataAddress => 0x103;
@@ -136,7 +135,6 @@ namespace ZexNext.Core
                 opcode = shortenedOpcode;
             }
 
-            OpcodeString = String.Join(null, opcode.Select(x => x.ToString("X2")));
             Mnemonic = mnemonic;
             Data = data;
 

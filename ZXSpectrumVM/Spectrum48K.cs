@@ -10,6 +10,8 @@ namespace Z80.ZXSpectrumVM
 {
     public class Spectrum48K
     {
+        public const int TICKS_BETWEEN_FRAMES = 69887;
+
         private Processor _cpu;
         private int _ticksSinceLastDisplayUpdate;
         private int _displayUpdatesSinceLastFlash;
@@ -36,7 +38,7 @@ namespace Z80.ZXSpectrumVM
 
             _ticksSinceLastDisplayUpdate++;
             
-            if (_ticksSinceLastDisplayUpdate > 69887)
+            if (_ticksSinceLastDisplayUpdate > TICKS_BETWEEN_FRAMES)
             {
                 UpdateDisplay();
                 _ticksSinceLastDisplayUpdate = 0;
@@ -168,7 +170,7 @@ namespace Z80.ZXSpectrumVM
 
             _cpu.OnClockTick += _cpu_OnClockTick;
             _cpu.Debug.AfterExecute += _cpu_AfterInstruction;
-            _ticksSinceLastDisplayUpdate = 69888; // trigger initial display buffer fill
+            _ticksSinceLastDisplayUpdate = TICKS_BETWEEN_FRAMES + 1; // trigger initial display buffer fill
         }
     }
 }

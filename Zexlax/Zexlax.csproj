@@ -17,6 +17,9 @@
     <None Update="cpm_patch.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="zexall.com">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="zexdoc-neg.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

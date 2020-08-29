@@ -165,7 +165,7 @@ namespace ZexNext_Runner
 
         public static TestState ExecuteTestCycle(TestState input)
         {
-            _cpu.Registers.AF = input.AF;
+            _cpu.Registers.Debug.AF = input.AF; // can only set AF directly via register debug mode
             _cpu.Registers.BC = input.BC;
             _cpu.Registers.DE = input.DE;
             _cpu.Registers.HL = input.HL;

@@ -5,9 +5,9 @@ using System.Text;
 
 namespace ZexNext.Core
 {
-    public static class InstructionTable
+    public static class MnemonicTable
     {
-        public static IReadOnlyDictionary<string, string> Instructions { get; private set; }
+        public static IReadOnlyDictionary<string, string> InstructionMnemonics { get; private set; }
 
         public static string MnemonicFor(byte[] opcode)
         {
@@ -22,10 +22,10 @@ namespace ZexNext.Core
             }
 
             string opcodeString = String.Join(null, opcode.Select(x => x.ToString("X2")));
-            return Instructions.GetValueOrDefault(opcodeString);
+            return InstructionMnemonics.GetValueOrDefault(opcodeString);
         }
 
-        static InstructionTable()
+        static MnemonicTable()
         {
             Dictionary<string, string> instructions = new Dictionary<string, string>();
 
@@ -829,7 +829,7 @@ namespace ZexNext.Core
             instructions.Add("FDCBF6", "SET 6,(IY+o)");
             instructions.Add("FDCBFE", "SET 7,(IY+o)");
 
-            Instructions = instructions;
+            InstructionMnemonics = instructions;
         }
     }
 }
