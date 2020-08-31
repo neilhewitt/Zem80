@@ -49,6 +49,11 @@ namespace ZexNext.Core
             return results;
         }
 
+        public TestResult Run(TestCycle testCycle, Func<TestState, TestState> testExecutor, bool useFlagMasks, Func<TestResult, bool> afterCycle = null)
+        {
+            return ExecuteTest(testCycle.ParentTest, testCycle, testExecutor, useFlagMasks, afterCycle);
+        }
+
         private TestResult ExecuteTest(Test test, TestCycle cycle, Func<TestState, TestState> testExecutor, bool useFlagMasks, Func<TestResult, bool> afterCycle = null)
         {
             TestState input = new TestState(cycle.BeforeState);
@@ -66,7 +71,7 @@ namespace ZexNext.Core
             }
             bool passed = actual.Equals(expected);
 
-            TestResult result = new TestResult(test.Name, cycle.Mnemonic, passed, input, expected, actual);
+            TestResult result = new TestResult(cycle, test.Name, cycle.Mnemonic, passed, input, expected, actual);
             if (afterCycle?.Invoke(result) == false)
             {
                 // nothing here ATM - debug point if we need it

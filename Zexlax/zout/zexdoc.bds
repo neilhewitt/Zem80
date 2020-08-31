@@ -94,11 +94,11 @@ binary-debuggable-source
 0113 0113 s start:	ld	hl,8000h
 0116 0116 d f9
 0116 0116 s 	ld	sp,hl
-0117 0117 d 11c41d
+0117 0117 d 11c21d
 0117 0117 s 	ld	de,msg1
 011a 011a d 0e09
 011a 011a s 	ld	c,9
-011c 011c d cdb81d
+011c 011c d cdb61d
 011c 011c s 	call	bdos
 011f 011f s 
 011f 011f d 213801
@@ -118,11 +118,11 @@ binary-debuggable-source
 012c 012c d c32201
 012c 012c s 	jp	loop
 012f 012f s 	
-012f 012f d 11e31d
+012f 012f d 11e11d
 012f 012f s done:	ld	de,msg2
 0132 0132 d 0e09
 0132 0132 s 	ld	c,9
-0134 0134 d cdb81d
+0134 0134 d cdb61d
 0134 0134 s 	call	bdos
 0137 0137 d 76
 0137 0137 s 	halt		; warm boot
@@ -4459,7 +4459,7 @@ binary-debuggable-source
 1ae2 1ae2 s 	ld	l,a
 1ae3 1ae3 d 7e
 1ae3 1ae3 s 	ld	a,(hl)		; flag mask
-1ae4 1ae4 d 32631d
+1ae4 1ae4 d 32611d
 1ae4 1ae4 s 	ld	(flgmsk+1),a
 1ae7 1ae7 d 23
 1ae7 1ae7 s 	inc	hl
@@ -4493,7 +4493,7 @@ binary-debuggable-source
 1b04 1b04 s 	pop	hl
 1b05 1b05 d e5
 1b05 1b05 s 	push	hl
-1b06 1b06 d 113f1d
+1b06 1b06 d 113e1d
 1b06 1b06 s 	ld	de,iut		; copy initial instruction under test
 1b09 1b09 d 010400
 1b09 1b09 s 	ld	bc,4
@@ -4513,12 +4513,12 @@ binary-debuggable-source
 1b1a 1b1a s 	ex	de,hl
 1b1b 1b1b d 0e09
 1b1b 1b1b s 	ld	c,9
-1b1d 1b1d d cdb81d
+1b1d 1b1d d cdb61d
 1b1d 1b1d s 	call	bdos		; show test name
-1b20 1b20 d cd5d1e
+1b20 1b20 d cd5b1e
 1b20 1b20 s 	call	initcrc		; initialise crc
 1b23 1b23 s ; test loop
-1b23 1b23 d 3a3f1d
+1b23 1b23 d 3a3e1d
 1b23 1b23 s tlp:	ld	a,(iut)
 1b26 1b26 d fe76
 1b26 1b26 s 	cp	076h		; pragmatically avoid halt intructions
@@ -4530,7 +4530,7 @@ binary-debuggable-source
 1b2d 1b2d s 	cp	0ddh
 1b2f 1b2f d c2371b
 1b2f 1b2f s 	jp	nz,tlp1
-1b32 1b32 d 3a401d
+1b32 1b32 d 3a3f1d
 1b32 1b32 s 	ld	a,(iut+1)
 1b35 1b35 d fe76
 1b35 1b35 s 	cp	076h
@@ -4548,35 +4548,35 @@ binary-debuggable-source
 1b44 1b44 s 	ld	de,20+20+20
 1b47 1b47 d 19
 1b47 1b47 s 	add	hl,de		; point to expected crc
-1b48 1b48 d cd1e1e
+1b48 1b48 d cd1c1e
 1b48 1b48 s 	call	cmpcrc
-1b4b 1b4b d 11f41d
+1b4b 1b4b d 11f21d
 1b4b 1b4b s 	ld	de,okmsg
 1b4e 1b4e d ca6d1b
 1b4e 1b4e s 	jp	z,tlpok
-1b51 1b51 d 11fb1d
+1b51 1b51 d 11f91d
 1b51 1b51 s 	ld	de,ermsg1
 1b54 1b54 d 0e09
 1b54 1b54 s 	ld	c,9
-1b56 1b56 d cdb81d
+1b56 1b56 d cdb61d
 1b56 1b56 s 	call	bdos
-1b59 1b59 d cd971d
+1b59 1b59 d cd951d
 1b59 1b59 s 	call	phex8
-1b5c 1b5c d 11161e
+1b5c 1b5c d 11141e
 1b5c 1b5c s 	ld	de,ermsg2
 1b5f 1b5f d 0e09
 1b5f 1b5f s 	ld	c,9
-1b61 1b61 d cdb81d
+1b61 1b61 d cdb61d
 1b61 1b61 s 	call	bdos
-1b64 1b64 d 21711e
+1b64 1b64 d 216f1e
 1b64 1b64 s 	ld	hl,crcval
-1b67 1b67 d cd971d
+1b67 1b67 d cd951d
 1b67 1b67 s 	call	phex8
-1b6a 1b6a d 11f11d
+1b6a 1b6a d 11ef1d
 1b6a 1b6a s 	ld	de,crlf
 1b6d 1b6d d 0e09
 1b6d 1b6d s tlpok:	ld	c,9
-1b6f 1b6f d cdb81d
+1b6f 1b6f d cdb61d
 1b6f 1b6f s 	call	bdos
 1b72 1b72 d e1
 1b72 1b72 s 	pop	hl
@@ -4610,7 +4610,7 @@ binary-debuggable-source
 1b8d 1b8d s 	pop	hl		; pointer to test case
 1b8e 1b8e d e5
 1b8e 1b8e s 	push	hl
-1b8f 1b8f d 113f1d
+1b8f 1b8f d 113e1d
 1b8f 1b8f s 	ld	de,iut
 1b92 1b92 d cda01b
 1b92 1b92 s 	call	setup		; setup iut
@@ -5088,7 +5088,7 @@ binary-debuggable-source
 1d2a 1d2a s       endif	
 1d2a 1d2a d f3
 1d2a 1d2a s 	di			; disable interrupts
-1d2b 1d2b d ed738b1d
+1d2b 1d2b d ed73891d
 1d2b 1d2b s 	ld	(spsav),sp	; save stack pointer
 1d2f 1d2f d 310501
 1d2f 1d2f s 	ld	sp,msbt+2	; point to test-case machine state
@@ -5106,853 +5106,849 @@ binary-debuggable-source
 1d39 1d39 s 	pop	af
 1d3a 1d3a d ed7b1101
 1d3a 1d3a s 	ld	sp,(spbt)
-1d3e 1d3e d 00
-1d3e 1d3e s 	nop
-1d3f 1d3f s iut:	ds	4		; max 4 byte instruction under test
-1d43 1d43 d 00
-1d43 1d43 s 	nop
-1d44 1d44 d ed73891d
-1d44 1d44 s 	ld	(spat),sp	; save stack pointer
-1d48 1d48 d 31891d
-1d48 1d48 s 	ld	sp,spat
-1d4b 1d4b d f5
-1d4b 1d4b s 	push	af		; save other registers
-1d4c 1d4c d c5
-1d4c 1d4c s 	push	bc
-1d4d 1d4d d d5
-1d4d 1d4d s 	push	de
-1d4e 1d4e d e5
-1d4e 1d4e s 	push	hl
-1d4f 1d4f d dde5
-1d4f 1d4f s 	push	ix
-1d51 1d51 d fde5
-1d51 1d51 s 	push	iy
-1d53 1d53 d ed7b8b1d
-1d53 1d53 s 	ld	sp,(spsav)	; restore stack pointer
-1d57 1d57 d fb
-1d57 1d57 s 	ei			; enable interrupts
-1d58 1d58 d 2a0301
-1d58 1d58 s 	ld	hl,(msbt)	; copy memory operand
-1d5b 1d5b d 227b1d
-1d5b 1d5b s 	ld	(msat),hl
-1d5e 1d5e d 21871d
-1d5e 1d5e s 	ld	hl,flgsat	; flags after test
-1d61 1d61 d 7e
-1d61 1d61 s 	ld	a,(hl)
-1d62 1d62 d e6d7
-1d62 1d62 s flgmsk:	and	a,0d7h		; mask-out irrelevant bits (self-modified code!)
-1d64 1d64 d 77
-1d64 1d64 s 	ld	(hl),a
-1d65 1d65 d 0610
-1d65 1d65 s 	ld	b,16		; total of 16 bytes of state
-1d67 1d67 d 117b1d
-1d67 1d67 s 	ld	de,msat
-1d6a 1d6a d 21711e
-1d6a 1d6a s 	ld	hl,crcval
-1d6d 1d6d d 1a
-1d6d 1d6d s tcrc:	ld	a,(de)
-1d6e 1d6e d 13
-1d6e 1d6e s 	inc	de
-1d6f 1d6f d cd351e
-1d6f 1d6f s 	call	updcrc		; accumulate crc of this test case
-1d72 1d72 d 05
-1d72 1d72 s 	dec	b
-1d73 1d73 d c26d1d
-1d73 1d73 s 	jp	nz,tcrc
-1d76 1d76 s       if	0
-1d76 1d76 s 	ld	e,' '
-1d76 1d76 s 	ld	c,2
-1d76 1d76 s 	call	bdos
-1d76 1d76 s 	ld	hl,crcval
-1d76 1d76 s 	call	phex8
-1d76 1d76 s 	ld	de,crlf
-1d76 1d76 s 	ld	c,9
-1d76 1d76 s 	call	bdos
-1d76 1d76 s 	ld	hl,msat
-1d76 1d76 s 	ld	b,16
-1d76 1d76 s 	call	hexstr
-1d76 1d76 s 	ld	de,crlf
-1d76 1d76 s 	ld	c,9
-1d76 1d76 s 	call	bdos
-1d76 1d76 s       endif
-1d76 1d76 d e1
-1d76 1d76 s 	pop	hl
-1d77 1d77 d d1
-1d77 1d77 s 	pop	de
-1d78 1d78 d c1
-1d78 1d78 s 	pop	bc
-1d79 1d79 d f1
-1d79 1d79 s 	pop	af
-1d7a 1d7a d c9
-1d7a 1d7a s 	ret
-1d7b 1d7b s 
-1d7b 1d7b s ; machine state after test
-1d7b 1d7b s msat:	ds	14	; memop,iy,ix,hl,de,bc,af
-1d89 1d89 s spat:	ds	2	; stack pointer after test
-1d8b 1d8b s ; ZMAC/MAXAM doesn't like ':' after label with EQUs
-1d8b 1d8b s flgsat	equ	spat-2	; flags
+1d3e 1d3e s iut:	ds	4		; max 4 byte instruction under test
+1d42 1d42 d ed73871d
+1d42 1d42 s 	ld	(spat),sp	; save stack pointer
+1d46 1d46 d 31871d
+1d46 1d46 s 	ld	sp,spat
+1d49 1d49 d f5
+1d49 1d49 s 	push	af		; save other registers
+1d4a 1d4a d c5
+1d4a 1d4a s 	push	bc
+1d4b 1d4b d d5
+1d4b 1d4b s 	push	de
+1d4c 1d4c d e5
+1d4c 1d4c s 	push	hl
+1d4d 1d4d d dde5
+1d4d 1d4d s 	push	ix
+1d4f 1d4f d fde5
+1d4f 1d4f s 	push	iy
+1d51 1d51 d ed7b891d
+1d51 1d51 s 	ld	sp,(spsav)	; restore stack pointer
+1d55 1d55 d fb
+1d55 1d55 s 	ei			; enable interrupts
+1d56 1d56 d 2a0301
+1d56 1d56 s 	ld	hl,(msbt)	; copy memory operand
+1d59 1d59 d 22791d
+1d59 1d59 s 	ld	(msat),hl
+1d5c 1d5c d 21851d
+1d5c 1d5c s 	ld	hl,flgsat	; flags after test
+1d5f 1d5f d 7e
+1d5f 1d5f s 	ld	a,(hl)
+1d60 1d60 d e6d7
+1d60 1d60 s flgmsk:	and	a,0d7h		; mask-out irrelevant bits (self-modified code!)
+1d62 1d62 d 77
+1d62 1d62 s 	ld	(hl),a
+1d63 1d63 d 0610
+1d63 1d63 s 	ld	b,16		; total of 16 bytes of state
+1d65 1d65 d 11791d
+1d65 1d65 s 	ld	de,msat
+1d68 1d68 d 216f1e
+1d68 1d68 s 	ld	hl,crcval
+1d6b 1d6b d 1a
+1d6b 1d6b s tcrc:	ld	a,(de)
+1d6c 1d6c d 13
+1d6c 1d6c s 	inc	de
+1d6d 1d6d d cd331e
+1d6d 1d6d s 	call	updcrc		; accumulate crc of this test case
+1d70 1d70 d 05
+1d70 1d70 s 	dec	b
+1d71 1d71 d c26b1d
+1d71 1d71 s 	jp	nz,tcrc
+1d74 1d74 s       if	0
+1d74 1d74 s 	ld	e,' '
+1d74 1d74 s 	ld	c,2
+1d74 1d74 s 	call	bdos
+1d74 1d74 s 	ld	hl,crcval
+1d74 1d74 s 	call	phex8
+1d74 1d74 s 	ld	de,crlf
+1d74 1d74 s 	ld	c,9
+1d74 1d74 s 	call	bdos
+1d74 1d74 s 	ld	hl,msat
+1d74 1d74 s 	ld	b,16
+1d74 1d74 s 	call	hexstr
+1d74 1d74 s 	ld	de,crlf
+1d74 1d74 s 	ld	c,9
+1d74 1d74 s 	call	bdos
+1d74 1d74 s       endif
+1d74 1d74 d e1
+1d74 1d74 s 	pop	hl
+1d75 1d75 d d1
+1d75 1d75 s 	pop	de
+1d76 1d76 d c1
+1d76 1d76 s 	pop	bc
+1d77 1d77 d f1
+1d77 1d77 s 	pop	af
+1d78 1d78 d c9
+1d78 1d78 s 	ret
+1d79 1d79 s 
+1d79 1d79 s ; machine state after test
+1d79 1d79 s msat:	ds	14	; memop,iy,ix,hl,de,bc,af
+1d87 1d87 s spat:	ds	2	; stack pointer after test
+1d89 1d89 s ; ZMAC/MAXAM doesn't like ':' after label with EQUs
+1d89 1d89 s flgsat	equ	spat-2	; flags
+1d89 1d89 s 
+1d89 1d89 s spsav:	ds	2	; saved stack pointer
 1d8b 1d8b s 
-1d8b 1d8b s spsav:	ds	2	; saved stack pointer
-1d8d 1d8d s 
-1d8d 1d8d s ; display hex string (pointer in hl, byte count in b)
-1d8d 1d8d d 7e
-1d8d 1d8d s hexstr:	ld	a,(hl)
-1d8e 1d8e d cda91d
-1d8e 1d8e s 	call	phex2
-1d91 1d91 d 23
-1d91 1d91 s 	inc	hl
-1d92 1d92 d 05
-1d92 1d92 s 	dec	b
-1d93 1d93 d c28d1d
-1d93 1d93 s 	jp	nz,hexstr
-1d96 1d96 d c9
-1d96 1d96 s 	ret
-1d97 1d97 s 
-1d97 1d97 s ; display hex
-1d97 1d97 s ; display the big-endian 32-bit value pointed to by hl
-1d97 1d97 d f5
-1d97 1d97 s phex8:	push	af
-1d98 1d98 d c5
-1d98 1d98 s 	push	bc
-1d99 1d99 d e5
-1d99 1d99 s 	push	hl
-1d9a 1d9a d 0604
-1d9a 1d9a s 	ld	b,4
-1d9c 1d9c d 7e
-1d9c 1d9c s ph8lp:	ld	a,(hl)
-1d9d 1d9d d cda91d
-1d9d 1d9d s 	call	phex2
-1da0 1da0 d 23
-1da0 1da0 s 	inc	hl
-1da1 1da1 d 05
-1da1 1da1 s 	dec	b
-1da2 1da2 d c29c1d
-1da2 1da2 s 	jp	nz,ph8lp
-1da5 1da5 d e1
-1da5 1da5 s 	pop	hl
-1da6 1da6 d c1
-1da6 1da6 s 	pop	bc
-1da7 1da7 d f1
-1da7 1da7 s 	pop	af
-1da8 1da8 d c9
-1da8 1da8 s 	ret
-1da9 1da9 s 
-1da9 1da9 s ; display byte in a
-1da9 1da9 d f5
-1da9 1da9 s phex2:	push	af
-1daa 1daa d c5
-1daa 1daa s 	push	bc
-1dab 1dab d d5
-1dab 1dab s 	push	de
-1dac 1dac d e5
-1dac 1dac s 	push	hl
-1dad 1dad d 5f
-1dad 1dad s 	ld	e,a
-1dae 1dae d 0e03
-1dae 1dae s 	ld	c,3
-1db0 1db0 d cdb81d
-1db0 1db0 s 	call	bdos
-1db3 1db3 d e1
-1db3 1db3 s 	pop	hl
-1db4 1db4 d d1
-1db4 1db4 s 	pop	de
-1db5 1db5 d c1
-1db5 1db5 s 	pop	bc
-1db6 1db6 d f1
-1db6 1db6 s 	pop	af
-1db7 1db7 d c9
-1db7 1db7 s 	ret
-1db8 1db8 s 
-1db8 1db8 d f5
-1db8 1db8 s bdos:	push	af
-1db9 1db9 d c5
-1db9 1db9 s 	push	bc
-1dba 1dba d d5
-1dba 1dba s 	push	de
-1dbb 1dbb d e5
-1dbb 1dbb s 	push	hl
-1dbc 1dbc d cd0500
-1dbc 1dbc s 	call	5
-1dbf 1dbf d e1
-1dbf 1dbf s 	pop	hl
-1dc0 1dc0 d d1
-1dc0 1dc0 s 	pop	de
-1dc1 1dc1 d c1
-1dc1 1dc1 s 	pop	bc
-1dc2 1dc2 d f1
-1dc2 1dc2 s 	pop	af
-1dc3 1dc3 d c9
-1dc3 1dc3 s 	ret
-1dc4 1dc4 s 
-1dc4 1dc4 d 5a3830646f6320696e737472756374696f6e206578657263697365720a0d24
-1dc4 1dc4 s msg1:	db	'Z80doc instruction exerciser',10,13,'$'
-1de3 1de3 d 546573747320636f6d706c657465
-1de3 1de3 s msg2:	db	'Tests complete'
-1df1 1df1 d 0a0d24
-1df1 1df1 s crlf:	db	10,13,'$'
-1df4 1df4 d 20204f4b0a0d24
-1df4 1df4 s okmsg:	db	'  OK',10,13,'$'
-1dfb 1dfb d 20204552524f52202a2a2a2a206372632065787065637465643a24
-1dfb 1dfb s ermsg1:	db	'  ERROR **** crc expected:$'
-1e16 1e16 d 20666f756e643a24
-1e16 1e16 s ermsg2:	db	' found:$'
-1e1e 1e1e s 
-1e1e 1e1e s ; compare crc
-1e1e 1e1e s ; hl points to value to compare to crcval
-1e1e 1e1e d c5
-1e1e 1e1e s cmpcrc:	push	bc
-1e1f 1e1f d d5
-1e1f 1e1f s 	push	de
-1e20 1e20 d e5
-1e20 1e20 s 	push	hl
-1e21 1e21 d 11711e
-1e21 1e21 s 	ld	de,crcval
-1e24 1e24 d 0604
-1e24 1e24 s 	ld	b,4
-1e26 1e26 d 1a
-1e26 1e26 s cclp:	ld	a,(de)
-1e27 1e27 d be
-1e27 1e27 s 	cp	a,(hl)
-1e28 1e28 d c2311e
-1e28 1e28 s 	jp	nz,cce
-1e2b 1e2b d 23
-1e2b 1e2b s 	inc	hl
-1e2c 1e2c d 13
-1e2c 1e2c s 	inc	de
-1e2d 1e2d d 05
-1e2d 1e2d s 	dec	b
-1e2e 1e2e d c2261e
-1e2e 1e2e s 	jp	nz,cclp
-1e31 1e31 d e1
-1e31 1e31 s cce:	pop	hl
-1e32 1e32 d d1
-1e32 1e32 s 	pop	de
-1e33 1e33 d c1
-1e33 1e33 s 	pop	bc
-1e34 1e34 d c9
-1e34 1e34 s 	ret
-1e35 1e35 s 
-1e35 1e35 s ; 32-bit crc routine
-1e35 1e35 s ; entry: a contains next byte, hl points to crc
-1e35 1e35 s ; exit:  crc updated
-1e35 1e35 d f5
-1e35 1e35 s updcrc:	push	af
-1e36 1e36 d c5
-1e36 1e36 s 	push	bc
-1e37 1e37 d d5
-1e37 1e37 s 	push	de
-1e38 1e38 d e5
-1e38 1e38 s 	push	hl
-1e39 1e39 d e5
-1e39 1e39 s 	push	hl
-1e3a 1e3a d 110300
-1e3a 1e3a s 	ld	de,3
-1e3d 1e3d d 19
-1e3d 1e3d s 	add	hl,de	; point to low byte of old crc
-1e3e 1e3e d ae
-1e3e 1e3e s 	xor	a,(hl)	; xor with new byte
-1e3f 1e3f d 6f
-1e3f 1e3f s 	ld	l,a
-1e40 1e40 d 2600
-1e40 1e40 s 	ld	h,0
-1e42 1e42 d 29
-1e42 1e42 s 	add	hl,hl	; use result as index into table of 4 byte entries
-1e43 1e43 d 29
-1e43 1e43 s 	add	hl,hl
-1e44 1e44 d eb
-1e44 1e44 s 	ex	de,hl
-1e45 1e45 d 21751e
-1e45 1e45 s 	ld	hl,crctab
-1e48 1e48 d 19
-1e48 1e48 s 	add	hl,de	; point to selected entry in crctab
-1e49 1e49 d eb
-1e49 1e49 s 	ex	de,hl
-1e4a 1e4a d e1
-1e4a 1e4a s 	pop	hl
-1e4b 1e4b d 010400
-1e4b 1e4b s 	ld	bc,4	; c = byte count, b = accumulator
-1e4e 1e4e d 1a
-1e4e 1e4e s crclp:	ld	a,(de)
-1e4f 1e4f d a8
-1e4f 1e4f s 	xor	a,b
-1e50 1e50 d 46
-1e50 1e50 s 	ld	b,(hl)
-1e51 1e51 d 77
-1e51 1e51 s 	ld	(hl),a
-1e52 1e52 d 13
-1e52 1e52 s 	inc	de
-1e53 1e53 d 23
-1e53 1e53 s 	inc	hl
-1e54 1e54 d 0d
-1e54 1e54 s 	dec	c
-1e55 1e55 d c24e1e
-1e55 1e55 s 	jp	nz,crclp
-1e58 1e58 s       if	0
-1e58 1e58 s 	ld	hl,crcval
-1e58 1e58 s 	call	phex8
-1e58 1e58 s 	ld	de,crlf
-1e58 1e58 s 	ld	c,9
-1e58 1e58 s 	call	bdos
-1e58 1e58 s       endif
-1e58 1e58 d e1
-1e58 1e58 s 	pop	hl
-1e59 1e59 d d1
-1e59 1e59 s 	pop	de
-1e5a 1e5a d c1
-1e5a 1e5a s 	pop	bc
-1e5b 1e5b d f1
-1e5b 1e5b s 	pop	af
-1e5c 1e5c d c9
-1e5c 1e5c s 	ret
-1e5d 1e5d s 
-1e5d 1e5d d f5
-1e5d 1e5d s initcrc:push	af
-1e5e 1e5e d c5
-1e5e 1e5e s 	push	bc
-1e5f 1e5f d e5
-1e5f 1e5f s 	push	hl
-1e60 1e60 d 21711e
-1e60 1e60 s 	ld	hl,crcval
-1e63 1e63 d 3eff
-1e63 1e63 s 	ld	a,0ffh
-1e65 1e65 d 0604
-1e65 1e65 s 	ld	b,4
-1e67 1e67 d 77
-1e67 1e67 s icrclp:	ld	(hl),a
-1e68 1e68 d 23
-1e68 1e68 s 	inc	hl
-1e69 1e69 d 05
-1e69 1e69 s 	dec	b
-1e6a 1e6a d c2671e
-1e6a 1e6a s 	jp	nz,icrclp
-1e6d 1e6d d e1
-1e6d 1e6d s 	pop	hl
-1e6e 1e6e d c1
-1e6e 1e6e s 	pop	bc
-1e6f 1e6f d f1
-1e6f 1e6f s 	pop	af
-1e70 1e70 d c9
-1e70 1e70 s 	ret
-1e71 1e71 s 
-1e71 1e71 s crcval	ds	4
-1e75 1e75 s 
-1e75 1e75 d 00000000
-1e75 1e75 s crctab:	db	000h,000h,000h,000h
-1e79 1e79 d 77073096
-1e79 1e79 s 	db	077h,007h,030h,096h
-1e7d 1e7d d ee0e612c
-1e7d 1e7d s 	db	0eeh,00eh,061h,02ch
-1e81 1e81 d 990951ba
-1e81 1e81 s 	db	099h,009h,051h,0bah
-1e85 1e85 d 076dc419
-1e85 1e85 s 	db	007h,06dh,0c4h,019h
-1e89 1e89 d 706af48f
-1e89 1e89 s 	db	070h,06ah,0f4h,08fh
-1e8d 1e8d d e963a535
-1e8d 1e8d s 	db	0e9h,063h,0a5h,035h
-1e91 1e91 d 9e6495a3
-1e91 1e91 s 	db	09eh,064h,095h,0a3h
-1e95 1e95 d 0edb8832
-1e95 1e95 s 	db	00eh,0dbh,088h,032h
-1e99 1e99 d 79dcb8a4
-1e99 1e99 s 	db	079h,0dch,0b8h,0a4h
-1e9d 1e9d d e0d5e91e
-1e9d 1e9d s 	db	0e0h,0d5h,0e9h,01eh
-1ea1 1ea1 d 97d2d988
-1ea1 1ea1 s 	db	097h,0d2h,0d9h,088h
-1ea5 1ea5 d 09b64c2b
-1ea5 1ea5 s 	db	009h,0b6h,04ch,02bh
-1ea9 1ea9 d 7eb17cbd
-1ea9 1ea9 s 	db	07eh,0b1h,07ch,0bdh
-1ead 1ead d e7b82d07
-1ead 1ead s 	db	0e7h,0b8h,02dh,007h
-1eb1 1eb1 d 90bf1d91
-1eb1 1eb1 s 	db	090h,0bfh,01dh,091h
-1eb5 1eb5 d 1db71064
-1eb5 1eb5 s 	db	01dh,0b7h,010h,064h
-1eb9 1eb9 d 6ab020f2
-1eb9 1eb9 s 	db	06ah,0b0h,020h,0f2h
-1ebd 1ebd d f3b97148
-1ebd 1ebd s 	db	0f3h,0b9h,071h,048h
-1ec1 1ec1 d 84be41de
-1ec1 1ec1 s 	db	084h,0beh,041h,0deh
-1ec5 1ec5 d 1adad47d
-1ec5 1ec5 s 	db	01ah,0dah,0d4h,07dh
-1ec9 1ec9 d 6ddde4eb
-1ec9 1ec9 s 	db	06dh,0ddh,0e4h,0ebh
-1ecd 1ecd d f4d4b551
-1ecd 1ecd s 	db	0f4h,0d4h,0b5h,051h
-1ed1 1ed1 d 83d385c7
-1ed1 1ed1 s 	db	083h,0d3h,085h,0c7h
-1ed5 1ed5 d 136c9856
-1ed5 1ed5 s 	db	013h,06ch,098h,056h
-1ed9 1ed9 d 646ba8c0
-1ed9 1ed9 s 	db	064h,06bh,0a8h,0c0h
-1edd 1edd d fd62f97a
-1edd 1edd s 	db	0fdh,062h,0f9h,07ah
-1ee1 1ee1 d 8a65c9ec
-1ee1 1ee1 s 	db	08ah,065h,0c9h,0ech
-1ee5 1ee5 d 14015c4f
-1ee5 1ee5 s 	db	014h,001h,05ch,04fh
-1ee9 1ee9 d 63066cd9
-1ee9 1ee9 s 	db	063h,006h,06ch,0d9h
-1eed 1eed d fa0f3d63
-1eed 1eed s 	db	0fah,00fh,03dh,063h
-1ef1 1ef1 d 8d080df5
-1ef1 1ef1 s 	db	08dh,008h,00dh,0f5h
-1ef5 1ef5 d 3b6e20c8
-1ef5 1ef5 s 	db	03bh,06eh,020h,0c8h
-1ef9 1ef9 d 4c69105e
-1ef9 1ef9 s 	db	04ch,069h,010h,05eh
-1efd 1efd d d56041e4
-1efd 1efd s 	db	0d5h,060h,041h,0e4h
-1f01 1f01 d a2677172
-1f01 1f01 s 	db	0a2h,067h,071h,072h
-1f05 1f05 d 3c03e4d1
-1f05 1f05 s 	db	03ch,003h,0e4h,0d1h
-1f09 1f09 d 4b04d447
-1f09 1f09 s 	db	04bh,004h,0d4h,047h
-1f0d 1f0d d d20d85fd
-1f0d 1f0d s 	db	0d2h,00dh,085h,0fdh
-1f11 1f11 d a50ab56b
-1f11 1f11 s 	db	0a5h,00ah,0b5h,06bh
-1f15 1f15 d 35b5a8fa
-1f15 1f15 s 	db	035h,0b5h,0a8h,0fah
-1f19 1f19 d 42b2986c
-1f19 1f19 s 	db	042h,0b2h,098h,06ch
-1f1d 1f1d d dbbbc9d6
-1f1d 1f1d s 	db	0dbh,0bbh,0c9h,0d6h
-1f21 1f21 d acbcf940
-1f21 1f21 s 	db	0ach,0bch,0f9h,040h
-1f25 1f25 d 32d86ce3
-1f25 1f25 s 	db	032h,0d8h,06ch,0e3h
-1f29 1f29 d 45df5c75
-1f29 1f29 s 	db	045h,0dfh,05ch,075h
-1f2d 1f2d d dcd60dcf
-1f2d 1f2d s 	db	0dch,0d6h,00dh,0cfh
-1f31 1f31 d abd13d59
-1f31 1f31 s 	db	0abh,0d1h,03dh,059h
-1f35 1f35 d 26d930ac
-1f35 1f35 s 	db	026h,0d9h,030h,0ach
-1f39 1f39 d 51de003a
-1f39 1f39 s 	db	051h,0deh,000h,03ah
-1f3d 1f3d d c8d75180
-1f3d 1f3d s 	db	0c8h,0d7h,051h,080h
-1f41 1f41 d bfd06116
-1f41 1f41 s 	db	0bfh,0d0h,061h,016h
-1f45 1f45 d 21b4f4b5
-1f45 1f45 s 	db	021h,0b4h,0f4h,0b5h
-1f49 1f49 d 56b3c423
-1f49 1f49 s 	db	056h,0b3h,0c4h,023h
-1f4d 1f4d d cfba9599
-1f4d 1f4d s 	db	0cfh,0bah,095h,099h
-1f51 1f51 d b8bda50f
-1f51 1f51 s 	db	0b8h,0bdh,0a5h,00fh
-1f55 1f55 d 2802b89e
-1f55 1f55 s 	db	028h,002h,0b8h,09eh
-1f59 1f59 d 5f058808
-1f59 1f59 s 	db	05fh,005h,088h,008h
-1f5d 1f5d d c60cd9b2
-1f5d 1f5d s 	db	0c6h,00ch,0d9h,0b2h
-1f61 1f61 d b10be924
-1f61 1f61 s 	db	0b1h,00bh,0e9h,024h
-1f65 1f65 d 2f6f7c87
-1f65 1f65 s 	db	02fh,06fh,07ch,087h
-1f69 1f69 d 58684c11
-1f69 1f69 s 	db	058h,068h,04ch,011h
-1f6d 1f6d d c1611dab
-1f6d 1f6d s 	db	0c1h,061h,01dh,0abh
-1f71 1f71 d b6662d3d
-1f71 1f71 s 	db	0b6h,066h,02dh,03dh
-1f75 1f75 d 76dc4190
-1f75 1f75 s 	db	076h,0dch,041h,090h
-1f79 1f79 d 01db7106
-1f79 1f79 s 	db	001h,0dbh,071h,006h
-1f7d 1f7d d 98d220bc
-1f7d 1f7d s 	db	098h,0d2h,020h,0bch
-1f81 1f81 d efd5102a
-1f81 1f81 s 	db	0efh,0d5h,010h,02ah
-1f85 1f85 d 71b18589
-1f85 1f85 s 	db	071h,0b1h,085h,089h
-1f89 1f89 d 06b6b51f
-1f89 1f89 s 	db	006h,0b6h,0b5h,01fh
-1f8d 1f8d d 9fbfe4a5
-1f8d 1f8d s 	db	09fh,0bfh,0e4h,0a5h
-1f91 1f91 d e8b8d433
-1f91 1f91 s 	db	0e8h,0b8h,0d4h,033h
-1f95 1f95 d 7807c9a2
-1f95 1f95 s 	db	078h,007h,0c9h,0a2h
-1f99 1f99 d 0f00f934
-1f99 1f99 s 	db	00fh,000h,0f9h,034h
-1f9d 1f9d d 9609a88e
-1f9d 1f9d s 	db	096h,009h,0a8h,08eh
-1fa1 1fa1 d e10e9818
-1fa1 1fa1 s 	db	0e1h,00eh,098h,018h
-1fa5 1fa5 d 7f6a0dbb
-1fa5 1fa5 s 	db	07fh,06ah,00dh,0bbh
-1fa9 1fa9 d 086d3d2d
-1fa9 1fa9 s 	db	008h,06dh,03dh,02dh
-1fad 1fad d 91646c97
-1fad 1fad s 	db	091h,064h,06ch,097h
-1fb1 1fb1 d e6635c01
-1fb1 1fb1 s 	db	0e6h,063h,05ch,001h
-1fb5 1fb5 d 6b6b51f4
-1fb5 1fb5 s 	db	06bh,06bh,051h,0f4h
-1fb9 1fb9 d 1c6c6162
-1fb9 1fb9 s 	db	01ch,06ch,061h,062h
-1fbd 1fbd d 856530d8
-1fbd 1fbd s 	db	085h,065h,030h,0d8h
-1fc1 1fc1 d f262004e
-1fc1 1fc1 s 	db	0f2h,062h,000h,04eh
-1fc5 1fc5 d 6c0695ed
-1fc5 1fc5 s 	db	06ch,006h,095h,0edh
-1fc9 1fc9 d 1b01a57b
-1fc9 1fc9 s 	db	01bh,001h,0a5h,07bh
-1fcd 1fcd d 8208f4c1
-1fcd 1fcd s 	db	082h,008h,0f4h,0c1h
-1fd1 1fd1 d f50fc457
-1fd1 1fd1 s 	db	0f5h,00fh,0c4h,057h
-1fd5 1fd5 d 65b0d9c6
-1fd5 1fd5 s 	db	065h,0b0h,0d9h,0c6h
-1fd9 1fd9 d 12b7e950
-1fd9 1fd9 s 	db	012h,0b7h,0e9h,050h
-1fdd 1fdd d 8bbeb8ea
-1fdd 1fdd s 	db	08bh,0beh,0b8h,0eah
-1fe1 1fe1 d fcb9887c
-1fe1 1fe1 s 	db	0fch,0b9h,088h,07ch
-1fe5 1fe5 d 62dd1ddf
-1fe5 1fe5 s 	db	062h,0ddh,01dh,0dfh
-1fe9 1fe9 d 15da2d49
-1fe9 1fe9 s 	db	015h,0dah,02dh,049h
-1fed 1fed d 8cd37cf3
-1fed 1fed s 	db	08ch,0d3h,07ch,0f3h
-1ff1 1ff1 d fbd44c65
-1ff1 1ff1 s 	db	0fbh,0d4h,04ch,065h
-1ff5 1ff5 d 4db26158
-1ff5 1ff5 s 	db	04dh,0b2h,061h,058h
-1ff9 1ff9 d 3ab551ce
-1ff9 1ff9 s 	db	03ah,0b5h,051h,0ceh
-1ffd 1ffd d a3bc0074
-1ffd 1ffd s 	db	0a3h,0bch,000h,074h
-2001 2001 d d4bb30e2
-2001 2001 s 	db	0d4h,0bbh,030h,0e2h
-2005 2005 d 4adfa541
-2005 2005 s 	db	04ah,0dfh,0a5h,041h
-2009 2009 d 3dd895d7
-2009 2009 s 	db	03dh,0d8h,095h,0d7h
-200d 200d d a4d1c46d
-200d 200d s 	db	0a4h,0d1h,0c4h,06dh
-2011 2011 d d3d6f4fb
-2011 2011 s 	db	0d3h,0d6h,0f4h,0fbh
-2015 2015 d 4369e96a
-2015 2015 s 	db	043h,069h,0e9h,06ah
-2019 2019 d 346ed9fc
-2019 2019 s 	db	034h,06eh,0d9h,0fch
-201d 201d d ad678846
-201d 201d s 	db	0adh,067h,088h,046h
-2021 2021 d da60b8d0
-2021 2021 s 	db	0dah,060h,0b8h,0d0h
-2025 2025 d 44042d73
-2025 2025 s 	db	044h,004h,02dh,073h
-2029 2029 d 33031de5
-2029 2029 s 	db	033h,003h,01dh,0e5h
-202d 202d d aa0a4c5f
-202d 202d s 	db	0aah,00ah,04ch,05fh
-2031 2031 d dd0d7cc9
-2031 2031 s 	db	0ddh,00dh,07ch,0c9h
-2035 2035 d 5005713c
-2035 2035 s 	db	050h,005h,071h,03ch
-2039 2039 d 270241aa
-2039 2039 s 	db	027h,002h,041h,0aah
-203d 203d d be0b1010
-203d 203d s 	db	0beh,00bh,010h,010h
-2041 2041 d c90c2086
-2041 2041 s 	db	0c9h,00ch,020h,086h
-2045 2045 d 5768b525
-2045 2045 s 	db	057h,068h,0b5h,025h
-2049 2049 d 206f85b3
-2049 2049 s 	db	020h,06fh,085h,0b3h
-204d 204d d b966d409
-204d 204d s 	db	0b9h,066h,0d4h,009h
-2051 2051 d ce61e49f
-2051 2051 s 	db	0ceh,061h,0e4h,09fh
-2055 2055 d 5edef90e
-2055 2055 s 	db	05eh,0deh,0f9h,00eh
-2059 2059 d 29d9c998
-2059 2059 s 	db	029h,0d9h,0c9h,098h
-205d 205d d b0d09822
-205d 205d s 	db	0b0h,0d0h,098h,022h
-2061 2061 d c7d7a8b4
-2061 2061 s 	db	0c7h,0d7h,0a8h,0b4h
-2065 2065 d 59b33d17
-2065 2065 s 	db	059h,0b3h,03dh,017h
-2069 2069 d 2eb40d81
-2069 2069 s 	db	02eh,0b4h,00dh,081h
-206d 206d d b7bd5c3b
-206d 206d s 	db	0b7h,0bdh,05ch,03bh
-2071 2071 d c0ba6cad
-2071 2071 s 	db	0c0h,0bah,06ch,0adh
-2075 2075 d edb88320
-2075 2075 s 	db	0edh,0b8h,083h,020h
-2079 2079 d 9abfb3b6
-2079 2079 s 	db	09ah,0bfh,0b3h,0b6h
-207d 207d d 03b6e20c
-207d 207d s 	db	003h,0b6h,0e2h,00ch
-2081 2081 d 74b1d29a
-2081 2081 s 	db	074h,0b1h,0d2h,09ah
-2085 2085 d ead54739
-2085 2085 s 	db	0eah,0d5h,047h,039h
-2089 2089 d 9dd277af
-2089 2089 s 	db	09dh,0d2h,077h,0afh
-208d 208d d 04db2615
-208d 208d s 	db	004h,0dbh,026h,015h
-2091 2091 d 73dc1683
-2091 2091 s 	db	073h,0dch,016h,083h
-2095 2095 d e3630b12
-2095 2095 s 	db	0e3h,063h,00bh,012h
-2099 2099 d 94643b84
-2099 2099 s 	db	094h,064h,03bh,084h
-209d 209d d 0d6d6a3e
-209d 209d s 	db	00dh,06dh,06ah,03eh
-20a1 20a1 d 7a6a5aa8
-20a1 20a1 s 	db	07ah,06ah,05ah,0a8h
-20a5 20a5 d e40ecf0b
-20a5 20a5 s 	db	0e4h,00eh,0cfh,00bh
-20a9 20a9 d 9309ff9d
-20a9 20a9 s 	db	093h,009h,0ffh,09dh
-20ad 20ad d 0a00ae27
-20ad 20ad s 	db	00ah,000h,0aeh,027h
-20b1 20b1 d 7d079eb1
-20b1 20b1 s 	db	07dh,007h,09eh,0b1h
-20b5 20b5 d f00f9344
-20b5 20b5 s 	db	0f0h,00fh,093h,044h
-20b9 20b9 d 8708a3d2
-20b9 20b9 s 	db	087h,008h,0a3h,0d2h
-20bd 20bd d 1e01f268
-20bd 20bd s 	db	01eh,001h,0f2h,068h
-20c1 20c1 d 6906c2fe
-20c1 20c1 s 	db	069h,006h,0c2h,0feh
-20c5 20c5 d f762575d
-20c5 20c5 s 	db	0f7h,062h,057h,05dh
-20c9 20c9 d 806567cb
-20c9 20c9 s 	db	080h,065h,067h,0cbh
-20cd 20cd d 196c3671
-20cd 20cd s 	db	019h,06ch,036h,071h
-20d1 20d1 d 6e6b06e7
-20d1 20d1 s 	db	06eh,06bh,006h,0e7h
-20d5 20d5 d fed41b76
-20d5 20d5 s 	db	0feh,0d4h,01bh,076h
-20d9 20d9 d 89d32be0
-20d9 20d9 s 	db	089h,0d3h,02bh,0e0h
-20dd 20dd d 10da7a5a
-20dd 20dd s 	db	010h,0dah,07ah,05ah
-20e1 20e1 d 67dd4acc
-20e1 20e1 s 	db	067h,0ddh,04ah,0cch
-20e5 20e5 d f9b9df6f
-20e5 20e5 s 	db	0f9h,0b9h,0dfh,06fh
-20e9 20e9 d 8ebeeff9
-20e9 20e9 s 	db	08eh,0beh,0efh,0f9h
-20ed 20ed d 17b7be43
-20ed 20ed s 	db	017h,0b7h,0beh,043h
-20f1 20f1 d 60b08ed5
-20f1 20f1 s 	db	060h,0b0h,08eh,0d5h
-20f5 20f5 d d6d6a3e8
-20f5 20f5 s 	db	0d6h,0d6h,0a3h,0e8h
-20f9 20f9 d a1d1937e
-20f9 20f9 s 	db	0a1h,0d1h,093h,07eh
-20fd 20fd d 38d8c2c4
-20fd 20fd s 	db	038h,0d8h,0c2h,0c4h
-2101 2101 d 4fdff252
-2101 2101 s 	db	04fh,0dfh,0f2h,052h
-2105 2105 d d1bb67f1
-2105 2105 s 	db	0d1h,0bbh,067h,0f1h
-2109 2109 d a6bc5767
-2109 2109 s 	db	0a6h,0bch,057h,067h
-210d 210d d 3fb506dd
-210d 210d s 	db	03fh,0b5h,006h,0ddh
-2111 2111 d 48b2364b
-2111 2111 s 	db	048h,0b2h,036h,04bh
-2115 2115 d d80d2bda
-2115 2115 s 	db	0d8h,00dh,02bh,0dah
-2119 2119 d af0a1b4c
-2119 2119 s 	db	0afh,00ah,01bh,04ch
-211d 211d d 36034af6
-211d 211d s 	db	036h,003h,04ah,0f6h
-2121 2121 d 41047a60
-2121 2121 s 	db	041h,004h,07ah,060h
-2125 2125 d df60efc3
-2125 2125 s 	db	0dfh,060h,0efh,0c3h
-2129 2129 d a867df55
-2129 2129 s 	db	0a8h,067h,0dfh,055h
-212d 212d d 316e8eef
-212d 212d s 	db	031h,06eh,08eh,0efh
-2131 2131 d 4669be79
-2131 2131 s 	db	046h,069h,0beh,079h
-2135 2135 d cb61b38c
-2135 2135 s 	db	0cbh,061h,0b3h,08ch
-2139 2139 d bc66831a
-2139 2139 s 	db	0bch,066h,083h,01ah
-213d 213d d 256fd2a0
-213d 213d s 	db	025h,06fh,0d2h,0a0h
-2141 2141 d 5268e236
-2141 2141 s 	db	052h,068h,0e2h,036h
-2145 2145 d cc0c7795
-2145 2145 s 	db	0cch,00ch,077h,095h
-2149 2149 d bb0b4703
-2149 2149 s 	db	0bbh,00bh,047h,003h
-214d 214d d 220216b9
-214d 214d s 	db	022h,002h,016h,0b9h
-2151 2151 d 5505262f
-2151 2151 s 	db	055h,005h,026h,02fh
-2155 2155 d c5ba3bbe
-2155 2155 s 	db	0c5h,0bah,03bh,0beh
-2159 2159 d b2bd0b28
-2159 2159 s 	db	0b2h,0bdh,00bh,028h
-215d 215d d 2bb45a92
-215d 215d s 	db	02bh,0b4h,05ah,092h
-2161 2161 d 5cb36a04
-2161 2161 s 	db	05ch,0b3h,06ah,004h
-2165 2165 d c2d7ffa7
-2165 2165 s 	db	0c2h,0d7h,0ffh,0a7h
-2169 2169 d b5d0cf31
-2169 2169 s 	db	0b5h,0d0h,0cfh,031h
-216d 216d d 2cd99e8b
-216d 216d s 	db	02ch,0d9h,09eh,08bh
-2171 2171 d 5bdeae1d
-2171 2171 s 	db	05bh,0deh,0aeh,01dh
-2175 2175 d 9b64c2b0
-2175 2175 s 	db	09bh,064h,0c2h,0b0h
-2179 2179 d ec63f226
-2179 2179 s 	db	0ech,063h,0f2h,026h
-217d 217d d 756aa39c
-217d 217d s 	db	075h,06ah,0a3h,09ch
-2181 2181 d 026d930a
-2181 2181 s 	db	002h,06dh,093h,00ah
-2185 2185 d 9c0906a9
-2185 2185 s 	db	09ch,009h,006h,0a9h
-2189 2189 d eb0e363f
-2189 2189 s 	db	0ebh,00eh,036h,03fh
-218d 218d d 72076785
-218d 218d s 	db	072h,007h,067h,085h
-2191 2191 d 05005713
-2191 2191 s 	db	005h,000h,057h,013h
-2195 2195 d 95bf4a82
-2195 2195 s 	db	095h,0bfh,04ah,082h
-2199 2199 d e2b87a14
-2199 2199 s 	db	0e2h,0b8h,07ah,014h
-219d 219d d 7bb12bae
-219d 219d s 	db	07bh,0b1h,02bh,0aeh
-21a1 21a1 d 0cb61b38
-21a1 21a1 s 	db	00ch,0b6h,01bh,038h
-21a5 21a5 d 92d28e9b
-21a5 21a5 s 	db	092h,0d2h,08eh,09bh
-21a9 21a9 d e5d5be0d
-21a9 21a9 s 	db	0e5h,0d5h,0beh,00dh
-21ad 21ad d 7cdcefb7
-21ad 21ad s 	db	07ch,0dch,0efh,0b7h
-21b1 21b1 d 0bdbdf21
-21b1 21b1 s 	db	00bh,0dbh,0dfh,021h
-21b5 21b5 d 86d3d2d4
-21b5 21b5 s 	db	086h,0d3h,0d2h,0d4h
-21b9 21b9 d f1d4e242
-21b9 21b9 s 	db	0f1h,0d4h,0e2h,042h
-21bd 21bd d 68ddb3f8
-21bd 21bd s 	db	068h,0ddh,0b3h,0f8h
-21c1 21c1 d 1fda836e
-21c1 21c1 s 	db	01fh,0dah,083h,06eh
-21c5 21c5 d 81be16cd
-21c5 21c5 s 	db	081h,0beh,016h,0cdh
-21c9 21c9 d f6b9265b
-21c9 21c9 s 	db	0f6h,0b9h,026h,05bh
-21cd 21cd d 6fb077e1
-21cd 21cd s 	db	06fh,0b0h,077h,0e1h
-21d1 21d1 d 18b74777
-21d1 21d1 s 	db	018h,0b7h,047h,077h
-21d5 21d5 d 88085ae6
-21d5 21d5 s 	db	088h,008h,05ah,0e6h
-21d9 21d9 d ff0f6a70
-21d9 21d9 s 	db	0ffh,00fh,06ah,070h
-21dd 21dd d 66063bca
-21dd 21dd s 	db	066h,006h,03bh,0cah
-21e1 21e1 d 11010b5c
-21e1 21e1 s 	db	011h,001h,00bh,05ch
-21e5 21e5 d 8f659eff
-21e5 21e5 s 	db	08fh,065h,09eh,0ffh
-21e9 21e9 d f862ae69
-21e9 21e9 s 	db	0f8h,062h,0aeh,069h
-21ed 21ed d 616bffd3
-21ed 21ed s 	db	061h,06bh,0ffh,0d3h
-21f1 21f1 d 166ccf45
-21f1 21f1 s 	db	016h,06ch,0cfh,045h
-21f5 21f5 d a00ae278
-21f5 21f5 s 	db	0a0h,00ah,0e2h,078h
-21f9 21f9 d d70dd2ee
-21f9 21f9 s 	db	0d7h,00dh,0d2h,0eeh
-21fd 21fd d 4e048354
-21fd 21fd s 	db	04eh,004h,083h,054h
-2201 2201 d 3903b3c2
-2201 2201 s 	db	039h,003h,0b3h,0c2h
-2205 2205 d a7672661
-2205 2205 s 	db	0a7h,067h,026h,061h
-2209 2209 d d06016f7
-2209 2209 s 	db	0d0h,060h,016h,0f7h
-220d 220d d 4969474d
-220d 220d s 	db	049h,069h,047h,04dh
-2211 2211 d 3e6e77db
-2211 2211 s 	db	03eh,06eh,077h,0dbh
-2215 2215 d aed16a4a
-2215 2215 s 	db	0aeh,0d1h,06ah,04ah
-2219 2219 d d9d65adc
-2219 2219 s 	db	0d9h,0d6h,05ah,0dch
-221d 221d d 40df0b66
-221d 221d s 	db	040h,0dfh,00bh,066h
-2221 2221 d 37d83bf0
-2221 2221 s 	db	037h,0d8h,03bh,0f0h
-2225 2225 d a9bcae53
-2225 2225 s 	db	0a9h,0bch,0aeh,053h
-2229 2229 d debb9ec5
-2229 2229 s 	db	0deh,0bbh,09eh,0c5h
-222d 222d d 47b2cf7f
-222d 222d s 	db	047h,0b2h,0cfh,07fh
-2231 2231 d 30b5ffe9
-2231 2231 s 	db	030h,0b5h,0ffh,0e9h
-2235 2235 d bdbdf21c
-2235 2235 s 	db	0bdh,0bdh,0f2h,01ch
-2239 2239 d cabac28a
-2239 2239 s 	db	0cah,0bah,0c2h,08ah
-223d 223d d 53b39330
-223d 223d s 	db	053h,0b3h,093h,030h
-2241 2241 d 24b4a3a6
-2241 2241 s 	db	024h,0b4h,0a3h,0a6h
-2245 2245 d bad03605
-2245 2245 s 	db	0bah,0d0h,036h,005h
-2249 2249 d cdd70693
-2249 2249 s 	db	0cdh,0d7h,006h,093h
-224d 224d d 54de5729
-224d 224d s 	db	054h,0deh,057h,029h
-2251 2251 d 23d967bf
-2251 2251 s 	db	023h,0d9h,067h,0bfh
-2255 2255 d b3667a2e
-2255 2255 s 	db	0b3h,066h,07ah,02eh
-2259 2259 d c4614ab8
-2259 2259 s 	db	0c4h,061h,04ah,0b8h
-225d 225d d 5d681b02
-225d 225d s 	db	05dh,068h,01bh,002h
-2261 2261 d 2a6f2b94
-2261 2261 s 	db	02ah,06fh,02bh,094h
-2265 2265 d b40bbe37
-2265 2265 s 	db	0b4h,00bh,0beh,037h
-2269 2269 d c30c8ea1
-2269 2269 s 	db	0c3h,00ch,08eh,0a1h
-226d 226d d 5a05df1b
-226d 226d s 	db	05ah,005h,0dfh,01bh
-2271 2271 d 2d02ef8d
-2271 2271 s 	db	02dh,002h,0efh,08dh
-2275 2275 s 
-1e31 a cce
+1d8b 1d8b s ; display hex string (pointer in hl, byte count in b)
+1d8b 1d8b d 7e
+1d8b 1d8b s hexstr:	ld	a,(hl)
+1d8c 1d8c d cda71d
+1d8c 1d8c s 	call	phex2
+1d8f 1d8f d 23
+1d8f 1d8f s 	inc	hl
+1d90 1d90 d 05
+1d90 1d90 s 	dec	b
+1d91 1d91 d c28b1d
+1d91 1d91 s 	jp	nz,hexstr
+1d94 1d94 d c9
+1d94 1d94 s 	ret
+1d95 1d95 s 
+1d95 1d95 s ; display hex
+1d95 1d95 s ; display the big-endian 32-bit value pointed to by hl
+1d95 1d95 d f5
+1d95 1d95 s phex8:	push	af
+1d96 1d96 d c5
+1d96 1d96 s 	push	bc
+1d97 1d97 d e5
+1d97 1d97 s 	push	hl
+1d98 1d98 d 0604
+1d98 1d98 s 	ld	b,4
+1d9a 1d9a d 7e
+1d9a 1d9a s ph8lp:	ld	a,(hl)
+1d9b 1d9b d cda71d
+1d9b 1d9b s 	call	phex2
+1d9e 1d9e d 23
+1d9e 1d9e s 	inc	hl
+1d9f 1d9f d 05
+1d9f 1d9f s 	dec	b
+1da0 1da0 d c29a1d
+1da0 1da0 s 	jp	nz,ph8lp
+1da3 1da3 d e1
+1da3 1da3 s 	pop	hl
+1da4 1da4 d c1
+1da4 1da4 s 	pop	bc
+1da5 1da5 d f1
+1da5 1da5 s 	pop	af
+1da6 1da6 d c9
+1da6 1da6 s 	ret
+1da7 1da7 s 
+1da7 1da7 s ; display byte in a
+1da7 1da7 d f5
+1da7 1da7 s phex2:	push	af
+1da8 1da8 d c5
+1da8 1da8 s 	push	bc
+1da9 1da9 d d5
+1da9 1da9 s 	push	de
+1daa 1daa d e5
+1daa 1daa s 	push	hl
+1dab 1dab d 5f
+1dab 1dab s 	ld	e,a
+1dac 1dac d 0e03
+1dac 1dac s 	ld	c,3
+1dae 1dae d cdb61d
+1dae 1dae s 	call	bdos
+1db1 1db1 d e1
+1db1 1db1 s 	pop	hl
+1db2 1db2 d d1
+1db2 1db2 s 	pop	de
+1db3 1db3 d c1
+1db3 1db3 s 	pop	bc
+1db4 1db4 d f1
+1db4 1db4 s 	pop	af
+1db5 1db5 d c9
+1db5 1db5 s 	ret
+1db6 1db6 s 
+1db6 1db6 d f5
+1db6 1db6 s bdos:	push	af
+1db7 1db7 d c5
+1db7 1db7 s 	push	bc
+1db8 1db8 d d5
+1db8 1db8 s 	push	de
+1db9 1db9 d e5
+1db9 1db9 s 	push	hl
+1dba 1dba d cd0500
+1dba 1dba s 	call	5
+1dbd 1dbd d e1
+1dbd 1dbd s 	pop	hl
+1dbe 1dbe d d1
+1dbe 1dbe s 	pop	de
+1dbf 1dbf d c1
+1dbf 1dbf s 	pop	bc
+1dc0 1dc0 d f1
+1dc0 1dc0 s 	pop	af
+1dc1 1dc1 d c9
+1dc1 1dc1 s 	ret
+1dc2 1dc2 s 
+1dc2 1dc2 d 5a3830646f6320696e737472756374696f6e206578657263697365720a0d24
+1dc2 1dc2 s msg1:	db	'Z80doc instruction exerciser',10,13,'$'
+1de1 1de1 d 546573747320636f6d706c657465
+1de1 1de1 s msg2:	db	'Tests complete'
+1def 1def d 0a0d24
+1def 1def s crlf:	db	10,13,'$'
+1df2 1df2 d 20204f4b0a0d24
+1df2 1df2 s okmsg:	db	'  OK',10,13,'$'
+1df9 1df9 d 20204552524f52202a2a2a2a206372632065787065637465643a24
+1df9 1df9 s ermsg1:	db	'  ERROR **** crc expected:$'
+1e14 1e14 d 20666f756e643a24
+1e14 1e14 s ermsg2:	db	' found:$'
+1e1c 1e1c s 
+1e1c 1e1c s ; compare crc
+1e1c 1e1c s ; hl points to value to compare to crcval
+1e1c 1e1c d c5
+1e1c 1e1c s cmpcrc:	push	bc
+1e1d 1e1d d d5
+1e1d 1e1d s 	push	de
+1e1e 1e1e d e5
+1e1e 1e1e s 	push	hl
+1e1f 1e1f d 116f1e
+1e1f 1e1f s 	ld	de,crcval
+1e22 1e22 d 0604
+1e22 1e22 s 	ld	b,4
+1e24 1e24 d 1a
+1e24 1e24 s cclp:	ld	a,(de)
+1e25 1e25 d be
+1e25 1e25 s 	cp	a,(hl)
+1e26 1e26 d c22f1e
+1e26 1e26 s 	jp	nz,cce
+1e29 1e29 d 23
+1e29 1e29 s 	inc	hl
+1e2a 1e2a d 13
+1e2a 1e2a s 	inc	de
+1e2b 1e2b d 05
+1e2b 1e2b s 	dec	b
+1e2c 1e2c d c2241e
+1e2c 1e2c s 	jp	nz,cclp
+1e2f 1e2f d e1
+1e2f 1e2f s cce:	pop	hl
+1e30 1e30 d d1
+1e30 1e30 s 	pop	de
+1e31 1e31 d c1
+1e31 1e31 s 	pop	bc
+1e32 1e32 d c9
+1e32 1e32 s 	ret
+1e33 1e33 s 
+1e33 1e33 s ; 32-bit crc routine
+1e33 1e33 s ; entry: a contains next byte, hl points to crc
+1e33 1e33 s ; exit:  crc updated
+1e33 1e33 d f5
+1e33 1e33 s updcrc:	push	af
+1e34 1e34 d c5
+1e34 1e34 s 	push	bc
+1e35 1e35 d d5
+1e35 1e35 s 	push	de
+1e36 1e36 d e5
+1e36 1e36 s 	push	hl
+1e37 1e37 d e5
+1e37 1e37 s 	push	hl
+1e38 1e38 d 110300
+1e38 1e38 s 	ld	de,3
+1e3b 1e3b d 19
+1e3b 1e3b s 	add	hl,de	; point to low byte of old crc
+1e3c 1e3c d ae
+1e3c 1e3c s 	xor	a,(hl)	; xor with new byte
+1e3d 1e3d d 6f
+1e3d 1e3d s 	ld	l,a
+1e3e 1e3e d 2600
+1e3e 1e3e s 	ld	h,0
+1e40 1e40 d 29
+1e40 1e40 s 	add	hl,hl	; use result as index into table of 4 byte entries
+1e41 1e41 d 29
+1e41 1e41 s 	add	hl,hl
+1e42 1e42 d eb
+1e42 1e42 s 	ex	de,hl
+1e43 1e43 d 21731e
+1e43 1e43 s 	ld	hl,crctab
+1e46 1e46 d 19
+1e46 1e46 s 	add	hl,de	; point to selected entry in crctab
+1e47 1e47 d eb
+1e47 1e47 s 	ex	de,hl
+1e48 1e48 d e1
+1e48 1e48 s 	pop	hl
+1e49 1e49 d 010400
+1e49 1e49 s 	ld	bc,4	; c = byte count, b = accumulator
+1e4c 1e4c d 1a
+1e4c 1e4c s crclp:	ld	a,(de)
+1e4d 1e4d d a8
+1e4d 1e4d s 	xor	a,b
+1e4e 1e4e d 46
+1e4e 1e4e s 	ld	b,(hl)
+1e4f 1e4f d 77
+1e4f 1e4f s 	ld	(hl),a
+1e50 1e50 d 13
+1e50 1e50 s 	inc	de
+1e51 1e51 d 23
+1e51 1e51 s 	inc	hl
+1e52 1e52 d 0d
+1e52 1e52 s 	dec	c
+1e53 1e53 d c24c1e
+1e53 1e53 s 	jp	nz,crclp
+1e56 1e56 s       if	0
+1e56 1e56 s 	ld	hl,crcval
+1e56 1e56 s 	call	phex8
+1e56 1e56 s 	ld	de,crlf
+1e56 1e56 s 	ld	c,9
+1e56 1e56 s 	call	bdos
+1e56 1e56 s       endif
+1e56 1e56 d e1
+1e56 1e56 s 	pop	hl
+1e57 1e57 d d1
+1e57 1e57 s 	pop	de
+1e58 1e58 d c1
+1e58 1e58 s 	pop	bc
+1e59 1e59 d f1
+1e59 1e59 s 	pop	af
+1e5a 1e5a d c9
+1e5a 1e5a s 	ret
+1e5b 1e5b s 
+1e5b 1e5b d f5
+1e5b 1e5b s initcrc:push	af
+1e5c 1e5c d c5
+1e5c 1e5c s 	push	bc
+1e5d 1e5d d e5
+1e5d 1e5d s 	push	hl
+1e5e 1e5e d 216f1e
+1e5e 1e5e s 	ld	hl,crcval
+1e61 1e61 d 3eff
+1e61 1e61 s 	ld	a,0ffh
+1e63 1e63 d 0604
+1e63 1e63 s 	ld	b,4
+1e65 1e65 d 77
+1e65 1e65 s icrclp:	ld	(hl),a
+1e66 1e66 d 23
+1e66 1e66 s 	inc	hl
+1e67 1e67 d 05
+1e67 1e67 s 	dec	b
+1e68 1e68 d c2651e
+1e68 1e68 s 	jp	nz,icrclp
+1e6b 1e6b d e1
+1e6b 1e6b s 	pop	hl
+1e6c 1e6c d c1
+1e6c 1e6c s 	pop	bc
+1e6d 1e6d d f1
+1e6d 1e6d s 	pop	af
+1e6e 1e6e d c9
+1e6e 1e6e s 	ret
+1e6f 1e6f s 
+1e6f 1e6f s crcval	ds	4
+1e73 1e73 s 
+1e73 1e73 d 00000000
+1e73 1e73 s crctab:	db	000h,000h,000h,000h
+1e77 1e77 d 77073096
+1e77 1e77 s 	db	077h,007h,030h,096h
+1e7b 1e7b d ee0e612c
+1e7b 1e7b s 	db	0eeh,00eh,061h,02ch
+1e7f 1e7f d 990951ba
+1e7f 1e7f s 	db	099h,009h,051h,0bah
+1e83 1e83 d 076dc419
+1e83 1e83 s 	db	007h,06dh,0c4h,019h
+1e87 1e87 d 706af48f
+1e87 1e87 s 	db	070h,06ah,0f4h,08fh
+1e8b 1e8b d e963a535
+1e8b 1e8b s 	db	0e9h,063h,0a5h,035h
+1e8f 1e8f d 9e6495a3
+1e8f 1e8f s 	db	09eh,064h,095h,0a3h
+1e93 1e93 d 0edb8832
+1e93 1e93 s 	db	00eh,0dbh,088h,032h
+1e97 1e97 d 79dcb8a4
+1e97 1e97 s 	db	079h,0dch,0b8h,0a4h
+1e9b 1e9b d e0d5e91e
+1e9b 1e9b s 	db	0e0h,0d5h,0e9h,01eh
+1e9f 1e9f d 97d2d988
+1e9f 1e9f s 	db	097h,0d2h,0d9h,088h
+1ea3 1ea3 d 09b64c2b
+1ea3 1ea3 s 	db	009h,0b6h,04ch,02bh
+1ea7 1ea7 d 7eb17cbd
+1ea7 1ea7 s 	db	07eh,0b1h,07ch,0bdh
+1eab 1eab d e7b82d07
+1eab 1eab s 	db	0e7h,0b8h,02dh,007h
+1eaf 1eaf d 90bf1d91
+1eaf 1eaf s 	db	090h,0bfh,01dh,091h
+1eb3 1eb3 d 1db71064
+1eb3 1eb3 s 	db	01dh,0b7h,010h,064h
+1eb7 1eb7 d 6ab020f2
+1eb7 1eb7 s 	db	06ah,0b0h,020h,0f2h
+1ebb 1ebb d f3b97148
+1ebb 1ebb s 	db	0f3h,0b9h,071h,048h
+1ebf 1ebf d 84be41de
+1ebf 1ebf s 	db	084h,0beh,041h,0deh
+1ec3 1ec3 d 1adad47d
+1ec3 1ec3 s 	db	01ah,0dah,0d4h,07dh
+1ec7 1ec7 d 6ddde4eb
+1ec7 1ec7 s 	db	06dh,0ddh,0e4h,0ebh
+1ecb 1ecb d f4d4b551
+1ecb 1ecb s 	db	0f4h,0d4h,0b5h,051h
+1ecf 1ecf d 83d385c7
+1ecf 1ecf s 	db	083h,0d3h,085h,0c7h
+1ed3 1ed3 d 136c9856
+1ed3 1ed3 s 	db	013h,06ch,098h,056h
+1ed7 1ed7 d 646ba8c0
+1ed7 1ed7 s 	db	064h,06bh,0a8h,0c0h
+1edb 1edb d fd62f97a
+1edb 1edb s 	db	0fdh,062h,0f9h,07ah
+1edf 1edf d 8a65c9ec
+1edf 1edf s 	db	08ah,065h,0c9h,0ech
+1ee3 1ee3 d 14015c4f
+1ee3 1ee3 s 	db	014h,001h,05ch,04fh
+1ee7 1ee7 d 63066cd9
+1ee7 1ee7 s 	db	063h,006h,06ch,0d9h
+1eeb 1eeb d fa0f3d63
+1eeb 1eeb s 	db	0fah,00fh,03dh,063h
+1eef 1eef d 8d080df5
+1eef 1eef s 	db	08dh,008h,00dh,0f5h
+1ef3 1ef3 d 3b6e20c8
+1ef3 1ef3 s 	db	03bh,06eh,020h,0c8h
+1ef7 1ef7 d 4c69105e
+1ef7 1ef7 s 	db	04ch,069h,010h,05eh
+1efb 1efb d d56041e4
+1efb 1efb s 	db	0d5h,060h,041h,0e4h
+1eff 1eff d a2677172
+1eff 1eff s 	db	0a2h,067h,071h,072h
+1f03 1f03 d 3c03e4d1
+1f03 1f03 s 	db	03ch,003h,0e4h,0d1h
+1f07 1f07 d 4b04d447
+1f07 1f07 s 	db	04bh,004h,0d4h,047h
+1f0b 1f0b d d20d85fd
+1f0b 1f0b s 	db	0d2h,00dh,085h,0fdh
+1f0f 1f0f d a50ab56b
+1f0f 1f0f s 	db	0a5h,00ah,0b5h,06bh
+1f13 1f13 d 35b5a8fa
+1f13 1f13 s 	db	035h,0b5h,0a8h,0fah
+1f17 1f17 d 42b2986c
+1f17 1f17 s 	db	042h,0b2h,098h,06ch
+1f1b 1f1b d dbbbc9d6
+1f1b 1f1b s 	db	0dbh,0bbh,0c9h,0d6h
+1f1f 1f1f d acbcf940
+1f1f 1f1f s 	db	0ach,0bch,0f9h,040h
+1f23 1f23 d 32d86ce3
+1f23 1f23 s 	db	032h,0d8h,06ch,0e3h
+1f27 1f27 d 45df5c75
+1f27 1f27 s 	db	045h,0dfh,05ch,075h
+1f2b 1f2b d dcd60dcf
+1f2b 1f2b s 	db	0dch,0d6h,00dh,0cfh
+1f2f 1f2f d abd13d59
+1f2f 1f2f s 	db	0abh,0d1h,03dh,059h
+1f33 1f33 d 26d930ac
+1f33 1f33 s 	db	026h,0d9h,030h,0ach
+1f37 1f37 d 51de003a
+1f37 1f37 s 	db	051h,0deh,000h,03ah
+1f3b 1f3b d c8d75180
+1f3b 1f3b s 	db	0c8h,0d7h,051h,080h
+1f3f 1f3f d bfd06116
+1f3f 1f3f s 	db	0bfh,0d0h,061h,016h
+1f43 1f43 d 21b4f4b5
+1f43 1f43 s 	db	021h,0b4h,0f4h,0b5h
+1f47 1f47 d 56b3c423
+1f47 1f47 s 	db	056h,0b3h,0c4h,023h
+1f4b 1f4b d cfba9599
+1f4b 1f4b s 	db	0cfh,0bah,095h,099h
+1f4f 1f4f d b8bda50f
+1f4f 1f4f s 	db	0b8h,0bdh,0a5h,00fh
+1f53 1f53 d 2802b89e
+1f53 1f53 s 	db	028h,002h,0b8h,09eh
+1f57 1f57 d 5f058808
+1f57 1f57 s 	db	05fh,005h,088h,008h
+1f5b 1f5b d c60cd9b2
+1f5b 1f5b s 	db	0c6h,00ch,0d9h,0b2h
+1f5f 1f5f d b10be924
+1f5f 1f5f s 	db	0b1h,00bh,0e9h,024h
+1f63 1f63 d 2f6f7c87
+1f63 1f63 s 	db	02fh,06fh,07ch,087h
+1f67 1f67 d 58684c11
+1f67 1f67 s 	db	058h,068h,04ch,011h
+1f6b 1f6b d c1611dab
+1f6b 1f6b s 	db	0c1h,061h,01dh,0abh
+1f6f 1f6f d b6662d3d
+1f6f 1f6f s 	db	0b6h,066h,02dh,03dh
+1f73 1f73 d 76dc4190
+1f73 1f73 s 	db	076h,0dch,041h,090h
+1f77 1f77 d 01db7106
+1f77 1f77 s 	db	001h,0dbh,071h,006h
+1f7b 1f7b d 98d220bc
+1f7b 1f7b s 	db	098h,0d2h,020h,0bch
+1f7f 1f7f d efd5102a
+1f7f 1f7f s 	db	0efh,0d5h,010h,02ah
+1f83 1f83 d 71b18589
+1f83 1f83 s 	db	071h,0b1h,085h,089h
+1f87 1f87 d 06b6b51f
+1f87 1f87 s 	db	006h,0b6h,0b5h,01fh
+1f8b 1f8b d 9fbfe4a5
+1f8b 1f8b s 	db	09fh,0bfh,0e4h,0a5h
+1f8f 1f8f d e8b8d433
+1f8f 1f8f s 	db	0e8h,0b8h,0d4h,033h
+1f93 1f93 d 7807c9a2
+1f93 1f93 s 	db	078h,007h,0c9h,0a2h
+1f97 1f97 d 0f00f934
+1f97 1f97 s 	db	00fh,000h,0f9h,034h
+1f9b 1f9b d 9609a88e
+1f9b 1f9b s 	db	096h,009h,0a8h,08eh
+1f9f 1f9f d e10e9818
+1f9f 1f9f s 	db	0e1h,00eh,098h,018h
+1fa3 1fa3 d 7f6a0dbb
+1fa3 1fa3 s 	db	07fh,06ah,00dh,0bbh
+1fa7 1fa7 d 086d3d2d
+1fa7 1fa7 s 	db	008h,06dh,03dh,02dh
+1fab 1fab d 91646c97
+1fab 1fab s 	db	091h,064h,06ch,097h
+1faf 1faf d e6635c01
+1faf 1faf s 	db	0e6h,063h,05ch,001h
+1fb3 1fb3 d 6b6b51f4
+1fb3 1fb3 s 	db	06bh,06bh,051h,0f4h
+1fb7 1fb7 d 1c6c6162
+1fb7 1fb7 s 	db	01ch,06ch,061h,062h
+1fbb 1fbb d 856530d8
+1fbb 1fbb s 	db	085h,065h,030h,0d8h
+1fbf 1fbf d f262004e
+1fbf 1fbf s 	db	0f2h,062h,000h,04eh
+1fc3 1fc3 d 6c0695ed
+1fc3 1fc3 s 	db	06ch,006h,095h,0edh
+1fc7 1fc7 d 1b01a57b
+1fc7 1fc7 s 	db	01bh,001h,0a5h,07bh
+1fcb 1fcb d 8208f4c1
+1fcb 1fcb s 	db	082h,008h,0f4h,0c1h
+1fcf 1fcf d f50fc457
+1fcf 1fcf s 	db	0f5h,00fh,0c4h,057h
+1fd3 1fd3 d 65b0d9c6
+1fd3 1fd3 s 	db	065h,0b0h,0d9h,0c6h
+1fd7 1fd7 d 12b7e950
+1fd7 1fd7 s 	db	012h,0b7h,0e9h,050h
+1fdb 1fdb d 8bbeb8ea
+1fdb 1fdb s 	db	08bh,0beh,0b8h,0eah
+1fdf 1fdf d fcb9887c
+1fdf 1fdf s 	db	0fch,0b9h,088h,07ch
+1fe3 1fe3 d 62dd1ddf
+1fe3 1fe3 s 	db	062h,0ddh,01dh,0dfh
+1fe7 1fe7 d 15da2d49
+1fe7 1fe7 s 	db	015h,0dah,02dh,049h
+1feb 1feb d 8cd37cf3
+1feb 1feb s 	db	08ch,0d3h,07ch,0f3h
+1fef 1fef d fbd44c65
+1fef 1fef s 	db	0fbh,0d4h,04ch,065h
+1ff3 1ff3 d 4db26158
+1ff3 1ff3 s 	db	04dh,0b2h,061h,058h
+1ff7 1ff7 d 3ab551ce
+1ff7 1ff7 s 	db	03ah,0b5h,051h,0ceh
+1ffb 1ffb d a3bc0074
+1ffb 1ffb s 	db	0a3h,0bch,000h,074h
+1fff 1fff d d4bb30e2
+1fff 1fff s 	db	0d4h,0bbh,030h,0e2h
+2003 2003 d 4adfa541
+2003 2003 s 	db	04ah,0dfh,0a5h,041h
+2007 2007 d 3dd895d7
+2007 2007 s 	db	03dh,0d8h,095h,0d7h
+200b 200b d a4d1c46d
+200b 200b s 	db	0a4h,0d1h,0c4h,06dh
+200f 200f d d3d6f4fb
+200f 200f s 	db	0d3h,0d6h,0f4h,0fbh
+2013 2013 d 4369e96a
+2013 2013 s 	db	043h,069h,0e9h,06ah
+2017 2017 d 346ed9fc
+2017 2017 s 	db	034h,06eh,0d9h,0fch
+201b 201b d ad678846
+201b 201b s 	db	0adh,067h,088h,046h
+201f 201f d da60b8d0
+201f 201f s 	db	0dah,060h,0b8h,0d0h
+2023 2023 d 44042d73
+2023 2023 s 	db	044h,004h,02dh,073h
+2027 2027 d 33031de5
+2027 2027 s 	db	033h,003h,01dh,0e5h
+202b 202b d aa0a4c5f
+202b 202b s 	db	0aah,00ah,04ch,05fh
+202f 202f d dd0d7cc9
+202f 202f s 	db	0ddh,00dh,07ch,0c9h
+2033 2033 d 5005713c
+2033 2033 s 	db	050h,005h,071h,03ch
+2037 2037 d 270241aa
+2037 2037 s 	db	027h,002h,041h,0aah
+203b 203b d be0b1010
+203b 203b s 	db	0beh,00bh,010h,010h
+203f 203f d c90c2086
+203f 203f s 	db	0c9h,00ch,020h,086h
+2043 2043 d 5768b525
+2043 2043 s 	db	057h,068h,0b5h,025h
+2047 2047 d 206f85b3
+2047 2047 s 	db	020h,06fh,085h,0b3h
+204b 204b d b966d409
+204b 204b s 	db	0b9h,066h,0d4h,009h
+204f 204f d ce61e49f
+204f 204f s 	db	0ceh,061h,0e4h,09fh
+2053 2053 d 5edef90e
+2053 2053 s 	db	05eh,0deh,0f9h,00eh
+2057 2057 d 29d9c998
+2057 2057 s 	db	029h,0d9h,0c9h,098h
+205b 205b d b0d09822
+205b 205b s 	db	0b0h,0d0h,098h,022h
+205f 205f d c7d7a8b4
+205f 205f s 	db	0c7h,0d7h,0a8h,0b4h
+2063 2063 d 59b33d17
+2063 2063 s 	db	059h,0b3h,03dh,017h
+2067 2067 d 2eb40d81
+2067 2067 s 	db	02eh,0b4h,00dh,081h
+206b 206b d b7bd5c3b
+206b 206b s 	db	0b7h,0bdh,05ch,03bh
+206f 206f d c0ba6cad
+206f 206f s 	db	0c0h,0bah,06ch,0adh
+2073 2073 d edb88320
+2073 2073 s 	db	0edh,0b8h,083h,020h
+2077 2077 d 9abfb3b6
+2077 2077 s 	db	09ah,0bfh,0b3h,0b6h
+207b 207b d 03b6e20c
+207b 207b s 	db	003h,0b6h,0e2h,00ch
+207f 207f d 74b1d29a
+207f 207f s 	db	074h,0b1h,0d2h,09ah
+2083 2083 d ead54739
+2083 2083 s 	db	0eah,0d5h,047h,039h
+2087 2087 d 9dd277af
+2087 2087 s 	db	09dh,0d2h,077h,0afh
+208b 208b d 04db2615
+208b 208b s 	db	004h,0dbh,026h,015h
+208f 208f d 73dc1683
+208f 208f s 	db	073h,0dch,016h,083h
+2093 2093 d e3630b12
+2093 2093 s 	db	0e3h,063h,00bh,012h
+2097 2097 d 94643b84
+2097 2097 s 	db	094h,064h,03bh,084h
+209b 209b d 0d6d6a3e
+209b 209b s 	db	00dh,06dh,06ah,03eh
+209f 209f d 7a6a5aa8
+209f 209f s 	db	07ah,06ah,05ah,0a8h
+20a3 20a3 d e40ecf0b
+20a3 20a3 s 	db	0e4h,00eh,0cfh,00bh
+20a7 20a7 d 9309ff9d
+20a7 20a7 s 	db	093h,009h,0ffh,09dh
+20ab 20ab d 0a00ae27
+20ab 20ab s 	db	00ah,000h,0aeh,027h
+20af 20af d 7d079eb1
+20af 20af s 	db	07dh,007h,09eh,0b1h
+20b3 20b3 d f00f9344
+20b3 20b3 s 	db	0f0h,00fh,093h,044h
+20b7 20b7 d 8708a3d2
+20b7 20b7 s 	db	087h,008h,0a3h,0d2h
+20bb 20bb d 1e01f268
+20bb 20bb s 	db	01eh,001h,0f2h,068h
+20bf 20bf d 6906c2fe
+20bf 20bf s 	db	069h,006h,0c2h,0feh
+20c3 20c3 d f762575d
+20c3 20c3 s 	db	0f7h,062h,057h,05dh
+20c7 20c7 d 806567cb
+20c7 20c7 s 	db	080h,065h,067h,0cbh
+20cb 20cb d 196c3671
+20cb 20cb s 	db	019h,06ch,036h,071h
+20cf 20cf d 6e6b06e7
+20cf 20cf s 	db	06eh,06bh,006h,0e7h
+20d3 20d3 d fed41b76
+20d3 20d3 s 	db	0feh,0d4h,01bh,076h
+20d7 20d7 d 89d32be0
+20d7 20d7 s 	db	089h,0d3h,02bh,0e0h
+20db 20db d 10da7a5a
+20db 20db s 	db	010h,0dah,07ah,05ah
+20df 20df d 67dd4acc
+20df 20df s 	db	067h,0ddh,04ah,0cch
+20e3 20e3 d f9b9df6f
+20e3 20e3 s 	db	0f9h,0b9h,0dfh,06fh
+20e7 20e7 d 8ebeeff9
+20e7 20e7 s 	db	08eh,0beh,0efh,0f9h
+20eb 20eb d 17b7be43
+20eb 20eb s 	db	017h,0b7h,0beh,043h
+20ef 20ef d 60b08ed5
+20ef 20ef s 	db	060h,0b0h,08eh,0d5h
+20f3 20f3 d d6d6a3e8
+20f3 20f3 s 	db	0d6h,0d6h,0a3h,0e8h
+20f7 20f7 d a1d1937e
+20f7 20f7 s 	db	0a1h,0d1h,093h,07eh
+20fb 20fb d 38d8c2c4
+20fb 20fb s 	db	038h,0d8h,0c2h,0c4h
+20ff 20ff d 4fdff252
+20ff 20ff s 	db	04fh,0dfh,0f2h,052h
+2103 2103 d d1bb67f1
+2103 2103 s 	db	0d1h,0bbh,067h,0f1h
+2107 2107 d a6bc5767
+2107 2107 s 	db	0a6h,0bch,057h,067h
+210b 210b d 3fb506dd
+210b 210b s 	db	03fh,0b5h,006h,0ddh
+210f 210f d 48b2364b
+210f 210f s 	db	048h,0b2h,036h,04bh
+2113 2113 d d80d2bda
+2113 2113 s 	db	0d8h,00dh,02bh,0dah
+2117 2117 d af0a1b4c
+2117 2117 s 	db	0afh,00ah,01bh,04ch
+211b 211b d 36034af6
+211b 211b s 	db	036h,003h,04ah,0f6h
+211f 211f d 41047a60
+211f 211f s 	db	041h,004h,07ah,060h
+2123 2123 d df60efc3
+2123 2123 s 	db	0dfh,060h,0efh,0c3h
+2127 2127 d a867df55
+2127 2127 s 	db	0a8h,067h,0dfh,055h
+212b 212b d 316e8eef
+212b 212b s 	db	031h,06eh,08eh,0efh
+212f 212f d 4669be79
+212f 212f s 	db	046h,069h,0beh,079h
+2133 2133 d cb61b38c
+2133 2133 s 	db	0cbh,061h,0b3h,08ch
+2137 2137 d bc66831a
+2137 2137 s 	db	0bch,066h,083h,01ah
+213b 213b d 256fd2a0
+213b 213b s 	db	025h,06fh,0d2h,0a0h
+213f 213f d 5268e236
+213f 213f s 	db	052h,068h,0e2h,036h
+2143 2143 d cc0c7795
+2143 2143 s 	db	0cch,00ch,077h,095h
+2147 2147 d bb0b4703
+2147 2147 s 	db	0bbh,00bh,047h,003h
+214b 214b d 220216b9
+214b 214b s 	db	022h,002h,016h,0b9h
+214f 214f d 5505262f
+214f 214f s 	db	055h,005h,026h,02fh
+2153 2153 d c5ba3bbe
+2153 2153 s 	db	0c5h,0bah,03bh,0beh
+2157 2157 d b2bd0b28
+2157 2157 s 	db	0b2h,0bdh,00bh,028h
+215b 215b d 2bb45a92
+215b 215b s 	db	02bh,0b4h,05ah,092h
+215f 215f d 5cb36a04
+215f 215f s 	db	05ch,0b3h,06ah,004h
+2163 2163 d c2d7ffa7
+2163 2163 s 	db	0c2h,0d7h,0ffh,0a7h
+2167 2167 d b5d0cf31
+2167 2167 s 	db	0b5h,0d0h,0cfh,031h
+216b 216b d 2cd99e8b
+216b 216b s 	db	02ch,0d9h,09eh,08bh
+216f 216f d 5bdeae1d
+216f 216f s 	db	05bh,0deh,0aeh,01dh
+2173 2173 d 9b64c2b0
+2173 2173 s 	db	09bh,064h,0c2h,0b0h
+2177 2177 d ec63f226
+2177 2177 s 	db	0ech,063h,0f2h,026h
+217b 217b d 756aa39c
+217b 217b s 	db	075h,06ah,0a3h,09ch
+217f 217f d 026d930a
+217f 217f s 	db	002h,06dh,093h,00ah
+2183 2183 d 9c0906a9
+2183 2183 s 	db	09ch,009h,006h,0a9h
+2187 2187 d eb0e363f
+2187 2187 s 	db	0ebh,00eh,036h,03fh
+218b 218b d 72076785
+218b 218b s 	db	072h,007h,067h,085h
+218f 218f d 05005713
+218f 218f s 	db	005h,000h,057h,013h
+2193 2193 d 95bf4a82
+2193 2193 s 	db	095h,0bfh,04ah,082h
+2197 2197 d e2b87a14
+2197 2197 s 	db	0e2h,0b8h,07ah,014h
+219b 219b d 7bb12bae
+219b 219b s 	db	07bh,0b1h,02bh,0aeh
+219f 219f d 0cb61b38
+219f 219f s 	db	00ch,0b6h,01bh,038h
+21a3 21a3 d 92d28e9b
+21a3 21a3 s 	db	092h,0d2h,08eh,09bh
+21a7 21a7 d e5d5be0d
+21a7 21a7 s 	db	0e5h,0d5h,0beh,00dh
+21ab 21ab d 7cdcefb7
+21ab 21ab s 	db	07ch,0dch,0efh,0b7h
+21af 21af d 0bdbdf21
+21af 21af s 	db	00bh,0dbh,0dfh,021h
+21b3 21b3 d 86d3d2d4
+21b3 21b3 s 	db	086h,0d3h,0d2h,0d4h
+21b7 21b7 d f1d4e242
+21b7 21b7 s 	db	0f1h,0d4h,0e2h,042h
+21bb 21bb d 68ddb3f8
+21bb 21bb s 	db	068h,0ddh,0b3h,0f8h
+21bf 21bf d 1fda836e
+21bf 21bf s 	db	01fh,0dah,083h,06eh
+21c3 21c3 d 81be16cd
+21c3 21c3 s 	db	081h,0beh,016h,0cdh
+21c7 21c7 d f6b9265b
+21c7 21c7 s 	db	0f6h,0b9h,026h,05bh
+21cb 21cb d 6fb077e1
+21cb 21cb s 	db	06fh,0b0h,077h,0e1h
+21cf 21cf d 18b74777
+21cf 21cf s 	db	018h,0b7h,047h,077h
+21d3 21d3 d 88085ae6
+21d3 21d3 s 	db	088h,008h,05ah,0e6h
+21d7 21d7 d ff0f6a70
+21d7 21d7 s 	db	0ffh,00fh,06ah,070h
+21db 21db d 66063bca
+21db 21db s 	db	066h,006h,03bh,0cah
+21df 21df d 11010b5c
+21df 21df s 	db	011h,001h,00bh,05ch
+21e3 21e3 d 8f659eff
+21e3 21e3 s 	db	08fh,065h,09eh,0ffh
+21e7 21e7 d f862ae69
+21e7 21e7 s 	db	0f8h,062h,0aeh,069h
+21eb 21eb d 616bffd3
+21eb 21eb s 	db	061h,06bh,0ffh,0d3h
+21ef 21ef d 166ccf45
+21ef 21ef s 	db	016h,06ch,0cfh,045h
+21f3 21f3 d a00ae278
+21f3 21f3 s 	db	0a0h,00ah,0e2h,078h
+21f7 21f7 d d70dd2ee
+21f7 21f7 s 	db	0d7h,00dh,0d2h,0eeh
+21fb 21fb d 4e048354
+21fb 21fb s 	db	04eh,004h,083h,054h
+21ff 21ff d 3903b3c2
+21ff 21ff s 	db	039h,003h,0b3h,0c2h
+2203 2203 d a7672661
+2203 2203 s 	db	0a7h,067h,026h,061h
+2207 2207 d d06016f7
+2207 2207 s 	db	0d0h,060h,016h,0f7h
+220b 220b d 4969474d
+220b 220b s 	db	049h,069h,047h,04dh
+220f 220f d 3e6e77db
+220f 220f s 	db	03eh,06eh,077h,0dbh
+2213 2213 d aed16a4a
+2213 2213 s 	db	0aeh,0d1h,06ah,04ah
+2217 2217 d d9d65adc
+2217 2217 s 	db	0d9h,0d6h,05ah,0dch
+221b 221b d 40df0b66
+221b 221b s 	db	040h,0dfh,00bh,066h
+221f 221f d 37d83bf0
+221f 221f s 	db	037h,0d8h,03bh,0f0h
+2223 2223 d a9bcae53
+2223 2223 s 	db	0a9h,0bch,0aeh,053h
+2227 2227 d debb9ec5
+2227 2227 s 	db	0deh,0bbh,09eh,0c5h
+222b 222b d 47b2cf7f
+222b 222b s 	db	047h,0b2h,0cfh,07fh
+222f 222f d 30b5ffe9
+222f 222f s 	db	030h,0b5h,0ffh,0e9h
+2233 2233 d bdbdf21c
+2233 2233 s 	db	0bdh,0bdh,0f2h,01ch
+2237 2237 d cabac28a
+2237 2237 s 	db	0cah,0bah,0c2h,08ah
+223b 223b d 53b39330
+223b 223b s 	db	053h,0b3h,093h,030h
+223f 223f d 24b4a3a6
+223f 223f s 	db	024h,0b4h,0a3h,0a6h
+2243 2243 d bad03605
+2243 2243 s 	db	0bah,0d0h,036h,005h
+2247 2247 d cdd70693
+2247 2247 s 	db	0cdh,0d7h,006h,093h
+224b 224b d 54de5729
+224b 224b s 	db	054h,0deh,057h,029h
+224f 224f d 23d967bf
+224f 224f s 	db	023h,0d9h,067h,0bfh
+2253 2253 d b3667a2e
+2253 2253 s 	db	0b3h,066h,07ah,02eh
+2257 2257 d c4614ab8
+2257 2257 s 	db	0c4h,061h,04ah,0b8h
+225b 225b d 5d681b02
+225b 225b s 	db	05dh,068h,01bh,002h
+225f 225f d 2a6f2b94
+225f 225f s 	db	02ah,06fh,02bh,094h
+2263 2263 d b40bbe37
+2263 2263 s 	db	0b4h,00bh,0beh,037h
+2267 2267 d c30c8ea1
+2267 2267 s 	db	0c3h,00ch,08eh,0a1h
+226b 226b d 5a05df1b
+226b 226b s 	db	05ah,005h,0dfh,01bh
+226f 226f d 2d02ef8d
+226f 226f s 	db	02dh,002h,0efh,08dh
+2273 2273 s 
+1e2f a cce
 14de a lda
 1b23 a tlp
-1d3f a iut
+1d3e a iut
 1ade a stt
 02bf a ?b0011
 01ff a ?b0003
@@ -5974,8 +5970,8 @@ binary-debuggable-source
 01bf a ?n0000
 01d3 a ?n0001
 01e7 a ?n0002
-1dc4 a msg1
-1de3 a msg2
+1dc2 a msg1
+1de1 a msg2
 021f a ?n0004
 0233 a ?n0005
 0247 a ?n0006
@@ -6022,7 +6018,7 @@ binary-debuggable-source
 0593 a ?n0041
 012f a done
 0abe a incl
-1db8 a bdos
+1db6 a bdos
 0b1e a incm
 05a7 a ?n0042
 05bf a ?b0043
@@ -6299,21 +6295,21 @@ binary-debuggable-source
 1a93 a ?n0265
 1aa7 a ?n0266
 1abf a ?b0267
-1d62 a flgmsk
+1d60 a flgmsk
 1b3a a tlp2
 1b37 a tlp1
 1d26 a test
 1c85 a count
 1ca9 a shift
 1b76 a tlp3
-1e1e a cmpcrc
-1df4 a okmsg
+1e1c a cmpcrc
+1df2 a okmsg
 1b6d a tlpok
-1dfb a ermsg1
-1d97 a phex8
-1e16 a ermsg2
-1e71 a crcval
-1df1 a crlf
+1df9 a ermsg1
+1d95 a phex8
+1e14 a ermsg2
+1e6f a crcval
+1def a crlf
 1bec a cntbit
 1c10 a shfbit
 1bed a cntbyt
@@ -6338,20 +6334,20 @@ binary-debuggable-source
 1cd1 a shflp1
 1ccd a shlpe
 1ccb a shflp2
-1d8b a spsav
-1d89 a spat
-1d7b a msat
-1d87 v flgsat
-1d6d a tcrc
-1e5d a initcrc
-1e35 a updcrc
-1d8d a hexstr
-1da9 a phex2
-1d9c a ph8lp
-1e26 a cclp
-1e75 a crctab
-1e4e a crclp
-1e67 a icrclp
+1d89 a spsav
+1d87 a spat
+1d79 a msat
+1d85 v flgsat
+1d6b a tcrc
+1e5b a initcrc
+1e33 a updcrc
+1d8b a hexstr
+1da7 a phex2
+1d9a a ph8lp
+1e24 a cclp
+1e73 a crctab
+1e4c a crclp
+1e65 a icrclp
 1cfe a shifter
 1bef a nxtcbit
 1cd6 a counter

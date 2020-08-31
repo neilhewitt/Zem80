@@ -19,6 +19,7 @@ namespace ZexNext.Core
         public bool IY;
         public bool SP;
         public bool PC;
+        public bool Data;
     }
 
     public class TestState
@@ -56,7 +57,8 @@ namespace ZexNext.Core
                    IX == state.IX &&
                    IY == state.IY &&
                    SP == state.SP &&
-                   PC == state.PC;
+                   PC == state.PC &&
+                   Data.SequenceEqual(state.Data);
         }
 
         public TestStateDiff Diff(TestState state)
@@ -72,6 +74,7 @@ namespace ZexNext.Core
             diff.IY = state.IY != IY;
             diff.SP = state.SP != SP;
             diff.PC = state.PC != PC;
+            diff.Data = !state.Data.SequenceEqual(Data);
             return diff;
         }
 
@@ -93,7 +96,7 @@ namespace ZexNext.Core
         public override string ToString()
         {
             StringBuilder output = new StringBuilder();
-            output.Append(Mnemonic);
+            output.Append(Mnemonic.PadRight(4));
             output.Append(" >> ");
             addValue(output, nameof(AF), AF);
             addValue(output, nameof(BC), BC);

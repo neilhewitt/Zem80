@@ -34,6 +34,7 @@ namespace Z80.Core
         private EventHandler _beforeStart;
         private EventHandler _onStop;
         private EventHandler<HaltReason> _onHalt;
+        private EventHandler<int> _onBeforeInsertWaitCycles;
         
         private Func<byte> _interruptCallback;
 
@@ -57,11 +58,12 @@ namespace Z80.Core
         public TimeSpan Elapsed => _startStopTimer.Elapsed;
 
         public event EventHandler<ExecutionPackage> OnClockTick;
-        
+
         // why yes, you do have to do event handlers this way if you want them to be on the interface and not on the type... no idea why
         // (basically, automatic properties don't work as events when they are explicitly on the interface, so we use a backing variable... old-school style)
         event EventHandler<ExecutionPackage> IDebug.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
         event EventHandler<ExecutionResult> IDebug.AfterExecute { add { _afterExecute += value; } remove { _afterExecute -= value; } }
+        event EventHandler<int> IDebug.OnBeforeInsertWaitCycles { add { _onBeforeInsertWaitCycles += value; } remove { _onBeforeInsertWaitCycles -= value; } }
         event EventHandler IDebug.BeforeStart { add { _beforeStart += value; } remove { _beforeStart -= value; } }
         event EventHandler IDebug.OnStop { add { _onStop += value; } remove { _onStop -= value; } }
         event EventHandler<HaltReason> IDebug.OnHalt { add { _onHalt += value; } remove { _onHalt -= value; } }
@@ -189,6 +191,9 @@ namespace Z80.Core
 
         public void AddWaitCycles(int waitCycles)
         {
+            // Note that it's fine for client software to add wait cycles
+            // and then add again *before* the wait has happened.
+            // Waits are only actually inserted at certain points in the instruction cycle. 
             _pendingWaitCycles = waitCycles;
         }
 
@@ -411,6 +416,11 @@ namespace Z80.Core
 
         private void InsertWaitCycles()
         {
+            if (_pendingWaitCycles > 0)
+            {
+                _onBeforeInsertWaitCycles?.Invoke(this, _pendingWaitCycles);
+            }
+
             while (_pendingWaitCycles-- > 0)
             {
                 WaitForNextClockTick();

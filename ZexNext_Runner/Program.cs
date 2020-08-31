@@ -18,7 +18,9 @@ namespace ZexNext_Runner
         private static int _y;
         private static int BUFFER_LINES = 20;
         private static bool _pauseOnFailure = false;
+        private static bool _useFlagMasks = true;
         private static int _cycles;
+        private static TestRunner _runner;
 
         static void Main(string[] args)
         {
@@ -43,10 +45,10 @@ namespace ZexNext_Runner
 
             Console.Write("\nUse flag masks (tests only documented flags and instructions) (y/n)? ");
             input = Console.ReadKey(false);
-            bool useFlagMasks = input.KeyChar == 'y' || input.KeyChar == 'Y';
+            _useFlagMasks = input.KeyChar == 'y' || input.KeyChar == 'Y';
 
             Console.WriteLine("\n\nCompiling tests...\n");
-            TestRunner runner = new TestRunner(
+            _runner = new TestRunner(
                 (address, data) => _cpu.Memory.WriteBytesAt(address, data, true), 
                 testFilePaths);
 
@@ -55,7 +57,7 @@ namespace ZexNext_Runner
             
             Console.WriteLine("ZexNext Console Test Runner (C)2020 Neil Hewitt (All Rights Reserved)\n");
 
-            foreach (TestSet testSet in runner.TestSets)
+            foreach (TestSet testSet in _runner.TestSets)
             {
                 Console.SetCursorPosition(0, 2);
                 Console.WriteLine("Beginning test set: " + testSet.Name + "                                            \n");
@@ -76,7 +78,7 @@ namespace ZexNext_Runner
                         for (int i = 0; i < 30; i++) Console.WriteLine(blank);
 
                         _y = 0;
-                        IEnumerable<TestResult> results = runner.Run(test, ExecuteTestCycle, useFlagMasks, AcceptResultForCycle);
+                        IEnumerable<TestResult> results = _runner.Run(test, ExecuteTestCycle, _useFlagMasks, AcceptResultForCycle);
                         _cycles = 0;
                         Console.SetCursorPosition(0, 28);
                         Console.Write("TEST");
@@ -106,7 +108,7 @@ namespace ZexNext_Runner
                     else
                     {
                         Console.Write("Test: " + test.Name);
-                        IEnumerable<TestResult> results = runner.Run(test, ExecuteTestCycle, useFlagMasks);
+                        IEnumerable<TestResult> results = _runner.Run(test, ExecuteTestCycle, _useFlagMasks);
                         Console.CursorLeft = 42;
                         if (results.Where(x => x.Passed == false).Count() == 0)
                         {
@@ -157,7 +159,8 @@ namespace ZexNext_Runner
             {
                 Flags e = new Flags(result.ExpectedState.F);
                 Flags a = new Flags(result.ActualState.F);
-                Console.ReadKey();
+                var key = Console.ReadKey();
+                if (key.KeyChar == 'x') _runner.Run(result.TestCycle, ExecuteTestCycle, _useFlagMasks, AcceptResultForCycle);
             }
 
             return true;

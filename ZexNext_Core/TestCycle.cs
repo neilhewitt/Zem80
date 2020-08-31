@@ -4,6 +4,7 @@ namespace ZexNext.Core
 {
     public class TestCycle
     {
+        public Test ParentTest { get; private set; }
         public string Mnemonic => BeforeState.Mnemonic;
         public byte[] Opcode => BeforeState.Opcode;
 
@@ -12,6 +13,7 @@ namespace ZexNext.Core
 
         public TestCycle(Test parent, TestState before, TestState after)
         {
+            ParentTest = parent;
             BeforeState = before;
             AfterState = after;
         }

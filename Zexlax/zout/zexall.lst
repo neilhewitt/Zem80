@@ -1,0 +1,4960 @@
+   1:					title	'Z80 instruction set exerciser'
+   2:				
+   3:				; zexall.src - Z80 instruction set exerciser
+   4:				; Original Copyright (C) 1994  Frank D. Cringle
+   5:				; Changes at 03-Nov-2002 Copyright (C) 2002 J.G.Harston
+   6:				; + Source syntax tweeked to assemble with ZMAC Z80 Macro Assembler
+   7:				;   and MAXAM Assembler, marked in the source with 'jgh:'
+   8:				; + labels on equates mustn't have trailing colon
+   9:				; + macros don't understand <...> sequence, so parameters are passed
+  10:				;   explicitly
+  11:				; + ds n,c not supported, so strings are set to full explicity length
+  12:				;
+  13:				; This program is free software; you can redistribute it and/or
+  14:				; modify it under the terms of the GNU General Public License
+  15:				; as published by the Free Software Foundation; either version 2
+  16:				; of the License, or (at your option) any later version.
+  17:				;
+  18:				; This program is distributed in the hope that it will be useful,
+  19:				; but WITHOUT ANY WARRANTY; without even the implied warranty of
+  20:				; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  21:				; GNU General Public License for more details.
+  22:				;
+  23:				; You should have received a copy of the GNU General Public License
+  24:				; along with this program; if not, write to the Free Software
+  25:				; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  26:				
+  27:					aseg
+  28:     -	0100          		.org	100h
+  29:				
+  30:    0+10	0100  C31301  		jp	start
+  31:				
+  32:				; machine state before test (needs to be at predictably constant address)
+  33:     -	0103          	msbt:	ds	14
+  34:     -	0111          	spbt:	ds	2
+  35:     -	0001          	msbthi	equ	msbt / 0100h
+  36:     -	0003          	msbtlo	equ	msbt & 0ffh
+  37:				
+  38:				
+  39:				; For the purposes of this test program, the machine state consists of:
+  40:				;	a 2 byte memory operand, followed by
+  41:				;	the registers iy,ix,hl,de,bc,af,sp
+  42:				; for a total of 16 bytes.
+  43:				
+  44:				; The program tests instructions (or groups of similar instructions)
+  45:				; by cycling through a sequence of machine states, executing the test
+  46:				; instruction for each one and running a 32-bit crc over the resulting
+  47:				; machine states.  At the end of the sequence the crc is compared to
+  48:				; an expected value that was found empirically on a real Z80.
+  49:				
+  50:				; A test case is defined by a descriptor which consists of:
+  51:				;	a flag mask byte,
+  52:				;	the base case,
+  53:				;	the incement vector,
+  54:				;	the shift vector,
+  55:				;	the expected crc,
+  56:				;	a short descriptive message.
+  57:				;
+  58:				; The flag mask byte is used to prevent undefined flag bits from
+  59:				; influencing the results.  Documented flags are as per Mostek Z80
+  60:				; Technical Manual.
+  61:				;
+  62:				; The next three parts of the descriptor are 20 byte vectors
+  63:				; corresponding to a 4 byte instruction and a 16 byte machine state.
+  64:				; The first part is the base case, which is the first test case of
+  65:				; the sequence.  This base is then modified according to the next 2
+  66:				; vectors.  Each 1 bit in the increment vector specifies a bit to be
+  67:				; cycled in the form of a binary counter.  For instance, if the byte
+  68:				; corresponding to the accumulator is set to 0ffh in the increment
+  69:				; vector, the test will be repeated for all 256 values of the
+  70:				; accumulator.  Note that 1 bits don't have to be contiguous.  The
+  71:				; number of test cases 'caused' by the increment vector is equal to
+  72:				; 2^(number of 1 bits).  The shift vector is similar, but specifies a
+  73:				; set of bits in the test case that are to be successively inverted.
+  74:				; Thus the shift vector 'causes' a number of test cases equal to the
+  75:				; number of 1 bits in it.
+  76:				
+  77:				; The total number of test cases is the product of those caused by the
+  78:				; counter and shift vectors and can easily become unweildy.  Each
+  79:				; individual test case can take a few milliseconds to execute, due to
+  80:				; the overhead of test setup and crc calculation, so test design is a
+  81:				; compromise between coverage and execution time.
+  82:				
+  83:				; This program is designed to detect differences between
+  84:				; implementations and is not ideal for diagnosing the causes of any
+  85:				; discrepancies.  However, provided a reference implementation (or
+  86:				; real system) is available, a failing test case can be isolated by
+  87:				; hand using a binary search of the test space.
+  88:				
+  89:				
+  90:   10+10	0113  210080  	start:	ld	hl,8000h
+  91:   20+6	0116  F9      		ld	sp,hl
+  92:   26+10	0117  11C41D  		ld	de,msg1
+  93:   36+7	011A  0E09    		ld	c,9
+  94:   43+17	011C  CDB81D  		call	bdos
+  95:				
+  96:   60+10	011F  213801  		ld	hl,tests	; first test case
+  97:   70+7	0122  7E      	loop:	ld	a,(hl)		; end of list ?
+  98:   77+6	0123  23      		inc	hl
+  99:   83+7	0124  B6      		or	(hl)
+ 100:   90+10	0125  CA2F01  		jp	z,done
+ 101:  100+6	0128  2B      		dec	hl
+ 102:  106+17	0129  CDE01A  		call	stt
+ 103:  123+10	012C  C32201  		jp	loop
+ 104:					
+ 105:  133+10	012F  11E31D  	done:	ld	de,msg2
+ 106:  143+7	0132  0E09    		ld	c,9
+ 107:  150+17	0134  CDB81D  		call	bdos
+ 108:  167+4	0137  76      		halt
+ 109:				
+ 110:     -	0138          	tests:
+ 111:     -	0138  C001    		dw	adc16
+ 112:     -	013A  2002    		dw	add16
+ 113:     -	013C  8002    		dw	add16x
+ 114:     -	013E  E002    		dw	add16y
+ 115:     -	0140  4003    		dw	alu8i
+ 116:     -	0142  A003    		dw	alu8r
+ 117:     -	0144  0004    		dw	alu8rx
+ 118:     -	0146  6004    		dw	alu8x
+ 119:     -	0148  C004    		dw	bitx
+ 120:     -	014A  2005    		dw	bitz80
+ 121:     -	014C  8005    		dw	cpd1
+ 122:     -	014E  E005    		dw	cpi1
+ 123:     -	0150  4006    		dw	daaop	; can't use opcode as label
+ 124:     -	0152  A006    		dw	inca
+ 125:     -	0154  0007    		dw	incb
+ 126:     -	0156  6007    		dw	incbc
+ 127:     -	0158  C007    		dw	incc
+ 128:     -	015A  2008    		dw	incd
+ 129:     -	015C  8008    		dw	incde
+ 130:     -	015E  E008    		dw	ince
+ 131:     -	0160  4009    		dw	inch
+ 132:     -	0162  A009    		dw	inchl
+ 133:     -	0164  000A    		dw	incix
+ 134:     -	0166  600A    		dw	inciy
+ 135:     -	0168  C00A    		dw	incl
+ 136:     -	016A  200B    		dw	incm
+ 137:     -	016C  800B    		dw	incsp
+ 138:     -	016E  E00B    		dw	incx
+ 139:     -	0170  400C    		dw	incxh
+ 140:     -	0172  A00C    		dw	incxl
+ 141:     -	0174  000D    		dw	incyh
+ 142:     -	0176  600D    		dw	incyl
+ 143:     -	0178  C00D    		dw	ld161
+ 144:     -	017A  200E    		dw	ld162
+ 145:     -	017C  800E    		dw	ld163
+ 146:     -	017E  E00E    		dw	ld164
+ 147:     -	0180  400F    		dw	ld165
+ 148:     -	0182  A00F    		dw	ld166
+ 149:     -	0184  0010    		dw	ld167
+ 150:     -	0186  6010    		dw	ld168
+ 151:     -	0188  C010    		dw	ld16im
+ 152:     -	018A  2011    		dw	ld16ix
+ 153:     -	018C  8011    		dw	ld8bd
+ 154:     -	018E  E011    		dw	ld8im
+ 155:     -	0190  4012    		dw	ld8imx
+ 156:     -	0192  A012    		dw	ld8ix1
+ 157:     -	0194  0013    		dw	ld8ix2
+ 158:     -	0196  6013    		dw	ld8ix3
+ 159:     -	0198  C013    		dw	ld8ixy
+ 160:     -	019A  2014    		dw	ld8rr
+ 161:     -	019C  8014    		dw	ld8rrx
+ 162:     -	019E  E014    		dw	lda
+ 163:     -	01A0  4015    		dw	ldd1
+ 164:     -	01A2  A015    		dw	ldd2
+ 165:     -	01A4  0016    		dw	ldi1
+ 166:     -	01A6  6016    		dw	ldi2
+ 167:     -	01A8  C016    		dw	negop	; jgh: can't use opcode as label
+ 168:     -	01AA  2017    		dw	rldop	; jgh: can't use opcode as label
+ 169:     -	01AC  8017    		dw	rot8080
+ 170:     -	01AE  E017    		dw	rotxy
+ 171:     -	01B0  4018    		dw	rotz80
+ 172:     -	01B2  A018    		dw	srz80
+ 173:     -	01B4  0019    		dw	srzx
+ 174:     -	01B6  6019    		dw	st8ix1
+ 175:     -	01B8  C019    		dw	st8ix2
+ 176:     -	01BA  201A    		dw	st8ix3
+ 177:     -	01BC  801A    		dw	stabd
+ 178:     -	01BE  0000    		dw	0
+ 179:				
+ 180:				; jgh: macro syntax changed for ZMAC and MAXAM
+ 181:				;	can't use opcodes as labels
+ 182:				;	ZMAC allows &nn as hex, so & removed from local labels
+ 183:				;
+ 184:				tstr	macro	insn1,insn2,insn3,insn4,memop,riy,rix,rhl,rde,rbc,flags,acc,rsp,?lab
+ 185:				?lab:	db	insn1,insn2,insn3,insn4
+ 186:					dw	memop,riy,rix,rhl,rde,rbc
+ 187:					db	flags
+ 188:					db	acc
+ 189:					dw	rsp
+ 190:					if	$-?lab ne 20
+ 191:					error	'missing parameter'
+ 192:					endif
+ 193:					endm
+ 194:				
+ 195:				tmsg	macro	msg,?lab
+ 196:				?lab:	db	msg
+ 197:					if	$ ge ?lab+31
+ 198:					error	'message too long'
+ 199:					else
+ 200:				;	ds	?lab+30-$,'.'	; jgh: ZMAC/MAXAM don't have char parameter
+ 201:					endif
+ 202:					db	'$'
+ 203:					endm
+ 204:				
+ 205:				; jgh: ZMAC/MAXAM don't recognise <n,m> syntax for macros, so full parameters given
+ 206:				; jgh: each tmsg has full string, as ZMAC/MAXAM don't have ds n,c pseudo-op
+ 207:				
+ 208:				; <adc,sbc> hl,<bc,de,hl,sp> (38,912 cycles)
+ 209:     -	01C0  FF      	adc16:	db	0ffh		; flag mask
+ 210:     -	01C1' ED420000		tstr	0edh,042h,0,0,0832ch,04f88h,0f22bh,0b339h,07e1fh,01563h,0d3h,089h,0465eh
+	              2C83884F
+	              2BF239B3
+	              1F7E6315
+	              D3895E46
+ 211:     -	01D5' 00380000		tstr	0,038h,0,0,0,0,0,0f821h,0,0,0,0,0	; (1024 cycles)
+	              00000000
+	              000021F8
+	              00000000
+	              00000000
+ 212:     -	01E9' 00000000		tstr	0,0,0,0,0,0,0,-1,-1,-1,0d7h,0,-1	; (38 cycles)
+	              00000000
+	              0000FFFF
+	              FFFFFFFF
+	              D700FFFF
+ 213:     -	01FD  D48AD519		db	0d4h,08ah,0d5h,019h			; expected crc
+ 214:     -	80F9  C41D0E09		tmsg	'<adc,sbc> hl,<bc,de,hl,sp>....'
+	              CDB81D21
+	              38017E23
+	              B6CA2F01
+	              2B
+	        1AC3n 0111E31D
+	              0E09CDB8
+	              1D76C001
+	              20028002
+	              E0024003
+	              A0030004
+	              6004C004
+	              20058005
+	              E005
+	        07C0% 20088008
+	              E00840
+	        0900: 600AC00A
+	              200B800B
+	              E00B
+	        0DC0% 200E800E
+	              E00E400F
+	              A00F0010
+	              60
+	        1020$ 8011E011
+	              4012A012
+	              00136013
+	              C0132014
+	              80
+	        1440n A0150016
+	              6016C016
+	              20178017
+	              E0174018
+	              A0180019
+	              60
+	        1920$ 801A0000
+	              FFED4200
+	              002C8388
+	              4F2BF239
+	              B31F7E63
+	              15D3895E
+	              4600
+	        0000  F8000000
+	              00000000
+	              00000000
+	              00000000
+	              000000FF
+	              FFFFFFFF
+	              FFD700FF
+	              FFD48AD5
+	              19
+	        6463s 7362633E
+	              20686C2C
+	              3C62632C
+	              64000102
+	              12000001
+	              02130065
+	              2C686C2C
+	              73703E2E
+	              2E2E2E24
+	              FF090000
+	              00A5C4C7
+ 215:				
+ 216:				; add hl,<bc,de,hl,sp> (19,456 cycles)
+ 217:     -	0220  FF      	add16:	db	0ffh		; flag mask
+ 218:     -	0221' 09000000		tstr	9,0,0,0,0c4a5h,0c4c7h,0d226h,0a050h,058eah,08566h,0c6h,0deh,09bc9h
+	              A5C4C7C4
+	              26D250A0
+	              EA586685
+	              C6DEC99B
+ 219:     -	0235' 30000000		tstr	030h,0,0,0,0,0,0,0f821h,0,0,0,0,0	; (512 cycles)
+	              00000000
+	              000021F8
+	              00000000
+	              00000000
+ 220:     -	0249' 00000000		tstr	0,0,0,0,0,0,0,-1,-1,-1,0d7h,0,-1	; (38 cycles)
+	              00000000
+	              0000FFFF
+	              FFFFFFFF
+	              D700FFFF
+ 221:     -	025D  D9A4CA05		db	0d9h,0a4h,0cah,005h			; expected crc
+ 222:     -	0261' 61646420		tmsg	'add hl,<bc,de,hl,sp>..........'
+	              686C2C3C
+	              62632C64
+	              652C686C
+	              2C73703E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 223:				
+ 224:				; add ix,<bc,de,ix,sp> (19,456 cycles)
+ 225:     -	0280  FF      	add16x:	db	0ffh		; flag mask
+ 226:     -	0281' DD090000		tstr	0ddh,9,0,0,0ddach,0c294h,0635bh,033d3h,06a76h,0fa20h,094h,068h,036f5h
+	              ACDD94C2
+	              5B63D333
+	              766A20FA
+	              9468F536
+ 227:     -	0295' 00300000		tstr	0,030h,0,0,0,0,0f821h,0,0,0,0,0,0	; (512 cycles)
+	              00000000
+	              21F80000
+	              00000000
+	              00000000
+ 228:     -	02A9' 00000000		tstr	0,0,0,0,0,0,-1,0,-1,-1,0d7h,0,-1	; (38 cycles)
+	              00000000
+	              FFFF0000
+	              FFFFFFFF
+	              D700FFFF
+ 229:     -	02BD  B1DF8EC0		db	0b1h,0dfh,08eh,0c0h			; expected crc
+ 230:     -	02C1' 61646420		tmsg	'add ix,<bc,de,ix,sp>..........'
+	              69782C3C
+	              62632C64
+	              652C6978
+	              2C73703E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 231:				
+ 232:				; add iy,<bc,de,iy,sp> (19,456 cycles)
+ 233:     -	02E0  FF      	add16y:	db	0ffh		; flag mask
+ 234:     -	02E1' FD090000		tstr	0fdh,9,0,0,0c7c2h,0f407h,051c1h,03e96h,00bf4h,0510fh,092h,01eh,071eah
+	              C2C707F4
+	              C151963E
+	              F40B0F51
+	              921EEA71
+ 235:     -	02F5' 00300000		tstr	0,030h,0,0,0,0f821h,0,0,0,0,0,0,0	; (512 cycles)
+	              000021F8
+	              00000000
+	              00000000
+	              00000000
+ 236:     -	686Cx 73703E2E		tstr	0,0,0,0,0,-1,0,0,-1,-1,0d7h,0,-1		; (38 cycles)
+	              2E2E2E24
+	              FF090000
+	              00A5C4C7
+	              C426D250
+	              A0EA5866
+	              85C6DEC9
+	              9B300000
+	              00000000
+	              00000021
+	              F8000000
+	        FFFF FFD700FF
+	              FFD9A4CA
+	              05616464
+	              20686C2C
+	              3C62632C
+	              64652C68
+	              6C2C7370
+	              3E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FFDD0900
+	              00ACDD94
+	              C25B63D3
+	              33766A20
+	              FA9468F5
+	              36003000
+	              00000000
+	              0021F800
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00FFFF00
+	              00FFFFFF
+	              FFD700FF
+	              FFB1DF8E
+	              C0616464
+	              2069782C
+	              3C62632C
+	              64652C69
+	              782C7370
+	              3E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FFFD0900
+	              00C2C707
+	              F4C15196
+	              3EF40B0F
+	              51921EEA
+	              71003000
+	              00000021
+	              F8000000
+	              00000000
+	              00000000
+	              00000000
+	              000000FF
+	              FF000000
+	              01031200
+	              00010313
+	              000000FF
+	              FFFFFFD7
+	              00FFFF39
+	              C8589B61
+	              64642069
+	              792C3C62
+	              632C6465
+	              2C69792C
+	              73703E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E24FFC6
+	              00000040
+	              913C7E67
+	              7A6DDF
+ 237:     -	031D  39C8589B		db	039h,0c8h,058h,09bh			; expected crc
+ 238:     -	0321' 61646420		tmsg	'add iy,<bc,de,iy,sp>..........'
+	              69792C3C
+	              62632C64
+	              652C6979
+	              2C73703E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 239:				
+ 240:				; aluop a,nn (28,672 cycles)
+ 241:     -	0340  FF      	alu8i:	db	0ffh		; flag mask
+ 242:     -	0341' C6000000		tstr	0c6h,0,0,0,009140h,07e3ch,07a67h,0df6dh,05b61h,00b29h,010h,066h,085b2h
+	              40913C7E
+	              677A6DDF
+	              615B290B
+	              1066B285
+ 243:     -	0355' 38000000		tstr	038h,0,0,0,0,0,0,0,0,0,0,-1,0		; (2048 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00FF0000
+ 244:     -	0369' 00FF0000		tstr	0,-1,0,0,0,0,0,0,0,0,0d7h,0,0		; (14 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 245:     -	037D  51C19C2E		db	051h,0c1h,09ch,02eh			; expected crc
+ 246:     -	0381' 616C756F		tmsg	'aluop a,nn....................'
+	              7020612C
+	              6E6E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 247:				
+ 248:				; aluop a,<b,c,d,e,h,l,(hl),a> (753,664 cycles)
+ 249:     -	03A0  FF      	alu8r:	db	0ffh		; flag mask
+ 250:     -	03A1' 80000000		tstr	080h,0,0,0,0c53eh,0573ah,04c4dh,msbt,0e309h,0a666h,0d0h,03bh,0adbbh
+	              3EC53A57
+	              4D4C0301
+	              09E366A6
+	              D03BBBAD
+ 251:     -	03B5' 3F000000		tstr	03fh,0,0,0,0,0,0,0,0,0,0,-1,0		; (16,384 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00FF0000
+ 252:     -	03C9' 00000000		tstr	0,0,0,0,0ffh,0,0,0,-1,-1,0d7h,0,0	; (46 cycles)
+	              FF000000
+	              00000000
+	              FFFFFFFF
+	              D7000000
+ 253:     -	03DD  06C7AA8E		db	006h,0c7h,0aah,08eh			; expected crc
+ 254:     -	03E1' 616C756F		tmsg	'aluop a,<b,c,d,e,h,l,(hl),a>..'
+	              7020612C
+	              3C622C63
+	              2C642C65
+	              2C682C6C
+	              2C28686C
+	              292C613E
+	              2E2E24
+ 255:				
+ 256:				; aluop a,<ixh,ixl,iyh,iyl> (376,832 cycles)
+ 257:     -	0400  FF      	alu8rx:	db	0ffh		; flag mask
+ 258:     -	FFFF  FFD700FF		tstr	0ddh,084h,0,0,0d6f7h,0c76eh,0accfh,02847h,022ddh,0c035h,0c5h,038h,0234bh
+	              FF39C858
+	              9B616464
+	              2069792C
+	              3C62632C
+	              64652C69
+	              792C7370
+	              3E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FFC60000
+	              0040913C
+	              7E677A6D
+	              DF615B29
+	              0B1066B2
+	              85380000
+	              00000000
+	              00000000
+	              00000000
+	              0000FF00
+	              0000FF00
+	              00000000
+	              00000000
+	              00000000
+	              00D70000
+	              0051C19C
+	              2E616C75
+	              6F702061
+	              2C6E6E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FF800000
+	              003EC53A
+	              574D4C03
+	              0109E366
+	              A6D03BBB
+	              AD3F0000
+	              00000000
+	              00000000
+	              00000000
+	              0000FF00
+	              00000000
+	              00FF0000
+	              00000000
+	              00FFFFFF
+	              FFD70000
+	              0006C7AA
+	              8E616C75
+	              6F702061
+	              2C3C622C
+	              632C642C
+	              652C682C
+	              6C2C2868
+	              6C292C61
+	              3E2E2E24
+	              FFDD8400
+	              00F7D66E
+	              C7CFAC47
+	              28DD2235
+	              C0C53800
+	              010412
+	        0104  004B2320
+	              39000000
+	              00000000
+	              00000000
+	              000000
+ 259:     -	0415' 20390000		tstr	020h,039h,0,0,0,0,0,0,0,0,0,-1,0	; (8,192 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00FF0000
+ 260:     -	0429' 00000000		tstr	0,0,0,0,0ffh,0,0,0,-1,-1,0d7h,0,0	; (46 cycles)
+	              FF000000
+	              00000000
+	              FFFFFFFF
+	              D7000000
+ 261:     -	043D  A886CC44		db	0a8h,086h,0cch,044h			; expected crc
+ 262:     -	0441' 616C756F		tmsg	'aluop a,<ixh,ixl,iyh,iyl>.....'
+	              7020612C
+	              3C697868
+	              2C69786C
+	              2C697968
+	              2C69796C
+	              3E2E2E2E
+	              2E2E24
+ 263:				
+ 264:				; aluop a,(<ix,iy>+1) (229,376 cycles)
+ 265:     -	0460  FF      	alu8x:	db	0ffh		; flag mask
+ 266:     -	0461' DD860100		tstr	0ddh,086h,1,0,090b7h,msbt-1,msbt-1,032fdh,0406eh,0c1dch,045h,06eh,0e5fah
+	              B7900201
+	              0201FD32
+	              6E40DCC1
+	              456EFAE5
+ 267:     -	0475' 20380000		tstr	020h,038h,0,0,0,1,1,0,0,0,0,-1,0	; (16,384 cycles)
+	              00000100
+	              01000000
+	              00000000
+	              00FF0000
+ 268:     -	0489' 00000000		tstr	0,0,0,0,0ffh,0,0,0,0,0,0d7h,0,0		; (14 cycles)
+	              FF000000
+	              00000000
+	              00000000
+	              D7000000
+ 269:     -	049D  D3F2D74A		db	0d3h,0f2h,0d7h,04ah			; expected crc
+ 270:     -	04A1' 616C756F		tmsg	'aluop a,(<ix,iy>+1)...........'
+	              7020612C
+	              283C6978
+	              2C69793E
+	              2B31292E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 271:				
+ 272:				; bit n,(<ix,iy>+1) (2048 cycles)
+ 273:     -	04C0  FF      	bitx:	db	0ffh		; flag mask
+ 274:     -	04C1' DDCB0146		tstr	0ddh,0cbh,1,046h,02075h,msbt-1,msbt-1,03cfch,0a79ah,03d74h,051h,027h,0ca14h
+	              75200201
+	              0201FC3C
+	              9AA7743D
+	              512714CA
+ 275:     -	04D5' 20000038		tstr	020h,0,0,038h,0,0,0,0,0,0,053h,0,0	; (256 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              53000000
+ 276:     -	04E9' 00000000		tstr	0,0,0,0,0ffh,0,0,0,0,0,0,0,0		; (8 cycles)
+	              FF000000
+	              00000000
+	              00000000
+	              00000000
+ 277:     -	04FD  83534EE1		db	083h,053h,04eh,0e1h			; expected crc
+ 278:     -	0000  00000000		tmsg	'bit n,(<ix,iy>+1).............'
+	              0000FF00
+	              00000000
+	              0000FFFF
+	              FFFFD700
+	              0000A886
+	              CC44616C
+	              756F7020
+	              612C3C69
+	              78682C69
+	              786C2C69
+	              79682C69
+	              796C3E2E
+	              2E2E2E2E
+	              24FFDD86
+	              0100B790
+	              02010201
+	              FD326E40
+	              DCC1456E
+	              FAE52038
+	              00000000
+	              01000100
+	              00000000
+	              000000FF
+	              00000000
+	              0000FF00
+	              00000000
+	              00000000
+	              0000D700
+	              0000D3F2
+	              D74A616C
+	              756F7020
+	              612C283C
+	              69782C69
+	              793E2B31
+	              292E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              24FFDDCB
+	              01467520
+	              02010201
+	              FC3C9AA7
+	              743D5127
+	              14CA2000
+	              00380000
+	              00000000
+	              00000000
+	              00005300
+	              00000000
+	              0000FF00
+	              00000000
+	              00000000
+	              00000000
+	              00008353
+	              4EE16269
+	              74206E2C
+	              283C6978
+	              2C69793E
+	              2B31292E
+	              00010512
+	              00000105
+	              13002E2E
+	              2E2E2E2E
+	              2E2E2E
+ 279:				
+ 280:				; bit n,<b,c,d,e,h,l,(hl),a> (49,152 cycles)
+ 281:     -	0520  FF      	bitz80:	db	0ffh		; flag mask
+ 282:     -	0521' CB400000		tstr	0cbh,040h,0,0,03ef1h,09dfch,07acch,msbt,0be61h,07a86h,050h,024h,01998h
+	              F13EFC9D
+	              CC7A0301
+	              61BE867A
+	              50249819
+ 283:     -	0535' 003F0000		tstr	0,03fh,0,0,0,0,0,0,0,0,053h,0,0		; (1024 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              53000000
+ 284:     -	0549' 00000000		tstr	0,0,0,0,0ffh,0,0,0,-1,-1,0,-1,0		; (48 cycles)
+	              FF000000
+	              00000000
+	              FFFFFFFF
+	              00FF0000
+ 285:     -	055D  5E020E98		db	05eh,002h,00eh,098h			; expected crc
+ 286:     -	0561' 62697420		tmsg	'bit n,<b,c,d,e,h,l,(hl),a>....'
+	              6E2C3C62
+	              2C632C64
+	              2C652C68
+	              2C6C2C28
+	              686C292C
+	              613E2E2E
+	              2E2E24
+ 287:				
+ 288:				; cpd<r> (1) (6144 cycles)
+ 289:     -	0580  FF      	cpd1:	db	0ffh		; flag mask
+ 290:     -	0581' EDA90000		tstr	0edh,0a9h,0,0,0c7b6h,072b4h,018f6h,msbt+17,08dbdh,1,0c0h,030h,094a3h
+	              B6C7B472
+	              F6181401
+	              BD8D0100
+	              C030A394
+ 291:     -	0595' 00100000		tstr	0,010h,0,0,0,0,0,0,0,010,0,-1,0		; (1024 cycles)
+	              00000000
+	              00000000
+	              00000A00
+	              00FF0000
+ 292:     -	05A9' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 293:     -	05BD  134B622D		db	013h,04bh,062h,02dh			; expected crc
+ 294:     -	05C1' 6370643C		tmsg	'cpd<r>........................'
+	              723E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 295:				
+ 296:				; cpi<r> (1) (6144 cycles)
+ 297:     -	05E0  FF      	cpi1:	db	0ffh		; flag mask
+ 298:     -	05E1' EDA10000		tstr	0edh,0a1h,0,0,04d48h,0af4ah,0906bh,msbt,04e71h,1,093h,06ah,0907ch
+	              484D4AAF
+	              6B900301
+	              714E0100
+	              936A7C90
+ 299:     -	05F5' 00100000		tstr	0,010h,0,0,0,0,0,0,0,010,0,-1,0		; (1024 cycles)
+	              00000000
+	              00000000
+	              00000A00
+	              00FF0000
+ 300:     -	2E2Ed 2E2E2E2E		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              2E2E2E24
+	              FFCB4000
+	              00F13EFC
+	              9DCC7A03
+	              0161BE86
+	              7A502498
+	              19003F00
+	              00000000
+	              00000000
+	              00000000
+	              0053
+	        005E  0E98
+	        7420g 2C3C622C
+	              632C642C
+	              652C682C
+	              6C2C2868
+	              6C292C61
+	              3E2E2E2E
+	              2E24FFED
+	              A90000B6
+	              C7B472F6
+	              181401BD
+	              8D0100C0
+	              30A39400
+	              10000000
+	              00000000
+	              00000000
+	              000A0000
+	              FF000000
+	              00000000
+	              00000000
+	              00000000
+	              000000D7
+	              00000013
+	              4B622D63
+	              70643C72
+	              3E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E
+	        2E2Ed 2E2E2E2E
+	              2E2E24FF
+	              EDA10000
+	              484D4AAF
+	              6B900301
+	              714E0100
+	              936A7C90
+	              00100000
+	              00000000
+	              00000000
+	              00000A00
+	              00FF
+	        0001  12000001
+	              0613
+ 301:     -	061D  2DA42D19		db	02dh,0a4h,02dh,019h			; expected crc
+ 302:     -	0621' 6370693C		tmsg	'cpi<r>........................'
+	              723E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 303:				
+ 304:				; <daa,cpl,scf,ccf>
+ 305:     -	0640  FF      	daaop:	db	0ffh		; flag mask
+ 306:     -	0641' 27000000		tstr	027h,0,0,0,02141h,009fah,01d60h,0a559h,08d5bh,09079h,004h,08eh,0299dh
+	              4121FA09
+	              601D59A5
+	              5B8D7990
+	              048E9D29
+ 307:     -	0655' 18000000		tstr	018h,0,0,0,0,0,0,0,0,0,0d7h,-1,0	; (65,536 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7FF0000
+ 308:     -	0669' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycle)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 309:     -	067D  6D2DD213		db	06dh,02dh,0d2h,013h			; expected crc
+ 310:     -	0681' 3C646161		tmsg	'<daa,cpl,scf,ccf>.............'
+	              2C63706C
+	              2C736366
+	              2C636366
+	              3E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 311:				
+ 312:				; <inc,dec> a (3072 cycles)
+ 313:     -	06A0  FF      	inca:	db	0ffh		; flag mask
+ 314:     -	06A1' 3C000000		tstr	03ch,0,0,0,04adfh,0d5d8h,0e598h,08a2bh,0a7b0h,0431bh,044h,05ah,0d030h
+	              DF4AD8D5
+	              98E52B8A
+	              B0A71B43
+	              445A30D0
+ 315:     -	06B5' 01000000		tstr	001h,0,0,0,0,0,0,0,0,0,0,-1,0		; (512 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00FF0000
+ 316:     -	06C9' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 317:     -	06DD  81FA8100		db	081h,0fah,081h,000h			; expected crc
+ 318:     -	06E1' 3C696E63		tmsg	'<inc,dec> a...................'
+	              2C646563
+	              3E20612E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 319:				
+ 320:				; <inc,dec> b (3072 cycles)
+ 321:     -	0700  FF      	incb:	db	0ffh		; flag mask
+ 322:     -	2D19	 70693C72		tstr	004h,0,0,0,0d623h,0432dh,07a61h,08180h,05a86h,01e85h,086h,058h,09bbbh
+	              3E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E24FF27
+	              00000041
+	              21FA0960
+	              1D59A55B
+	              8D799004
+	              8E9D2918
+	              00000000
+	              00000000
+	              00000000
+	              000000D7
+	              FF000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              0000006D
+	              2DD2133C
+	              646161
+	        706C% 7363662C
+	              6363663E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E24FF3C
+	              000000DF
+	              4AD8D598
+	              E52B8AB0
+	              A71B4344
+	              5A30D001
+	        0000  FA81003C
+	              696E632C
+	              6465633E
+	              20612E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E24FF04
+	              00000023
+	              D62D4361
+	              7A808186
+	              5A851E86
+	              58000107
+	              12000001
+	              071300BB
+	              9B010000
+	              00000000
+	              00000000
+	              00000000
+	              FF000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00D70000
+	              0077F35A
+	              733C696E
+	              632C6465
+	              633E2062
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E
+ 323:     -	0715' 01000000		tstr	001h,0,0,0,0,0,0,0,0,0ff00h,0,0,0	; (512 cycles)
+	              00000000
+	              00000000
+	              000000FF
+	              00000000
+ 324:     -	0729' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 325:     -	073D  77F35A73		db	077h,0f3h,05ah,073h			; expected crc
+ 326:     -	0741' 3C696E63		tmsg	'<inc,dec> b...................'
+	              2C646563
+	              3E20622E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 327:				
+ 328:				; <inc,dec> bc (1536 cycles)
+ 329:     -	0760  FF      	incbc:	db	0ffh		; flag mask
+ 330:     -	0761' 03000000		tstr	003h,0,0,0,0cd97h,044abh,08dc9h,0e3e3h,011cch,0e8a4h,002h,049h,02a4dh
+	              97CDAB44
+	              C98DE3E3
+	              CC11A4E8
+	              02494D2A
+ 331:     -	0775' 08000000		tstr	008h,0,0,0,0,0,0,0,0,0f821h,0,0,0	; (256 cycles)
+	              00000000
+	              00000000
+	              000021F8
+	              00000000
+ 332:     -	0789' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 333:     -	079D  D2AE3BEC		db	0d2h,0aeh,03bh,0ech			; expected crc
+ 334:     -	07A1' 3C696E63		tmsg	'<inc,dec> bc..................'
+	              2C646563
+	              3E206263
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 335:				
+ 336:				; <inc,dec> c (3072 cycles)
+ 337:     -	07C0  FF      	incc:	db	0ffh		; flag mask
+ 338:     -	07C1' 0C000000		tstr	00ch,0,0,0,0d789h,00935h,0055bh,09f85h,08b27h,0d208h,095h,005h,00660h
+	              89D73509
+	              5B05859F
+	              278B08D2
+	              95056006
+ 339:     -	07D5' 01000000		tstr	001h,0,0,0,0,0,0,0,0,0ffh,0,0,0		; (512 cycles)
+	              00000000
+	              00000000
+	              0000FF00
+	              00000000
+ 340:     -	07E9' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 341:     -	07FD  1AF612A7		db	01ah,0f6h,012h,0a7h			; expected crc
+ 342:     -	77F3  733C696E		tmsg	'<inc,dec> c...................'
+	              632C6465
+	              633E2062
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FF030000
+	              0097CDAB
+	              44C98DE3
+	              E3CC11A4
+	              E802494D
+	              2A080000
+	              00000000
+	              00000000
+	              00000021
+	              F8000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00D7
+	        00D2  3BEC3C69
+	              6E632C64
+	              65633E20
+	              62632E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              24FF0C00
+	              000089D7
+	              35095B05
+	              859F278B
+	              08D29505
+	              60060100
+	              00000000
+	              00000000
+	              00000000
+	              FF000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              0000D700
+	              00001AF6
+	              12A73C69
+	              6E632C64
+	              65633E20
+	              632E2E2E
+	              2E2E2E2E
+	              00010812
+	              00000108
+	              13002E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24FF
+	              14000000
+	              EAA0BA5F
+	              FB651C98
+	              CC38BCDE
+	              435CBD03
+	              01000000
+	              00000000
+	              00000000
+	              00FF
+ 343:				
+ 344:				; <inc,dec> d (3072 cycles)
+ 345:     -	0820  FF      	incd:	db	0ffh		; flag mask
+ 346:     -	0821' 14000000		tstr	014h,0,0,0,0a0eah,05fbah,065fbh,0981ch,038cch,0debch,043h,05ch,003bdh
+	              EAA0BA5F
+	              FB651C98
+	              CC38BCDE
+	              435CBD03
+ 347:     -	0835' 01000000		tstr	001h,0,0,0,0,0,0,0,0ff00h,0,0,0,0	; (512 cycles)
+	              00000000
+	              00000000
+	              00FF0000
+	              00000000
+ 348:     -	0849' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 349:     -	085D  D146BF51		db	0d1h,046h,0bfh,051h			; expected crc
+ 350:     -	0861' 3C696E63		tmsg	'<inc,dec> d...................'
+	              2C646563
+	              3E20642E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 351:				
+ 352:				; <inc,dec> de (1536 cycles)
+ 353:     -	0880  FF      	incde:	db	0ffh		; flag mask
+ 354:     -	0881' 13000000		tstr	013h,0,0,0,0342eh,0131dh,028c9h,00acah,09967h,03a2eh,092h,0f6h,09d54h
+	              2E341D13
+	              C928CA0A
+	              67992E3A
+	              92F6549D
+ 355:     -	0895' 08000000		tstr	008h,0,0,0,0,0,0,0,0f821h,0,0,0,0	; (256 cycles)
+	              00000000
+	              00000000
+	              21F80000
+	              00000000
+ 356:     -	08A9' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 357:     -	08BD  AEC6D42C		db	0aeh,0c6h,0d4h,02ch			; expected crc
+ 358:     -	08C1' 3C696E63		tmsg	'<inc,dec> de..................'
+	              2C646563
+	              3E206465
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 359:				
+ 360:				; <inc,dec> e (3072 cycles)
+ 361:     -	08E0  FF      	ince:	db	0ffh		; flag mask
+ 362:     -	08E1' 1C000000		tstr	01ch,0,0,0,0602fh,04c0dh,02402h,0e2f5h,0a0f4h,0a10ah,013h,032h,05925h
+	              2F600D4C
+	              0224F5E2
+	              F4A00AA1
+	              13322559
+ 363:     -	08F5' 01000000		tstr	001h,0,0,0,0,0,0,0,0ffh,0,0,0,0		; (512 cycles)
+	              00000000
+	              00000000
+	              FF000000
+	              00000000
+ 364:     -	2E2Ed 2E2E2E2E		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              2E2E2E24
+	              FF140000
+	              00EAA0BA
+	              5FFB651C
+	              98CC38BC
+	              DE435CBD
+	              03010000
+	              00000000
+	              00000000
+	              0000FF00
+	              0000
+	        0000  000000D1
+	              46BF513C
+	              696E632C
+	              6465633E
+	              20642E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E24FF13
+	              0000002E
+	              341D13C9
+	              28CA0A67
+	              992E3A92
+	              F6549D08
+	              00000000
+	              00000000
+	              00000021
+	              F8000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              000000D7
+	              000000AE
+	              C6D42C3C
+	              696E632C
+	              6465633E
+	              2064652E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E24FF1C
+	              0000002F
+	              600D4C02
+	              24F5E2F4
+	              A00AA113
+	              32255901
+	              00000000
+	              00000000
+	              000000FF
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000109
+	              12000001
+	              09130000
+	              00000000
+	              00D70000
+	              00CA8C6A
+	              C23C696E
+	              632C64
+ 365:     -	091D  CA8C6AC2		db	0cah,08ch,06ah,0c2h			; expected crc
+ 366:     -	0921' 3C696E63		tmsg	'<inc,dec> e...................'
+	              2C646563
+	              3E20652E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 367:				
+ 368:				; <inc,dec> h (3072 cycles)
+ 369:     -	0940  FF      	inch:	db	0ffh		; flag mask
+ 370:     -	0941' 24000000		tstr	024h,0,0,0,01506h,0f2ebh,0e8ddh,0262bh,011a6h,0bc1ah,017h,006h,02818h
+	              0615EBF2
+	              DDE82B26
+	              A6111ABC
+	              17061828
+ 371:     -	0955' 01000000		tstr	001h,0,0,0,0,0,0,0ff00h,0,0,0,0,0	; (512 cycles)
+	              00000000
+	              000000FF
+	              00000000
+	              00000000
+ 372:     -	0969' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 373:     -	097D  560F955E		db	056h,00fh,095h,05eh			; expected crc
+ 374:     -	0981' 3C696E63		tmsg	'<inc,dec> h...................'
+	              2C646563
+	              3E20682E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 375:				
+ 376:				; <inc,dec> hl (1536 cycles)
+ 377:     -	09A0  FF      	inchl:	db	0ffh		; flag mask
+ 378:     -	09A1' 23000000		tstr	023h,0,0,0,0c3f4h,007a5h,01b6dh,04f04h,0e2c2h,0822ah,057h,0e0h,0c3e1h
+	              F4C3A507
+	              6D1B044F
+	              C2E22A82
+	              57E0E1C3
+ 379:     -	09B5' 08000000		tstr	008h,0,0,0,0,0,0,0f821h,0,0,0,0,0	; (256 cycles)
+	              00000000
+	              000021F8
+	              00000000
+	              00000000
+ 380:     -	09C9' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 381:     -	09DD  FC0D6D4A		db	0fch,00dh,06dh,04ah			; expected crc
+ 382:     -	09E1' 3C696E63		tmsg	'<inc,dec> hl..................'
+	              2C646563
+	              3E20686C
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 383:				
+ 384:				; <inc,dec> ix (1536 cycles)
+ 385:     -	0A00  FF      	incix:	db	0ffh		; flag mask
+ 386:     -	6AC2s 696E632C		tstr	0ddh,023h,0,0,0bc3ch,00d9bh,0e081h,0adfdh,09a7fh,096e5h,013h,085h,00be2h
+	              6465633E
+	              20652E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E24FF24
+	              00000006
+	              15EBF2DD
+	              E82B26A6
+	              111ABC17
+	              06182801
+	              00000000
+	              00000000
+	        0F95
+ 3C696E63
+	              2C646563
+	              3E20682E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24FF
+	              23000000
+	              F4C3A507
+	              6D1B044F
+	              C2E22A82
+	              57E0E1C3
+	              08000000
+	              00000000
+	              000021F8
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+	              FC0D
+	        3C69  632C6465
+	              633E2068
+	              6C2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FFDD2300
+	              003CBC9B
+	              0D81E0FD
+	              AD7F9AE5
+	              96138500
+	              010A1200
+	              00010A13
+	              00E20B00
+	              08000000
+	              00000021
+	              F8000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              000000D7
+	              000000A5
+	              4DBE313C
+	              696E632C
+	              6465
+ 387:     -	0A15' 00080000		tstr	0,8,0,0,0,0,0f821h,0,0,0,0,0,0		; (256 cycles)
+	              00000000
+	              21F80000
+	              00000000
+	              00000000
+ 388:     -	0A29' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 389:     -	0A3D  A54DBE31		db	0a5h,04dh,0beh,031h			; expected crc
+ 390:     -	0A41' 3C696E63		tmsg	'<inc,dec> ix..................'
+	              2C646563
+	              3E206978
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 391:				
+ 392:				; <inc,dec> iy (1536 cycles)
+ 393:     -	0A60  FF      	inciy:	db	0ffh		; flag mask
+ 394:     -	0A61' FD230000		tstr	0fdh,023h,0,0,09402h,0637ah,03182h,0c65ah,0b2e9h,0abb4h,016h,0f2h,06d05h
+	              02947A63
+	              82315AC6
+	              E9B2B4AB
+	              16F2056D
+ 395:     -	0A75' 00080000		tstr	0,8,0,0,0,0f821h,0,0,0,0,0,0,0		; (256 cycles)
+	              000021F8
+	              00000000
+	              00000000
+	              00000000
+ 396:     -	0A89' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 397:     -	0A9D  505D51A3		db	050h,05dh,051h,0a3h			; expected crc
+ 398:     -	0AA1' 3C696E63		tmsg	'<inc,dec> iy..................'
+	              2C646563
+	              3E206979
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 399:				
+ 400:				; <inc,dec> l (3072 cycles)
+ 401:     -	0AC0  FF      	incl:	db	0ffh		; flag mask
+ 402:     -	0AC1' 2C000000		tstr	02ch,0,0,0,08031h,0a520h,04356h,0b409h,0f4c1h,0dfa2h,0d1h,03ch,03ea2h
+	              318020A5
+	              564309B4
+	              C1F4A2DF
+	              D13CA23E
+ 403:     -	0AD5' 01000000		tstr	001h,0,0,0,0,0,0,0ffh,0,0,0,0,0		; (512 cycles)
+	              00000000
+	              0000FF00
+	              00000000
+	              00000000
+ 404:     -	0AE9' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 405:     -	0AFD  A0A1B49F		db	0a0h,0a1h,0b4h,09fh			; expected crc
+ 406:     -	A54D  313C696E		tmsg	'<inc,dec> l...................'
+	              632C6465
+	              633E2069
+	              782E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FFFD2300
+	              0002947A
+	              6382315A
+	              C6E9B2B4
+	              AB16F205
+	              6D000800
+	              00000021
+	              F8000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00D70000
+	              00505D51
+	              A33C696E
+	              632C6465
+	              633E2069
+	              792E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FF2C0000
+	              00318020
+	              A5564309
+	              B4C1F4A2
+	              DFD13CA2
+	              3E010000
+	              00000000
+	              000000FF
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00D70000
+	              00A0
+	        9F3Cs 6E632C64
+	              65633E20
+	              6C2E2E2E
+	              2E2E2E2E
+	              00010B12
+	              0000010B
+	              13002E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24FF
+	              34000000
+	              56B87C0C
+	              3EE50301
+	              7E8758DA
+	              155C371F
+	              01000000
+	              FF000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+	              28295ECE
+	              3C
+ 407:				
+ 408:				; <inc,dec> (hl) (3072 cycles)
+ 409:     -	0B20  FF      	incm:	db	0ffh		; flag mask
+ 410:     -	0B21' 34000000		tstr	034h,0,0,0,0b856h,00c7ch,0e53eh,msbt,0877eh,0da58h,015h,05ch,01f37h
+	              56B87C0C
+	              3EE50301
+	              7E8758DA
+	              155C371F
+ 411:     -	0B35' 01000000		tstr	001h,0,0,0,0ffh,0,0,0,0,0,0,0,0		; (512 cycles)
+	              FF000000
+	              00000000
+	              00000000
+	              00000000
+ 412:     -	0B49' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 413:     -	0B5D  28295ECE		db	028h,029h,05eh,0ceh			; expected crc
+ 414:     -	0B61' 3C696E63		tmsg	'<inc,dec> (hl)................'
+	              2C646563
+	              3E202868
+	              6C292E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 415:				
+ 416:				; <inc,dec> sp (1536 cycles)
+ 417:     -	0B80  FF      	incsp:	db	0ffh		; flag mask
+ 418:     -	0B81' 33000000		tstr	033h,0,0,0,0346fh,0d482h,0d169h,0deb6h,0a494h,0f476h,053h,002h,0855bh
+	              6F3482D4
+	              69D1B6DE
+	              94A476F4
+	              53025B85
+ 419:     -	0B95' 08000000		tstr	008h,0,0,0,0,0,0,0,0,0,0,0,0f821h	; (256 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              000021F8
+ 420:     -	0BA9' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 421:     -	0BBD  5DACD527		db	05dh,0ach,0d5h,027h			; expected crc
+ 422:     -	0BC1' 3C696E63		tmsg	'<inc,dec> sp..................'
+	              2C646563
+	              3E207370
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 423:				
+ 424:				; <inc,dec> (<ix,iy>+1) (6144 cycles)
+ 425:     -	0BE0  FF      	incx:	db	0ffh		; flag mask
+ 426:     -	0BE1' DD340100		tstr	0ddh,034h,1,0,0fa6eh,msbt-1,msbt-1,02c28h,08894h,05057h,016h,033h,0286fh
+	              6EFA0201
+	              0201282C
+	              94885750
+	              16336F28
+ 427:     -	0BF5' 20010000		tstr	020h,1,0,0,0ffh,0,0,0,0,0,0,0,0		; (1024 cycles)
+	              FF000000
+	              00000000
+	              00000000
+	              00000000
+ 428:     -	2E2Ed 2E2E2E2E		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              2E2E2E24
+	              FF340000
+	              0056B87C
+	              0C3EE503
+	              017E8758
+	              DA155C37
+	              1F010000
+	              00FF0000
+	              00000000
+	              00000000
+	              0000
+	        0000  00000028
+	              295ECE3C
+	              696E632C
+	              6465633E
+	              2028686C
+	              292E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E24FF33
+	              0000006F
+	              3482D469
+	              D1B6DE94
+	              A476F453
+	              025B8508
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              0021F800
+	              00000000
+	              00000000
+	              00000000
+	              000000D7
+	              0000005D
+	              ACD5273C
+	              696E632C
+	              6465633E
+	              2073702E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E24FFDD
+	              3401006E
+	              FA020102
+	              01282C94
+	              88575016
+	              336F2820
+	              010000FF
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              0000010C
+	              12000001
+	              0C130000
+	              00000000
+	              00D70000
+	              000B95A8
+	              EA3C696E
+	              632C64
+ 429:     -	0C1D  0B95A8EA		db	00bh,095h,0a8h,0eah			; expected crc
+ 430:     -	0C21' 3C696E63		tmsg	'<inc,dec> (<ix,iy>+1).........'
+	              2C646563
+	              3E20283C
+	              69782C69
+	              793E2B31
+	              292E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 431:				
+ 432:				; <inc,dec> ixh (3072 cycles)
+ 433:     -	0C40  FF      	incxh:	db	0ffh		; flag mask
+ 434:     -	0C41' DD240000		tstr	0ddh,024h,0,0,0b838h,0316ch,0c6d4h,03e01h,08358h,015b4h,081h,0deh,04259h
+	              38B86C31
+	              D4C6013E
+	              5883B415
+	              81DE5942
+ 435:     -	0C55' 00010000		tstr	0,1,0,0,0,0ff00h,0,0,0,0,0,0,0		; (512 cycles)
+	              000000FF
+	              00000000
+	              00000000
+	              00000000
+ 436:     -	0C69' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 437:     -	0C7D  6F463662		db	06fh,046h,036h,062h			; expected crc
+ 438:     -	0C81' 3C696E63		tmsg	'<inc,dec> ixh.................'
+	              2C646563
+	              3E206978
+	              682E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 439:				
+ 440:				; <inc,dec> ixl (3072 cycles)
+ 441:     -	0CA0  FF      	incxl:	db	0ffh		; flag mask
+ 442:     -	0CA1' DD2C0000		tstr	0ddh,02ch,0,0,04d14h,07460h,076d4h,006e7h,032a2h,0213ch,0d6h,0d7h,099a5h
+	              144D6074
+	              D476E706
+	              A2323C21
+	              D6D7A599
+ 443:     -	0CB5' 00010000		tstr	0,1,0,0,0,0ffh,0,0,0,0,0,0,0		; (512 cycles)
+	              0000FF00
+	              00000000
+	              00000000
+	              00000000
+ 444:     -	0CC9' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 445:     -	0CDD  027BEF2C		db	002h,07bh,0efh,02ch			; expected crc
+ 446:     -	0CE1' 3C696E63		tmsg	'<inc,dec> ixl.................'
+	              2C646563
+	              3E206978
+	              6C2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 447:				
+ 448:				; <inc,dec> iyh (3072 cycles)
+ 449:     -	0D00  FF      	incyh:	db	0ffh		; flag mask
+ 450:     -	A8EAs 696E632C		tstr	0ddh,024h,0,0,02836h,09f6fh,09116h,061b9h,082cbh,0e219h,092h,073h,0a98ch
+	              6465633E
+	              20283C69
+	              782C6979
+	              3E2B3129
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E24FFDD
+	              24000038
+	              B86C31D4
+	              C6013E58
+	              83B41581
+	              DE594200
+	              01000000
+	              0000FF00
+	        4636
+ 3C696E63
+	              2C646563
+	              3E206978
+	              682E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24FF
+	              DD2C0000
+	              144D6074
+	              D476E706
+	              A2323C21
+	              D6D7A599
+	              00010000
+	              0000FF00
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+	              027BEF2C
+	              3C69
+	        2C64% 633E2069
+	              786C2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FFDD2400
+	              0036286F
+	              9F1691B9
+	              61CB8219
+	              E2927300
+	              010D1200
+	              00010D13
+	              008CA900
+	              01000000
+	              FF000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              000000D7
+	              0000002D
+	              966CF33C
+	              69
+ 451:     -	0D15' 00010000		tstr	0,1,0,0,0ff00h,0,0,0,0,0,0,0,0		; (512 cycles)
+	              00FF0000
+	              00000000
+	              00000000
+	              00000000
+ 452:     -	0D29' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 453:     -	0D3D  2D966CF3		db	02dh,096h,06ch,0f3h			; expected crc
+ 454:     -	0D41' 3C696E63		tmsg	'<inc,dec> iyh.................'
+	              2C646563
+	              3E206979
+	              682E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 455:				
+ 456:				; <inc,dec> iyl (3072 cycles)
+ 457:     -	0D60  FF      	incyl:	db	0ffh		; flag mask
+ 458:     -	0D61' DD2C0000		tstr	0ddh,02ch,0,0,0d7c6h,062d5h,0a09eh,07039h,03e7eh,09f12h,090h,0d9h,0220fh
+	              C6D7D562
+	              9EA03970
+	              7E3E129F
+	              90D90F22
+ 459:     -	0D75' 00010000		tstr	0,1,0,0,0ffh,0,0,0,0,0,0,0,0		; (512 cycles)
+	              FF000000
+	              00000000
+	              00000000
+	              00000000
+ 460:     -	0D89' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 461:     -	0D9D  36C11E75		db	036h,0c1h,01eh,075h			; expected crc
+ 462:     -	0DA1' 3C696E63		tmsg	'<inc,dec> iyl.................'
+	              2C646563
+	              3E206979
+	              6C2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 463:				
+ 464:				; ld <bc,de>,(nnnn) (32 cycles)
+ 465:     -	0DC0  FF      	ld161:	db	0ffh		; flag mask
+ 466:     -	0DC1' ED4B0301		tstr	0edh,04bh,msbtlo,msbthi,0f9a8h,0f559h,093a4h,0f5edh,06f96h,0d968h,086h,0e6h,04bd8h
+	              A8F959F5
+	              A493EDF5
+	              966F68D9
+	              86E6D84B
+ 467:     -	0DD5' 00100000		tstr	0,010h,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 468:     -	0DE9' 00000000		tstr	0,0,0,0,-1,0,0,0,0,0,0,0,0		; (16 cycles)
+	              FFFF0000
+	              00000000
+	              00000000
+	              00000000
+ 469:     -	0DFD  4D45A9AC		db	04dh,045h,0a9h,0ach			; expected crc
+ 470:     -	2D96  F33C696E		tmsg	'ld <bc,de>,(nnnn).............'
+	              632C6465
+	              633E2069
+	              79682E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FFDD2C00
+	              00C6D7D5
+	              629EA039
+	              707E3E12
+	              9F90D90F
+	              22000100
+	              00FF0000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00D70000
+	              0036C11E
+	              753C696E
+	              632C6465
+	              633E2069
+	        2E2E% 2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24FF
+	              ED4B0301
+	              A8F959F5
+	              A493EDF5
+	              966F68D9
+	              86E6D84B
+	              00100000
+	              00000000
+	              0000
+	        0000  FF000000
+	              00000000
+	              00000000
+	              0000004D
+	              45A9AC6C
+	              64203C62
+	              632C6465
+	              3E2C286E
+	              6E6E6E29
+	              2E00010E
+	              12000001
+	              0E13002E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FF2A0301
+	              00639830
+	              787720FE
+	              B1FAB9B8
+	              AB040615
+	              60000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00FFFF00
+	              00000000
+	              00000000
+	              00000000
+	              005F9724
+	              876C6420
+	              686C2C28
+	              6E6E6E6E
+	              292E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FFED7B03
+	              01FC8DD7
+	              57612118
+	              CA85C1DA
+	              27831E60
+	              F4000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00FFFF00
+	              00000000
+	              00000000
+	              00000000
+	              007ACEA1
+	              1B6C6420
+	              73702C28
+	              6E6E6E6E
+	              292E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FFDD2A
+ 471:				
+ 472:				; ld hl,(nnnn) (16 cycles)
+ 473:     -	0E20  FF      	ld162:	db	0ffh		; flag mask
+ 474:     -	0E21' 2A030100		tstr	02ah,msbtlo,msbthi,0,09863h,07830h,02077h,0b1feh,0b9fah,0abb8h,004h,006h,06015h
+	              63983078
+	              7720FEB1
+	              FAB9B8AB
+	              04061560
+ 475:     -	0E35' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycle)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 476:     -	0E49' 00000000		tstr	0,0,0,0,-1,0,0,0,0,0,0,0,0		; (16 cycles)
+	              FFFF0000
+	              00000000
+	              00000000
+	              00000000
+ 477:     -	0E5D  5F972487		db	05fh,097h,024h,087h			; expected crc
+ 478:     -	0E61' 6C642068		tmsg	'ld hl,(nnnn)..................'
+	              6C2C286E
+	              6E6E6E29
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 479:					
+ 480:				; ld sp,(nnnn) (16 cycles)
+ 481:     -	0E80  FF      	ld163:	db	0ffh		; flag mask
+ 482:     -	0E81' ED7B0301		tstr	0edh,07bh,msbtlo,msbthi,08dfch,057d7h,02161h,0ca18h,0c185h,027dah,083h,01eh,0f460h
+	              FC8DD757
+	              612118CA
+	              85C1DA27
+	              831E60F4
+ 483:     -	0E95' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 484:     -	0EA9' 00000000		tstr	0,0,0,0,-1,0,0,0,0,0,0,0,0		; (16 cycles)
+	              FFFF0000
+	              00000000
+	              00000000
+	              00000000
+ 485:     -	0EBD  7ACEA11B		db	07ah,0ceh,0a1h,01bh			; expected crc
+ 486:     -	0EC1' 6C642073		tmsg	'ld sp,(nnnn)..................'
+	              702C286E
+	              6E6E6E29
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 487:				
+ 488:				; ld <ix,iy>,(nnnn) (32 cycles)
+ 489:     -	0EE0  FF      	ld164:	db	0ffh		; flag mask
+ 490:     -	0EE1' DD2A0301		tstr	0ddh,02ah,msbtlo,msbthi,0ded7h,0a6fah,0f780h,0244ch,087deh,0bcc2h,016h,063h,04c96h
+	              D7DEFAA6
+	              80F74C24
+	              DE87C2BC
+	              1663964C
+ 491:     -	0EF5' 20000000		tstr	020h,0,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 492:     -	2E2Ed 2E2E2E2E		tstr	0,0,0,0,-1,0,0,0,0,0,0,0,0		; (16 cycles)
+	              2E2E2E24
+	              FF2A0301
+	              00639830
+	              787720FE
+	              B1FAB9B8
+	              AB040615
+	              60000000
+	              00000000
+	              00000000
+	              00000000
+	              0000
+	        005F  24876C64
+	              20686C2C
+	              286E6E6E
+	              6E292E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              24FFED7B
+	              0301FC8D
+	              D7576121
+	              18CA85C1
+	              DA27831E
+	              60F40000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              0000FFFF
+	              00000000
+	              00000000
+	              00000000
+	              00007ACE
+	              A11B6C64
+	              2073702C
+	              286E6E6E
+	              6E292E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              24FFDD2A
+	              0301D7DE
+	              FAA680F7
+	              4C24DE87
+	              C2BC1663
+	              964C20
+	        00FF  00000000
+	              00010F12
+	              0000010F
+	              13000000
+	              00000000
+	              00000000
+	              858BF16D
+	              6C64203C
+	              69782C69
+	              793E2C28
+	              6E6E6E6E
+	              292E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24FF
+	              ED430301
+	              981F4D84
+	              ACE8EDC9
+	              5DC9618F
+	              803FBFC7
+	              00100000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              FFFFFFFF
+	              00000000
+	              641E8715
+	              6C642028
+	              6E6E6E6E
+	              292C3C62
+	              632C6465
+	              3E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24FF
+	              22030100
+	              03D07277
+	              537F723F
+	              EA6480E1
+	              102DE935
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              0000FFFF
+	              00000000
+	              00000000
+	              A3608B47
+	              6C642028
+	              6E6E6E6E
+	              292C686C
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24FF
+	              ED7303
+ 493:     -	0F1D  858BF16D		db	085h,08bh,0f1h,06dh			; expected crc
+ 494:     -	0F21' 6C64203C		tmsg	'ld <ix,iy>,(nnnn).............'
+	              69782C69
+	              793E2C28
+	              6E6E6E6E
+	              292E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 495:					
+ 496:				; ld (nnnn),<bc,de> (64 cycles)
+ 497:     -	0F40  FF      	ld165:	db	0ffh		; flag mask
+ 498:     -	0F41' ED430301		tstr	0edh,043h,msbtlo,msbthi,01f98h,0844dh,0e8ach,0c9edh,0c95dh,08f61h,080h,03fh,0c7bfh
+	              981F4D84
+	              ACE8EDC9
+	              5DC9618F
+	              803FBFC7
+ 499:     -	0F55' 00100000		tstr	0,010h,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 500:     -	0F69' 00000000		tstr	0,0,0,0,0,0,0,0,-1,-1,0,0,0		; (32 cycles)
+	              00000000
+	              00000000
+	              FFFFFFFF
+	              00000000
+ 501:     -	0F7D  641E8715		db	064h,01eh,087h,015h			; expected crc
+ 502:     -	0F81' 6C642028		tmsg	'ld (nnnn),<bc,de>.............'
+	              6E6E6E6E
+	              292C3C62
+	              632C6465
+	              3E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 503:				
+ 504:				; ld (nnnn),hl (16 cycles)
+ 505:     -	0FA0  FF      	ld166:	db	0ffh		; flag mask
+ 506:     -	0FA1' 22030100		tstr	022h,msbtlo,msbthi,0,0d003h,07772h,07f53h,03f72h,064eah,0e180h,010h,02dh,035e9h
+	              03D07277
+	              537F723F
+	              EA6480E1
+	              102DE935
+ 507:     -	0FB5' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycle)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 508:     -	0FC9' 00000000		tstr	0,0,0,0,0,0,0,-1,0,0,0,0,0		; (16 cycles)
+	              00000000
+	              0000FFFF
+	              00000000
+	              00000000
+ 509:     -	0FDD  A3608B47		db	0a3h,060h,08bh,047h			; expected crc
+ 510:     -	0FE1' 6C642028		tmsg	'ld (nnnn),hl..................'
+	              6E6E6E6E
+	              292C686C
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 511:				
+ 512:				; ld (nnnn),sp (16 cycles)
+ 513:     -	1000  FF      	ld167:	db	0ffh		; flag mask
+ 514:     -	F16D% 64203C69		tstr	0edh,073h,msbtlo,msbthi,0c0dch,0d1d6h,0ed5ah,0f356h,0afdah,06ca7h,044h,09fh,03f0ah
+	              782C6979
+	              3E2C286E
+	              6E6E6E29
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E24FFED
+	              43030198
+	              1F4D84AC
+	              E8EDC95D
+	              C9618F80
+	              3FBFC700
+	              10000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              000000FF
+	              FFFFFF00
+	              00000064
+	              1E87156C
+	              6420286E
+	              6E6E6E29
+	              2C3C6263
+	        653Es 2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              24FF2203
+	              010003D0
+	              7277537F
+	              723FEA64
+	              80E1102D
+	              E9350000
+	              00000000
+	              00000000
+	              0000
+	        00FF  00000000
+	              00000000
+	              A3608B47
+	              6C642028
+	              6E6E6E6E
+	              292C686C
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24FF
+	              ED730301
+	              DCC0D6D1
+	              5AED56F3
+	              DAAFA76C
+	              449F0001
+	              10120000
+	              01101300
+	              0A3F0000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              FFFF1658
+	              5FD76C64
+	              20286E6E
+	              6E6E292C
+	              73702E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              24FFDD22
+	              0301C36C
+	              910D0069
+	              F88ED6E3
+	              F7C3C6D9
+	              DFC22000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              FFFFFFFF
+	              00000000
+	              00000000
+	              0000BA10
+	              2A6B6C64
+	              20286E6E
+	              6E6E292C
+	              3C69782C
+	              69793E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              24FF0100
+	              00001C5C
+	              462DB9
+ 515:     -	1015' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycle)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 516:     -	1029' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0,0,-1		; (16 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              0000FFFF
+ 517:     -	103D  16585FD7		db	016h,058h,05fh,0d7h			; expected crc
+ 518:     -	1041' 6C642028		tmsg	'ld (nnnn),sp..................'
+	              6E6E6E6E
+	              292C7370
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 519:				
+ 520:				; ld (nnnn),<ix,iy> (64 cycles)
+ 521:     -	1060  FF      	ld168:	db	0ffh		; flag mask
+ 522:     -	1061' DD220301		tstr	0ddh,022h,msbtlo,msbthi,06cc3h,00d91h,06900h,08ef8h,0e3d6h,0c3f7h,0c6h,0d9h,0c2dfh
+	              C36C910D
+	              0069F88E
+	              D6E3F7C3
+	              C6D9DFC2
+ 523:     -	1075' 20000000		tstr	020h,0,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 524:     -	1089' 00000000		tstr	0,0,0,0,0,-1,-1,0,0,0,0,0,0		; (32 cycles)
+	              0000FFFF
+	              FFFF0000
+	              00000000
+	              00000000
+ 525:     -	109D  BA102A6B		db	0bah,010h,02ah,06bh			; expected crc
+ 526:     -	10A1' 6C642028		tmsg	'ld (nnnn),<ix,iy>.............'
+	              6E6E6E6E
+	              292C3C69
+	              782C6979
+	              3E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 527:				
+ 528:				; ld <bc,de,hl,sp>,nnnn (64 cycles)
+ 529:     -	10C0  FF      	ld16im:	db	0ffh		; flag mask
+ 530:     -	10C1' 01000000		tstr	1,0,0,0,05c1ch,02d46h,08eb9h,06078h,074b1h,0b30eh,046h,0d1h,030cch
+	              1C5C462D
+	              B98E7860
+	              B1740EB3
+	              46D1CC30
+ 531:     -	10D5' 30000000		tstr	030h,0,0,0,0,0,0,0,0,0,0,0,0		; (4 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 532:     -	10E9' 00FFFF00		tstr	0,0ffh,0ffh,0,0,0,0,0,0,0,0,0,0		; (16 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 533:     -	10FD  DE391969		db	0deh,039h,019h,069h			; expected crc
+ 534:     -	1658 D76C6420		tmsg	'ld <bc,de,hl,sp>,nnnn.........'
+	              286E6E6E
+	              6E292C73
+	              702E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FFDD2203
+	              01C36C91
+	              0D0069F8
+	              8ED6E3F7
+	              C3C6D9DF
+	              C2200000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              000000FF
+	              FFFFFF00
+	              00000000
+	              00000000
+	              00BA10
+	        6C64  286E6E6E
+	              6E292C3C
+	              69782C69
+	              793E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FF010000
+	        5C464 B98E7860
+	              B1740EB3
+	              46D1CC30
+	              30000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00FFFF00
+	              00000000
+	              00000000
+	              00
+	        DE39  696C6420
+	              3C62632C
+	              64652C68
+	              6C2C7370
+	              3E2C6E00
+	              01111200
+	              00
+ 535:				
+ 536:				; ld <ix,iy>,nnnn (32 cycles)
+ 537:     -	1120  FF      	ld16ix:	db	0ffh		; flag mask
+ 538:     -	1121' DD210000		tstr	0ddh,021h,0,0,087e8h,02006h,0bd12h,0b69bh,07253h,0a1e5h,051h,013h,0f1bdh
+	              E8870620
+	              12BD9BB6
+	              5372E5A1
+	              5113BDF1
+ 539:     -	1135' 20000000		tstr	020h,0,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 540:     -	1149' 0000FFFF		tstr	0,0,0ffh,0ffh,0,0,0,0,0,0,0,0,0		; (16 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 541:     -	115D  227DD525		db	022h,07dh,0d5h,025h			; expected crc
+ 542:     -	1161' 6C64203C		tmsg	'ld <ix,iy>,nnnn...............'
+	              69782C69
+	              793E2C6E
+	              6E6E6E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 543:				
+ 544:				; ld a,<(bc),(de)> (44 cycles)
+ 545:     -	1180  FF      	ld8bd:	db	0ffh		; flag mask
+ 546:     -	1181' 0A000000		tstr	00ah,0,0,0,0b3a8h,01d2ah,07f8eh,042ach,msbt,msbt,0c6h,0b1h,0ef8eh
+	              A8B32A1D
+	              8E7FAC42
+	              03010301
+	              C6B18EEF
+ 547:     -	1195' 10000000		tstr	010h,0,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 548:     -	11A9' 00000000		tstr	0,0,0,0,0ffh,0,0,0,0,0,0d7h,-1,0	; (22 cycles)
+	              FF000000
+	              00000000
+	              00000000
+	              D7FF0000
+ 549:     -	11BD  B0818935		db	0b0h,081h,089h,035h			; expected crc
+ 550:     -	11C1' 6C642061		tmsg	'ld a,<(bc),(de)>..............'
+	              2C3C2862
+	              63292C28
+	              6465293E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 551:				
+ 552:				; ld <b,c,d,e,h,l,(hl),a>,nn (64 cycles)
+ 553:     -	11E0  FF      	ld8im:	db	0ffh		; flag mask
+ 554:     -	11E1' 06000000		tstr	6,0,0,0,0c407h,0f49dh,0d13dh,00339h,0de89h,07455h,053h,0c0h,05509h
+	              07C49DF4
+	              3DD13903
+	              89DE5574
+	              53C00955
+ 555:     -	11F5' 38000000		tstr	038h,0,0,0,0,0,0,0,0,0,0,0,0		; (8 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 556:     -	6E2E
+ 2E2E2E2E		tstr	0,0,0,0,0,0,0,0,0,0,0,-1,0		; (8 cycles)
+	              2E2E2E24
+	              FFDD2100
+	              00E88706
+	              2012BD9B
+	              B65372E5
+	              A15113BD
+	              F1200000
+	              00000000
+	              00000000
+	              00000000
+	              0000
+	        0022  D5256C64
+	              203C6978
+	              2C69793E
+	              2C6E6E6E
+	              6E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              24FF0A00
+	              0000A8B3
+	              2A1D8E7F
+	              AC420301
+	              0301C6B1
+	              8EEF1000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              0000FF00
+	              00000000
+	              00000000
+	              0000D7FF
+	              0000B081
+	              89356C64
+	              20612C3C
+	              28626329
+	              2C286465
+	              293E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E
+	        2E24d 06000000
+	              07C49DF4
+	              3DD13903
+	              89DE5574
+	              53C00955
+	              38000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000001
+	              12120000
+	              01121300
+	              00000000
+	              000000FF
+	              0000F1DA
+	              B5566C64
+	              203C622C
+	              632C642C
+	              652C682C
+	              6C2C2868
+	              6C292C61
+	              3E2C6E6E
+	              2E2E2E2E
+	              24FFDD36
+	              0100451B
+	              02010201
+	              C1D5C761
+	              C4BDC085
+	              16CD2000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00FF0000
+	              00000000
+	              00000000
+	              000000FF
+	              000026DB
+	              477E6C64
+	              20283C69
+	              782C6979
+	              3E2B3129
+	              2C6E6E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              24FFDD46
+	              010016D0
+	              02010201
+	              6042397F
+	              0404974A
+	              85D02018
+	              00000000
+	              01000100
+	              00000000
+	              00000000
+	              00000000
+	              0000FFFF
+	              00000000
+	              000000
+ 557:     -	121D  F1DAB556		db	0f1h,0dah,0b5h,056h			; expected crc
+ 558:     -	1221' 6C64203C		tmsg	'ld <b,c,d,e,h,l,(hl),a>,nn....'
+	              622C632C
+	              642C652C
+	              682C6C2C
+	              28686C29
+	              2C613E2C
+	              6E6E2E2E
+	              2E2E24
+ 559:				
+ 560:				; ld (<ix,iy>+1),nn (32 cycles)
+ 561:     -	1240  FF      	ld8imx:	db	0ffh		; flag mask
+ 562:     -	1241' DD360100		tstr	0ddh,036h,1,0,01b45h,msbt-1,msbt-1,0d5c1h,061c7h,0bdc4h,0c0h,085h,0cd16h
+	              451B0201
+	              0201C1D5
+	              C761C4BD
+	              C08516CD
+ 563:     -	1255' 20000000		tstr	020h,0,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 564:     -	1269' 000000FF		tstr	0,0,0,-1,0,0,0,0,0,0,0,-1,0		; (16 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00FF0000
+ 565:     -	127D  26DB477E		db	026h,0dbh,047h,07eh			; expected crc
+ 566:     -	1281' 6C642028		tmsg	'ld (<ix,iy>+1),nn.............'
+	              3C69782C
+	              69793E2B
+	              31292C6E
+	              6E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 567:				
+ 568:				; ld <b,c,d,e>,(<ix,iy>+1) (512 cycles)
+ 569:     -	12A0  FF      	ld8ix1:	db	0ffh		; flag mask
+ 570:     -	12A1' DD460100		tstr	0ddh,046h,1,0,0d016h,msbt-1,msbt-1,04260h,07f39h,00404h,097h,04ah,0d085h
+	              16D00201
+	              02016042
+	              397F0404
+	              974A85D0
+ 571:     -	12B5' 20180000		tstr	020h,018h,0,0,0,1,1,0,0,0,0,0,0		; (32 cycles)
+	              00000100
+	              01000000
+	              00000000
+	              00000000
+ 572:     -	12C9' 00000000		tstr	0,0,0,0,-1,0,0,0,0,0,0,0,0		; (16 cycles)
+	              FFFF0000
+	              00000000
+	              00000000
+	              00000000
+ 573:     -	12DD  CC1106A8		db	0cch,011h,006h,0a8h			; expected crc
+ 574:     -	12E1' 6C64203C		tmsg	'ld <b,c,d,e>,(<ix,iy>+1)......'
+	              622C632C
+	              642C653E
+	              2C283C69
+	              782C6979
+	              3E2B3129
+	              2E2E2E2E
+	              2E2E24
+ 575:				
+ 576:				; ld <h,l>,(<ix,iy>+1) (256 cycles)
+ 577:     -	1300  FF      	ld8ix2:	db	0ffh		; flag mask
+ 578:     -	B556% 64203C62		tstr	0ddh,066h,1,0,084e0h,msbt-1,msbt-1,09c52h,0a799h,049b6h,093h,000h,0eeadh
+	              2C632C64
+	              2C652C68
+	              2C6C2C28
+	              686C292C
+	              613E2C6E
+	              6E2E2E2E
+	              2E24FFDD
+	              36010045
+	              1B020102
+	              01C1D5C7
+	              61C4BDC0
+	              8516CD20
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              0000FF00
+	              00000000
+	              00000000
+	              00000000
+	              FF000026
+	              DB477E6C
+	              6420283C
+	              69782C69
+	              793E2B31
+	        6E6Ex 2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              24FFDD46
+	              010016D0
+	              02010201
+	              6042397F
+	              0404974A
+	              85D02018
+	              00000000
+	              01000100
+	              0000
+	        00CC  06A86C64
+	              203C622C
+	              632C642C
+	              653E2C28
+	              3C
+	        2C69  3E2B3129
+	              2E2E2E2E
+	              2E2E24FF
+	              DD660100
+	              E0840201
+	              0201529C
+	              99A7B649
+	              93000001
+	              13120000
+	              01131300
+	              ADEE2008
+	              00000000
+	              01000100
+	              00000000
+	              00000000
+	              00000000
+	              0000FFFF
+	              00000000
+	              00000000
+	              00000000
+	              0000FA2A
+	              4D036C64
+	              203C682C
+	              6C3E2C28
+	              3C69782C
+	              69793E2B
+	              31292E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              24FFDD7E
+	              01
+ 579:     -	1315' 20080000		tstr	020h,008h,0,0,0,1,1,0,0,0,0,0,0		; (16 cycles)
+	              00000100
+	              01000000
+	              00000000
+	              00000000
+ 580:     -	1329' 00000000		tstr	0,0,0,0,-1,0,0,0,0,0,0,0,0		; (16 cycles)
+	              FFFF0000
+	              00000000
+	              00000000
+	              00000000
+ 581:     -	133D  FA2A4D03		db	0fah,02ah,04dh,003h			; expected crc
+ 582:     -	1341' 6C64203C		tmsg	'ld <h,l>,(<ix,iy>+1)..........'
+	              682C6C3E
+	              2C283C69
+	              782C6979
+	              3E2B3129
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 583:				
+ 584:				; ld a,(<ix,iy>+1) (128 cycles)
+ 585:     -	1360  FF      	ld8ix3:	db	0ffh		; flag mask
+ 586:     -	1361' DD7E0100		tstr	0ddh,07eh,1,0,0d8b6h,msbt-1,msbt-1,0c612h,0df07h,09cd0h,043h,0a6h,0a0e5h
+	              B6D80201
+	              020112C6
+	              07DFD09C
+	              43A6E5A0
+ 587:     -	1375' 20000000		tstr	020h,0,0,0,0,1,1,0,0,0,0,0,0		; (8 cycles)
+	              00000100
+	              01000000
+	              00000000
+	              00000000
+ 588:     -	1389' 00000000		tstr	0,0,0,0,-1,0,0,0,0,0,0,0,0		; (16 cycles)
+	              FFFF0000
+	              00000000
+	              00000000
+	              00000000
+ 589:     -	139D  A5E9AC64		db	0a5h,0e9h,0ach,064h			; expected crc
+ 590:     -	13A1' 6C642061		tmsg	'ld a,(<ix,iy>+1)..............'
+	              2C283C69
+	              782C6979
+	              3E2B3129
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 591:				
+ 592:				; ld <ixh,ixl,iyh,iyl>,nn (32 cycles)
+ 593:     -	13C0  FF      	ld8ixy:	db	0ffh		; flag mask
+ 594:     -	13C1' DD260000		tstr	0ddh,026h,0,0,03c53h,04640h,0e179h,07711h,0c107h,01afah,081h,0adh,05d9bh
+	              533C4046
+	              79E11177
+	              07C1FA1A
+	              81AD9B5D
+ 595:     -	13D5' 20080000		tstr	020h,8,0,0,0,0,0,0,0,0,0,0,0		; (4 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 596:     -	13E9' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0,-1,0		; (8 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00FF0000
+ 597:     -	13FD  24E8828B		db	024h,0e8h,082h,08bh			; expected crc
+ 598:     -	FA2A  036C6420		tmsg	'ld <ixh,ixl,iyh,iyl>,nn.......'
+	              3C682C6C
+	              3E2C283C
+	              69782C69
+	              793E2B31
+	              292E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FFDD7E01
+	              00B6D802
+	              01020112
+	              C607DFD0
+	              9C43A6E5
+	              A0200000
+	              00000001
+	              00010000
+	              00000000
+	              00000000
+	              00000000
+	              00
+	        E9AC% 6C642061
+	              2C283C69
+	              782C6979
+	              3E2B3129
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24FF
+	              DD260000
+	              533C4046
+	              79E11177
+	              07C1FA1A
+	              81AD9B5D
+	              20080000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00FF0000
+	              24E8828B
+	              6C64203C
+	        682C  786C2C69
+	              79682C69
+	              79000114
+	              12000001
+	              1413006C
+	              3E2C6E6E
+	              2E2E2E2E
+	              2E2E2E24
+	              FF400000
+	              00A47224
+	              A0AC6103
+	              01C7828F
+	              71978F8E
+	              EF3F0000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00FF0000
+	              00000000
+	              00FFFFFF
+	              FFD7FF00
+	              00744B01
+	              186C6420
+	              3C626364
+	              65
+ 599:				
+ 600:				; ld <b,c,d,e,h,l,a>,<b,c,d,e,h,l,a> (3456 cycles)
+ 601:     -	1420  FF      	ld8rr:	db	0ffh		; flag mask
+ 602:     -	1421' 40000000		tstr	040h,0,0,0,072a4h,0a024h,061ach,msbt,082c7h,0718fh,097h,08fh,0ef8eh
+	              A47224A0
+	              AC610301
+	              C7828F71
+	              978F8EEF
+ 603:     -	1435' 3F000000		tstr	03fh,0,0,0,0,0,0,0,0,0,0,0,0		; (64 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 604:     -	1449' 00000000		tstr	0,0,0,0,0ffh,0,0,0,-1,-1,0d7h,-1,0	; (54 cycles)
+	              FF000000
+	              00000000
+	              FFFFFFFF
+	              D7FF0000
+ 605:     -	145D  744B0118		db	074h,04bh,001h,018h			; expected crc
+ 606:     -	1461' 6C64203C		tmsg	'ld <bcdehla>,<bcdehla>........'
+	              62636465
+	              686C613E
+	              2C3C6263
+	              6465686C
+	              613E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 607:				
+ 608:				; ld <b,c,d,e,ixy,a>,<b,c,d,e,ixy,a> (6912 cycles)
+ 609:     -	1480  FF      	ld8rrx:	db	0ffh		; flag mask
+ 610:     -	1481' DD400000		tstr	0ddh,040h,0,0,0bcc5h,msbt,msbt,msbt,02fc2h,098c0h,083h,01fh,03bcdh
+	              C5BC0301
+	              03010301
+	              C22FC098
+	              831FCD3B
+ 611:     -	1495' 203F0000		tstr	020h,03fh,0,0,0,0,0,0,0,0,0,0,0		; (128 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 612:     -	14A9' 00000000		tstr	0,0,0,0,0ffh,0,0,0,-1,-1,0d7h,-1,0	; (54 cycles)
+	              FF000000
+	              00000000
+	              FFFFFFFF
+	              D7FF0000
+ 613:     -	14BD  478BA36B		db	047h,08bh,0a3h,06bh			; expected crc
+ 614:     -	14C1' 6C64203C		tmsg	'ld <bcdexya>,<bcdexya>........'
+	              62636465
+	              7879613E
+	              2C3C6263
+	              64657879
+	              613E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 615:				
+ 616:				; ld a,(nnnn) / ld (nnnn),a (44 cycles)
+ 617:     -	14E0  FF      	lda:	db	0ffh		; flag mask
+ 618:     -	14E1' 32030100		tstr	032h,msbtlo,msbthi,0,0fd68h,0f4ech,044a0h,0b543h,00653h,0cdbah,0d2h,04fh,01fd8h
+	              68FDECF4
+	              A04443B5
+	              5306BACD
+	              D24FD81F
+ 619:     -	14F5' 08000000		tstr	008h,0,0,0,0,0,0,0,0,0,0,0,0		; (2 cycle)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 620:     -	2C6Ex 2E2E2E2E		tstr	0,0,0,0,0ffh,0,0,0,0,0,0d7h,-1,0	; (22 cycles)
+	              2E2E2E24
+	              FF400000
+	              00A47224
+	              A0AC6103
+	              01C7828F
+	              71978F8E
+	              EF3F0000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00FF0000
+	              00000000
+	              00FFFFFF
+	              FFD7FF00
+	              00744B01
+	              186C6420
+	              3C626364
+	              65686C61
+	              3E2C3C62
+	              63646568
+	              6C613E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FFDD4000
+	              00C5
+	        0103! 03
+	        2FC00 831FCD3B
+	              203F0000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              FF000000
+	              00000000
+	              FFFFFFFF
+	              D7FF0000
+	              478BA36B
+	              6C64203C
+	              62636465
+	              7879613E
+	              2C3C6263
+	              64657879
+	              613E2E2E
+	              2E2E2E2E
+	              2E2E24FF
+	              32030100
+	              68FDECF4
+	              A04443B5
+	              5306BACD
+	              D24FD81F
+	              08000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              FF000000
+	              00000001
+	              15120000
+	              01151300
+	              00000000
+	              0000D7FF
+	              0000C926
+ 621:     -	151D  C9262DE5		db	0c9h,026h,02dh,0e5h			; expected crc
+ 622:     -	1521' 6C642061		tmsg	'ld a,(nnnn) / ld (nnnn),a.....'
+	              2C286E6E
+	              6E6E2920
+	              2F206C64
+	              20286E6E
+	              6E6E292C
+	              612E2E2E
+	              2E2E24
+ 623:				
+ 624:				; ldd<r> (1) (44 cycles)
+ 625:     -	1540  FF      	ldd1:	db	0ffh		; flag mask
+ 626:     -	1541' EDA80000		tstr	0edh,0a8h,0,0,09852h,068fah,066a1h,msbt+3,msbt+1,1,0c1h,068h,020b7h
+	              5298FA68
+	              A1660601
+	              04010100
+	              C168B720
+ 627:     -	1555' 00100000		tstr	0,010h,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 628:     -	1569' 00000000		tstr	0,0,0,0,-1,0,0,0,0,0,0d7h,0,0		; (22 cycles)
+	              FFFF0000
+	              00000000
+	              00000000
+	              D7000000
+ 629:     -	157D  94F42769		db	094h,0f4h,027h,069h			; expected crc
+ 630:     -	1581' 6C64643C		tmsg	'ldd<r> (1)....................'
+	              723E2028
+	              31292E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 631:				
+ 632:				; ldd<r> (2) (44 cycles)
+ 633:     -	15A0  FF      	ldd2:	db	0ffh		; flag mask
+ 634:     -	15A1' EDA80000		tstr	0edh,0a8h,0,0,0f12eh,0eb2ah,0d5bah,msbt+3,msbt+1,2,047h,0ffh,0fbe4h
+	              2EF12AEB
+	              BAD50601
+	              04010200
+	              47FFE4FB
+ 635:     -	15B5' 00100000		tstr	0,010h,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 636:     -	15C9' 00000000		tstr	0,0,0,0,-1,0,0,0,0,0,0d7h,0,0		; (22 cycles)
+	              FFFF0000
+	              00000000
+	              00000000
+	              D7000000
+ 637:     -	15DD  39DD3DE1		db	039h,0ddh,03dh,0e1h			; expected crc
+ 638:     -	15E1' 6C64643C		tmsg	'ldd<r> (2)....................'
+	              723E2028
+	              32292E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 639:				
+ 640:				; ldi<r> (1) (44 cycles)
+ 641:     -	1600  FF      	ldi1:	db	0ffh		; flag mask
+ 642:     -	2DE54 6420612C		tstr	0edh,0a0h,0,0,0fe30h,003cdh,06058h,msbt+2,msbt,1,004h,060h,02688h
+	              286E6E6E
+	              6E29202F
+	              206C6420
+	              286E6E6E
+	              6E292C61
+	              2E2E2E2E
+	              2E24FFED
+	              A8000052
+	              98FA68A1
+	              66060104
+	              010100C1
+	              68B72000
+	              10000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              000000FF
+	              FF000000
+	              00000000
+	              000000D7
+	              00000094
+	              F427696C
+	              64643C72
+	              3E202831
+	              292E2E2E
+	        2E2Ed 2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              24FFEDA8
+	              00002EF1
+	              2AEBBAD5
+	              06010401
+	              020047FF
+	              E4FB0010
+	              00000000
+	              00000000
+	              0000
+	        0000  00000039
+	              DD3DE16C
+	              64643C72
+	              3E202832
+	              292E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E24FFED
+	              A0000030
+	              FECD0358
+	              60050103
+	              01010004
+	              60000116
+	              12000001
+	              16130088
+	              26001000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00FFFF00
+	              00000000
+	              00000000
+	              00D70000
+	              00F782B0
+	              D16C6469
+	              3C723E20
+	              2831292E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FFEDA000
+	              00CE4A6E
+	              C288B105
+	              01030102
+	              00142D9F
+	              A3001000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00FFFF00
+	              00000000
+	              00000000
+	              00D70000
+	              00E9EAD0
+	              AE6C6469
+	              3C723E
+ 643:     -	1615' 00100000		tstr	0,010h,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 644:     -	1629' 00000000		tstr	0,0,0,0,-1,0,0,0,0,0,0d7h,0,0		; (22 cycles)
+	              FFFF0000
+	              00000000
+	              00000000
+	              D7000000
+ 645:     -	163D  F782B0D1		db	0f7h,082h,0b0h,0d1h			; expected crc
+ 646:     -	1641' 6C64693C		tmsg	'ldi<r> (1)....................'
+	              723E2028
+	              31292E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 647:				
+ 648:				; ldi<r> (2) (44 cycles)
+ 649:     -	1660  FF      	ldi2:	db	0ffh		; flag mask
+ 650:     -	1661' EDA00000		tstr	0edh,0a0h,0,0,04aceh,0c26eh,0b188h,msbt+2,msbt,2,014h,02dh,0a39fh
+	              CE4A6EC2
+	              88B10501
+	              03010200
+	              142D9FA3
+ 651:     -	1675' 00100000		tstr	0,010h,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 652:     -	1689' 00000000		tstr	0,0,0,0,-1,0,0,0,0,0,0d7h,0,0		; (22 cycles)
+	              FFFF0000
+	              00000000
+	              00000000
+	              D7000000
+ 653:     -	169D  E9EAD0AE		db	0e9h,0eah,0d0h,0aeh			; expected crc
+ 654:     -	16A1' 6C64693C		tmsg	'ldi<r> (2)....................'
+	              723E2028
+	              32292E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 655:				
+ 656:				; neg (16,384 cycles)
+ 657:     -	16C0  FF      	negop:	db	0ffh		; flag mask
+ 658:     -	16C1' ED440000		tstr	0edh,044h,0,0,038a2h,05f6bh,0d934h,057e4h,0d2d6h,04642h,043h,05ah,009cch
+	              A2386B5F
+	              34D9E457
+	              D6D24246
+	              435ACC09
+ 659:     -	16D5' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,-1,0		; (16,384 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7FF0000
+ 660:     -	16E9' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycle)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 661:     -	16FD  D638DD6A		db	0d6h,038h,0ddh,06ah			; expected crc
+ 662:     -	F782  D16C6469		tmsg	'neg...........................'
+	              3C723E20
+	              2831292E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FFEDA000
+	              00CE4A6E
+	              C288B105
+	              01030102
+	              00142D9F
+	              A3001000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00FFFF00
+	              00000000
+	              00000000
+	              00D70000
+	              00E9EAD0
+	              AE6C6469
+	              3C723E20
+	              2832292E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E24
+	              FFED4400
+	              00A2386B
+	              5F34D9E4
+	              57D6D242
+	              46435ACC
+	              09000000
+	              00000000
+	              00000000
+	              00000000
+	              00D7FF00
+	              00000000
+	              00000000
+	        00D6  DD6A6E65
+	              672E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              00011712
+	              00000117
+	              13002E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24FF
+	              ED670000
+	              CB918BC4
+	              62FA0301
+ 663:				
+ 664:				; <rld,rrd> (7168 cycles)
+ 665:     -	1720  FF      	rldop:	db	0ffh		; flag mask
+ 666:     -	1721' ED670000		tstr	0edh,067h,0,0,091cbh,0c48bh,0fa62h,msbt,0e720h,0b479h,040h,006h,08ae2h
+	              CB918BC4
+	              62FA0301
+	              20E779B4
+	              4006E28A
+ 667:     -	1735' 00080000		tstr	0,8,0,0,0ffh,0,0,0,0,0,0,0,0		; (512 cycles)
+	              FF000000
+	              00000000
+	              00000000
+	              00000000
+ 668:     -	1749' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,-1,0		; (14 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7FF0000
+ 669:     -	175D  FF823E77		db	0ffh,082h,03eh,077h			; expected crc
+ 670:     -	1761' 3C727264		tmsg	'<rrd,rld>.....................'
+	              2C726C64
+	              3E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 671:				
+ 672:				; <rlca,rrca,rla,rra> (6144 cycles)
+ 673:     -	1780  FF      	rot8080: db	0ffh		; flag mask
+ 674:     -	1781' 07000000		tstr	7,0,0,0,0cb92h,06d43h,00a90h,0c284h,00c53h,0f50eh,091h,0ebh,040fch
+	              92CB436D
+	              900A84C2
+	              530C0EF5
+	              91EBFC40
+ 675:     -	1795' 18000000		tstr	018h,0,0,0,0,0,0,0,0,0,0,-1,0		; (1024 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00FF0000
+ 676:     -	17A9' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              D7000000
+ 677:     -	17BD  9BA3807C		db	09bh,0a3h,080h,07ch			; expected crc
+ 678:     -	17C1' 3C726C63		tmsg	'<rlca,rrca,rla,rra>...........'
+	              612C7272
+	              63612C72
+	              6C612C72
+	              72613E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 679:				
+ 680:				; shift/rotate (<ix,iy>+1) (416 cycles)
+ 681:     -	17E0  FF      	rotxy:	db	0ffh		; flag mask
+ 682:     -	17E1' DDCB0106		tstr	0ddh,0cbh,1,6,0ddafh,msbt-1,msbt-1,0ff3ch,0dbf6h,094f4h,082h,080h,061d9h
+	              AFDD0201
+	              02013CFF
+	              F6DBF494
+	              8280D961
+ 683:     -	17F5' 20000038		tstr	020h,0,0,038h,0,0,0,0,0,0,080h,0,0	; (32 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              80000000
+ 684:     -	2E2Ed 2E2E2E2E		tstr	0,0,0,0,0ffh,0,0,0,0,0,057h,0,0		; (13 cycles)
+	              2E2E2E24
+	              FFED6700
+	              00CB918B
+	              C462FA03
+	              0120E779
+	              B44006E2
+	              8A000800
+	              00FF0000
+	              00000000
+	              00000000
+	              0000
+	        0000  FF0000FF
+	              823E773C
+	              7272642C
+	              726C643E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E24FF07
+	              00000092
+	              CB436D90
+	              0A84C253
+	              0C0EF591
+	              EBFC4018
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              FF000000
+	              00000000
+	              00000000
+	              00000000
+	              000000D7
+	              0000009B
+	              A3807C3C
+	              726C6361
+	              2C727263
+	              612C726C
+	              612C7272
+	              613E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E24FFDD
+	              CB0106AF
+	              DD020102
+	              013CFFF6
+	              DBF49482
+	              80D96120
+	              00003800
+	              00000000
+	              00000000
+	              00000080
+	              00000000
+	              000000FF
+	              00000000
+	              00000118
+	              12000001
+	              18130000
+	              00000000
+	              00570000
+	              00710034
+	              CB736866
+	              2F726F
+ 685:     -	181D  710034CB		db	071h,000h,034h,0cbh			; expected crc
+ 686:     -	1821' 7368662F		tmsg	'shf/rot (<ix,iy>+1)...........'
+	              726F7420
+	              283C6978
+	              2C69793E
+	              2B31292E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 687:				
+ 688:				; shift/rotate <b,c,d,e,h,l,(hl),a> (6784 cycles)
+ 689:     -	1840  FF      	rotz80:	db	0ffh		; flag mask
+ 690:     -	1841' CB000000		tstr	0cbh,0,0,0,0ccebh,05d4ah,0e007h,msbt,01395h,030eeh,043h,078h,03dadh
+	              EBCC4A5D
+	              07E00301
+	              9513EE30
+	              4378AD3D
+ 691:     -	1855' 003F0000		tstr	0,03fh,0,0,0,0,0,0,0,0,080h,0,0		; (128 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              80000000
+ 692:     -	1869' 00000000		tstr	0,0,0,0,0ffh,0,0,0,-1,-1,057h,-1,0	; (53 cycles)
+	              FF000000
+	              00000000
+	              FFFFFFFF
+	              57FF0000
+ 693:     -	187D  A4255833		db	0a4h,025h,058h,033h			; expected crc
+ 694:     -	1881' 7368662F		tmsg	'shf/rot <b,c,d,e,h,l,(hl),a>..'
+	              726F7420
+	              3C622C63
+	              2C642C65
+	              2C682C6C
+	              2C28686C
+	              292C613E
+	              2E2E24
+ 695:				
+ 696:				; <set,res> n,<b,c,d,e,h,l,(hl),a> (7936 cycles)
+ 697:     -	18A0  FF      	srz80:	db	0ffh		; flag mask
+ 698:     -	18A1' CB800000		tstr	0cbh,080h,0,0,02cd5h,097abh,039ffh,msbt,0d14bh,06ab2h,053h,027h,0b538h
+	              D52CAB97
+	              FF390301
+	              4BD1B26A
+	              532738B5
+ 699:     -	18B5' 007F0000		tstr	0,07fh,0,0,0,0,0,0,0,0,0,0,0		; (128 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 700:     -	18C9' 00000000		tstr	0,0,0,0,0ffh,0,0,0,-1,-1,0d7h,-1,0	; (62 cycles)
+	              FF000000
+	              00000000
+	              FFFFFFFF
+	              D7FF0000
+ 701:     -	18DD  8B57F008		db	08bh,057h,0f0h,008h			; expected crc
+ 702:     -	18E1' 3C736574		tmsg	'<set,res> n,<bcdehl(hl)a>.....'
+	              2C726573
+	              3E206E2C
+	              3C626364
+	              65686C28
+	              686C2961
+	              3E2E2E2E
+	              2E2E24
+ 703:				
+ 704:				; <set,res> n,(<ix,iy>+1) (1792 cycles)
+ 705:     -	1900  FF      	srzx:	db	0ffh		; flag mask
+ 706:     -	34CB  68662F72		tstr	0ddh,0cbh,1,086h,0fb44h,msbt-1,msbt-1,0ba09h,068beh,032d8h,010h,05eh,0a867h
+	              6F742028
+	              3C69782C
+	              69793E2B
+	              31292E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E24FFCB
+	              000000EB
+	              CC4A5D07
+	              E0030195
+	              13EE3043
+	              78AD3D00
+	              3F000000
+	              00000000
+	              00000000
+	              00000080
+	              00000000
+	              000000FF
+	              00000000
+	              000000FF
+	              FFFFFF57
+	              FF0000A4
+	              25583373
+	              68662F72
+	              6F74203C
+	              622C632C
+	              642C652C
+	              682C6C
+	        686C  2C613E2E
+	              2E24FFCB
+	              800000D5
+	              2CAB97FF
+	              3903014B
+	              D1B26A53
+	              2738B500
+	              7F000000
+	              00000000
+	              00000000
+	              00
+	        00FF  FFFFD7FF
+	              00008B57
+	              F0083C73
+	              65742C72
+	              65733E20
+	              6E2C3C62
+	              63646568
+	              6C28686C
+	              29613E2E
+	              2E2E2E2E
+	              24FFDDCB
+	              018644FB
+	              02010201
+	              09BABE68
+	              D832105E
+	              00011912
+	              00000119
+	              130067A8
+	              20000078
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              FF000000
+	              00000000
+	              00000000
+	              D7000000
+	              CC63F98A
+	              3C736574
+	              2C726573
+	              3E206E2C
+	              283C6978
+	              2C69793E
+	              2B31292E
+	              2E2E2E2E
+	              2E2E24FF
+	              DD700100
+	              0D270201
+	              02013AB7
+	              7B88EE99
+	              867007CA
+	              20030000
+	              00000100
+	              01000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              FFFFFFFF
+	              00000000
+	              04626ABF
+	              6C642028
+	              3C69782C
+	              69793E2B
+	              31292C3C
+	              622C632C
+	              642C653E
+	              2E2E2E2E
+	              2E2E24FF
+	              DD740100
+	              64B60201
+	              0201AC
+ 707:     -	1915' 20000078		tstr	020h,0,0,078h,0,0,0,0,0,0,0,0,0	; (128 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 708:     -	1929' 00000000		tstr	0,0,0,0,0ffh,0,0,0,0,0,0d7h,0,0		;(14 cycles)
+	              FF000000
+	              00000000
+	              00000000
+	              D7000000
+ 709:     -	193D  CC63F98A		db	0cch,063h,0f9h,08ah			; expected crc
+ 710:     -	1941' 3C736574		tmsg	'<set,res> n,(<ix,iy>+1).......'
+	              2C726573
+	              3E206E2C
+	              283C6978
+	              2C69793E
+	              2B31292E
+	              2E2E2E2E
+	              2E2E24
+ 711:				
+ 712:				; ld (<ix,iy>+1),<b,c,d,e> (1024 cycles)
+ 713:     -	1960  FF      	st8ix1:	db	0ffh		; flag mask
+ 714:     -	1961' DD700100		tstr	0ddh,070h,1,0,0270dh,msbt-1,msbt-1,0b73ah,0887bh,099eeh,086h,070h,0ca07h
+	              0D270201
+	              02013AB7
+	              7B88EE99
+	              867007CA
+ 715:     -	1975' 20030000		tstr	020h,003h,0,0,0,1,1,0,0,0,0,0,0		; (32 cycles)
+	              00000100
+	              01000000
+	              00000000
+	              00000000
+ 716:     -	1989' 00000000		tstr	0,0,0,0,0,0,0,0,-1,-1,0,0,0		; (32 cycles)
+	              00000000
+	              00000000
+	              FFFFFFFF
+	              00000000
+ 717:     -	199D  04626ABF		db	004h,062h,06ah,0bfh			; expected crc
+ 718:     -	19A1' 6C642028		tmsg	'ld (<ix,iy>+1),<b,c,d,e>......'
+	              3C69782C
+	              69793E2B
+	              31292C3C
+	              622C632C
+	              642C653E
+	              2E2E2E2E
+	              2E2E24
+ 719:				
+ 720:				; ld (<ix,iy>+1),<h,l> (256 cycles)
+ 721:     -	19C0  FF      	st8ix2:	db	0ffh		; flag mask
+ 722:     -	19C1' DD740100		tstr	0ddh,074h,1,0,0b664h,msbt-1,msbt-1,0e8ach,0b5f5h,0aafeh,012h,010h,09566h
+	              64B60201
+	              0201ACE8
+	              F5B5FEAA
+	              12106695
+ 723:     -	19D5' 20010000		tstr	020h,001h,0,0,0,1,1,0,0,0,0,0,0		; (16 cycles)
+	              00000100
+	              01000000
+	              00000000
+	              00000000
+ 724:     -	19E9' 00000000		tstr	0,0,0,0,0,0,0,-1,0,0,0,0,0		; (32 cycles)
+	              00000000
+	              0000FFFF
+	              00000000
+	              00000000
+ 725:     -	19FD  6A1A8831		db	06ah,01ah,088h,031h			; expected crc
+ 726:     -	CC63  8A3C7365		tmsg	'ld (<ix,iy>+1),<h,l>..........'
+	              742C7265
+	              733E206E
+	              2C283C69
+	              782C6979
+	              3E2B3129
+	              2E2E2E2E
+	              2E2E2E24
+	              FFDD7001
+	              000D2702
+	              0102013A
+	              B77B88EE
+	              99867007
+	              CA200300
+	              00000001
+	              00010000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              00FFFFFF
+	              FF000000
+	              0004626A
+	              BF6C6420
+	              283C6978
+	              2C69793E
+	              2B31292C
+	              3C622C63
+	              2C642C65
+	              3E2E2E2E
+	              2E2E2E24
+	              FFDD7401
+	              0064B602
+	              010201AC
+	              E8F5B5FE
+	              AA121066
+	              95200100
+	              00000001
+	              00010000
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+	              000000FF
+	              FF000000
+	              00000000
+	              006A1A88
+	              316C6420
+	              283C6978
+	              2C69793E
+	              2B31292C
+	              3C682C00
+	              011A1200
+	              00011A13
+	              006C3E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E24FFDD
+	              770100AF
+	              67020102
+	              01134F44
+	              06
+ 727:				
+ 728:				; ld (<ix,iy>+1),a (64 cycles)
+ 729:     -	1A20  FF      	st8ix3:	db	0ffh		; flag mask
+ 730:     -	1A21' DD770100		tstr	0ddh,077h,1,0,067afh,msbt-1,msbt-1,04f13h,00644h,0bcd7h,050h,0ach,05fafh
+	              AF670201
+	              0201134F
+	              4406D7BC
+	              50ACAF5F
+ 731:     -	1A35' 20000000		tstr	020h,0,0,0,0,1,1,0,0,0,0,0,0		; (8 cycles)
+	              00000100
+	              01000000
+	              00000000
+	              00000000
+ 732:     -	1A49' 00000000		tstr	0,0,0,0,0,0,0,0,0,0,0,-1,0		; (8 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00FF0000
+ 733:     -	1A5D  CCBE5A96		db	0cch,0beh,05ah,096h			; expected crc
+ 734:     -	1A61' 6C642028		tmsg	'ld (<ix,iy>+1),a..............'
+	              3C69782C
+	              69793E2B
+	              31292C61
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 735:				
+ 736:				; ld (<bc,de>),a (96 cycles)
+ 737:     -	1A80  FF      	stabd:	db	0ffh		; flag mask
+ 738:     -	1A81' 02000000		tstr	2,0,0,0,00c3bh,0b592h,06cffh,0959eh,msbt,msbt+1,0c1h,021h,0bde7h
+	              3B0C92B5
+	              FF6C9E95
+	              03010401
+	              C121E7BD
+ 739:     -	1A95' 18000000		tstr	018h,0,0,0,0,0,0,0,0,0,0,0,0		; (4 cycles)
+	              00000000
+	              00000000
+	              00000000
+	              00000000
+ 740:     -	1AA9' 00000000		tstr	0,0,0,0,-1,0,0,0,0,0,0,-1,0		; (24 cycles)
+	              FFFF0000
+	              00000000
+	              00000000
+	              00FF0000
+ 741:     -	1ABD  7A4C114F		db	07ah,04ch,011h,04fh			; expected crc
+ 742:     -	1AC1' 6C642028		tmsg	'ld (<bc,de>),a................'
+	              3C62632C
+	              64653E29
+	              2C612E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E2E2E
+	              2E2E24
+ 743:				
+ 744:				; start test pointed to by (hl)
+ 745:  171+11	1AE0  E5      	stt:	push	hl
+ 746:  182+7	1AE1  7E      		ld	a,(hl)		; get pointer to test
+ 747:  189+6	1AE2  23      		inc	hl
+ 748:  195+7	1AE3  66      		ld	h,(hl)
+ 749:  202+4	1AE4  6F      		ld	l,a
+ 750:  206+7	1AE5  7E      		ld	a,(hl)		; flag mask
+ 751:  213+13	1AE6  32631D  		ld	(flgmsk+1),a
+ 752:  226+6	1AE9  23      		inc	hl
+ 753:  232+11	1AEA  E5      		push	hl
+ 754:  243+10	1AEB  111400  		ld	de,20
+ 755:  253+11	1AEE  19      		add	hl,de		; point to incmask
+ 756:  264+10	1AEF  11D81C  		ld	de,counter
+ 757:  274+17	1AF2  CD471C  		call	initmask
+ 758:  291+10	1AF5  E1      		pop	hl
+ 759:  301+11	1AF6  E5      		push	hl
+ 760:  312+10	1AF7  112800  		ld	de,20+20
+ 761:  322+11	1AFA  19      		add	hl,de		; point to scanmask
+ 762:  333+10	1AFB  11001D  		ld	de,shifter
+ 763:  343+17	1AFE  CD471C  		call	initmask
+ 764:  360+10	1B01  21001D  		ld	hl,shifter
+ 765:  370+10	1B04  3601    		ld	(hl),1		; first bit
+ 766:  380+10	1B06  E1      		pop	hl
+ 767:  390+11	1B07  E5      		push	hl
+ 768:  401+10	1B08  11401D  		ld	de,iut		; copy initial instruction under test
+ 769:  411+10	1B0B  010400  		ld	bc,4
+ 770:  421+16+5	1B0E  EDB0    		ldir
+ 771:  437+10	1B10  110301  		ld	de,msbt		; copy initial machine state
+ 772:  447+10	1B13  011000  		ld	bc,16
+ 773:  457+16+5	1B16  EDB0    		ldir
+ 774:  473+10	1B18  112C00  		ld	de,20+20+4	; skip incmask, scanmask and expcrc
+ 775:  483+11	1B1B  19      		add	hl,de
+ 776:  494+4	1B1C  EB      		ex	de,hl
+ 777:  498+7	1B1D  0E09    		ld	c,9
+ 778:  505+17	1B1F  CDB81D  		call	bdos		; show test name
+ 779:  522+17	1B22  CD5D1E  		call	initcrc		; initialise crc
+ 780:				; test loop
+ 781:  539+13	1B25  3A401D  	tlp:	ld	a,(iut)
+ 782:  552+7	1B28  FE76    		cp	076h		; pragmatically avoid halt intructions
+ 783:  559+10	1B2A  CA3C1B  		jp	z,tlp2
+ 784:  569+7	1B2D  E6DF    		and	a,0dfh
+ 785:  576+7	1B2F  FEDD    		cp	0ddh
+ 786:  583+10	1B31  C2391B  		jp	nz,tlp1
+ 787:  593+13	1B34  3A411D  		ld	a,(iut+1)
+ 788:  606+7	1B37  FE76    		cp	076h
+ 789:  613+10+7	1B39  C4281D  	tlp1:	call	nz,test		; execute the test instruction
+ 790:  623+17	1B3C  CD871C  	tlp2:	call	count		; increment the counter
+ 791:  640+10+7	1B3F  C4AB1C  		call	nz,shift	; shift the scan bit
+ 792:  650+10	1B42  E1      		pop	hl		; pointer to test case
+ 793:  660+10	1B43  CA781B  		jp	z,tlp3		; done if shift returned NZ
+ 794:  670+10	1B46  113C00  		ld	de,20+20+20
+ 795:  680+11	1B49  19      		add	hl,de		; point to expected crc
+ 796:  691+17	1B4A  CD1E1E  		call	cmpcrc
+ 797:  708+10	1B4D  11F41D  		ld	de,okmsg
+ 798:  718+10	1B50  CA6F1B  		jp	z,tlpok
+ 799:  728+10	1B53  11FB1D  		ld	de,ermsg1
+ 800:  738+7	1B56  0E09    		ld	c,9
+ 801:  745+17	1B58  CDB81D  		call	bdos
+ 802:  762+17	1B5B  CD971D  		call	phex8
+ 803:  779+10	1B5E  11161E  		ld	de,ermsg2
+ 804:  789+7	1B61  0E09    		ld	c,9
+ 805:  796+17	1B63  CDB81D  		call	bdos
+ 806:  813+10	1B66  21711E  		ld	hl,crcval
+ 807:  823+17	1B69  CD971D  		call	phex8
+ 808:  840+10	1B6C  11F11D  		ld	de,crlf
+ 809:  850+7	1B6F  0E09    	tlpok:	ld	c,9
+ 810:  857+17	1B71  CDB81D  		call	bdos
+ 811:  874+10	1B74  E1      		pop	hl
+ 812:  884+6	1B75  23      		inc	hl
+ 813:  890+6	1B76  23      		inc	hl
+ 814:  896+10	1B77  C9      		ret
+ 815:				
+ 816:  906+11	1B78  E5      	tlp3:	push	hl
+ 817:  917+7	1B79  3E01    		ld	a,1		; initialise count and shift scanners
+ 818:  924+13	1B7B  32EE1B  		ld	(cntbit),a
+ 819:  937+13	1B7E  32121C  		ld	(shfbit),a
+ 820:  950+10	1B81  21D81C  		ld	hl,counter
+ 821:  960+16	1B84  22EF1B  		ld	(cntbyt),hl
+ 822:  976+10	1B87  21001D  		ld	hl,shifter
+ 823:  986+16	1B8A  22131C  		ld	(shfbyt),hl
+ 824:				
+ 825: 1002+7	1B8D  0604    		ld	b,4		; bytes in iut field
+ 826: 1009+10	1B8F  E1      		pop	hl		; pointer to test case
+ 827: 1019+11	1B90  E5      		push	hl
+ 828: 1030+10	1B91  11401D  		ld	de,iut
+ 829: 1040+17	1B94  CDA21B  		call	setup		; setup iut
+ 830: 1057+7	1B97  0610    		ld	b,16		; bytes in machine state
+ 831: 1064+10	1B99  110301  		ld	de,msbt
+ 832: 1074+17	1B9C  CDA21B  		call	setup		; setup machine state
+ 833: 1091+10	1B9F  C3251B  		jp	tlp
+ 834:				
+ 835:				; setup a field of the test case
+ 836:				; b  = number of bytes
+ 837:				; hl = pointer to base case
+ 838:				; de = destination
+ 839: 1101+17	1BA2  CDAB1B  	setup:	call	subyte
+ 840: 1118+6	1BA5  23      		inc	hl
+ 841: 1124+4	1BA6  05      		dec	b
+ 842: 1128+10	1BA7  C2A21B  		jp	nz,setup
+ 843: 1138+10	1BAA  C9      		ret
+ 844:				
+ 845: 1148+11	1BAB  C5      	subyte:	push	bc
+ 846: 1159+11	1BAC  D5      		push	de
+ 847: 1170+11	1BAD  E5      		push	hl
+ 848: 1181+7	1BAE  4E      		ld	c,(hl)		; get base byte
+ 849: 1188+10	1BAF  111400  		ld	de,20
+ 850: 1198+11	1BB2  19      		add	hl,de		; point to incmask
+ 851: 1209+7	1BB3  7E      		ld	a,(hl)
+ 852: 1216+7	1BB4  FE00    		cp	0
+ 853: 1223+10	1BB6  CACC1B  		jp	z,subshf
+ 854: 1233+7	1BB9  0608    		ld	b,8		; 8 bits
+ 855: 1240+4	1BBB  0F      	subclp:	rrca
+ 856: 1244+11	1BBC  F5      		push	af
+ 857: 1255+7	1BBD  3E00    		ld	a,0
+ 858: 1262+10+7	1BBF  DCF11B  		call	c,nxtcbit	; get next counter bit if mask bit was set
+ 859: 1272+4	1BC2  A9      		xor	c		; flip bit if counter bit was set
+ 860: 1276+4	1BC3  0F      		rrca
+ 861: 1280+4	1BC4  4F      		ld	c,a
+ 862: 1284+10	1BC5  F1      		pop	af
+ 863: 1294+4	1BC6  05      		dec	b
+ 864: 1298+10	1BC7  C2BB1B  		jp	nz,subclp
+ 865: 1308+7	1BCA  0608    		ld	b,8
+ 866: 1315+10	1BCC  111400  	subshf:	ld	de,20
+ 867: 1325+11	1BCF  19      		add	hl,de		; point to shift mask
+ 868: 1336+7	1BD0  7E      		ld	a,(hl)
+ 869: 1343+7	1BD1  FE00    		cp	0
+ 870: 1350+10	1BD3  CAE71B  		jp	z,substr
+ 871: 1360+7	1BD6  0608    		ld	b,8		; 8 bits
+ 872: 1367+4	1BD8  0F      	sbshf1:	rrca
+ 873: 1371+11	1BD9  F5      		push	af
+ 874: 1382+7	1BDA  3E00    		ld	a,0
+ 875: 1389+10+7	1BDC  DC151C  		call	c,nxtsbit	; get next shifter bit if mask bit was set
+ 876: 1399+4	1BDF  A9      		xor	c		; flip bit if shifter bit was set
+ 877: 1403+4	1BE0  0F      		rrca
+ 878: 1407+4	1BE1  4F      		ld	c,a
+ 879: 1411+10	1BE2  F1      		pop	af
+ 880: 1421+4	1BE3  05      		dec	b
+ 881: 1425+10	1BE4  C2D81B  		jp	nz,sbshf1
+ 882: 1435+10	1BE7  E1      	substr:	pop	hl
+ 883: 1445+10	1BE8  D1      		pop	de
+ 884: 1455+4	1BE9  79      		ld	a,c
+ 885: 1459+7	1BEA  12      		ld	(de),a		; mangled byte to destination
+ 886: 1466+6	1BEB  13      		inc	de
+ 887: 1472+10	1BEC  C1      		pop	bc
+ 888: 1482+10	1BED  C9      		ret
+ 889:				
+ 890:				; get next counter bit in low bit of a
+ 891:     -	1BEE          	cntbit:	ds	1
+ 892:     -	1BEF          	cntbyt:	ds	2
+ 893:				
+ 894: 1492+11	1BF1  C5      	nxtcbit: push	bc
+ 895: 1503+11	1BF2  E5      		push	hl
+ 896: 1514+16	1BF3  2AEF1B  		ld	hl,(cntbyt)
+ 897: 1530+7	1BF6  46      		ld	b,(hl)
+ 898: 1537+10	1BF7  21EE1B  		ld	hl,cntbit
+ 899: 1547+7	1BFA  7E      		ld	a,(hl)
+ 900: 1554+4	1BFB  4F      		ld	c,a
+ 901: 1558+4	1BFC  07      		rlca
+ 902: 1562+7	1BFD  77      		ld	(hl),a
+ 903: 1569+7	1BFE  FE01    		cp	a,1
+ 904: 1576+10	1C00  C20A1C  		jp	nz,ncb1
+ 905: 1586+16	1C03  2AEF1B  		ld	hl,(cntbyt)
+ 906: 1602+6	1C06  23      		inc	hl
+ 907: 1608+16	1C07  22EF1B  		ld	(cntbyt),hl
+ 908: 1624+4	1C0A  78      	ncb1:	ld	a,b
+ 909: 1628+4	1C0B  A1      		and	c
+ 910: 1632+10	1C0C  E1      		pop	hl
+ 911: 1642+10	1C0D  C1      		pop	bc
+ 912: 1652+5+6	1C0E  C8      		ret	z
+ 913: 1657+7	1C0F  3E01    		ld	a,1
+ 914: 1664+10	1C11  C9      		ret
+ 915:					
+ 916:				; get next shifter bit in low bit of a
+ 917:     -	1C12          	shfbit:	ds	1
+ 918:     -	1C13          	shfbyt:	ds	2
+ 919:				
+ 920: 1674+11	1C15  C5      	nxtsbit: push	bc
+ 921: 1685+11	1C16  E5      		push	hl
+ 922: 1696+16	1C17  2A131C  		ld	hl,(shfbyt)
+ 923: 1712+7	1C1A  46      		ld	b,(hl)
+ 924: 1719+10	1C1B  21121C  		ld	hl,shfbit
+ 925: 1729+7	1C1E  7E      		ld	a,(hl)
+ 926: 1736+4	1C1F  4F      		ld	c,a
+ 927: 1740+4	1C20  07      		rlca
+ 928: 1744+7	1C21  77      		ld	(hl),a
+ 929: 1751+7	1C22  FE01    		cp	a,1
+ 930: 1758+10	1C24  C22E1C  		jp	nz,nsb1
+ 931: 1768+16	1C27  2A131C  		ld	hl,(shfbyt)
+ 932: 1784+6	1C2A  23      		inc	hl
+ 933: 1790+16	1C2B  22131C  		ld	(shfbyt),hl
+ 934: 1806+4	1C2E  78      	nsb1:	ld	a,b
+ 935: 1810+4	1C2F  A1      		and	c
+ 936: 1814+10	1C30  E1      		pop	hl
+ 937: 1824+10	1C31  C1      		pop	bc
+ 938: 1834+5+6	1C32  C8      		ret	z
+ 939: 1839+7	1C33  3E01    		ld	a,1
+ 940: 1846+10	1C35  C9      		ret
+ 941:					
+ 942:				
+ 943:				; clear memory at hl, bc bytes
+ 944: 1856+11	1C36  F5      	clrmem:	push	af
+ 945: 1867+11	1C37  C5      		push	bc
+ 946: 1878+11	1C38  D5      		push	de
+ 947: 1889+11	1C39  E5      		push	hl
+ 948: 1900+10	1C3A  3600    		ld	(hl),0
+ 949: 1910+4	1C3C  54      		ld	d,h
+ 950: 1914+4	1C3D  5D      		ld	e,l
+ 951: 1918+6	1C3E  13      		inc	de
+ 952: 1924+6	1C3F  0B      		dec	bc
+ 953: 1930+16+5	1C40  EDB0    		ldir
+ 954: 1946+10	1C42  E1      		pop	hl
+ 955: 1956+10	1C43  D1      		pop	de
+ 956: 1966+10	1C44  C1      		pop	bc
+ 957: 1976+10	1C45  F1      		pop	af
+ 958: 1986+10	1C46  C9      		ret
+ 959:				
+ 960:				; initialise counter or shifter
+ 961:				; de = pointer to work area for counter or shifter
+ 962:				; hl = pointer to mask
+ 963:     -	1C47          	initmask:
+ 964: 1996+11	1C47  D5      		push	de
+ 965: 2007+4	1C48  EB      		ex	de,hl
+ 966: 2011+10	1C49  012800  		ld	bc,20+20
+ 967: 2021+17	1C4C  CD361C  		call	clrmem		; clear work area
+ 968: 2038+4	1C4F  EB      		ex	de,hl
+ 969: 2042+7	1C50  0614    		ld	b,20		; byte counter
+ 970: 2049+7	1C52  0E01    		ld	c,1		; first bit
+ 971: 2056+7	1C54  1600    		ld	d,0		; bit counter
+ 972: 2063+7	1C56  5E      	imlp:	ld	e,(hl)
+ 973: 2070+4	1C57  7B      	imlp1:	ld	a,e
+ 974: 2074+4	1C58  A1      		and	a,c
+ 975: 2078+10	1C59  CA5D1C  		jp	z,imlp2
+ 976: 2088+4	1C5C  14      		inc	d
+ 977: 2092+4	1C5D  79      	imlp2:	ld	a,c
+ 978: 2096+4	1C5E  07      		rlca
+ 979: 2100+4	1C5F  4F      		ld	c,a
+ 980: 2104+7	1C60  FE01    		cp	a,1
+ 981: 2111+10	1C62  C2571C  		jp	nz,imlp1
+ 982: 2121+6	1C65  23      		inc	hl
+ 983: 2127+4	1C66  05      		dec	b
+ 984: 2131+10	1C67  C2561C  		jp	nz,imlp
+ 985:				; got number of 1-bits in mask in reg d
+ 986: 2141+4	1C6A  7A      		ld	a,d
+ 987: 2145+7	1C6B  E6F8    		and	0f8h
+ 988: 2152+4	1C6D  0F      		rrca
+ 989: 2156+4	1C6E  0F      		rrca
+ 990: 2160+4	1C6F  0F      		rrca			; divide by 8 (get byte offset)
+ 991: 2164+4	1C70  6F      		ld	l,a
+ 992: 2168+7	1C71  2600    		ld	h,0
+ 993: 2175+4	1C73  7A      		ld	a,d
+ 994: 2179+7	1C74  E607    		and	a,7		; bit offset
+ 995: 2186+4	1C76  3C      		inc	a
+ 996: 2190+4	1C77  47      		ld	b,a
+ 997: 2194+7	1C78  3E80    		ld	a,080h
+ 998: 2201+4	1C7A  07      	imlp3:	rlca
+ 999: 2205+4	1C7B  05      		dec	b
+1000: 2209+10	1C7C  C27A1C  		jp	nz,imlp3
+1001: 2219+10	1C7F  D1      		pop	de
+1002: 2229+11	1C80  19      		add	hl,de
+1003: 2240+10	1C81  111400  		ld	de,20
+1004: 2250+11	1C84  19      		add	hl,de
+1005: 2261+7	1C85  77      		ld	(hl),a
+1006: 2268+10	1C86  C9      		ret
+1007:				
+1008:				; multi-byte counter
+1009: 2278+11	1C87  C5      	count:	push	bc
+1010: 2289+11	1C88  D5      		push	de
+1011: 2300+11	1C89  E5      		push	hl
+1012: 2311+10	1C8A  21D81C  		ld	hl,counter	; 20 byte counter starts here
+1013: 2321+10	1C8D  111400  		ld	de,20		; somewhere in here is the stop bit
+1014: 2331+4	1C90  EB      		ex	de,hl
+1015: 2335+11	1C91  19      		add	hl,de
+1016: 2346+4	1C92  EB      		ex	de,hl
+1017: 2350+11	1C93  34      	cntlp:	inc	(hl)
+1018: 2361+7	1C94  7E      		ld	a,(hl)
+1019: 2368+7	1C95  FE00    		cp	0
+1020: 2375+10	1C97  CAA61C  		jp	z,cntlp1	; overflow to next byte
+1021: 2385+4	1C9A  47      		ld	b,a
+1022: 2389+7	1C9B  1A      		ld	a,(de)
+1023: 2396+4	1C9C  A0      		and	a,b		; test for terminal value
+1024: 2400+10	1C9D  CAA21C  		jp	z,cntend
+1025: 2410+10	1CA0  3600    		ld	(hl),0		; reset to zero
+1026: 2420+10	1CA2  C1      	cntend:	pop	bc
+1027: 2430+10	1CA3  D1      		pop	de
+1028: 2440+10	1CA4  E1      		pop	hl
+1029: 2450+10	1CA5  C9      		ret
+1030:				
+1031: 2460+6	1CA6  23      	cntlp1:	inc	hl
+1032: 2466+6	1CA7  13      		inc	de
+1033: 2472+10	1CA8  C3931C  		jp	cntlp
+1034:					
+1035:				
+1036:				; multi-byte shifter
+1037: 2482+11	1CAB  C5      	shift:	push	bc
+1038: 2493+11	1CAC  D5      		push	de
+1039: 2504+11	1CAD  E5      		push	hl
+1040: 2515+10	1CAE  21001D  		ld	hl,shifter	; 20 byte shift register starts here
+1041: 2525+10	1CB1  111400  		ld	de,20		; somewhere in here is the stop bit
+1042: 2535+4	1CB4  EB      		ex	de,hl
+1043: 2539+11	1CB5  19      		add	hl,de
+1044: 2550+4	1CB6  EB      		ex	de,hl
+1045: 2554+7	1CB7  7E      	shflp:	ld	a,(hl)
+1046: 2561+4	1CB8  B7      		or	a
+1047: 2565+10	1CB9  CAD31C  		jp	z,shflp1
+1048: 2575+4	1CBC  47      		ld	b,a
+1049: 2579+7	1CBD  1A      		ld	a,(de)
+1050: 2586+4	1CBE  A0      		and	b
+1051: 2590+10	1CBF  C2CF1C  		jp	nz,shlpe
+1052: 2600+4	1CC2  78      		ld	a,b
+1053: 2604+4	1CC3  07      		rlca
+1054: 2608+7	1CC4  FE01    		cp	a,1
+1055: 2615+10	1CC6  C2CD1C  		jp	nz,shflp2
+1056: 2625+10	1CC9  3600    		ld	(hl),0
+1057: 2635+6	1CCB  23      		inc	hl
+1058: 2641+6	1CCC  13      		inc	de
+1059: 2647+7	1CCD  77      	shflp2:	ld	(hl),a
+1060: 2654+4	1CCE  AF      		xor	a		; set Z
+1061: 2658+10	1CCF  E1      	shlpe:	pop	hl
+1062: 2668+10	1CD0  D1      		pop	de
+1063: 2678+10	1CD1  C1      		pop	bc
+1064: 2688+10	1CD2  C9      		ret
+1065: 2698+6	1CD3  23      	shflp1:	inc	hl
+1066: 2704+6	1CD4  13      		inc	de
+1067: 2710+10	1CD5  C3B71C  		jp	shflp
+1068:				
+1069:     -	1CD8          	counter: ds	2*20
+1070:     -	1D00          	shifter: ds	2*20
+1071:				
+1072:				; test harness
+1073: 2720+11	1D28  F5      	test:	push	af
+1074: 2731+11	1D29  C5      		push	bc
+1075: 2742+11	1D2A  D5      		push	de
+1076: 2753+11	1D2B  E5      		push	hl
+1077:     -	0000          	      if	0
+1090:				      endif	
+1091: 2764+4	1D2C  F3      		di			; disable interrupts
+1092: 2768+20	1D2D  ED738B1D		ld	(spsav),sp	; save stack pointer
+1093: 2788+10	1D31  310501  		ld	sp,msbt+2	; point to test-case machine state
+1094: 2798+14	1D34  FDE1    		pop	iy		; and load all regs
+1095: 2812+14	1D36  DDE1    		pop	ix
+1096: 2826+10	1D38  E1      		pop	hl
+1097: 2836+10	1D39  D1      		pop	de
+1098: 2846+10	1D3A  C1      		pop	bc
+1099: 2856+10	1D3B  F1      		pop	af
+1100: 2866+20	1D3C  ED7B1101		ld	sp,(spbt)
+1101:     -	1D40          	iut:	ds	4		; max 4 byte instruction under test
+1102: 2886+20	1D44  ED73891D		ld	(spat),sp	; save stack pointer
+1103: 2906+10	1D48  31891D  		ld	sp,spat
+1104: 2916+11	1D4B  F5      		push	af		; save other registers
+1105: 2927+11	1D4C  C5      		push	bc
+1106: 2938+11	1D4D  D5      		push	de
+1107: 2949+11	1D4E  E5      		push	hl
+1108: 2960+15	1D4F  DDE5    		push	ix
+1109: 2975+15	1D51  FDE5    		push	iy
+1110: 2990+20	1D53  ED7B8B1D		ld	sp,(spsav)	; restore stack pointer
+1111: 3010+4	1D57  FB      		ei			; enable interrupts
+1112: 3014+16	1D58  2A0301  		ld	hl,(msbt)	; copy memory operand
+1113: 3030+16	1D5B  227B1D  		ld	(msat),hl
+1114: 3046+10	1D5E  21871D  		ld	hl,flgsat	; flags after test
+1115: 3056+7	1D61  7E      		ld	a,(hl)
+1116: 3063+7	1D62  E6D7    	flgmsk:	and	a,0d7h		; mask-out irrelevant bits (self-modified code!)
+1117: 3070+7	1D64  77      		ld	(hl),a
+1118: 3077+7	1D65  0610    		ld	b,16		; total of 16 bytes of state
+1119: 3084+10	1D67  117B1D  		ld	de,msat
+1120: 3094+10	1D6A  21711E  		ld	hl,crcval
+1121: 3104+7	1D6D  1A      	tcrc:	ld	a,(de)
+1122: 3111+6	1D6E  13      		inc	de
+1123: 3117+17	1D6F  CD351E  		call	updcrc		; accumulate crc of this test case
+1124: 3134+4	1D72  05      		dec	b
+1125: 3138+10	1D73  C26D1D  		jp	nz,tcrc
+1126:     -	0000          	      if	0
+1141:				      endif
+1142: 3148+10	1D76  E1      		pop	hl
+1143: 3158+10	1D77  D1      		pop	de
+1144: 3168+10	1D78  C1      		pop	bc
+1145: 3178+10	1D79  F1      		pop	af
+1146: 3188+10	1D7A  C9      		ret
+1147:				
+1148:				; machine state after test
+1149:     -	1D7B          	msat:	ds	14	; memop,iy,ix,hl,de,bc,af
+1150:     -	1D89          	spat:	ds	2	; stack pointer after test
+1151:				; ZMAC/MAXAM doesn't like ':' after label with EQUs
+1152:     -	1D87          	flgsat	equ	spat-2	; flags
+1153:				
+1154:     -	1D8B          	spsav:	ds	2	; saved stack pointer
+1155:				
+1156:				; display hex string (pointer in hl, byte count in b)
+1157: 3198+7	1D8D  7E      	hexstr:	ld	a,(hl)
+1158: 3205+17	1D8E  CDA91D  		call	phex2
+1159: 3222+6	1D91  23      		inc	hl
+1160: 3228+4	1D92  05      		dec	b
+1161: 3232+10	1D93  C28D1D  		jp	nz,hexstr
+1162: 3242+10	1D96  C9      		ret
+1163:				
+1164:				; display hex
+1165:				; display the big-endian 32-bit value pointed to by hl
+1166: 3252+11	1D97  F5      	phex8:	push	af
+1167: 3263+11	1D98  C5      		push	bc
+1168: 3274+11	1D99  E5      		push	hl
+1169: 3285+7	1D9A  0604    		ld	b,4
+1170: 3292+7	1D9C  7E      	ph8lp:	ld	a,(hl)
+1171: 3299+17	1D9D  CDA91D  		call	phex2
+1172: 3316+6	1DA0  23      		inc	hl
+1173: 3322+4	1DA1  05      		dec	b
+1174: 3326+10	1DA2  C29C1D  		jp	nz,ph8lp
+1175: 3336+10	1DA5  E1      		pop	hl
+1176: 3346+10	1DA6  C1      		pop	bc
+1177: 3356+10	1DA7  F1      		pop	af
+1178: 3366+10	1DA8  C9      		ret
+1179:				
+1180:				; display byte in a
+1181: 3376+11	1DA9  F5      	phex2:	push	af
+1182: 3387+11	1DAA  C5      		push	bc
+1183: 3398+11	1DAB  D5      		push	de
+1184: 3409+11	1DAC  E5      		push	hl
+1185: 3420+4	1DAD  5F      		ld	e,a
+1186: 3424+7	1DAE  0E03    		ld	c,3
+1187: 3431+17	1DB0  CDB81D  		call	bdos
+1188: 3448+10	1DB3  E1      		pop	hl
+1189: 3458+10	1DB4  D1      		pop	de
+1190: 3468+10	1DB5  C1      		pop	bc
+1191: 3478+10	1DB6  F1      		pop	af
+1192: 3488+10	1DB7  C9      		ret
+1193:				
+1194: 3498+11	1DB8  F5      	bdos:	push	af
+1195: 3509+11	1DB9  C5      		push	bc
+1196: 3520+11	1DBA  D5      		push	de
+1197: 3531+11	1DBB  E5      		push	hl
+1198: 3542+17	1DBC  CD0500  		call	5
+1199: 3559+10	1DBF  E1      		pop	hl
+1200: 3569+10	1DC0  D1      		pop	de
+1201: 3579+10	1DC1  C1      		pop	bc
+1202: 3589+10	1DC2  F1      		pop	af
+1203: 3599+10	1DC3  C9      		ret
+1204:				
+1205:     -	1DC4  5A383061	msg1:	db	'Z80all instruction exerciser',10,13,'$'
+	              6C6C2069
+	              6E737472
+	              75637469
+	              6F6E2065
+	              78657263
+	              69736572
+	              0A0D24
+1206:     -	1DE3  54657374	msg2:	db	'Tests complete'
+	              7320636F
+	              6D706C65
+	              7465
+1207:     -	1DF1  0A0D24  	crlf:	db	10,13,'$'
+1208:     -	1DF4  20204F4B	okmsg:	db	'  OK',10,13,'$'
+	              0A0D24
+1209:     -	1DFB  20204552	ermsg1:	db	'  ERROR **** crc expected:$'
+	              524F5220
+	              2A2A2A2A
+	              20637263
+	              20657870
+	              65637465
+	              643A24
+1210:     -	1E16  20666F75	ermsg2:	db	' found:$'
+	              6E643A24
+1211:				
+1212:				; compare crc
+1213:				; hl points to value to compare to crcval
+1214: 3609+11	1E1E  C5      	cmpcrc:	push	bc
+1215: 3620+11	1E1F  D5      		push	de
+1216: 3631+11	1E20  E5      		push	hl
+1217: 3642+10	1E21  11711E  		ld	de,crcval
+1218: 3652+7	1E24  0604    		ld	b,4
+1219: 3659+7	1E26  1A      	cclp:	ld	a,(de)
+1220: 3666+7	1E27  BE      		cp	a,(hl)
+1221: 3673+10	1E28  C2311E  		jp	nz,cce
+1222: 3683+6	1E2B  23      		inc	hl
+1223: 3689+6	1E2C  13      		inc	de
+1224: 3695+4	1E2D  05      		dec	b
+1225: 3699+10	1E2E  C2261E  		jp	nz,cclp
+1226: 3709+10	1E31  E1      	cce:	pop	hl
+1227: 3719+10	1E32  D1      		pop	de
+1228: 3729+10	1E33  C1      		pop	bc
+1229: 3739+10	1E34  C9      		ret
+1230:				
+1231:				; 32-bit crc routine
+1232:				; entry: a contains next byte, hl points to crc
+1233:				; exit:  crc updated
+1234: 3749+11	1E35  F5      	updcrc:	push	af
+1235: 3760+11	1E36  C5      		push	bc
+1236: 3771+11	1E37  D5      		push	de
+1237: 3782+11	1E38  E5      		push	hl
+1238: 3793+11	1E39  E5      		push	hl
+1239: 3804+10	1E3A  110300  		ld	de,3
+1240: 3814+11	1E3D  19      		add	hl,de	; point to low byte of old crc
+1241: 3825+7	1E3E  AE      		xor	a,(hl)	; xor with new byte
+1242: 3832+4	1E3F  6F      		ld	l,a
+1243: 3836+7	1E40  2600    		ld	h,0
+1244: 3843+11	1E42  29      		add	hl,hl	; use result as index into table of 4 byte entries
+1245: 3854+11	1E43  29      		add	hl,hl
+1246: 3865+4	1E44  EB      		ex	de,hl
+1247: 3869+10	1E45  21751E  		ld	hl,crctab
+1248: 3879+11	1E48  19      		add	hl,de	; point to selected entry in crctab
+1249: 3890+4	1E49  EB      		ex	de,hl
+1250: 3894+10	1E4A  E1      		pop	hl
+1251: 3904+10	1E4B  010400  		ld	bc,4	; c = byte count, b = accumulator
+1252: 3914+7	1E4E  1A      	crclp:	ld	a,(de)
+1253: 3921+4	1E4F  A8      		xor	a,b
+1254: 3925+7	1E50  46      		ld	b,(hl)
+1255: 3932+7	1E51  77      		ld	(hl),a
+1256: 3939+6	1E52  13      		inc	de
+1257: 3945+6	1E53  23      		inc	hl
+1258: 3951+4	1E54  0D      		dec	c
+1259: 3955+10	1E55  C24E1E  		jp	nz,crclp
+1260:     -	0000          	      if	0
+1266:				      endif
+1267: 3965+10	1E58  E1      		pop	hl
+1268: 3975+10	1E59  D1      		pop	de
+1269: 3985+10	1E5A  C1      		pop	bc
+1270: 3995+10	1E5B  F1      		pop	af
+1271: 4005+10	1E5C  C9      		ret
+1272:				
+1273: 4015+11	1E5D  F5      	initcrc:push	af
+1274: 4026+11	1E5E  C5      		push	bc
+1275: 4037+11	1E5F  E5      		push	hl
+1276: 4048+10	1E60  21711E  		ld	hl,crcval
+1277: 4058+7	1E63  3EFF    		ld	a,0ffh
+1278: 4065+7	1E65  0604    		ld	b,4
+1279: 4072+7	1E67  77      	icrclp:	ld	(hl),a
+1280: 4079+6	1E68  23      		inc	hl
+1281: 4085+4	1E69  05      		dec	b
+1282: 4089+10	1E6A  C2671E  		jp	nz,icrclp
+1283: 4099+10	1E6D  E1      		pop	hl
+1284: 4109+10	1E6E  C1      		pop	bc
+1285: 4119+10	1E6F  F1      		pop	af
+1286: 4129+10	1E70  C9      		ret
+1287:				
+1288:     -	1E71          	crcval	ds	4
+1289:				
+1290:     -	1E75  00000000	crctab:	db	000h,000h,000h,000h
+1291:     -	1E79  77073096		db	077h,007h,030h,096h
+1292:     -	1E7D  EE0E612C		db	0eeh,00eh,061h,02ch
+1293:     -	1E81  990951BA		db	099h,009h,051h,0bah
+1294:     -	1E85  076DC419		db	007h,06dh,0c4h,019h
+1295:     -	1E89  706AF48F		db	070h,06ah,0f4h,08fh
+1296:     -	1E8D  E963A535		db	0e9h,063h,0a5h,035h
+1297:     -	1E91  9E6495A3		db	09eh,064h,095h,0a3h
+1298:     -	1E95  0EDB8832		db	00eh,0dbh,088h,032h
+1299:     -	1E99  79DCB8A4		db	079h,0dch,0b8h,0a4h
+1300:     -	1E9D  E0D5E91E		db	0e0h,0d5h,0e9h,01eh
+1301:     -	1EA1  97D2D988		db	097h,0d2h,0d9h,088h
+1302:     -	1EA5  09B64C2B		db	009h,0b6h,04ch,02bh
+1303:     -	1EA9  7EB17CBD		db	07eh,0b1h,07ch,0bdh
+1304:     -	1EAD  E7B82D07		db	0e7h,0b8h,02dh,007h
+1305:     -	1EB1  90BF1D91		db	090h,0bfh,01dh,091h
+1306:     -	1EB5  1DB71064		db	01dh,0b7h,010h,064h
+1307:     -	1EB9  6AB020F2		db	06ah,0b0h,020h,0f2h
+1308:     -	1EBD  F3B97148		db	0f3h,0b9h,071h,048h
+1309:     -	1EC1  84BE41DE		db	084h,0beh,041h,0deh
+1310:     -	1EC5  1ADAD47D		db	01ah,0dah,0d4h,07dh
+1311:     -	1EC9  6DDDE4EB		db	06dh,0ddh,0e4h,0ebh
+1312:     -	1ECD  F4D4B551		db	0f4h,0d4h,0b5h,051h
+1313:     -	1ED1  83D385C7		db	083h,0d3h,085h,0c7h
+1314:     -	1ED5  136C9856		db	013h,06ch,098h,056h
+1315:     -	1ED9  646BA8C0		db	064h,06bh,0a8h,0c0h
+1316:     -	1EDD  FD62F97A		db	0fdh,062h,0f9h,07ah
+1317:     -	1EE1  8A65C9EC		db	08ah,065h,0c9h,0ech
+1318:     -	1EE5  14015C4F		db	014h,001h,05ch,04fh
+1319:     -	1EE9  63066CD9		db	063h,006h,06ch,0d9h
+1320:     -	1EED  FA0F3D63		db	0fah,00fh,03dh,063h
+1321:     -	1EF1  8D080DF5		db	08dh,008h,00dh,0f5h
+1322:     -	1EF5  3B6E20C8		db	03bh,06eh,020h,0c8h
+1323:     -	1EF9  4C69105E		db	04ch,069h,010h,05eh
+1324:     -	1EFD  D56041E4		db	0d5h,060h,041h,0e4h
+1325:     -	1F01  A2677172		db	0a2h,067h,071h,072h
+1326:     -	1F05  3C03E4D1		db	03ch,003h,0e4h,0d1h
+1327:     -	1F09  4B04D447		db	04bh,004h,0d4h,047h
+1328:     -	1F0D  D20D85FD		db	0d2h,00dh,085h,0fdh
+1329:     -	1F11  A50AB56B		db	0a5h,00ah,0b5h,06bh
+1330:     -	1F15  35B5A8FA		db	035h,0b5h,0a8h,0fah
+1331:     -	1F19  42B2986C		db	042h,0b2h,098h,06ch
+1332:     -	1F1D  DBBBC9D6		db	0dbh,0bbh,0c9h,0d6h
+1333:     -	1F21  ACBCF940		db	0ach,0bch,0f9h,040h
+1334:     -	1F25  32D86CE3		db	032h,0d8h,06ch,0e3h
+1335:     -	1F29  45DF5C75		db	045h,0dfh,05ch,075h
+1336:     -	1F2D  DCD60DCF		db	0dch,0d6h,00dh,0cfh
+1337:     -	1F31  ABD13D59		db	0abh,0d1h,03dh,059h
+1338:     -	1F35  26D930AC		db	026h,0d9h,030h,0ach
+1339:     -	1F39  51DE003A		db	051h,0deh,000h,03ah
+1340:     -	1F3D  C8D75180		db	0c8h,0d7h,051h,080h
+1341:     -	1F41  BFD06116		db	0bfh,0d0h,061h,016h
+1342:     -	1F45  21B4F4B5		db	021h,0b4h,0f4h,0b5h
+1343:     -	1F49  56B3C423		db	056h,0b3h,0c4h,023h
+1344:     -	1F4D  CFBA9599		db	0cfh,0bah,095h,099h
+1345:     -	1F51  B8BDA50F		db	0b8h,0bdh,0a5h,00fh
+1346:     -	1F55  2802B89E		db	028h,002h,0b8h,09eh
+1347:     -	1F59  5F058808		db	05fh,005h,088h,008h
+1348:     -	1F5D  C60CD9B2		db	0c6h,00ch,0d9h,0b2h
+1349:     -	1F61  B10BE924		db	0b1h,00bh,0e9h,024h
+1350:     -	1F65  2F6F7C87		db	02fh,06fh,07ch,087h
+1351:     -	1F69  58684C11		db	058h,068h,04ch,011h
+1352:     -	1F6D  C1611DAB		db	0c1h,061h,01dh,0abh
+1353:     -	1F71  B6662D3D		db	0b6h,066h,02dh,03dh
+1354:     -	1F75  76DC4190		db	076h,0dch,041h,090h
+1355:     -	1F79  01DB7106		db	001h,0dbh,071h,006h
+1356:     -	1F7D  98D220BC		db	098h,0d2h,020h,0bch
+1357:     -	1F81  EFD5102A		db	0efh,0d5h,010h,02ah
+1358:     -	1F85  71B18589		db	071h,0b1h,085h,089h
+1359:     -	1F89  06B6B51F		db	006h,0b6h,0b5h,01fh
+1360:     -	1F8D  9FBFE4A5		db	09fh,0bfh,0e4h,0a5h
+1361:     -	1F91  E8B8D433		db	0e8h,0b8h,0d4h,033h
+1362:     -	1F95  7807C9A2		db	078h,007h,0c9h,0a2h
+1363:     -	1F99  0F00F934		db	00fh,000h,0f9h,034h
+1364:     -	1F9D  9609A88E		db	096h,009h,0a8h,08eh
+1365:     -	1FA1  E10E9818		db	0e1h,00eh,098h,018h
+1366:     -	1FA5  7F6A0DBB		db	07fh,06ah,00dh,0bbh
+1367:     -	1FA9  086D3D2D		db	008h,06dh,03dh,02dh
+1368:     -	1FAD  91646C97		db	091h,064h,06ch,097h
+1369:     -	1FB1  E6635C01		db	0e6h,063h,05ch,001h
+1370:     -	1FB5  6B6B51F4		db	06bh,06bh,051h,0f4h
+1371:     -	1FB9  1C6C6162		db	01ch,06ch,061h,062h
+1372:     -	1FBD  856530D8		db	085h,065h,030h,0d8h
+1373:     -	1FC1  F262004E		db	0f2h,062h,000h,04eh
+1374:     -	1FC5  6C0695ED		db	06ch,006h,095h,0edh
+1375:     -	1FC9  1B01A57B		db	01bh,001h,0a5h,07bh
+1376:     -	1FCD  8208F4C1		db	082h,008h,0f4h,0c1h
+1377:     -	1FD1  F50FC457		db	0f5h,00fh,0c4h,057h
+1378:     -	1FD5  65B0D9C6		db	065h,0b0h,0d9h,0c6h
+1379:     -	1FD9  12B7E950		db	012h,0b7h,0e9h,050h
+1380:     -	1FDD  8BBEB8EA		db	08bh,0beh,0b8h,0eah
+1381:     -	1FE1  FCB9887C		db	0fch,0b9h,088h,07ch
+1382:     -	1FE5  62DD1DDF		db	062h,0ddh,01dh,0dfh
+1383:     -	1FE9  15DA2D49		db	015h,0dah,02dh,049h
+1384:     -	1FED  8CD37CF3		db	08ch,0d3h,07ch,0f3h
+1385:     -	1FF1  FBD44C65		db	0fbh,0d4h,04ch,065h
+1386:     -	1FF5  4DB26158		db	04dh,0b2h,061h,058h
+1387:     -	1FF9  3AB551CE		db	03ah,0b5h,051h,0ceh
+1388:     -	1FFD  A3BC0074		db	0a3h,0bch,000h,074h
+1389:     -	2001  D4BB30E2		db	0d4h,0bbh,030h,0e2h
+1390:     -	2005  4ADFA541		db	04ah,0dfh,0a5h,041h
+1391:     -	2009  3DD895D7		db	03dh,0d8h,095h,0d7h
+1392:     -	200D  A4D1C46D		db	0a4h,0d1h,0c4h,06dh
+1393:     -	2011  D3D6F4FB		db	0d3h,0d6h,0f4h,0fbh
+1394:     -	2015  4369E96A		db	043h,069h,0e9h,06ah
+1395:     -	2019  346ED9FC		db	034h,06eh,0d9h,0fch
+1396:     -	201D  AD678846		db	0adh,067h,088h,046h
+1397:     -	2021  DA60B8D0		db	0dah,060h,0b8h,0d0h
+1398:     -	2025  44042D73		db	044h,004h,02dh,073h
+1399:     -	2029  33031DE5		db	033h,003h,01dh,0e5h
+1400:     -	202D  AA0A4C5F		db	0aah,00ah,04ch,05fh
+1401:     -	2031  DD0D7CC9		db	0ddh,00dh,07ch,0c9h
+1402:     -	2035  5005713C		db	050h,005h,071h,03ch
+1403:     -	2039  270241AA		db	027h,002h,041h,0aah
+1404:     -	203D  BE0B1010		db	0beh,00bh,010h,010h
+1405:     -	2041  C90C2086		db	0c9h,00ch,020h,086h
+1406:     -	2045  5768B525		db	057h,068h,0b5h,025h
+1407:     -	2049  206F85B3		db	020h,06fh,085h,0b3h
+1408:     -	204D  B966D409		db	0b9h,066h,0d4h,009h
+1409:     -	2051  CE61E49F		db	0ceh,061h,0e4h,09fh
+1410:     -	2055  5EDEF90E		db	05eh,0deh,0f9h,00eh
+1411:     -	2059  29D9C998		db	029h,0d9h,0c9h,098h
+1412:     -	205D  B0D09822		db	0b0h,0d0h,098h,022h
+1413:     -	2061  C7D7A8B4		db	0c7h,0d7h,0a8h,0b4h
+1414:     -	2065  59B33D17		db	059h,0b3h,03dh,017h
+1415:     -	2069  2EB40D81		db	02eh,0b4h,00dh,081h
+1416:     -	206D  B7BD5C3B		db	0b7h,0bdh,05ch,03bh
+1417:     -	2071  C0BA6CAD		db	0c0h,0bah,06ch,0adh
+1418:     -	2075  EDB88320		db	0edh,0b8h,083h,020h
+1419:     -	2079  9ABFB3B6		db	09ah,0bfh,0b3h,0b6h
+1420:     -	207D  03B6E20C		db	003h,0b6h,0e2h,00ch
+1421:     -	2081  74B1D29A		db	074h,0b1h,0d2h,09ah
+1422:     -	2085  EAD54739		db	0eah,0d5h,047h,039h
+1423:     -	2089  9DD277AF		db	09dh,0d2h,077h,0afh
+1424:     -	208D  04DB2615		db	004h,0dbh,026h,015h
+1425:     -	2091  73DC1683		db	073h,0dch,016h,083h
+1426:     -	2095  E3630B12		db	0e3h,063h,00bh,012h
+1427:     -	2099  94643B84		db	094h,064h,03bh,084h
+1428:     -	209D  0D6D6A3E		db	00dh,06dh,06ah,03eh
+1429:     -	20A1  7A6A5AA8		db	07ah,06ah,05ah,0a8h
+1430:     -	20A5  E40ECF0B		db	0e4h,00eh,0cfh,00bh
+1431:     -	20A9  9309FF9D		db	093h,009h,0ffh,09dh
+1432:     -	20AD  0A00AE27		db	00ah,000h,0aeh,027h
+1433:     -	20B1  7D079EB1		db	07dh,007h,09eh,0b1h
+1434:     -	20B5  F00F9344		db	0f0h,00fh,093h,044h
+1435:     -	20B9  8708A3D2		db	087h,008h,0a3h,0d2h
+1436:     -	20BD  1E01F268		db	01eh,001h,0f2h,068h
+1437:     -	20C1  6906C2FE		db	069h,006h,0c2h,0feh
+1438:     -	20C5  F762575D		db	0f7h,062h,057h,05dh
+1439:     -	20C9  806567CB		db	080h,065h,067h,0cbh
+1440:     -	20CD  196C3671		db	019h,06ch,036h,071h
+1441:     -	20D1  6E6B06E7		db	06eh,06bh,006h,0e7h
+1442:     -	20D5  FED41B76		db	0feh,0d4h,01bh,076h
+1443:     -	20D9  89D32BE0		db	089h,0d3h,02bh,0e0h
+1444:     -	20DD  10DA7A5A		db	010h,0dah,07ah,05ah
+1445:     -	20E1  67DD4ACC		db	067h,0ddh,04ah,0cch
+1446:     -	20E5  F9B9DF6F		db	0f9h,0b9h,0dfh,06fh
+1447:     -	20E9  8EBEEFF9		db	08eh,0beh,0efh,0f9h
+1448:     -	20ED  17B7BE43		db	017h,0b7h,0beh,043h
+1449:     -	20F1  60B08ED5		db	060h,0b0h,08eh,0d5h
+1450:     -	20F5  D6D6A3E8		db	0d6h,0d6h,0a3h,0e8h
+1451:     -	20F9  A1D1937E		db	0a1h,0d1h,093h,07eh
+1452:     -	20FD  38D8C2C4		db	038h,0d8h,0c2h,0c4h
+1453:     -	2101  4FDFF252		db	04fh,0dfh,0f2h,052h
+1454:     -	2105  D1BB67F1		db	0d1h,0bbh,067h,0f1h
+1455:     -	2109  A6BC5767		db	0a6h,0bch,057h,067h
+1456:     -	210D  3FB506DD		db	03fh,0b5h,006h,0ddh
+1457:     -	2111  48B2364B		db	048h,0b2h,036h,04bh
+1458:     -	2115  D80D2BDA		db	0d8h,00dh,02bh,0dah
+1459:     -	2119  AF0A1B4C		db	0afh,00ah,01bh,04ch
+1460:     -	211D  36034AF6		db	036h,003h,04ah,0f6h
+1461:     -	2121  41047A60		db	041h,004h,07ah,060h
+1462:     -	2125  DF60EFC3		db	0dfh,060h,0efh,0c3h
+1463:     -	2129  A867DF55		db	0a8h,067h,0dfh,055h
+1464:     -	212D  316E8EEF		db	031h,06eh,08eh,0efh
+1465:     -	2131  4669BE79		db	046h,069h,0beh,079h
+1466:     -	2135  CB61B38C		db	0cbh,061h,0b3h,08ch
+1467:     -	2139  BC66831A		db	0bch,066h,083h,01ah
+1468:     -	213D  256FD2A0		db	025h,06fh,0d2h,0a0h
+1469:     -	2141  5268E236		db	052h,068h,0e2h,036h
+1470:     -	2145  CC0C7795		db	0cch,00ch,077h,095h
+1471:     -	2149  BB0B4703		db	0bbh,00bh,047h,003h
+1472:     -	214D  220216B9		db	022h,002h,016h,0b9h
+1473:     -	2151  5505262F		db	055h,005h,026h,02fh
+1474:     -	2155  C5BA3BBE		db	0c5h,0bah,03bh,0beh
+1475:     -	2159  B2BD0B28		db	0b2h,0bdh,00bh,028h
+1476:     -	215D  2BB45A92		db	02bh,0b4h,05ah,092h
+1477:     -	2161  5CB36A04		db	05ch,0b3h,06ah,004h
+1478:     -	2165  C2D7FFA7		db	0c2h,0d7h,0ffh,0a7h
+1479:     -	2169  B5D0CF31		db	0b5h,0d0h,0cfh,031h
+1480:     -	216D  2CD99E8B		db	02ch,0d9h,09eh,08bh
+1481:     -	2171  5BDEAE1D		db	05bh,0deh,0aeh,01dh
+1482:     -	2175  9B64C2B0		db	09bh,064h,0c2h,0b0h
+1483:     -	2179  EC63F226		db	0ech,063h,0f2h,026h
+1484:     -	217D  756AA39C		db	075h,06ah,0a3h,09ch
+1485:     -	2181  026D930A		db	002h,06dh,093h,00ah
+1486:     -	2185  9C0906A9		db	09ch,009h,006h,0a9h
+1487:     -	2189  EB0E363F		db	0ebh,00eh,036h,03fh
+1488:     -	218D  72076785		db	072h,007h,067h,085h
+1489:     -	2191  05005713		db	005h,000h,057h,013h
+1490:     -	2195  95BF4A82		db	095h,0bfh,04ah,082h
+1491:     -	2199  E2B87A14		db	0e2h,0b8h,07ah,014h
+1492:     -	219D  7BB12BAE		db	07bh,0b1h,02bh,0aeh
+1493:     -	21A1  0CB61B38		db	00ch,0b6h,01bh,038h
+1494:     -	21A5  92D28E9B		db	092h,0d2h,08eh,09bh
+1495:     -	21A9  E5D5BE0D		db	0e5h,0d5h,0beh,00dh
+1496:     -	21AD  7CDCEFB7		db	07ch,0dch,0efh,0b7h
+1497:     -	21B1  0BDBDF21		db	00bh,0dbh,0dfh,021h
+1498:     -	21B5  86D3D2D4		db	086h,0d3h,0d2h,0d4h
+1499:     -	21B9  F1D4E242		db	0f1h,0d4h,0e2h,042h
+1500:     -	21BD  68DDB3F8		db	068h,0ddh,0b3h,0f8h
+1501:     -	21C1  1FDA836E		db	01fh,0dah,083h,06eh
+1502:     -	21C5  81BE16CD		db	081h,0beh,016h,0cdh
+1503:     -	21C9  F6B9265B		db	0f6h,0b9h,026h,05bh
+1504:     -	21CD  6FB077E1		db	06fh,0b0h,077h,0e1h
+1505:     -	21D1  18B74777		db	018h,0b7h,047h,077h
+1506:     -	21D5  88085AE6		db	088h,008h,05ah,0e6h
+1507:     -	21D9  FF0F6A70		db	0ffh,00fh,06ah,070h
+1508:     -	21DD  66063BCA		db	066h,006h,03bh,0cah
+1509:     -	21E1  11010B5C		db	011h,001h,00bh,05ch
+1510:     -	21E5  8F659EFF		db	08fh,065h,09eh,0ffh
+1511:     -	21E9  F862AE69		db	0f8h,062h,0aeh,069h
+1512:     -	21ED  616BFFD3		db	061h,06bh,0ffh,0d3h
+1513:     -	21F1  166CCF45		db	016h,06ch,0cfh,045h
+1514:     -	21F5  A00AE278		db	0a0h,00ah,0e2h,078h
+1515:     -	21F9  D70DD2EE		db	0d7h,00dh,0d2h,0eeh
+1516:     -	21FD  4E048354		db	04eh,004h,083h,054h
+1517:     -	2201  3903B3C2		db	039h,003h,0b3h,0c2h
+1518:     -	2205  A7672661		db	0a7h,067h,026h,061h
+1519:     -	2209  D06016F7		db	0d0h,060h,016h,0f7h
+1520:     -	220D  4969474D		db	049h,069h,047h,04dh
+1521:     -	2211  3E6E77DB		db	03eh,06eh,077h,0dbh
+1522:     -	2215  AED16A4A		db	0aeh,0d1h,06ah,04ah
+1523:     -	2219  D9D65ADC		db	0d9h,0d6h,05ah,0dch
+1524:     -	221D  40DF0B66		db	040h,0dfh,00bh,066h
+1525:     -	2221  37D83BF0		db	037h,0d8h,03bh,0f0h
+1526:     -	2225  A9BCAE53		db	0a9h,0bch,0aeh,053h
+1527:     -	2229  DEBB9EC5		db	0deh,0bbh,09eh,0c5h
+1528:     -	222D  47B2CF7F		db	047h,0b2h,0cfh,07fh
+1529:     -	2231  30B5FFE9		db	030h,0b5h,0ffh,0e9h
+1530:     -	2235  BDBDF21C		db	0bdh,0bdh,0f2h,01ch
+1531:     -	2239  CABAC28A		db	0cah,0bah,0c2h,08ah
+1532:     -	223D  53B39330		db	053h,0b3h,093h,030h
+1533:     -	2241  24B4A3A6		db	024h,0b4h,0a3h,0a6h
+1534:     -	2245  BAD03605		db	0bah,0d0h,036h,005h
+1535:     -	2249  CDD70693		db	0cdh,0d7h,006h,093h
+1536:     -	224D  54DE5729		db	054h,0deh,057h,029h
+1537:     -	2251  23D967BF		db	023h,0d9h,067h,0bfh
+1538:     -	2255  B3667A2E		db	0b3h,066h,07ah,02eh
+1539:     -	2259  C4614AB8		db	0c4h,061h,04ah,0b8h
+1540:     -	225D  5D681B02		db	05dh,068h,01bh,002h
+1541:     -	2261  2A6F2B94		db	02ah,06fh,02bh,094h
+1542:     -	2265  B40BBE37		db	0b4h,00bh,0beh,037h
+1543:     -	2269  C30C8EA1		db	0c3h,00ch,08eh,0a1h
+1544:     -	226D  5A05DF1B		db	05ah,005h,0dfh,01bh
+1545:     -	2271  2D02EF8D		db	02dh,002h,0efh,08dh
+1546:				
+
+
+
+Statistics:
+
+     4	passes
+     0	jr promotions
+   408	symbols
+  8437	bytes
+
+   268	macro calls
+   260	macro bytes
+  1072	invented symbols
+
+
+
+Symbol Table:
+
+?b0003           201     
+?b0007           261     
+?b0011           2c1     
+?b0015           321     
+?b0019           381     
+?b0023           3e1     
+?b0027           441     
+?b0031           4a1     
+?b0035           501     
+?b0039           561     
+?b0043           5c1     
+?b0047           621     
+?b0051           681     
+?b0055           6e1     
+?b0059           741     
+?b0063           7a1     
+?b0067           801     
+?b0071           861     
+?b0075           8c1     
+?b0079           921     
+?b0083           981     
+?b0087           9e1     
+?b0091           a41     
+?b0095           aa1     
+?b0099           b01     
+?b0103           b61     
+?b0107           bc1     
+?b0111           c21     
+?b0115           c81     
+?b0119           ce1     
+?b0123           d41     
+?b0127           da1     
+?b0131           e01     
+?b0135           e61     
+?b0139           ec1     
+?b0143           f21     
+?b0147           f81     
+?b0151           fe1     
+?b0155          1041     
+?b0159          10a1     
+?b0163          1101     
+?b0167          1161     
+?b0171          11c1     
+?b0175          1221     
+?b0179          1281     
+?b0183          12e1     
+?b0187          1341     
+?b0191          13a1     
+?b0195          1401     
+?b0199          1461     
+?b0203          14c1     
+?b0207          1521     
+?b0211          1581     
+?b0215          15e1     
+?b0219          1641     
+?b0223          16a1     
+?b0227          1701     
+?b0231          1761     
+?b0235          17c1     
+?b0239          1821     
+?b0243          1881     
+?b0247          18e1     
+?b0251          1941     
+?b0255          19a1     
+?b0259          1a01     
+?b0263          1a61     
+?b0267          1ac1     
+?n0000           1c1     
+?n0001           1d5     
+?n0002           1e9     
+?n0004           221     
+?n0005           235     
+?n0006           249     
+?n0008           281     
+?n0009           295     
+?n0010           2a9     
+?n0012           2e1     
+?n0013           2f5     
+?n0014           309     
+?n0016           341     
+?n0017           355     
+?n0018           369     
+?n0020           3a1     
+?n0021           3b5     
+?n0022           3c9     
+?n0024           401     
+?n0025           415     
+?n0026           429     
+?n0028           461     
+?n0029           475     
+?n0030           489     
+?n0032           4c1     
+?n0033           4d5     
+?n0034           4e9     
+?n0036           521     
+?n0037           535     
+?n0038           549     
+?n0040           581     
+?n0041           595     
+?n0042           5a9     
+?n0044           5e1     
+?n0045           5f5     
+?n0046           609     
+?n0048           641     
+?n0049           655     
+?n0050           669     
+?n0052           6a1     
+?n0053           6b5     
+?n0054           6c9     
+?n0056           701     
+?n0057           715     
+?n0058           729     
+?n0060           761     
+?n0061           775     
+?n0062           789     
+?n0064           7c1     
+?n0065           7d5     
+?n0066           7e9     
+?n0068           821     
+?n0069           835     
+?n0070           849     
+?n0072           881     
+?n0073           895     
+?n0074           8a9     
+?n0076           8e1     
+?n0077           8f5     
+?n0078           909     
+?n0080           941     
+?n0081           955     
+?n0082           969     
+?n0084           9a1     
+?n0085           9b5     
+?n0086           9c9     
+?n0088           a01     
+?n0089           a15     
+?n0090           a29     
+?n0092           a61     
+?n0093           a75     
+?n0094           a89     
+?n0096           ac1     
+?n0097           ad5     
+?n0098           ae9     
+?n0100           b21     
+?n0101           b35     
+?n0102           b49     
+?n0104           b81     
+?n0105           b95     
+?n0106           ba9     
+?n0108           be1     
+?n0109           bf5     
+?n0110           c09     
+?n0112           c41     
+?n0113           c55     
+?n0114           c69     
+?n0116           ca1     
+?n0117           cb5     
+?n0118           cc9     
+?n0120           d01     
+?n0121           d15     
+?n0122           d29     
+?n0124           d61     
+?n0125           d75     
+?n0126           d89     
+?n0128           dc1     
+?n0129           dd5     
+?n0130           de9     
+?n0132           e21     
+?n0133           e35     
+?n0134           e49     
+?n0136           e81     
+?n0137           e95     
+?n0138           ea9     
+?n0140           ee1     
+?n0141           ef5     
+?n0142           f09     
+?n0144           f41     
+?n0145           f55     
+?n0146           f69     
+?n0148           fa1     
+?n0149           fb5     
+?n0150           fc9     
+?n0152          1001     
+?n0153          1015     
+?n0154          1029     
+?n0156          1061     
+?n0157          1075     
+?n0158          1089     
+?n0160          10c1     
+?n0161          10d5     
+?n0162          10e9     
+?n0164          1121     
+?n0165          1135     
+?n0166          1149     
+?n0168          1181     
+?n0169          1195     
+?n0170          11a9     
+?n0172          11e1     
+?n0173          11f5     
+?n0174          1209     
+?n0176          1241     
+?n0177          1255     
+?n0178          1269     
+?n0180          12a1     
+?n0181          12b5     
+?n0182          12c9     
+?n0184          1301     
+?n0185          1315     
+?n0186          1329     
+?n0188          1361     
+?n0189          1375     
+?n0190          1389     
+?n0192          13c1     
+?n0193          13d5     
+?n0194          13e9     
+?n0196          1421     
+?n0197          1435     
+?n0198          1449     
+?n0200          1481     
+?n0201          1495     
+?n0202          14a9     
+?n0204          14e1     
+?n0205          14f5     
+?n0206          1509     
+?n0208          1541     
+?n0209          1555     
+?n0210          1569     
+?n0212          15a1     
+?n0213          15b5     
+?n0214          15c9     
+?n0216          1601     
+?n0217          1615     
+?n0218          1629     
+?n0220          1661     
+?n0221          1675     
+?n0222          1689     
+?n0224          16c1     
+?n0225          16d5     
+?n0226          16e9     
+?n0228          1721     
+?n0229          1735     
+?n0230          1749     
+?n0232          1781     
+?n0233          1795     
+?n0234          17a9     
+?n0236          17e1     
+?n0237          17f5     
+?n0238          1809     
+?n0240          1841     
+?n0241          1855     
+?n0242          1869     
+?n0244          18a1     
+?n0245          18b5     
+?n0246          18c9     
+?n0248          1901     
+?n0249          1915     
+?n0250          1929     
+?n0252          1961     
+?n0253          1975     
+?n0254          1989     
+?n0256          19c1     
+?n0257          19d5     
+?n0258          19e9     
+?n0260          1a21     
+?n0261          1a35     
+?n0262          1a49     
+?n0264          1a81     
+?n0265          1a95     
+?n0266          1aa9     
+adc16            1c0     
+add16            220     
+add16x           280     
+add16y           2e0     
+alu8i            340     
+alu8r            3a0     
+alu8rx           400     
+alu8x            460     
+bdos            1db8     
+bitx             4c0     
+bitz80           520     
+cce             1e31     
+cclp            1e26     
+clrmem          1c36     
+cmpcrc          1e1e     
+cntbit          1bee     
+cntbyt          1bef     
+cntend          1ca2     
+cntlp           1c93     
+cntlp1          1ca6     
+count           1c87     
+counter         1cd8     
+cpd1             580     
+cpi1             5e0     
+crclp           1e4e     
+crctab          1e75     
+crcval          1e71     
+crlf            1df1     
+daaop            640     
+done             12f     
+ermsg1          1dfb     
+ermsg2          1e16     
+flgmsk          1d62     
+flgsat         =1d87     
+hexstr          1d8d     
+icrclp          1e67     
+imlp            1c56     
+imlp1           1c57     
+imlp2           1c5d     
+imlp3           1c7a     
+inca             6a0     
+incb             700     
+incbc            760     
+incc             7c0     
+incd             820     
+incde            880     
+ince             8e0     
+inch             940     
+inchl            9a0     
+incix            a00     
+inciy            a60     
+incl             ac0     
+incm             b20     
+incsp            b80     
+incx             be0     
+incxh            c40     
+incxl            ca0     
+incyh            d00     
+incyl            d60     
+initcrc         1e5d     
+initmask        1c47     
+iut             1d40     
+ld161            dc0     
+ld162            e20     
+ld163            e80     
+ld164            ee0     
+ld165            f40     
+ld166            fa0     
+ld167           1000     
+ld168           1060     
+ld16im          10c0     
+ld16ix          1120     
+ld8bd           1180     
+ld8im           11e0     
+ld8imx          1240     
+ld8ix1          12a0     
+ld8ix2          1300     
+ld8ix3          1360     
+ld8ixy          13c0     
+ld8rr           1420     
+ld8rrx          1480     
+lda             14e0     
+ldd1            1540     
+ldd2            15a0     
+ldi1            1600     
+ldi2            1660     
+loop             122     
+msat            1d7b     
+msbt             103     
+msbthi         =   1     
+msbtlo         =   3     
+msg1            1dc4     
+msg2            1de3     
+ncb1            1c0a     
+negop           16c0     
+nsb1            1c2e     
+nxtcbit         1bf1     
+nxtsbit         1c15     
+okmsg           1df4     
+ph8lp           1d9c     
+phex2           1da9     
+phex8           1d97     
+rldop           1720     
+rot8080         1780     
+rotxy           17e0     
+rotz80          1840     
+sbshf1          1bd8     
+setup           1ba2     
+shfbit          1c12     
+shfbyt          1c13     
+shflp           1cb7     
+shflp1          1cd3     
+shflp2          1ccd     
+shift           1cab     
+shifter         1d00     
+shlpe           1ccf     
+spat            1d89     
+spbt             111     
+spsav           1d8b     
+srz80           18a0     
+srzx            1900     
+st8ix1          1960     
+st8ix2          19c0     
+st8ix3          1a20     
+stabd           1a80     
+start            113     
+stt             1ae0     
+subclp          1bbb     
+subshf          1bcc     
+substr          1be7     
+subyte          1bab     
+tcrc            1d6d     
+test            1d28     
+tests            138     
+tlp             1b25     
+tlp1            1b39     
+tlp2            1b3c     
+tlp3            1b78     
+tlpok           1b6f     
+updcrc          1e35     

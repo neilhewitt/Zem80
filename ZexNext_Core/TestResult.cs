@@ -2,6 +2,7 @@
 {
     public class TestResult
     {
+        public TestCycle TestCycle { get; private set; }
         public string TestName { get; private set; }
         public string Mnemonic { get; private set; }
         public bool Passed { get; private set; }
@@ -14,8 +15,9 @@
             return (Passed ? "PASSED " : "FAILED") + "\nInitial state: " + InitialState.ToString() + "\nExpected state: " + ExpectedState.ToString() + "\nActual state: " + ActualState.ToString();
         }
 
-        public TestResult(string testName, string mnemonic, bool passed, TestState initial, TestState expected, TestState actual)
+        public TestResult(TestCycle testCycle, string testName, string mnemonic, bool passed, TestState initial, TestState expected, TestState actual)
         {
+            TestCycle = testCycle;
             TestName = testName;
             Mnemonic = mnemonic;
             Passed = passed;

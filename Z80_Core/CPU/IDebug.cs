@@ -10,6 +10,8 @@ namespace Z80.Core
         event EventHandler BeforeStart;
         event EventHandler OnStop;
         event EventHandler<HaltReason> OnHalt;
+        event EventHandler<int> OnBeforeInsertWaitCycles;
+
         ExecutionResult Execute(byte[] opcode);
         ExecutionResult Execute(ExecutionPackage package);
     }
