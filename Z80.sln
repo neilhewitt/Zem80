@@ -12,6 +12,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{AF7F2F10-6617-4C54-909E-E7AF063B6F26}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZexNext_Core", "ZexNext_Core\ZexNext_Core.csproj", "{656736CB-686B-4C84-A703-4D18991719CE}"
@@ -24,7 +25,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrumApp", "ZXSpectrum
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zexlax", "Zexlax\Zexlax.csproj", "{51D6EE62-458F-4657-AB56-3629BCAAE8E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZXSpectrumConsole", "ZXSpectrumConsole\ZXSpectrumConsole.csproj", "{D63BD513-BC85-4700-9FE0-2E46127AD813}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrumConsole", "ZXSpectrumConsole\ZXSpectrumConsole.csproj", "{D63BD513-BC85-4700-9FE0-2E46127AD813}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
