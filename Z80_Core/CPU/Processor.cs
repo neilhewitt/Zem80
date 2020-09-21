@@ -457,7 +457,7 @@ namespace Z80.Core
             IO.EndNMIState();
         }
 
-        private ExecutionPackage DecodeInterrupt()
+        private ExecutionPackage DecodeIM0Interrupt()
         {
             // In IM0, when an interrupt is generated, the CPU will ask the device
             // to send one to four bytes which are decoded into an instruction, which will then be executed.
@@ -500,7 +500,7 @@ namespace Z80.Core
                 {
                     case InterruptMode.IM0: // read instruction data from data bus in 1-4 opcode fetch cycles and execute resulting instruction - flags are set but PC is unaffected
                         Timing.BeginInterruptRequestAcknowledgeCycle(IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
-                        ExecutionPackage package = DecodeInterrupt();
+                        ExecutionPackage package = DecodeIM0Interrupt();
                         ushort pc = Registers.PC;
                         Execute(package);
                         Registers.PC = pc;

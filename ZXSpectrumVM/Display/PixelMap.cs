@@ -4,7 +4,7 @@
     {
         private bool[,] _pixels;
 
-        public bool this[int row, int column] { get { return _pixels[row, column]; } set { _pixels[row, column] = value; } }
+        public bool this[int y, int x] { get { return _pixels[y, x]; } set { _pixels[y, x] = value; } }
         
         public PixelMap(int height, int width)
         {

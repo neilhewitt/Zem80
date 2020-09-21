@@ -29,49 +29,41 @@ namespace Z80.ZXSpectrumApp
         private static object _updateLock = new object();
 
         private Spectrum48K _vm;
-        private CodeWindow _code;
         private bool _displaySource = true;
-        private BindingList<string> _asm;
+        private bool _isClosing = false;
 
         public MainWindow()
         {
             InitializeComponent();
             _vm = new Spectrum48K();
             _vm.OnUpdateDisplay += UpdateDisplay;
-            //_vm.OnAfterExecuteInstruction += _vm_OnAfterExecuteInstruction;
-
-            //_code = new CodeWindow();
-           // _code.Show();
-
-            //_asm = new BindingList<string>();
-            //_code.AssemblyListing.ItemsSource = _asm;
-            
             _vm.Start();
-        }
-
-        private void _vm_OnAfterExecuteInstruction(object sender, (string mnemonic, string status) e)
-        {
-            lock (_updateLock)
-            {
-                _code.Dispatcher.Invoke(() =>
-                {
-                    _asm.Add(e.mnemonic);
-                    if (_asm.Count > 20) _asm.RemoveAt(0);
-                });
-                Thread.Sleep(0);
-            }
         }
 
         public void UpdateDisplay(object sender, byte[] rgba)
         {
-            lock (_updateLock)
+            if (!_isClosing)
             {
-                Dispatcher.Invoke(() =>
+                lock (_updateLock)
                 {
-                    var bitmap = BitmapFactory.New(256, 192).FromByteArray(rgba);
-                    DisplaySurface.Source = bitmap;
-                });
+                    if (!_isClosing)
+                    {
+                        Dispatcher.InvokeAsync(() =>
+                        {
+                            var bitmap = BitmapFactory.New(320, 256).FromByteArray(rgba);
+                            DisplaySurface.Stretch = Stretch.Fill;
+                            DisplaySurface.Source = bitmap;
+                        });
+                    }
+                }
             }
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            _isClosing = true;
+            _vm.Stop();
+            base.OnClosing(e);
         }
 
         private void Toggle_Click(object sender, RoutedEventArgs e)

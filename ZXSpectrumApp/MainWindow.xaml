@@ -6,8 +6,8 @@
         xmlns:local="clr-namespace:Z80.ZXSpectrumApp"
         mc:Ignorable="d"
         x:Name="Main"
-        Title="ZX Spectrum 48K Test UI" Height="386" Width="512">
-    <Grid>
-        <Image x:Name="DisplaySurface" Height="386" Width="512" Stretch="Fill" Visibility="Visible" />
+        Title="ZX Spectrum 48K Test UI" Height="600" Width="800">
+    <Grid RenderOptions.BitmapScalingMode="HighQuality">
+        <Image x:Name="DisplaySurface" Margin ="10" Stretch="Fill" Visibility="Visible" />
     </Grid>
 </Window>

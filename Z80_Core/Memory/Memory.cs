@@ -67,9 +67,22 @@ namespace Z80.Core
 
         public void WriteBytesAt(ushort address, byte[] bytes, bool noTiming)
         {
-            for (ushort i = 0; i < bytes.Length; i++)
+            if (!noTiming)
             {
-                WriteByteAt((ushort)(address + i), bytes[i], noTiming);
+                for (ushort i = 0; i < bytes.Length; i++)
+                {
+                    WriteByteAt((ushort)(address + i), bytes[i], false);
+                }
+            }
+            else
+            {
+                if (!_initialised) throw new MemoryException();
+                IMemorySegment segment = _map.MemoryFor(address);
+                if (segment == null || segment.ReadOnly)
+                {
+                    throw new MemoryNotPresentException("Readonly or unmapped");
+                }
+                segment.WriteBytesAt((ushort)(address - segment.StartAddress), bytes);
             }
         }
 

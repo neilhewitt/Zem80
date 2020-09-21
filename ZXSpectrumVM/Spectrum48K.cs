@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Z80.Core;
@@ -17,17 +18,21 @@ namespace Z80.ZXSpectrumVM
         private int _ticksSinceLastDisplayUpdate;
         private int _displayUpdatesSinceLastFlash;
         private ScreenMap _screen;
-
+        private IDictionary<int, ushort> _screenLineAddresses;
         private IDictionary<int, int> _displayWaits = new Dictionary<int, int>();
 
         public event EventHandler<byte[]> OnUpdateDisplay;
-        public event EventHandler<(string, string)> OnAfterExecuteInstruction;
 
         public Processor CPU => _cpu;
 
         public void Start()
         {
             _cpu.Start(timingMode: TimingMode.FastAndFurious);
+        }
+
+        public void Stop()
+        {
+            _cpu.Stop();
         }
 
         private void _cpu_OnClockTick(object sender, ExecutionPackage e)
@@ -43,8 +48,14 @@ namespace Z80.ZXSpectrumVM
             if (_ticksSinceLastDisplayUpdate > TICKS_BETWEEN_FRAMES)
             {
                 UpdateDisplay();
+                MaskableInterrupt();
                 _ticksSinceLastDisplayUpdate = 0;
             }
+        }
+
+        private void MaskableInterrupt()
+        {
+            _cpu.RaiseInterrupt();
         }
 
         private void UpdateDisplay()
@@ -58,24 +69,19 @@ namespace Z80.ZXSpectrumVM
             byte[] pixelBuffer = _cpu.Memory.ReadBytesAt(0x4000, 6144, true);
             byte[] attributeBuffer = _cpu.Memory.ReadBytesAt(0x5800, 768, true);
 
-            int columnCounter = 0, rowCounter = 0;
-            foreach (byte column in pixelBuffer)
+            // 256 * 192
+            for (byte y = 0; y < 192; y++)
             {
-                for (int i = 0; i < 8; i++)
+                ushort address = _screenLineAddresses[y]; // base address for this screen line
+                for (byte x = 0; x < 32; x++)
                 {
-                    _screen.PixelMap[rowCounter, columnCounter] = column.GetBit(i);
-                }
-
-                columnCounter++;
-                if (columnCounter == 32)
-                {
-                    columnCounter = 0;
-                    rowCounter++;
+                    byte pixels = pixelBuffer[address + x];
+                    _screen.SetPixels(y, x * 8, pixels);
                 }
             }
 
-            columnCounter = 0;
-            rowCounter = 0;
+            int columnCounter = 0;
+            int rowCounter = 0;
             foreach (byte attribute in attributeBuffer)
             {
                 // 32 x 24
@@ -99,40 +105,10 @@ namespace Z80.ZXSpectrumVM
             if (_displayUpdatesSinceLastFlash > FLASH_FRAME_RATE) _displayUpdatesSinceLastFlash = 0;
         }
 
-        private void _cpu_AfterInstruction(object sender, ExecutionResult e)
-        {
-            string mnemonic = e.Instruction.Mnemonic;
-            if (mnemonic.Contains("nn")) mnemonic = mnemonic.Replace("nn", "0x" + e.Data.ArgumentsAsWord.ToString("X4"));
-            else if (mnemonic.Contains("n")) mnemonic = mnemonic.Replace("n", "0x" + e.Data.Argument1.ToString("X2"));
-            if (mnemonic.Contains("o")) mnemonic = mnemonic.Replace("o", "0x" + e.Data.Argument1.ToString("X2"));
-            string output = e.InstructionAddress.ToString("X4") + ": " + mnemonic;
-
-            string values = regValue(ByteRegister.A) + wregValue(WordRegister.BC) + wregValue(WordRegister.DE) + wregValue(WordRegister.HL) + wregValue(WordRegister.SP) + wregValue(WordRegister.PC);
-            values = values.TrimEnd(' ', '\n');
-
-            OnAfterExecuteInstruction?.Invoke(this, (output, values));
-
-            string regValue(ByteRegister r)
-            {
-                byte value = _cpu.Registers[r];
-                return r.ToString() + ": 0x" + value.ToString("X2") + "\n";
-            }
-
-            string wregValue(WordRegister r)
-            {
-                ushort value = _cpu.Registers[r];
-                return r.ToString() + ": 0x" + value.ToString("X4") + "\n";
-            }
-        }
-
-        private void _cpu_OnBeforeInsertWaitCycles(object sender, int e)
-        {
-        }
-
         private byte ReadPort()
         {
             ushort portAddress = _cpu.IO.ADDRESS_BUS;
-            return 0xFF;
+            return 0xFF; // no keyboard input yet!
         }
 
         private void WritePort(byte output)
@@ -169,12 +145,12 @@ namespace Z80.ZXSpectrumVM
 
         public Spectrum48K()
         {
-            _screen = new ScreenMap(192, 256, 8, 8);
+            _screen = new ScreenMap(192, 256, 32, 8, 8);
             FillDisplayWaits();
 
             // set up the memory map - 16K ROM + 48K RAM = 64K
             IMemoryMap map = new MemoryMap(65536, false);
-            map.Map(new ReadOnlyMemorySegment(0, File.ReadAllBytes("rom\\48.bin")));
+            map.Map(new ReadOnlyMemorySegment(0, File.ReadAllBytes("rom\\48k.rom")));
             map.Map(new MemorySegment(16384, 49152));
 
             _cpu = Bootstrapper.BuildCPU(map: map, speedInMHz: 3.5);
@@ -188,9 +164,24 @@ namespace Z80.ZXSpectrumVM
             }
 
             _cpu.OnClockTick += _cpu_OnClockTick;
-            _cpu.Debug.OnBeforeInsertWaitCycles += _cpu_OnBeforeInsertWaitCycles;
-            _cpu.Debug.AfterExecute += _cpu_AfterInstruction;
             _ticksSinceLastDisplayUpdate = TICKS_BETWEEN_FRAMES; // trigger initial display buffer fill
+
+            // screen pixel layout is not linear in memory - it's done in thirds
+            // this pre-calculates the address index of each screen line
+            _screenLineAddresses = new Dictionary<int, ushort>();
+            for (byte y = 0; y < 192; y++)
+            {
+                ushort address = 0x0000;
+                address = address.SetBit(8, y.GetBit(0));
+                address = address.SetBit(9, y.GetBit(1));
+                address = address.SetBit(10, y.GetBit(2));
+                address = address.SetBit(5, y.GetBit(3));
+                address = address.SetBit(6, y.GetBit(4));
+                address = address.SetBit(7, y.GetBit(5));
+                address = address.SetBit(11, y.GetBit(6));
+                address = address.SetBit(12, y.GetBit(7));
+                _screenLineAddresses.Add(y, address);
+            }
         }
     }
 }
