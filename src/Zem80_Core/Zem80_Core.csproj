@@ -5,10 +5,23 @@
     <AssemblyName>Zem80.Core</AssemblyName>
     <RootNamespace>Zem80.Core</RootNamespace>
     <Platforms>AnyCPU;x64</Platforms>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Neil Hewitt</Authors>
+    <Company>Radius Zero</Company>
+    <Product>Zem80</Product>
+    <Copyright>Copyright 2020 Neil Hewitt</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Package\" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy $(ProjectDir)\bin\Debug\*.nupkg $(ProjectDir)\Package" />
+  </Target>
 
 </Project>
