@@ -1,0 +1,44 @@
+﻿namespace Zem80.Core.Instructions
+{
+    // DO NOT RE-ORDER OR INSERT / REMOVE VALUES - order and ordinal values are relied upon in the code for performance reasons
+    public enum InstructionElement
+    {
+        None,
+        ByteValue,
+        DisplacementValue,
+        WordValue,
+        PortNumberFromByteValue,
+        PortNumberFromC,
+        BitIndex,
+        A,
+        B,
+        C,
+        D,
+        E,
+        F,
+        H,
+        L,
+        I,
+        R,
+        IXh,
+        IXl,
+        IYh,
+        IYl,
+        AF,
+        HL,
+        BC,
+        DE,
+        IX,
+        IY,
+        SP,
+        AddressFromHL,
+        AddressFromBC,
+        AddressFromDE,
+        AddressFromIX,
+        AddressFromIY,
+        AddressFromSP,
+        AddressFromWordValue,
+        AddressFromIXAndOffset,
+        AddressFromIYAndOffset
+    }
+}
