@@ -20,8 +20,4 @@
     <Folder Include="Package\" />
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy $(ProjectDir)\bin\Debug\*.nupkg $(ProjectDir)\Package" />
-  </Target>
-
 </Project>

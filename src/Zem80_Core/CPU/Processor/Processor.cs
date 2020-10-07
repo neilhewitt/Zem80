@@ -8,7 +8,7 @@ using Zem80.Core.IO;
 
 namespace Zem80.Core
 {
-    public class Processor : IDebug, ITiming
+    public class Processor : IDebugProcessor, ITiming
     {
         public const int MAX_MEMORY_SIZE_IN_BYTES = 65536;
 
@@ -43,7 +43,7 @@ namespace Zem80.Core
         
         private Func<byte> _interruptCallback;
 
-        public IDebug Debug => this;
+        public IDebugProcessor Debug => this;
         internal ITiming Timing => this;
        
         public bool EndOnHalt { get; private set; }
@@ -66,12 +66,12 @@ namespace Zem80.Core
 
         // why yes, you do have to do event handlers this way if you want them to be on the interface and not on the type... no idea why
         // (basically, automatic properties don't work as events when they are explicitly on the interface, so we use a backing variable... old-school style)
-        event EventHandler<ExecutionPackage> IDebug.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
-        event EventHandler<ExecutionResult> IDebug.AfterExecute { add { _afterExecute += value; } remove { _afterExecute -= value; } }
-        event EventHandler<int> IDebug.OnBeforeInsertWaitCycles { add { _onBeforeInsertWaitCycles += value; } remove { _onBeforeInsertWaitCycles -= value; } }
-        event EventHandler IDebug.BeforeStart { add { _beforeStart += value; } remove { _beforeStart -= value; } }
-        event EventHandler IDebug.OnStop { add { _onStop += value; } remove { _onStop -= value; } }
-        event EventHandler<HaltReason> IDebug.OnHalt { add { _onHalt += value; } remove { _onHalt -= value; } }
+        event EventHandler<ExecutionPackage> IDebugProcessor.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
+        event EventHandler<ExecutionResult> IDebugProcessor.AfterExecute { add { _afterExecute += value; } remove { _afterExecute -= value; } }
+        event EventHandler<int> IDebugProcessor.OnBeforeInsertWaitCycles { add { _onBeforeInsertWaitCycles += value; } remove { _onBeforeInsertWaitCycles -= value; } }
+        event EventHandler IDebugProcessor.BeforeStart { add { _beforeStart += value; } remove { _beforeStart -= value; } }
+        event EventHandler IDebugProcessor.OnStop { add { _onStop += value; } remove { _onStop -= value; } }
+        event EventHandler<HaltReason> IDebugProcessor.OnHalt { add { _onHalt += value; } remove { _onHalt -= value; } }
 
         public void Start(ushort address = 0x0000, bool endOnHalt = false, TimingMode timingMode = TimingMode.FastAndFurious)
         {
@@ -255,7 +255,7 @@ namespace Zem80.Core
             return result;
         } 
         
-        ExecutionResult IDebug.Execute(byte[] opcode)
+        ExecutionResult IDebugProcessor.Execute(byte[] opcode)
         {
             Memory.WriteBytesAt(Registers.PC, opcode, true);
             ExecutionPackage package = DecodeInstruction();
@@ -269,7 +269,7 @@ namespace Zem80.Core
             return Execute(package);
         }
 
-        ExecutionResult IDebug.Execute(ExecutionPackage package)
+        ExecutionResult IDebugProcessor.Execute(ExecutionPackage package)
         {
             Registers.PC += package.Instruction.SizeInBytes; // simulate the decode cycle effect on PC
             return Execute(package);
