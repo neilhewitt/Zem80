@@ -1,9 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
-    <AssemblyName>Z80.Core.Tests</AssemblyName>
-    <RootNamespace>Z80.Core.Tests</RootNamespace>
+    <AssemblyName>Zem80.Core.Tests</AssemblyName>
+    <RootNamespace>Zem80.Core.Tests</RootNamespace>
     <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Z80_Core\Z80_Core.csproj" />
+    <ProjectReference Include="..\Zem80_Core\Zem80_Core.csproj" />
   </ItemGroup>
 
 </Project>

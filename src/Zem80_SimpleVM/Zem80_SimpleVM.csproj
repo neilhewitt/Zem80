@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>Zem80.SimpleVM</AssemblyName>
+    <RootNamespace>Zem80.SimpleVM</RootNamespace>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Zem80_Core\Zem80_Core.csproj" />
+  </ItemGroup>
+
+</Project>

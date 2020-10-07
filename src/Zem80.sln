@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28922.388
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Z80_Core", "Z80_Core\Z80_Core.csproj", "{F1912952-2484-4C19-8137-D0F2BB18BEDA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_Core", "Zem80_Core\Zem80_Core.csproj", "{F1912952-2484-4C19-8137-D0F2BB18BEDA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Z80_Core_Tests", "Z80_Core_Tests\Z80_Core_Tests.csproj", "{95AE3BEE-40CA-4FCE-87D5-972BF84D9C0F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_Core_Tests", "Zem80_Core_Tests\Zem80_Core_Tests.csproj", "{95AE3BEE-40CA-4FCE-87D5-972BF84D9C0F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{AF7F2F10-6617-4C54-909E-E7AF063B6F26}"
 	ProjectSection(SolutionItems) = preProject
@@ -17,13 +17,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZexNext_Core", "ZexNext_Cor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZexNext_Runner", "ZexNext_Runner\ZexNext_Runner.csproj", "{744CAE3B-9012-432B-A6C0-98FDA21C4E47}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrumVM", "ZXSpectrumVM\ZXSpectrumVM.csproj", "{CF6CC431-1F44-4577-A19F-BB575F7BE89E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_ZXSpectrumVM", "ZXSpectrumVM\Zem80_ZXSpectrumVM.csproj", "{CF6CC431-1F44-4577-A19F-BB575F7BE89E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrumApp", "ZXSpectrumApp\ZXSpectrumApp.csproj", "{4A62BAAF-F0B3-4EC2-9A11-18A58B9C78F1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Z80_Console", "Z80_Console\Z80_Console.csproj", "{5A4D96DA-0FCB-4B6F-B0DD-4D99427462F5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_Console", "Zem80_Console\Zem80_Console.csproj", "{5A4D96DA-0FCB-4B6F-B0DD-4D99427462F5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Z80_SimpleVM", "Z80_SimpleVM\Z80_SimpleVM.csproj", "{BA5D8F2D-A3F1-45E0-AC50-48784D5EE6B8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_SimpleVM", "Zem80_SimpleVM\Zem80_SimpleVM.csproj", "{BA5D8F2D-A3F1-45E0-AC50-48784D5EE6B8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

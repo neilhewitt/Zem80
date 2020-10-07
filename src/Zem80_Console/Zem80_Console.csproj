@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Z80_Core\Z80_Core.csproj" />
-    <ProjectReference Include="..\ZXSpectrumVM\ZXSpectrumVM.csproj" />
+    <ProjectReference Include="..\Zem80_Core\Zem80_Core.csproj" />
+    <ProjectReference Include="..\ZXSpectrumVM\Zem80_ZXSpectrumVM.csproj" />
   </ItemGroup>
 
   <ItemGroup>

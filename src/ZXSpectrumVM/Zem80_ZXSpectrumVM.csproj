@@ -2,21 +2,17 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <RootNamespace>Z80.ZXSpectrumVM</RootNamespace>
+    <RootNamespace>Zem80.ZXSpectrumVM</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Z80_Core\Z80_Core.csproj" />
+    <ProjectReference Include="..\Zem80_Core\Zem80_Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="ROM\48.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="ULA\" />
   </ItemGroup>
 
 </Project>
