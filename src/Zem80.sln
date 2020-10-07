@@ -12,18 +12,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZexNext_Core", "ZexNext_Core\ZexNext_Core.csproj", "{656736CB-686B-4C84-A703-4D18991719CE}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZexNext_Runner", "ZexNext_Runner\ZexNext_Runner.csproj", "{744CAE3B-9012-432B-A6C0-98FDA21C4E47}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_ZXSpectrumVM", "ZXSpectrumVM\Zem80_ZXSpectrumVM.csproj", "{CF6CC431-1F44-4577-A19F-BB575F7BE89E}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrumApp", "ZXSpectrumApp\ZXSpectrumApp.csproj", "{4A62BAAF-F0B3-4EC2-9A11-18A58B9C78F1}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_Console", "Zem80_Console\Zem80_Console.csproj", "{5A4D96DA-0FCB-4B6F-B0DD-4D99427462F5}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_SimpleVM", "Zem80_SimpleVM\Zem80_SimpleVM.csproj", "{BA5D8F2D-A3F1-45E0-AC50-48784D5EE6B8}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

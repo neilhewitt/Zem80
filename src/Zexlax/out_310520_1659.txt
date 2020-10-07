@@ -1,70 +1,0 @@
-Z80doc instruction exerciser
-<adc,sbc> hl,<bc,de,hl,sp>....  ERROR **** crc expected:F8B4EAA9 found:E1E2432F
-add hl,<bc,de,hl,sp>..........  OK
-add ix,<bc,de,ix,sp>..........  OK
-add iy,<bc,de,iy,sp>..........  OK
-aluop a,nn....................  ERROR **** crc expected:48799360 found:5EA0E958
-aluop a,<b,c,d,e,h,l,(hl),a>..  ERROR **** crc expected:FE43B016 found:E1CC327F
-aluop a,<ixh,ixl,iyh,iyl>.....  ERROR **** crc expected:A4026D5A found:0654114C
-aluop a,(<ix,iy>+1)...........  ERROR **** crc expected:E849676E found:FB0867E9
-bit n,(<ix,iy>+1).............  ERROR **** crc expected:A8EE0867 found:F2275E29
-bit n,<b,c,d,e,h,l,(hl),a>....  OK
-cpd<r>........................  ERROR **** crc expected:A87E6CFA found:55DFEBF2
-cpi<r>........................  ERROR **** crc expected:06DEB356 found:465E5494
-<daa,cpl,scf,ccf>.............  ERROR **** crc expected:9B4BA675 found:EDD1B310
-<inc,dec> a...................  ERROR **** crc expected:D18815A4 found:B4F34254
-<inc,dec> b...................  ERROR **** crc expected:5F682264 found:444192B0
-<inc,dec> bc..................  OK
-<inc,dec> c...................  ERROR **** crc expected:C284554C found:AC2C984D
-<inc,dec> d...................  ERROR **** crc expected:4523DE10 found:C3713930
-<inc,dec> de..................  OK
-<inc,dec> e...................  ERROR **** crc expected:E175AFCC found:DD8342D5
-<inc,dec> h...................  ERROR **** crc expected:1CED847D found:12A2D2C8
-<inc,dec> hl..................  OK
-<inc,dec> ix..................  OK
-<inc,dec> iy..................  OK
-<inc,dec> l...................  ERROR **** crc expected:56CD06F3 found:15661E5C
-<inc,dec> (hl)................  ERROR **** crc expected:B83ADCEF found:05E4BABF
-<inc,dec> sp..................  OK
-<inc,dec> (<ix,iy>+1).........  ERROR **** crc expected:20581470 found:74FDE277
-<inc,dec> ixh.................  OK
-<inc,dec> ixl.................  OK
-<inc,dec> iyh.................  OK
-<inc,dec> iyl.................  OK
-ld <bc,de>,(nnnn).............  OK
-ld hl,(nnnn)..................  OK
-ld sp,(nnnn)..................  OK
-ld <ix,iy>,(nnnn).............  OK
-ld (nnnn),<bc,de>.............  OK
-ld (nnnn),hl..................  OK
-ld (nnnn),sp..................  OK
-ld (nnnn),<ix,iy>.............  OK
-ld <bc,de,hl,sp>,nnnn.........  OK
-ld <ix,iy>,nnnn...............  OK
-ld a,<(bc),(de)>..............  OK
-ld <b,c,d,e,h,l,(hl),a>,nn....  OK
-ld (<ix,iy>+1),nn.............  OK
-ld <b,c,d,e>,(<ix,iy>+1)......  OK
-ld <h,l>,(<ix,iy>+1)..........  OK
-ld a,(<ix,iy>+1)..............  OK
-ld <ixh,ixl,iyh,iyl>,nn.......  OK
-ld <bcdehla>,<bcdehla>........  OK
-ld <bcdexya>,<bcdexya>........  ERROR **** crc expected:478BA36B found:8088C9D9
-ld a,(nnnn) / ld (nnnn),a.....  OK
-ldd<r> (1)....................  OK
-ldd<r> (2)....................  OK
-ldi<r> (1)....................  OK
-ldi<r> (2)....................  OK
-neg...........................  OK
-<rrd,rld>.....................  ERROR **** crc expected:955BA326 found:1A19EF59
-<rlca,rrca,rla,rra>...........  OK
-shf/rot (<ix,iy>+1)...........  ERROR **** crc expected:713ACD81 found:010CCD75
-shf/rot <b,c,d,e,h,l,(hl),a>..  ERROR **** crc expected:EB604D58 found:020F36E2
-<set,res> n,<bcdehl(hl)a>.....  ERROR **** crc expected:8B57F008 found:64AAC136
-<set,res> n,(<ix,iy>+1).......  OK
-ld (<ix,iy>+1),<b,c,d,e>......  OK
-ld (<ix,iy>+1),<h,l>..........  OK
-ld (<ix,iy>+1),a..............  OK
-ld (<bc,de>),a................  OK
-Tests complete
-
