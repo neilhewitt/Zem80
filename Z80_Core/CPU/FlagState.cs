@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Z80.Core
+namespace Zem80.Core
 {
     [Flags]
     public enum FlagState

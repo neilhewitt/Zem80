@@ -5,9 +5,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Z80.Core
+namespace Zem80.Core
 {
-    public static class ALUExtensions
+    public static class ArithmeticExtensions
     {
 
         public static byte LowByte(this ushort input)

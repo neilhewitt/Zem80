@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Zem80.Core.IO;
 
-namespace Z80.Core
+namespace Zem80.Core.Instructions
 {
     public class IN : IMicrocode
     {
@@ -13,11 +14,11 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             Registers r = cpu.Registers;
 
-            byte @in(byte portNumber, ByteRegister toRegister)
+            byte @in(byte portNumber, ByteRegister toRegister, bool bc)
             {
                 Port port = cpu.Ports[portNumber];
                 port.SignalRead();
-                byte input = port.ReadByte();
+                byte input = port.ReadByte(bc);
                 r[toRegister] = input;
                 return input;
             }
@@ -25,12 +26,12 @@ namespace Z80.Core
             if (instruction.Prefix == InstructionPrefix.Unprefixed)
             {
                 // IN A,(n)
-                @in(data.Argument1, ByteRegister.A);
+                @in(data.Argument1, ByteRegister.A, false);
             }
             else
             {
                 // IN r,(C)
-                byte input = @in(r.C, instruction.Target.AsByteRegister());
+                byte input = @in(r.C, instruction.Target.AsByteRegister(), true);
                 flags.Sign = ((sbyte)input < 0);
                 flags.Zero = (input == 0);
                 flags.ParityOverflow = input.EvenParity();

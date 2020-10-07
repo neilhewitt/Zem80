@@ -3,7 +3,7 @@
 //using System.Diagnostics.SymbolStore;
 //using System.Text;
 
-//namespace Z80.Core
+//namespace Z80.Core.Instructions
 //{
 //    public static class INCDEC
 //    {

@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Z80.Core
+namespace Zem80.Core.Memory
 {
-    public class Memory
+    public class MemorySpace
     {
         private IMemoryMap _map;
         private Processor _cpu;
@@ -109,7 +109,7 @@ namespace Z80.Core
             _map.ClearAllWritableMemory();
         }
 
-        public Memory()
+        public MemorySpace()
         {
         }
     }

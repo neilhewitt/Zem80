@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq.Expressions;
 using System.Text;
-using Z80.Core;
+using Zem80.Core;
 
-namespace Z80.ZXSpectrumVM
+namespace Zem80.ZXSpectrumVM
 {
     public class ScreenPixel
     {
@@ -25,19 +26,49 @@ namespace Z80.ZXSpectrumVM
         private AttributeMap _attributes;
         private byte[] _rgba;
         private Random _random = new Random();
+        private IDictionary<int, ushort> _screenLineAddresses;
+
 
         public ColourValue BorderColour => _border;
         public PixelMap PixelMap => _pixels;
         public AttributeMap AttributeMap => _attributes;
 
-        public void SetPixels(int y, int x, byte pixels)
+        public void Fill(byte[] pixels, byte[] attributes)
         {
-            for (int i = 0; i < 8; i++)
+            for (byte y = 0; y < 192; y++)
             {
-                _pixels[y, x + i] = pixels.GetBit(8 - i);
+                ushort address = _screenLineAddresses[y]; // base address for this screen line
+                for (byte x = 0; x < 32; x++)
+                {
+                    byte pixelData = pixels[address + x];
+                    for (int i = 0; i < 8; i++)
+                    {
+                        _pixels[y, (x * 8) + i] = pixelData.GetBit(8 - i);
+                    }
+                }
+            }
+
+            int columnCounter = 0;
+            int rowCounter = 0;
+            foreach (byte attribute in attributes)
+            {
+                // 32 x 24
+                AttributeMap[rowCounter, columnCounter] = new DisplayAttribute()
+                {
+                    Ink = DisplayColour.FromThreeBit(attribute.GetByteFromBits(0, 3)),
+                    Paper = DisplayColour.FromThreeBit(attribute.GetByteFromBits(3, 3)),
+                    Bright = attribute.GetBit(6),
+                    Flash = attribute.GetBit(7)
+                };
+
+                columnCounter++;
+                if (columnCounter == 32)
+                {
+                    columnCounter = 0;
+                    rowCounter++;
+                }
             }
         }
-
 
         public byte[] AsRGBA(bool flash)
         {
@@ -125,6 +156,27 @@ namespace Z80.ZXSpectrumVM
             _pixels = new PixelMap(height, width);
             _attributes = new AttributeMap((height / attributeVerticalPixels), (width / attributeHorizontalPixels));
             _rgba = new byte[(height + border + border) * (width + border + border) * 4];
+
+            // screen pixel layout is not linear in memory - it's done in 'stripes' across each third of the screen
+            // so the memory at 0x4000 contains the 256 bytes for screen line 0, but 0x4100 contains the bytes for 
+            // screen line 65 (the first line of the second third of the screen), then 0x4200 contains bytes for screen line 129
+            // and finally 0x4300 contains the bytes for screen line 2. This pattern repeats for the whole screen buffer.
+
+            // We pre-calculate the memory address index of each screen line here:
+            _screenLineAddresses = new Dictionary<int, ushort>();
+            for (byte y = 0; y < 192; y++)
+            {
+                ushort address = 0x0000;
+                address = address.SetBit(8, y.GetBit(0));
+                address = address.SetBit(9, y.GetBit(1));
+                address = address.SetBit(10, y.GetBit(2));
+                address = address.SetBit(5, y.GetBit(3));
+                address = address.SetBit(6, y.GetBit(4));
+                address = address.SetBit(7, y.GetBit(5));
+                address = address.SetBit(11, y.GetBit(6));
+                address = address.SetBit(12, y.GetBit(7));
+                _screenLineAddresses.Add(y, address);
+            }
         }
     }
 }

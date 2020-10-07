@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Z80.Core
+namespace Zem80.Core
 {
     public interface IDebug
     {

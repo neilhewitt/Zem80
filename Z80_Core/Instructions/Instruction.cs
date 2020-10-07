@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Globalization;
 
-namespace Z80.Core
+namespace Zem80.Core.Instructions
 {
     public class Instruction
     {

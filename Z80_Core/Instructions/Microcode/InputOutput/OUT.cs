@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Zem80.Core.IO;
 
-namespace Z80.Core
+namespace Zem80.Core.Instructions
 {
     public class OUT : IMicrocode
     {
@@ -13,23 +14,23 @@ namespace Z80.Core
             Flags flags = cpu.Registers.Flags;
             Registers r = cpu.Registers;
 
-            void @out(byte portNumber, ByteRegister dataRegister)
+            void @out(byte portNumber, ByteRegister dataRegister, bool bc)
             {
                 Port port = cpu.Ports[portNumber];
                 byte output = r[dataRegister];
                 port.SignalWrite();
-                port.WriteByte(output);
+                port.WriteByte(output, bc);
             }
 
             if (instruction.Prefix == InstructionPrefix.Unprefixed)
             {
                 // OUT (n),A
-                @out(data.Argument1, ByteRegister.A);
+                @out(data.Argument1, ByteRegister.A, false);
             }
             else
             {
                 // OUT (C),r
-                @out(r.C, instruction.Source.AsByteRegister());
+                @out(r.C, instruction.Source.AsByteRegister(), true);
             }
 
             return new ExecutionResult(package, flags);

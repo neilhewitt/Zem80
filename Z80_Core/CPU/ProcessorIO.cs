@@ -1,6 +1,6 @@
-﻿namespace Z80.Core
+﻿namespace Zem80.Core
 {
-    public class IO
+    public class ProcessorIO
     {
         /*  
          *  A0..A15 (out): this is the 16 bit address-bus, used for addressing 64 KBytes of memory or as port number for communicating with other chips and hardware devices
@@ -187,7 +187,7 @@
             DATA_BUS = value;
         }
 
-        internal IO(Processor cpu)
+        internal ProcessorIO(Processor cpu)
         {
             _cpu = cpu;
         }

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Z80.Core;
+using Zem80.Core;
 
-namespace Z80.Core
+namespace Zem80.Core.Memory
 {
     public class ReadOnlyMemorySegment : MemorySegment
     {

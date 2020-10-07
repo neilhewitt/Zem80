@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics.SymbolStore;
 
-namespace Z80.Core
+namespace Zem80.Core.Instructions
 {
     public static class InstructionElementExtensions
     {

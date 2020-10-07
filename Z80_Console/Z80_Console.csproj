@@ -8,11 +8,17 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Z80_Core\Z80_Core.csproj" />
-    <ProjectReference Include="..\Z80_SimpleVM\Z80_SimpleVM.csproj" />
+    <ProjectReference Include="..\ZXSpectrumVM\ZXSpectrumVM.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="cpm_patch.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="ROM\48.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="ROM\48k.rom">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="zexall.bin">

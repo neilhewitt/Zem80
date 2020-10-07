@@ -1,4 +1,4 @@
-﻿namespace Z80.Core
+﻿namespace Zem80.Core
 {
     public interface ITiming
     {
@@ -8,9 +8,9 @@
         void BeginStackReadCycle();
         void EndStackReadCycle(bool highByte, byte data);
         void StackWriteCycle(bool highByte, byte data);
-        void BeginPortReadCycle();
+        void BeginPortReadCycle(byte n, bool bc);
         void CompletePortReadCycle(byte data);
-        void BeginPortWriteCycle(byte data);
+        void BeginPortWriteCycle(byte data, byte n, bool bc);
         void CompletePortWriteCycle();
         void BeginInterruptRequestAcknowledgeCycle(int tStates);
         void EndInterruptRequestAcknowledgeCycle();

@@ -1,25 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Runtime.CompilerServices;
+using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using Z80.Core;
+using System.Threading;
+using Zem80.Core;
+using Zem80.Core.Memory;
 
-namespace Z80.ZXSpectrumVM
+namespace Zem80.ZXSpectrumVM
 {
     public class Spectrum48K
     {
         public const int TICKS_BETWEEN_FRAMES = 69887; // PAL
         public const int FLASH_FRAME_RATE = 16; // PAL
 
+        private IDictionary<int, string> _keyMatrix = new Dictionary<int, string>()
+        {
+            { 3, "12345" },
+            { 2, "QWERT" },
+            { 1, "ASDFG" },
+            { 0, "^ZXCV" },
+            { 4, "09876" },
+            { 5, "POIUY" },
+            { 6, "#LKJH" },
+            { 7, " *MNB" }
+        };
+
         private Processor _cpu;
         private int _ticksSinceLastDisplayUpdate;
         private int _displayUpdatesSinceLastFlash;
+        private bool _flashOn;
         private ScreenMap _screen;
-        private IDictionary<int, ushort> _screenLineAddresses;
         private IDictionary<int, int> _displayWaits = new Dictionary<int, int>();
+
+        private IList<char> _keysDown = new List<char>();
 
         public event EventHandler<byte[]> OnUpdateDisplay;
 
@@ -27,7 +41,7 @@ namespace Z80.ZXSpectrumVM
 
         public void Start()
         {
-            _cpu.Start(timingMode: TimingMode.FastAndFurious);
+            _cpu.Start(timingMode: TimingMode.PseudoRealTime);
         }
 
         public void Stop()
@@ -35,9 +49,36 @@ namespace Z80.ZXSpectrumVM
             _cpu.Stop();
         }
 
+        public bool KeyDown(string keyName)
+        {
+            char key = KeyCharFromKeyString(keyName);
+
+            if (!_keysDown.Contains(key))
+            {
+                _keysDown.Add(key);
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool KeyUp(string keyName)
+        {
+            char key = KeyCharFromKeyString(keyName);
+
+            if (_keysDown.Contains(key))
+            {
+                _keysDown.Remove(key);
+                return true;
+            }
+
+            return false;
+        }
+
         private void _cpu_OnClockTick(object sender, ExecutionPackage e)
         {
-            // handle memory contention
+            // handle memory contention (where the ULA is reading the video memory and blocks the CPU from running)
+
             if (_displayWaits.ContainsKey(_ticksSinceLastDisplayUpdate))
             {
                 _cpu.AddWaitCycles(_displayWaits[_ticksSinceLastDisplayUpdate]);
@@ -48,83 +89,119 @@ namespace Z80.ZXSpectrumVM
             if (_ticksSinceLastDisplayUpdate > TICKS_BETWEEN_FRAMES)
             {
                 UpdateDisplay();
-                MaskableInterrupt();
+                RaiseInterruptForSystemRoutines();
                 _ticksSinceLastDisplayUpdate = 0;
             }
         }
 
-        private void MaskableInterrupt()
+        private void RaiseInterruptForSystemRoutines()
         {
+            // before each display draw the Spectrum raises an interrupt on the CPU which forces
+            // a call to 0x0038 where the ROM routines begin to service keyboard input, play sound etc
+            
             _cpu.RaiseInterrupt();
         }
 
         private void UpdateDisplay()
         {
-            // this does an 'instant' frame update every TICKS_BETWEEN_FRAMES t-states
-            // TODO: move to a bit-by-bit refresh to emulate how TV scan-lines work, as this
-            // will be necessary for certain games; but this will work for now!
+            // this does a screen update after every TICKS_BETWEEN_FRAMES t-states
 
             // the ULA accesses the memory directly, not via the CPU, so these reads are done
             // without any CPU timing
             byte[] pixelBuffer = _cpu.Memory.ReadBytesAt(0x4000, 6144, true);
             byte[] attributeBuffer = _cpu.Memory.ReadBytesAt(0x5800, 768, true);
+            _screen.Fill(pixelBuffer, attributeBuffer);
 
-            // 256 * 192
-            for (byte y = 0; y < 192; y++)
+            if (_displayUpdatesSinceLastFlash++ >= FLASH_FRAME_RATE)
             {
-                ushort address = _screenLineAddresses[y]; // base address for this screen line
-                for (byte x = 0; x < 32; x++)
-                {
-                    byte pixels = pixelBuffer[address + x];
-                    _screen.SetPixels(y, x * 8, pixels);
-                }
+                _flashOn = !_flashOn;
             }
 
-            int columnCounter = 0;
-            int rowCounter = 0;
-            foreach (byte attribute in attributeBuffer)
-            {
-                // 32 x 24
-                _screen.AttributeMap[rowCounter, columnCounter] = new DisplayAttribute()
-                {
-                    Ink = DisplayColour.FromThreeBit(attribute.GetByteFromBits(0, 3)),
-                    Paper = DisplayColour.FromThreeBit(attribute.GetByteFromBits(3, 3)),
-                    Bright = attribute.GetBit(6),
-                    Flash = attribute.GetBit(7)
-                };
+            byte[] screenBitmap = _screen.AsRGBA(_flashOn);
+            OnUpdateDisplay?.Invoke(this, screenBitmap);
 
-                columnCounter++;
-                if (columnCounter == 32)
-                {
-                    columnCounter = 0;
-                    rowCounter++;
-                }
-            }
-
-            OnUpdateDisplay?.Invoke(this, _screen.AsRGBA(_displayUpdatesSinceLastFlash++ >= FLASH_FRAME_RATE));
             if (_displayUpdatesSinceLastFlash > FLASH_FRAME_RATE) _displayUpdatesSinceLastFlash = 0;
         }
 
         private byte ReadPort()
         {
             ushort portAddress = _cpu.IO.ADDRESS_BUS;
-            return 0xFF; // no keyboard input yet!
+            byte result = 0xFF;
+
+            if (portAddress.LowByte() == 0xFE)
+            {
+                byte keyResult = ReadKeyboard(portAddress.HighByte());
+                result = keyResult;
+            }
+
+            return result; // no keyboard input yet!
         }
 
         private void WritePort(byte output)
         {
             ushort portAddress = _cpu.IO.ADDRESS_BUS;
+            
             if (portAddress % 2 == 0)
             {
-                // ULA will respond
-                if ((portAddress & 0xFFFE) == 0) // PORT OxFE
+                // ULA will respond to all even port numbers
+                if (portAddress.LowByte() == 0xFE) // PORT OxFE
                 {
                     // TODO: handle MIC, EAR and speaker activation (bit 3 == MIC, bit 4 == EAR / speaker)
 
-                    ColourValue newBorder = DisplayColour.FromThreeBit(output);
-                    _screen.SetBorderColour(newBorder);
+                    if (portAddress >> 8 < 8)
+                    {
+                        ColourValue newBorder = DisplayColour.FromThreeBit(output);
+                        if (newBorder != null)
+                        {
+                            _screen.SetBorderColour(newBorder);
+                        }
+                    }
+                    else
+                    {
+                        if (_cpu.IO.D4)
+                        {
+                            // beeper time!
+                            bool beep = true;
+                        }
+                    }
                 }
             }
+        }
+
+        private byte ReadKeyboard(byte rowSelector)
+        {
+            byte keysPressed = 0xFF;
+            keysPressed = keysPressed.SetBit(6, false);
+
+            if (_keysDown.Count() > 0)
+            {
+                List<string> selectedRows = new List<string>();
+                for (int i = 0; i < 8; i++)
+                {
+                    if (rowSelector.GetBit(i) == false)
+                    {
+                        selectedRows.Add(_keyMatrix[i]);
+                    }
+                }
+
+                foreach (string selectedRow in selectedRows)
+                {
+                    for (int i = 0; i < selectedRow.Length; i++)
+                    {
+                        char spectrumKey = selectedRow[i];
+
+                        foreach (char key in _keysDown)
+                        {
+                            if (spectrumKey == key)
+                            {
+                                keysPressed = keysPressed.SetBit(i, false);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return keysPressed;
         }
 
         private void SignalPortRead()
@@ -135,7 +212,21 @@ namespace Z80.ZXSpectrumVM
         {
         }
 
-        private void FillDisplayWaits()
+        private char KeyCharFromKeyString(string keyName)
+        {
+            char key = keyName.ToUpper() switch
+            {
+                "LEFTALT" => '^',
+                "RIGHTALT" => '#',
+                "LEFTSHIFT" => '*',
+                "RIGHTSHIFT" => '*',
+                _ => keyName[0]
+            };
+
+            return char.ToUpper(key);
+        }
+
+        private void GenerateDisplayWaits()
         {
             int wait = 6;
             for (int i = 14335; i < 14341; i++) _displayWaits.Add(i, wait--);
@@ -146,16 +237,16 @@ namespace Z80.ZXSpectrumVM
         public Spectrum48K()
         {
             _screen = new ScreenMap(192, 256, 32, 8, 8);
-            FillDisplayWaits();
+            GenerateDisplayWaits();
 
             // set up the memory map - 16K ROM + 48K RAM = 64K
             IMemoryMap map = new MemoryMap(65536, false);
             map.Map(new ReadOnlyMemorySegment(0, File.ReadAllBytes("rom\\48k.rom")));
             map.Map(new MemorySegment(16384, 49152));
 
-            _cpu = Bootstrapper.BuildCPU(map: map, speedInMHz: 3.5);
+            _cpu = new Processor(map: map, frequencyInMHz: 3.5);
 
-            // The Spectrum doesn't handle ports using actual port numbers, instead all port reads / writes go to all ports and 
+            // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 
             // devices signal or respond based on a bit-field signature across the 16-bit port address held on the address bus at read/write time.
             // Connect all ports to the handlers, which will then work out which device is being addressed.
             for (byte i = 0; i < 255; i++)
@@ -165,23 +256,6 @@ namespace Z80.ZXSpectrumVM
 
             _cpu.OnClockTick += _cpu_OnClockTick;
             _ticksSinceLastDisplayUpdate = TICKS_BETWEEN_FRAMES; // trigger initial display buffer fill
-
-            // screen pixel layout is not linear in memory - it's done in thirds
-            // this pre-calculates the address index of each screen line
-            _screenLineAddresses = new Dictionary<int, ushort>();
-            for (byte y = 0; y < 192; y++)
-            {
-                ushort address = 0x0000;
-                address = address.SetBit(8, y.GetBit(0));
-                address = address.SetBit(9, y.GetBit(1));
-                address = address.SetBit(10, y.GetBit(2));
-                address = address.SetBit(5, y.GetBit(3));
-                address = address.SetBit(6, y.GetBit(4));
-                address = address.SetBit(7, y.GetBit(5));
-                address = address.SetBit(11, y.GetBit(6));
-                address = address.SetBit(12, y.GetBit(7));
-                _screenLineAddresses.Add(y, address);
-            }
         }
     }
 }

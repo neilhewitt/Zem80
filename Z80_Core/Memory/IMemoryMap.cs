@@ -1,4 +1,4 @@
-﻿namespace Z80.Core
+﻿namespace Zem80.Core.Memory
 {
     public interface IMemoryMap
     {

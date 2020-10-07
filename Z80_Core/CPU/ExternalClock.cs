@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 
-namespace Z80.Core
+namespace Zem80.Core
 {
     public class ExternalClock
     {
@@ -23,15 +23,18 @@ namespace Z80.Core
 
         public void Start()
         {
-            _running = true;
-            TicksSinceStart = 0;
-            _clockThread = new Thread(new ThreadStart(ClockTick));
-            _clockThread.Start();
+            if (!_running)
+            {
+                _running = true;
+                TicksSinceStart = 0;
+                _clockThread.Start();
+            }
         }
 
         public void Stop()
         {
             _running = false;
+            _clockThread = new Thread(new ThreadStart(ClockTick)); // let the old thread die
         }
 
         private void ClockTick()
@@ -51,7 +54,7 @@ namespace Z80.Core
             _stopwatch = new Stopwatch();
 
             FrequencyInMhz = frequencyInMhz;
-            TicksSinceStart = 0;
+            _clockThread = new Thread(new ThreadStart(ClockTick));
         }
     }
 }

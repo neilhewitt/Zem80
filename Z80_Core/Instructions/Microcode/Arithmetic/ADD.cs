@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Z80.Core
+namespace Zem80.Core.Instructions
 {
     public class ADD : IMicrocode
     {

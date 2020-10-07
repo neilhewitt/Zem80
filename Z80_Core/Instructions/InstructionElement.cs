@@ -1,4 +1,4 @@
-﻿namespace Z80.Core
+﻿namespace Zem80.Core.Instructions
 {
     // DO NOT RE-ORDER OR INSERT / REMOVE VALUES - order and ordinal values are relied upon in the code for performance reasons
     public enum InstructionElement

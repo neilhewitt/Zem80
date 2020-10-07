@@ -1,6 +1,6 @@
 ﻿using System;
 using ZexNext.Core;
-using Z80.Core;
+using Zem80.Core;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -26,7 +26,7 @@ namespace ZexNext_Runner
         {
             Console.WriteLine("ZexNext Console Test Runner (C)2020 Neil Hewitt (All Rights Reserved)\n");
 
-            _cpu = Bootstrapper.BuildCPU(enableFlagPrecalculation: false);
+            _cpu = new Processor(enableFlagPrecalculation: false);
 
             string path = args.FirstOrDefault();
             if (path == null) path = "zexall.zxl";

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
 
-namespace Z80.Core.Tests
+namespace Zem80.Core.Tests
 {
     [TestFixture]
     public class FlagsTests

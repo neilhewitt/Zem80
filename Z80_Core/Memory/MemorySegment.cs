@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Z80.Core;
+using Zem80.Core;
 
-namespace Z80.Core
+namespace Zem80.Core.Memory
 {
     public class MemorySegment : IMemorySegment
     {
@@ -35,7 +35,7 @@ namespace Z80.Core
         {
             for (int i = offset; i < offset + bytes.Length; i++)
             {
-                _memory[i] = bytes[i];
+                _memory[i] = bytes[i - offset];
             }
         }
 

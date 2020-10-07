@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Z80.Core
+namespace Zem80.Core.IO
 {
     public class Port
     {
@@ -12,17 +12,17 @@ namespace Z80.Core
 
         public byte Number { get; private set; }
 
-        public byte ReadByte()
+        public byte ReadByte(bool bc)
         {
-            _cpu.Timing.BeginPortReadCycle();
+            _cpu.Timing.BeginPortReadCycle(Number, bc);
             byte input = (byte)((_read != null) ? _read() : 0);
             _cpu.Timing.CompletePortReadCycle(input);
             return input;
         }
 
-        public void WriteByte(byte output)
+        public void WriteByte(byte output, bool bc)
         {
-            _cpu.Timing.BeginPortWriteCycle(output);
+            _cpu.Timing.BeginPortWriteCycle(output, Number, bc);
             if (_write != null) _write(output);
             _cpu.Timing.CompletePortWriteCycle();
         }

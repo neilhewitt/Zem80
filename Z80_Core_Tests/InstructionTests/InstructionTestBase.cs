@@ -20,7 +20,7 @@ namespace Z80.Core.Tests
         {
             try
             {
-                CPU = Bootstrapper.BuildCPU(speedInMHz: 3.5);
+                CPU = new Processor(frequencyInMHz: 3.5);
                 _random = new Random(DateTime.Now.Millisecond);
             }
             catch (Exception ex)

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 
-namespace Z80.Core
+namespace Zem80.Core
 {
 
     public class Flags

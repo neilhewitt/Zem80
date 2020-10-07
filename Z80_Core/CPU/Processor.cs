@@ -2,11 +2,16 @@
 using System.Threading;
 using System.Linq;
 using System.Diagnostics;
+using Zem80.Core.Instructions;
+using Zem80.Core.Memory;
+using Zem80.Core.IO;
 
-namespace Z80.Core
+namespace Zem80.Core
 {
     public class Processor : IDebug, ITiming
     {
+        public const int MAX_MEMORY_SIZE_IN_BYTES = 65536;
+
         public const int OPCODE_FETCH_TSTATES = 4;
         public const int NMI_INTERRUPT_ACKNOWLEDGE_TSTATES = 5;
         public const int IM0_INTERRUPT_ACKNOWLEDGE_TSTATES = 6;
@@ -44,10 +49,10 @@ namespace Z80.Core
         public bool EndOnHalt { get; private set; }
 
         public Registers Registers { get; private set; }
-        public Memory Memory { get; private set; }
+        public MemorySpace Memory { get; private set; }
         public Ports Ports { get; private set; }
         public ExecutionPackage ExecutingPackage => _executingPackage;
-        public IO IO { get; private set; }
+        public ProcessorIO IO { get; private set; }
         
         public InterruptMode InterruptMode { get; private set; } = InterruptMode.IM0;
         public bool InterruptsEnabled { get; private set; } = true;
@@ -445,6 +450,11 @@ namespace Z80.Core
         {
             if (IO.NMI)
             {
+                if (_halted)
+                {
+                    Resume();
+                }
+
                 Timing.BeginInterruptRequestAcknowledgeCycle(NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
 
                 Push(WordRegister.PC);
@@ -491,6 +501,11 @@ namespace Z80.Core
         {
             if (IO.INT && InterruptsEnabled)
             {
+                if (_halted)
+                {
+                    Resume();
+                }
+
                 if (_interruptCallback == null && InterruptMode != InterruptMode.IM1)
                 {
                     throw new InterruptException("Interrupt mode is " + InterruptMode.ToString() + " which requires a callback for reading data from the interrupting device. Callback was null.");
@@ -609,9 +624,11 @@ namespace Z80.Core
             WaitForNextClockTick();
         }
 
-        void ITiming.BeginPortReadCycle()
+        void ITiming.BeginPortReadCycle(byte n, bool bc)
         {
-            IO.SetPortReadState((Registers.B, Registers.C).ToWord());
+            ushort address = bc ? (Registers.C, Registers.B).ToWord() : (n, Registers.A).ToWord();
+
+            IO.SetPortReadState(address);
             WaitForNextClockTick();
         }
 
@@ -626,9 +643,11 @@ namespace Z80.Core
             WaitForNextClockTick();
         }
 
-        void ITiming.BeginPortWriteCycle(byte data)
+        void ITiming.BeginPortWriteCycle(byte data, byte n, bool bc)
         {
-            IO.SetPortWriteState((Registers.B, Registers.C).ToWord(), data);
+            ushort address = bc ? (Registers.C, Registers.B).ToWord() : (n, Registers.A).ToWord();
+
+            IO.SetPortWriteState(address, data);
             WaitForNextClockTick();
         }
 
@@ -665,17 +684,17 @@ namespace Z80.Core
         }
         #endregion  
 
-        internal Processor(IMemoryMap map, ushort topOfStackAddress, double frequencyInMHz = 4, bool enableFlagPrecalculation = true)
+        public Processor(IMemoryMap map = null, ushort? topOfStackAddress = null, double frequencyInMHz = 4, bool enableFlagPrecalculation = true)
         {
             FrequencyInMHz = frequencyInMHz;
 
             Registers = new Registers();
             Ports = new Ports(this);
-            Memory = new Memory();
-            Memory.Initialise(this, map);
-            IO = new IO(this);
+            Memory = new MemorySpace();
+            Memory.Initialise(this, map ?? new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES, true));
+            IO = new ProcessorIO(this);
 
-            _topOfStack = topOfStackAddress;
+            _topOfStack = topOfStackAddress ?? (ushort)(Memory.SizeInBytes - 3);
             Registers.SP = _topOfStack;
 
             // if precalculation is enabled, all flag combinations for all input values for 8-bit ALU / bitwise operations are pre-built now (not 16-bit ALU operations, far too big!)
@@ -683,8 +702,12 @@ namespace Z80.Core
             // disable this and attach a debugger to the flag calculation methods in FlagLookup.cs
             FlagLookup.EnablePrecalculation = enableFlagPrecalculation;
             FlagLookup.BuildFlagLookupTables();
+            
             InstructionSet.Build();
 
+            // if running in Pseudo-Real Time mode, an external clock routine is used to sync instruction execution to real time. Sort of.
+            // The timing is approximate due to unpredictability as to how long .NET will take to run the instruction code each time, so you do get clock misses, but all emulated devices run at the same
+            // speed so the effect is as if time itself is slowing and accelerating (by a tiny %) inside the emulation, and everything remains consistent.
             _clock = new ExternalClock(frequencyInMHz);
             _clock.OnTick += WhenTheClockTicks;
         }

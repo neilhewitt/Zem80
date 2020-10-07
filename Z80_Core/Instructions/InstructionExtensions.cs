@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace Z80.Core
+namespace Zem80.Core.Instructions
 {
     public static class InstructionExtensions
     {

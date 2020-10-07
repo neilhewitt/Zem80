@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Text;
-using Z80.Core;
+using Zem80.Core;
 
-namespace Z80.SimpleVM
+namespace Zem80.SimpleVM
 {
     public class VirtualMachine
     {
@@ -214,7 +211,7 @@ namespace Z80.SimpleVM
 
         public VirtualMachine(double speed = 4)
         {
-            _cpu = Bootstrapper.BuildCPU(speedInMHz: speed, enableFlagPrecalculation: false);
+            _cpu = new Processor(frequencyInMHz: speed, enableFlagPrecalculation: false);
             _cpu.Ports[0].Connect(ReadChar, WriteChar, SignalRead, SignalWrite);
             _cpu.Ports[1].Connect(ReadByte, WriteByte, SignalRead, SignalWrite);
         }

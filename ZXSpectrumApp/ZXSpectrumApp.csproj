@@ -17,9 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Elite.screen">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="initialise.bmp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

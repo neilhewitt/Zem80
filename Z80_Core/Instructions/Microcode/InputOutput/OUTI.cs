@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Zem80.Core.IO;
 
-namespace Z80.Core
+namespace Zem80.Core.Instructions
 {
     public class OUTI : IMicrocode
     {
@@ -17,7 +18,7 @@ namespace Z80.Core
             byte output = cpu.Memory.ReadByteAt(r.HL, false);
             r.B--;
             port.SignalWrite();
-            port.WriteByte(output);
+            port.WriteByte(output, true);
             r.HL++;
 
             flags.Zero = (r.B == 0);

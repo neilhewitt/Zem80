@@ -5,77 +5,89 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
-using Z80.Core;
-using Z80.SimpleVM;
-using Z80.ZXSpectrumVM;
+using Zem80.Core;
+using Zem80.ZXSpectrumVM;
 
 namespace Z80_Console
 {
     class Program
     {
         private static Processor _cpu;
-        private static bool _flowChange;
-        private static int _tabs;
         private static bool _stepThrough = true;
         private static Registers _lastRegisters;
-        private static ushort _targetPC = 0;
+        private static ushort? _targetPC = null;
+        private static Spectrum48K _vm;
+        private static char? _lastKey;
 
         static void Main(string[] args)
         {
-            // NOTE TO ALL WHO ENTER HERE
-            // This has become a general test program / playground. Yes, I know it's messy. Yes, I'm OK with that. Yes, it will get cleaned up later.
-
-            //VirtualMachine vm = new VirtualMachine(speed: 3.5);
-            Spectrum48K vm = new Spectrum48K();
-            _cpu = (Processor)vm.CPU;
-
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine("Starting VM...\r\n");
-
-            //vm.Load(0x05, "cpm_patch.bin"); // patch the CP/M BDOS routines out
-            //vm.Load(0x100, "zexdoc.bin");
-            //vm.Load(0x00, "zx_spectrum_48k_ROM.bin");
-
-            //byte[] program = new byte[10001];
-            //for (int i = 0; i < 10000; i++) program[i] = 0x80;
-            //program[10000] = 0x76;
-            //vm.Load(0x100, program);
-            //Console.ForegroundColor = ConsoleColor.White;
-
-            //_cpu.Debug.BeforeExecute += Before_Instruction_Execution;
+            _vm = new Spectrum48K();
+            _cpu = _vm.CPU;
             _cpu.Debug.AfterExecute += After_Instruction_Execute;
-            //_cpu.Debug.OnStop += Debug_OnStop;
-            //while (true)
-            //{
-            //    foreach (var tm in new TimingMode[] { TimingMode.FastAndFurious, TimingMode.PseudoRealTime })
-            //    {
-            //vm.Start(address: 0x0000, timingMode: TimingMode.FastAndFurious, endOnHalt: true, synchronous: true);
-            vm.Start();
-            vm.CPU.RunUntilStopped();
 
-            //int row = tm == TimingMode.FastAndFurious ? 0 : 6;
-            Console.SetCursorPosition(0, 0);// row);
-            TimeSpan elapsed = _cpu.Elapsed;
-            TimeSpan expected = TimeSpan.FromTicks((long)((double)_cpu.EmulatedTStates * (double)((double)10 / (double)_cpu.FrequencyInMHz)));
-            TimeSpan difference = elapsed.Subtract(expected);
-            //Console.WriteLine(tm.ToString());
-            Console.WriteLine("Elapsed: " + elapsed + "                         ");
-            Console.WriteLine("Expected: " + expected + "                         ");
-            Console.WriteLine("Difference: " + difference + "                         ");
-            Console.WriteLine("Emulated clock ticks: " + _cpu.EmulatedTStates + "                         ");
-            Console.ForegroundColor = ConsoleColor.White;
-            //Console.WriteLine("\r\nProgram has finished. Press enter to exit.");
-            //Console.ReadLine();
-                //}
-                //Thread.Sleep(100);
-            //}
+            char quitKey;
+            do
+            {
+                Console.Clear();
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("Starting VM...\r\n");
+
+                _vm.Start();
+                while (_cpu.State != ProcessorState.Stopped)
+                {
+                    if (Console.KeyAvailable)
+                    {
+                        var key = Console.ReadKey(true);
+                        _lastKey = key.KeyChar;
+                    }
+                }
+                _vm.Stop();
+
+                Console.WriteLine("\nSTOPPED. R to restart, any other key to quit.");
+                quitKey = Console.ReadKey(true).KeyChar;
+            }
+            while (quitKey == 'r');
+        }
+
+        private static char? CheckKey()
+        {
+            if (_lastKey.HasValue)
+            {
+                char key = _lastKey.Value;
+                _lastKey = null;
+                return key;
+            }
+
+            return null;
+        }
+
+        private static void RunTo()
+        {
+            Console.Write("\nEnter address to run to (Hex): ");
+            string pc = Console.ReadLine();
+            if (ushort.TryParse(pc, System.Globalization.NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ushort address))
+            {
+                _targetPC = address;
+                _stepThrough = false;
+            }
+        }
+
+        private static void ToggleStepThrough()
+        {
+            _stepThrough = !_stepThrough;
+        }
+
+        private static void Quit()
+        {
+            _vm.Stop();
         }
 
         private static void After_Instruction_Execute(object sender, ExecutionResult e)
         {
-            if (_targetPC == 0 || _targetPC == e.InstructionAddress)
+            if (_targetPC == null || _targetPC == e.InstructionAddress)
             {
                 string mnemonic = e.Instruction.Mnemonic;
                 if (mnemonic.Contains("nn")) mnemonic = mnemonic.Replace("nn", "0x" + e.Data.ArgumentsAsWord.ToString("X4"));
@@ -83,57 +95,36 @@ namespace Z80_Console
                 if (mnemonic.Contains("o")) mnemonic = mnemonic.Replace("o", "0x" + e.Data.Argument1.ToString("X2"));
                 Console.Write(e.InstructionAddress.ToString("X4") + ": " + mnemonic.PadRight(20));
                 regValue(ByteRegister.A); wregValue(WordRegister.BC); wregValue(WordRegister.DE); wregValue(WordRegister.HL); wregValue(WordRegister.SP); wregValue(WordRegister.PC);
-                Console.Write(_cpu.Registers.Flags.State);
+                Console.WriteLine(_cpu.Registers.Flags.State);
             }
 
             _lastRegisters = _cpu.Registers.Snapshot();
 
-            if (!_stepThrough && _targetPC == 0)
-            {
-                if (Console.KeyAvailable)
-                {
-                    var key = Console.ReadKey(true);
-                    if (key.KeyChar == 's')
-                    {
-                        _stepThrough = !_stepThrough;
-                    }
-                    else if (key.KeyChar == 'w')
-                    {
-                        Console.Write("\nEnter address to run to (Hex): ");
-                        string pc = Console.ReadLine();
-                        if (ushort.TryParse(pc, System.Globalization.NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ushort address))
-                        {
-                            _targetPC = address;
-                        }
-                    }
-                }
-            }
-            else if (_targetPC == e.InstructionAddress)
+            if (_targetPC == e.InstructionAddress)
             {
                 _stepThrough = true;
-                _targetPC = 0;
+                _targetPC = null;
             }
 
-            if (_stepThrough)
+            char? key;
+            do
             {
-                var key = Console.ReadKey(true);
-                if (key.KeyChar == 's') _stepThrough = false;
-                else if (key.KeyChar == 'w')
+                key = CheckKey();
+                if (key.HasValue)
                 {
-                    Console.Write("\nEnter address to run to (Hex): ");
-                    string pc = Console.ReadLine();
-                    if (ushort.TryParse(pc, System.Globalization.NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ushort address))
+                    switch (key)
                     {
-                        _targetPC = address;
-                        _stepThrough = false;
+                        case 's': ToggleStepThrough(); break;
+                        case 'w': RunTo(); break;
+                        case 'q': Quit(); break;
+                        default:
+                            _vm.KeyDown(key.ToString());
+                            _vm.KeyUp(key.ToString());
+                            break;
                     }
                 }
-                Console.WriteLine();
             }
-            else if (_targetPC == 0)
-            {
-                Console.WriteLine();
-            }    
+            while (key == null && _stepThrough);
 
             void regValue(ByteRegister r)
             {

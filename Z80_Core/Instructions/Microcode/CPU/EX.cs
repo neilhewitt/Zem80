@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Z80.Core
+namespace Zem80.Core.Instructions
 {
     public class EX : IMicrocode
     {

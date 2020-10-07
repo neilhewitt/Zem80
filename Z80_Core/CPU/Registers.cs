@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 
-namespace Z80.Core
+namespace Zem80.Core
 {
     public class Registers : IDebugRegisters
     {

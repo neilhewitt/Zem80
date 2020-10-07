@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Zem80.Core.IO;
 
-namespace Z80.Core
+namespace Zem80.Core.Instructions
 {
     public class INIR : IMicrocode
     {
@@ -15,7 +16,7 @@ namespace Z80.Core
 
             Port port = cpu.Ports[r.C];
             port.SignalRead();
-            byte input = port.ReadByte();
+            byte input = port.ReadByte(true);
             cpu.Memory.WriteByteAt(r.HL, input, false);
             cpu.Timing.InternalOperationCycle(5);
             r.HL++;

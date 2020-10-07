@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Zem80.Core.Instructions;
 
-namespace Z80.Core
+namespace Zem80.Core
 {
     public class ExecutionPackage
     {

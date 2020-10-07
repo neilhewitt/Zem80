@@ -4,8 +4,9 @@ using System.Text;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Reflection;
+using Zem80.Core.Instructions;
 
-namespace Z80.Core
+namespace Zem80.Core
 {
     public static class FlagLookup
     {
@@ -15,7 +16,7 @@ namespace Z80.Core
         private static byte[,,] _addFlags8;
         private static byte[,,] _subFlags8;
         private static byte[,,] _logicalFlags;
-        private static byte[,] _bitwiseFlags;
+        private static byte[,,] _bitwiseFlags;
 
         public static void BuildFlagLookupTables()
         {
@@ -52,18 +53,15 @@ namespace Z80.Core
                     }
                 }
 
-                _bitwiseFlags = new byte[256, 8];
+                _bitwiseFlags = new byte[256, 8, 2];
                 for (int i = 0; i < 256; i++)
                 {
                     Flags flags = new Flags();
-                    _bitwiseFlags[i, 0] = GetBitwiseFlags((byte)i, BitwiseOperation.ShiftLeft, false).Value;
-                    _bitwiseFlags[i, 1] = GetBitwiseFlags((byte)i, BitwiseOperation.ShiftRight, false).Value;
-                    _bitwiseFlags[i, 2] = GetBitwiseFlags((byte)i, BitwiseOperation.RotateLeft, false).Value;
-                    _bitwiseFlags[i, 3] = GetBitwiseFlags((byte)i, BitwiseOperation.RotateRight, false).Value;
-                    _bitwiseFlags[i, 4] = GetBitwiseFlags((byte)i, BitwiseOperation.ShiftLeft, true).Value;
-                    _bitwiseFlags[i, 5] = GetBitwiseFlags((byte)i, BitwiseOperation.ShiftRight, true).Value;
-                    _bitwiseFlags[i, 6] = GetBitwiseFlags((byte)i, BitwiseOperation.RotateLeft, true).Value;
-                    _bitwiseFlags[i, 7] = GetBitwiseFlags((byte)i, BitwiseOperation.RotateRight, true).Value;
+                    for (int j = 0; j < 8; j++)
+                    {
+                        _bitwiseFlags[i, j, 0] = GetBitwiseFlags((byte)i, (BitwiseOperation)j, false).Value;
+                        _bitwiseFlags[i, j, 1] = GetBitwiseFlags((byte)i, (BitwiseOperation)j, true).Value;
+                    }
                 }
 
                 _initialised = true;
@@ -101,7 +99,7 @@ namespace Z80.Core
         {
             if (EnablePrecalculation)
             {
-                return new Flags(_bitwiseFlags[value, (int)operation]);
+                return new Flags(_bitwiseFlags[value, (int)operation, previousCarry ? 1 : 0]);
             }
             else
             {
@@ -111,7 +109,7 @@ namespace Z80.Core
 
         // the state space of 16 x 16 bit numbers is too large to pre-calculate the flags in a reasonable time
         // TODO: run the code to completion and store output in a file?
-        public static Flags GetWordArithmeticFlags(Flags flags, ushort startingValue, int addOrSubtractValue, bool carry, bool setSignZeroParityOverflow, bool subtract) 
+        public static Flags WordArithmeticFlags(Flags flags, ushort startingValue, int addOrSubtractValue, bool carry, bool setSignZeroParityOverflow, bool subtract) 
         {
             if (flags == null) flags = new Flags();
 
