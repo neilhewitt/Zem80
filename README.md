@@ -1,10 +1,6 @@
-# Z80_Emulator
+# Zem80
 
 A simple emulation of the Z80 CPU written in C# and running on .NET Core 3.0 or above. 
-
-This emulator is strictly an *emulation* of the logical design and execution of the Z80 and not a physics-based *simulation*. If you're interested in a simulation that models the actual electronic and physical behaviour of the Z80 down to the signal level for a hardware project, I would recommend Symmetry (formerly Zim80) by obiwanjacobi:
-
-https://github.com/obiwanjacobi/Zim80
 
 ## Project goals
 
@@ -17,7 +13,15 @@ The first module of the project will be the Z80 core emulator itself. After this
 Beyond this, I *may* attempt to write a ZX Spectrum VM hosting the Z80.
 
 ## Project status
-21/09/20 - *The Z80 emulation is complete and passes all Zexlax tests including for undocumented instructions and behaviours.* 
+07/10/20 - *Renamed the project from 'Z80 Emulator' to 'Zem80'. There are basically no unique names left for Z80 emulators on Github :-) I renamed all the projects and namespaces and restructured the project files.*
+
+At this point, the emulator is ready to be used in projects, with some caveats. 
+
+* I'm looking at writing some documentation and some how-to pages. For now, the code is all there is.
+* The test suite has been gutted and is being re-built to do instruction tests via ZexNext (this will be a project in its own right soon), and new tests will be added (sorry, this isn't a TDD project!).
+* All of the projects in the solution are built for .NET Core 3.1 and all the libraries (Zem80.Core etc) are built to .NET Standard 2.1
+
+21/09/20 - The Z80 emulation is complete and passes all Zexlax tests including for undocumented instructions and behaviours. 
 
 I've added a new Zexlax test frame which will become a separate project. I also added a simple ZX Spectrum emulator that boots the Spectrum 48K ROM (no keyboard handling as yet, so you can't actually *use* it!'), which I will expand and refactor until it's a basic working sample. The goal of the project is not to write Yet Another Spectrum Emulator - there are plenty already. But the ZX Spectrum emulation will provide an example of how to integrate the Z80 Emulator library into a project. 
 
