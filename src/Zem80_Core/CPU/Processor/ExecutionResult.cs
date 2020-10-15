@@ -12,7 +12,7 @@ namespace Zem80.Core
         public Flags Flags { get; }
         public ushort InstructionAddress { get; }
 
-        public ExecutionResult(ExecutionPackage package, Flags flags)
+        public ExecutionResult(InstructionPackage package, Flags flags)
         {
             InstructionAddress = package.InstructionAddress;
             Instruction = package.Instruction;

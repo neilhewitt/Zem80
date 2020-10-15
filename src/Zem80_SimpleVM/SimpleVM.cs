@@ -34,6 +34,39 @@ namespace Zem80.SimpleVM
             if (synchronous) _cpu.RunUntilStopped();
         }
 
+        public void Stop()
+        {
+            _cpu.Stop();
+        }
+
+        public void Reset()
+        {
+            _cpu.Stop();
+            _cpu.ResetAndClearMemory();
+            _cpu.Start(_address, _endOnHalt, _timingMode);
+            if (_synchronous) _cpu.RunUntilStopped();
+        }
+
+        public void Load(ushort address, string path)
+        {
+            _cpu.Memory.WriteBytesAt(address, File.ReadAllBytes(path), true);
+        }
+
+        public void Load(ushort address, params byte[] code)
+        {
+            _cpu.Memory.WriteBytesAt(address, code, true);
+        }
+
+        public void Poke(ushort address, byte value)
+        {
+            _cpu.Memory.WriteByteAt(address, value, true);
+        }
+
+        public byte Peek(ushort address)
+        {
+            return _cpu.Memory.ReadByteAt(address, true);
+        }
+
         private void DebugOutput_AfterExecute(object sender, ExecutionResult e)
         {
             string mnemonic = e.Instruction.Mnemonic;
@@ -74,48 +107,6 @@ namespace Zem80.SimpleVM
             }
         }
 
-        private void WriteLine(string output = null)
-        {
-            if (output == null) Console.WriteLine();
-            else Console.WriteLine(output);
-            if (_outputLogPath != null)
-            {
-                File.AppendAllText(_outputLogPath, output + "\n");
-            }
-        }
-
-        public void Stop()
-        {
-            _cpu.Stop();
-        }
-
-        public void Reset()
-        {
-            _cpu.Stop();
-            _cpu.ResetAndClearMemory();
-            _cpu.Start(_address, _endOnHalt, _timingMode);
-            if (_synchronous) _cpu.RunUntilStopped();
-        }
-
-        public void Load(ushort address, string path)
-        {
-            _cpu.Memory.WriteBytesAt(address, File.ReadAllBytes(path), true);
-        }
-
-        public void Load(ushort address, params byte[] code)
-        {
-            _cpu.Memory.WriteBytesAt(address, code, true);
-        }
-
-        public void Poke(ushort address, byte value)
-        {
-            _cpu.Memory.WriteByteAt(address, value, true);
-        }
-
-        public byte Peek(ushort address)
-        {
-            return _cpu.Memory.ReadByteAt(address, true);
-        }
 
         private byte ReadChar()
         {

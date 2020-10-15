@@ -6,7 +6,7 @@ namespace Zem80.Core.Instructions
 {
     public class RETN : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             cpu.Pop(WordRegister.PC);
             return new ExecutionResult(package, cpu.Registers.Flags);

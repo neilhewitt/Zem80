@@ -18,7 +18,7 @@ namespace Zem80.Core
         public const int IM1_INTERRUPT_ACKNOWLEDGE_TSTATES = 7;
         public const int IM2_INTERRUPT_ACKNOWLEDGE_TSTATES = 7;
 
-        private ExecutionPackage _executingPackage;
+        private InstructionPackage _executingInstructionPackage;
 
         private bool _running;
         private bool _halted;
@@ -34,7 +34,7 @@ namespace Zem80.Core
 
         private Thread _instructionCycle;
 
-        private EventHandler<ExecutionPackage> _beforeExecute;
+        private EventHandler<InstructionPackage> _beforeExecute;
         private EventHandler<ExecutionResult> _afterExecute;
         private EventHandler _beforeStart;
         private EventHandler _onStop;
@@ -44,14 +44,14 @@ namespace Zem80.Core
         private Func<byte> _interruptCallback;
 
         public IDebugProcessor Debug => this;
-        internal ITiming Timing => this;
+        public ITiming Timing => this;
        
         public bool EndOnHalt { get; private set; }
 
         public Registers Registers { get; private set; }
         public MemorySpace Memory { get; private set; }
         public Ports Ports { get; private set; }
-        public ExecutionPackage ExecutingPackage => _executingPackage;
+        public InstructionPackage ExecutingInstructionPackage => _executingInstructionPackage;
         public ProcessorIO IO { get; private set; }
         
         public InterruptMode InterruptMode { get; private set; } = InterruptMode.IM0;
@@ -62,11 +62,11 @@ namespace Zem80.Core
         public long EmulatedTStates => _emulatedTStates;
         public TimeSpan Elapsed => _startStopTimer.Elapsed;
 
-        public event EventHandler<ExecutionPackage> OnClockTick;
+        public event EventHandler<InstructionPackage> OnClockTick;
 
         // why yes, you do have to do event handlers this way if you want them to be on the interface and not on the type... no idea why
         // (basically, automatic properties don't work as events when they are explicitly on the interface, so we use a backing variable... old-school style)
-        event EventHandler<ExecutionPackage> IDebugProcessor.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
+        event EventHandler<InstructionPackage> IDebugProcessor.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
         event EventHandler<ExecutionResult> IDebugProcessor.AfterExecute { add { _afterExecute += value; } remove { _afterExecute -= value; } }
         event EventHandler<int> IDebugProcessor.OnBeforeInsertWaitCycles { add { _onBeforeInsertWaitCycles += value; } remove { _onBeforeInsertWaitCycles -= value; } }
         event EventHandler IDebugProcessor.BeforeStart { add { _beforeStart += value; } remove { _beforeStart -= value; } }
@@ -206,7 +206,7 @@ namespace Zem80.Core
         {
             while (_running)
             {
-                ExecutionPackage package = null;
+                InstructionPackage package = null;
                 ushort pc = Registers.PC;
 
                 if (!_halted)
@@ -229,23 +229,23 @@ namespace Zem80.Core
                     }
                     // when halted, the CPU should execute NOP continuously
                     Timing.OpcodeFetchCycle(Registers.PC, InstructionSet.NOP.Opcode); // we still need to generate the right ticks + wait cycles for a NOP
-                    package = new ExecutionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
+                    package = new InstructionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
                 }
 
                 // run the decoded instruction and deal with timing / ticks
                 ExecutionResult result = Execute(package);
                 Registers.R++; // R is incremented after every instruction as a memory refresh initiator
-                _executingPackage = null;
+                _executingInstructionPackage = null;
 
                 HandleNonMaskableInterrupts();
                 HandleMaskableInterrupts();
             }
         }
 
-        private ExecutionResult Execute(ExecutionPackage package)
+        private ExecutionResult Execute(InstructionPackage package)
         {
             _beforeExecute?.Invoke(this, package);
-            _executingPackage = package;
+            _executingInstructionPackage = package;
 
             // run the instruction microcode implementation
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
@@ -255,10 +255,10 @@ namespace Zem80.Core
             return result;
         } 
         
-        ExecutionResult IDebugProcessor.Execute(byte[] opcode)
+        ExecutionResult IDebugProcessor.ExecuteDirect(byte[] opcode)
         {
             Memory.WriteBytesAt(Registers.PC, opcode, true);
-            ExecutionPackage package = DecodeInstruction();
+            InstructionPackage package = DecodeInstruction();
             if (package == null)
             {
                 // only happens if we reach the end of memory mid-instruction, if so we bail out
@@ -269,13 +269,13 @@ namespace Zem80.Core
             return Execute(package);
         }
 
-        ExecutionResult IDebugProcessor.Execute(ExecutionPackage package)
+        ExecutionResult IDebugProcessor.ExecuteDirect(InstructionPackage package)
         {
             Registers.PC += package.Instruction.SizeInBytes; // simulate the decode cycle effect on PC
             return Execute(package);
         }
 
-        private ExecutionPackage DecodeInstruction()
+        private InstructionPackage DecodeInstruction()
         {
             byte b0, b1, b3;
             Instruction instruction;
@@ -293,7 +293,7 @@ namespace Zem80.Core
                     // sequences of 0xDD / 0xFD / either / or count as NOP until the final 0xDD / 0xFD which is then the prefix byte
                     b1 = OpcodeFetch(); // to generate correct ticks
                     Registers.PC++;
-                    return new ExecutionPackage(InstructionSet.NOP, data, instructionAddress);
+                    return new InstructionPackage(InstructionSet.NOP, data, instructionAddress);
                 }
                 else if ((b0 == 0xDD || b0 == 0xFD) && b1 == 0xCB)
                 {
@@ -306,16 +306,16 @@ namespace Zem80.Core
                     Registers.PC++;
                     if (!InstructionSet.Instructions.TryGetValue(b3 | b1 << 8 | b0 << 16, out instruction))
                     {
-                        return new ExecutionPackage(InstructionSet.NOP, data, (ushort)(instructionAddress));
+                        return new InstructionPackage(InstructionSet.NOP, data, (ushort)(instructionAddress));
                     }                    
 
-                    return new ExecutionPackage(instruction, data, instructionAddress);
+                    return new InstructionPackage(instruction, data, instructionAddress);
                 }
                 else // all other prefixed instructions: a two-byte opcode + up to 2 operand bytes
                 {
                     if (!InstructionSet.Instructions.TryGetValue(b1 | b0 << 8, out instruction))
                     {
-                        return new ExecutionPackage(InstructionSet.NOP, data, instructionAddress);
+                        return new InstructionPackage(InstructionSet.NOP, data, instructionAddress);
                     }
                     else
                     {
@@ -334,7 +334,7 @@ namespace Zem80.Core
                             }
                         }
 
-                        return new ExecutionPackage(instruction, data, instructionAddress);
+                        return new InstructionPackage(instruction, data, instructionAddress);
                     }
                 }
             }
@@ -343,7 +343,7 @@ namespace Zem80.Core
                 // unprefixed instruction - 1 byte opcode + up to 2 operand bytes
                 if (!InstructionSet.Instructions.TryGetValue(b0, out instruction))
                 {
-                    return new ExecutionPackage(InstructionSet.NOP, data, instructionAddress);
+                    return new InstructionPackage(InstructionSet.NOP, data, instructionAddress);
                 }
                     
                 addTicksIfNeededForOpcodeFetch();
@@ -371,7 +371,7 @@ namespace Zem80.Core
                     }
                 }
 
-                return new ExecutionPackage(instruction, data, instructionAddress);
+                return new InstructionPackage(instruction, data, instructionAddress);
             }
 
             void addTicksIfNeededForOpcodeFetch()
@@ -402,7 +402,7 @@ namespace Zem80.Core
             if (TimingMode == TimingMode.FastAndFurious)
             {
                 _emulatedTStates++;
-                OnClockTick?.Invoke(this, _executingPackage);
+                OnClockTick?.Invoke(this, _executingInstructionPackage);
                 return;
             }
             else
@@ -410,7 +410,7 @@ namespace Zem80.Core
                 while (_clockSemaphore == false);
                 _clockSemaphore = false;
                 _emulatedTStates++;
-                OnClockTick?.Invoke(this, _executingPackage);
+                OnClockTick?.Invoke(this, _executingInstructionPackage);
             }
         }
 
@@ -467,7 +467,7 @@ namespace Zem80.Core
             IO.EndNMIState();
         }
 
-        private ExecutionPackage DecodeIM0Interrupt()
+        private InstructionPackage DecodeIM0Interrupt()
         {
             // In IM0, when an interrupt is generated, the CPU will ask the device
             // to send one to four bytes which are decoded into an instruction, which will then be executed.
@@ -488,7 +488,7 @@ namespace Zem80.Core
                 Memory.WriteByteAt((ushort)(address + i), value, true);
             }
 
-            ExecutionPackage package = DecodeInstruction();
+            InstructionPackage package = DecodeInstruction();
             _suspendMachineCycles = false;
 
             Registers.PC = pc;
@@ -515,7 +515,7 @@ namespace Zem80.Core
                 {
                     case InterruptMode.IM0: // read instruction data from data bus in 1-4 opcode fetch cycles and execute resulting instruction - flags are set but PC is unaffected
                         Timing.BeginInterruptRequestAcknowledgeCycle(IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
-                        ExecutionPackage package = DecodeIM0Interrupt();
+                        InstructionPackage package = DecodeIM0Interrupt();
                         ushort pc = Registers.PC;
                         Execute(package);
                         Registers.PC = pc;
@@ -571,8 +571,8 @@ namespace Zem80.Core
             IO.EndMemoryReadState();
             WaitForNextClockTick();
 
-            if (ExecutingPackage != null &&
-                ExecutingPackage.Instruction.TimingExceptions.HasMemoryRead4)
+            if (ExecutingInstructionPackage != null &&
+                ExecutingInstructionPackage.Instruction.TimingExceptions.HasMemoryRead4)
             {
                 WaitForNextClockTick();
             }
@@ -588,8 +588,8 @@ namespace Zem80.Core
             IO.EndMemoryWriteState();
             WaitForNextClockTick();
 
-            if (ExecutingPackage != null &&
-                ExecutingPackage.Instruction.TimingExceptions.HasMemoryWrite5)
+            if (ExecutingInstructionPackage != null &&
+                ExecutingInstructionPackage.Instruction.TimingExceptions.HasMemoryWrite5)
             {
                 WaitForNextClockTick();
                 WaitForNextClockTick();
