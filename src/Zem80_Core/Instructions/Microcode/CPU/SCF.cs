@@ -6,7 +6,7 @@ namespace Zem80.Core.Instructions
 {
     public class SCF : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, ExecutionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Flags flags = cpu.Registers.Flags;
             flags.Carry = true;
