@@ -13,6 +13,8 @@ The first module of the project will be the Z80 core emulator itself. After this
 Beyond this, I *may* attempt to write a ZX Spectrum VM hosting the Z80.
 
 ## Project status
+15/10/20 - Version 1.0
+
 07/10/20 - *Renamed the project from 'Z80 Emulator' to 'Zem80'. There are basically no unique names left for Z80 emulators on Github :-) I renamed all the projects and namespaces and restructured the project files.*
 
 Ancillary projects (the ZexNext Z80 test framework, the in-progress ZX Spectrum emulation) have been moved to separate repositories.
