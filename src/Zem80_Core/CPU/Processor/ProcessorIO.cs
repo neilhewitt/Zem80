@@ -3,17 +3,17 @@
     public class ProcessorIO
     {
         /*  
-         *  A0..A15 (out): this is the 16 bit address-bus, used for addressing 64 KBytes of memory or as port number for communicating with other chips and hardware devices
-            D0..D7 (in/out): the 8-bit data bus, the address bus says ‘where’ to read or write something, and the data bus says ‘what’
-            MREQ (out): the ‘memory request’ pin is active when the CPU wants to perform a memory access
-            IORQ (out): likewise the ‘I/O request’ pin is active when the CPU wants to perform an I/O device access (via the special IN/OUT instructions of the Z80)
-            RD (out): the ‘read’ pin is used together with the MREQ or IORQ to identify a memory-read or IO-device-input operation
-            WR (out): …and this is for the opposite direction, a memory-write or IO-device-output
-            M1 (out): ‘machine cycle one’, this pin is active during an opcode fetch machine cycle and can be used to differentiate an opcode fetch from a normal memory read operation
-            WAIT (in): this pin is set to active by the ‘system’ to inject a wait state into the CPU, the CPU will only check this pin during a read or write operation
-            INT (in): this pin is set to active by the ‘system’ to initiate an interrupt- request cycle
-            RESET (in): this pin is set to active by the ‘system’ to perform a system reset 
-            */
+         *  A0..A15 (out): this is the 16 bit address-bus, used for addressing up to 64 KBytes of memory or as port number for communicating with other chips and hardware devices
+            D0..D7 (in/out): the 8-bit data bus, the address bus says where to read or write something, and the data bus says what
+            MREQ (out): the memory request pin is active when the CPU wants to perform a memory access
+            IORQ (out): likewise the I/O request pin is active when the CPU wants to perform an I/O device access (via the special IN/OUT instructions of the Z80)
+            RD (out): the read pin is used together with the MREQ or IORQ to identify a memory-read or IO-device-input operation
+            WR (out): and this is for the opposite direction, a memory-write or IO-device-output
+            M1 (out): machine cycle one, this pin is active during an opcode fetch machine cycle and can be used to differentiate an opcode fetch from a normal memory read operation
+            WAIT (in): this pin is set to active by the system to inject a wait state into the CPU, the CPU will only check this pin during a read or write operation
+            INT (in): this pin is set to active by the system to initiate an interrupt- request cycle
+            RESET (in): this pin is set to active by the system to perform a system reset 
+        */
 
         private Processor _cpu;
 
@@ -54,6 +54,21 @@
         public bool INT { get; private set; }
         public bool NMI { get; private set; }
         public bool RESET { get; private set; }
+
+        internal void Clear()
+        {
+            ADDRESS_BUS = 0;
+            DATA_BUS = 0;
+            MREQ = false;
+            IORQ = false;
+            RD = false;
+            WR = false;
+            M1 = false;
+            WAIT = false;
+            INT = false;
+            NMI = false;
+            RESET = false;
+        }
 
         internal void SetOpcodeFetchState(ushort address)
         {
@@ -175,6 +190,11 @@
         internal void EndWaitState()
         {
             WAIT = false;
+        }
+
+        internal void SetResetState()
+        {
+            RESET = true;
         }
 
         internal void SetAddressBusValue(ushort value)

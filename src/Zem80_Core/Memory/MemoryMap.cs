@@ -15,7 +15,7 @@ namespace Zem80.Core.Memory
 
         public uint SizeInBytes { get; private set; }
 
-        public IMemorySegment MemoryFor(ushort address)
+        public IMemorySegment SegmentFor(ushort address)
         {
             return _pageMap[PageFromAddress(address)];
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Zem80.Core.Instructions;
 
 namespace Zem80.Core
 {
@@ -10,7 +11,7 @@ namespace Zem80.Core
         event EventHandler BeforeStart;
         event EventHandler OnStop;
         event EventHandler<HaltReason> OnHalt;
-        event EventHandler<int> OnBeforeInsertWaitCycles;
+        event EventHandler<int> BeforeInsertWaitCycles;
 
         ExecutionResult ExecuteDirect(byte[] opcode);
         ExecutionResult ExecuteDirect(InstructionPackage package);

@@ -8,17 +8,15 @@ namespace Zem80.Core.Instructions
 {
     public class Instruction
     {
-        private bool HLIX => Prefix == InstructionPrefix.DD || Prefix == InstructionPrefix.DDCB;
-        private bool HLIY => Prefix == InstructionPrefix.FD || Prefix == InstructionPrefix.FDCB;
-
         public InstructionPrefix Prefix { get; private set; }
         public byte Opcode { get; private set; }
+        public string FullOpcode { get; private set; }
         public string Mnemonic { get; private set; }
         public Condition Condition { get; private set; }
         public byte SizeInBytes { get; private set; }
         public IReadOnlyList<MachineCycle> Timing { get; private set; }
         public TimingExceptions TimingExceptions { get; private set; }
-        public bool IsIndexed => HLIX || HLIY;
+        public bool IsIndexed => Prefix >= InstructionPrefix.DD && Prefix <= InstructionPrefix.FDCB;
         public bool IsConditional => Condition != Condition.None;
         public IMicrocode Microcode { get; private set; }
         public InstructionElement Target { get; private set; }
@@ -28,23 +26,15 @@ namespace Zem80.Core.Instructions
         public bool TargetsByteRegister => Target >= InstructionElement.A && Target <= InstructionElement.IYl;
         public bool TargetsWordRegister => Target >= InstructionElement.AF && Target <= InstructionElement.SP;
         public bool TargetsByteInMemory => (Target >= InstructionElement.AddressFromHL && Target <= InstructionElement.AddressFromIYAndOffset);
-        public string FullOpcode { get; private set; }
-        public byte[] FullOpcodeBytes { get; private set; }
         public ByteRegister? CopyResultTo { get; private set; }
 
-        internal int OpcodeAsInt => int.Parse(FullOpcode, NumberStyles.HexNumber);
-
-        public Instruction(string opcode, string mnemonic, Condition condition, InstructionElement target, InstructionElement source, InstructionElement arg1, InstructionElement arg2, byte sizeInBytes, MachineCycle[] machineCycles, ByteRegister? copyResultTo = ByteRegister.None, IMicrocode microcode = null)
+        public Instruction(string fullOpcode, string mnemonic, Condition condition, InstructionElement target, InstructionElement source, InstructionElement arg1, InstructionElement arg2, byte sizeInBytes, MachineCycle[] machineCycles, ByteRegister? copyResultTo = ByteRegister.None, IMicrocode microcode = null)
         {
-            FullOpcode = opcode;
-            FullOpcodeBytes = new byte[FullOpcode.Length / 2];
-            FullOpcodeBytes[0] = byte.Parse(opcode.Substring(0,2), NumberStyles.HexNumber);
-            if (opcode.Length == 4) FullOpcodeBytes[1] = byte.Parse(opcode.Substring(2,2), NumberStyles.HexNumber);
-            if (opcode.Length == 6) FullOpcodeBytes[2] = byte.Parse(opcode.Substring(4,2), NumberStyles.HexNumber);
+            FullOpcode = fullOpcode;
             CopyResultTo = copyResultTo;
 
-            Prefix = opcode.Length == 2 ? InstructionPrefix.Unprefixed : (InstructionPrefix)Enum.Parse(typeof(InstructionPrefix), opcode[..^2], true);
-            Opcode = byte.Parse(opcode[^2..], NumberStyles.HexNumber);
+            Prefix = fullOpcode.Length == 2 ? InstructionPrefix.Unprefixed : (InstructionPrefix)Enum.Parse(typeof(InstructionPrefix), fullOpcode[..^2], true);
+            Opcode = byte.Parse(fullOpcode[^2..], NumberStyles.HexNumber);
             
             Mnemonic = mnemonic;
             SizeInBytes = sizeInBytes;

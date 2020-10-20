@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -18,10 +19,14 @@ namespace Zem80.Core.Instructions
             {
                 var instructions = new List<Instruction>();
 
-                // TODO: find all instructions that operate implicitly on the accumulator and mark the target as A (DONE: SUB, AND, OR, XOR, CP)
+                // We have to build the complete Z80 instruction set, with metadata to allow us to reflect on the instructions as we process them.
+                // Below is a (very long) table of Instruction object instantions wrapped in an 'instruction_build' block (so you can collapse them easily).
+                // Instruction constructor is: new Instruction(opcode, mnemonic, condition, target, source, argument1, argument2, sizeInBytes, machine cycles)
 
-                // instruction template:        (opcode, mnemonic, condition, target, source, argument1, argument2, sizeInBytes, machine cycles)
+                // ***********************   INSTRUCTION TABLE   ************************ 
+
                 #region instruction_build
+
                 instructions.Add(new Instruction("00", "NOP", Condition.None, InstructionElement.None, InstructionElement.None, InstructionElement.None, InstructionElement.None, 1, new MachineCycle[] { new MachineCycle(MachineCycleType.OpcodeFetch, 4, false) }));
                 instructions.Add(new Instruction("01", "LD BC,nn", Condition.None, InstructionElement.BC, InstructionElement.WordValue, InstructionElement.ByteValue, InstructionElement.ByteValue, 3, new MachineCycle[] { new MachineCycle(MachineCycleType.OpcodeFetch, 4, false), new MachineCycle(MachineCycleType.OperandReadLow, 3, false), new MachineCycle(MachineCycleType.OperandReadHigh, 3, false) }));
                 instructions.Add(new Instruction("02", "LD (BC),A", Condition.None, InstructionElement.AddressFromBC, InstructionElement.A, InstructionElement.None, InstructionElement.None, 1, new MachineCycle[] { new MachineCycle(MachineCycleType.OpcodeFetch, 4, false), new MachineCycle(MachineCycleType.MemoryWrite, 3, false) }));
@@ -821,46 +826,68 @@ namespace Zem80.Core.Instructions
                 instructions.Add(new Instruction("FDCBEE", "SET 5,(IY+o)", Condition.None, InstructionElement.BitIndex, InstructionElement.AddressFromIYAndOffset, InstructionElement.DisplacementValue, InstructionElement.None, 4, new MachineCycle[] { new MachineCycle(MachineCycleType.OpcodeFetch, 4, false), new MachineCycle(MachineCycleType.OpcodeFetch, 4, false), new MachineCycle(MachineCycleType.OperandRead, 3, false), new MachineCycle(MachineCycleType.InternalOperation, 5, false), new MachineCycle(MachineCycleType.MemoryRead, 4, false), new MachineCycle(MachineCycleType.MemoryWrite, 3, false) }));
                 instructions.Add(new Instruction("FDCBF6", "SET 6,(IY+o)", Condition.None, InstructionElement.BitIndex, InstructionElement.AddressFromIYAndOffset, InstructionElement.DisplacementValue, InstructionElement.None, 4, new MachineCycle[] { new MachineCycle(MachineCycleType.OpcodeFetch, 4, false), new MachineCycle(MachineCycleType.OpcodeFetch, 4, false), new MachineCycle(MachineCycleType.OperandRead, 3, false), new MachineCycle(MachineCycleType.InternalOperation, 5, false), new MachineCycle(MachineCycleType.MemoryRead, 4, false), new MachineCycle(MachineCycleType.MemoryWrite, 3, false) }));
                 instructions.Add(new Instruction("FDCBFE", "SET 7,(IY+o)", Condition.None, InstructionElement.BitIndex, InstructionElement.AddressFromIYAndOffset, InstructionElement.DisplacementValue, InstructionElement.None, 4, new MachineCycle[] { new MachineCycle(MachineCycleType.OpcodeFetch, 4, false), new MachineCycle(MachineCycleType.OpcodeFetch, 4, false), new MachineCycle(MachineCycleType.OperandRead, 3, false), new MachineCycle(MachineCycleType.InternalOperation, 5, false), new MachineCycle(MachineCycleType.MemoryRead, 4, false), new MachineCycle(MachineCycleType.MemoryWrite, 3, false) }));
+                
                 #endregion
+
+                // *********************** END INSTRUCTION TABLE ************************
+
+                // add the undocumented overloads for documented instructions
+                BuildUndocumentedOverloads(instructions);
+
+                // We add each instruction (plus the undocumented overloads) to a dictionary (keyed on the full 1-4 byte opcode as an integer [for lookup performance reasons]).
+                // This is expensive but only runs once.
 
                 foreach (Instruction instruction in instructions)
                 {
-                    // Generate undocumented extended instructions for DDCB / FDCB opcodes, which copy the result to a register
-                    if (instruction.Prefix == InstructionPrefix.DDCB || instruction.Prefix == InstructionPrefix.FDCB)
-                    {
-                        for (int i = 0; i <= 7; i++)
-                        {
-                            if (i != 6)
-                            {
-                                byte opcode = instruction.Opcode;
-                                opcode = opcode.SetBits(0, false, false, false);
-                                opcode += (byte)i;
-
-                                string opcodeAsString = instruction.FullOpcode.Substring(0, 4);
-                                opcodeAsString += opcode.ToString("X2");
-                                
-                                Instruction undocumentedInstruction = new Instruction(
-                                    opcodeAsString,
-                                    instruction.Mnemonic + "," + ((ByteRegister)i).ToString(),
-                                    Condition.None,
-                                    instruction.Target,
-                                    instruction.Source,
-                                    instruction.Argument1,
-                                    instruction.Argument2,
-                                    instruction.SizeInBytes,
-                                    instruction.Timing.ToArray(),
-                                    (instruction.Mnemonic.StartsWith("BIT ") ? ByteRegister.None : (ByteRegister)i) // BIT instructions have no result to store
-                                    );
-                                Instructions.Add(undocumentedInstruction.OpcodeAsInt, undocumentedInstruction);
-                                InstructionsByMnemonic.Add(undocumentedInstruction.Mnemonic, undocumentedInstruction);
-                            }
-                        }
-                    }
-
-                    Instructions.Add(instruction.OpcodeAsInt, instruction);
+                    Instructions.Add(int.Parse(instruction.FullOpcode, NumberStyles.HexNumber), instruction);
                     InstructionsByMnemonic.Add(instruction.Mnemonic, instruction);
                 }
             }
+        }
+
+        private static void BuildUndocumentedOverloads(List<Instruction> instructions)
+        {
+            List<Instruction> undocumentedInstructions = new List<Instruction>();
+
+            foreach (Instruction instruction in instructions)
+            {
+                // Generate a matrix of undocumented extended instructions for the DDCB / FDCB opcodes, which copy the result of whatever the operation is to a byte register
+                // Each instruction gets 6 overloads which copy to registers A,B,C,D,E,H,L (except BIT, which gets the overloads but doesn't copy to a register - crazy, eh?)
+
+                // This is quicker than adding all the overloads to the main instruction set list above
+
+                if (instruction.Prefix == InstructionPrefix.DDCB || instruction.Prefix == InstructionPrefix.FDCB)
+                {
+                    for (int i = 0; i <= 7; i++)
+                    {
+                        if (i != 6)
+                        {
+                            byte opcode = instruction.Opcode;
+                            opcode = opcode.SetBits(0, false, false, false);
+                            opcode += (byte)i;
+
+                            string opcodeAsString = instruction.FullOpcode.Substring(0, 4);
+                            opcodeAsString += opcode.ToString("X2");
+
+                            Instruction undocumentedInstruction = new Instruction(
+                                opcodeAsString,
+                                instruction.Mnemonic + "," + ((ByteRegister)i).ToString(),
+                                Condition.None,
+                                instruction.Target,
+                                instruction.Source,
+                                instruction.Argument1,
+                                instruction.Argument2,
+                                instruction.SizeInBytes,
+                                instruction.Timing.ToArray(),
+                                (instruction.Mnemonic.StartsWith("BIT ") ? ByteRegister.None : (ByteRegister)i) // BIT instructions have no result to store
+                                );
+                            undocumentedInstructions.Add(undocumentedInstruction);
+                        }
+                    }
+                }
+            }
+
+            instructions.AddRange(undocumentedInstructions);
         }
 
         static InstructionSet()
@@ -868,3 +895,4 @@ namespace Zem80.Core.Instructions
         }
     }
 }
+

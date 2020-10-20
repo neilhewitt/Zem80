@@ -6,6 +6,6 @@
 
         void Map(IMemorySegment memory, bool overwriteMappedPages = false);
         void ClearAllWritableMemory();
-        IMemorySegment MemoryFor(ushort address);
+        IMemorySegment SegmentFor(ushort address);
     }
 }

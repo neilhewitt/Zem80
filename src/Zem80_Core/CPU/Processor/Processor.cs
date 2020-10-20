@@ -30,7 +30,7 @@ namespace Zem80.Core
 
         private ExternalClock _clock;
         private bool _clockSemaphore;
-        private Stopwatch _startStopTimer = new Stopwatch();
+        private Stopwatch _startStopTimer;
 
         private Thread _instructionCycle;
 
@@ -39,7 +39,7 @@ namespace Zem80.Core
         private EventHandler _beforeStart;
         private EventHandler _onStop;
         private EventHandler<HaltReason> _onHalt;
-        private EventHandler<int> _onBeforeInsertWaitCycles;
+        private EventHandler<int> _beforeInsertWaitCycles;
         
         private Func<byte> _interruptCallback;
 
@@ -49,26 +49,30 @@ namespace Zem80.Core
         public bool EndOnHalt { get; private set; }
 
         public Registers Registers { get; private set; }
-        public MemorySpace Memory { get; private set; }
+        public MemoryBank Memory { get; private set; }
         public Ports Ports { get; private set; }
         public InstructionPackage ExecutingInstructionPackage => _executingInstructionPackage;
         public ProcessorIO IO { get; private set; }
         
-        public InterruptMode InterruptMode { get; private set; } = InterruptMode.IM0;
-        public bool InterruptsEnabled { get; private set; } = true;
+        public InterruptMode InterruptMode { get; private set; }
+        public bool InterruptsEnabled { get; private set; }
         public double FrequencyInMHz { get; private set; }
-        public TimingMode TimingMode { get; private set; } = TimingMode.FastAndFurious;
+        public TimingMode TimingMode { get; private set; }
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; 
         public long EmulatedTStates => _emulatedTStates;
         public TimeSpan Elapsed => _startStopTimer.Elapsed;
 
+        // client code should use this event to synchronise activity with the CPU clock cyles
         public event EventHandler<InstructionPackage> OnClockTick;
 
-        // why yes, you do have to do event handlers this way if you want them to be on the interface and not on the type... no idea why
+        // IDebugProcessor gives you access to these extra event handlers (and some methods) that are more... dangerous than the main API
+        // the Processor.Debug property gives access to the current instance as IDebugProcessor and makes it available to call on the current instance
+
+        // Note: why yes, you do have to do event handlers this way if you want them to be on the interface and not on the type... no idea why
         // (basically, automatic properties don't work as events when they are explicitly on the interface, so we use a backing variable... old-school style)
         event EventHandler<InstructionPackage> IDebugProcessor.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
         event EventHandler<ExecutionResult> IDebugProcessor.AfterExecute { add { _afterExecute += value; } remove { _afterExecute -= value; } }
-        event EventHandler<int> IDebugProcessor.OnBeforeInsertWaitCycles { add { _onBeforeInsertWaitCycles += value; } remove { _onBeforeInsertWaitCycles -= value; } }
+        event EventHandler<int> IDebugProcessor.BeforeInsertWaitCycles { add { _beforeInsertWaitCycles += value; } remove { _beforeInsertWaitCycles -= value; } }
         event EventHandler IDebugProcessor.BeforeStart { add { _beforeStart += value; } remove { _beforeStart -= value; } }
         event EventHandler IDebugProcessor.OnStop { add { _onStop += value; } remove { _onStop -= value; } }
         event EventHandler<HaltReason> IDebugProcessor.OnHalt { add { _onHalt += value; } remove { _onHalt -= value; } }
@@ -87,8 +91,9 @@ namespace Zem80.Core
 
                 _startStopTimer.Reset();
                 _startStopTimer.Start();
-                if (timingMode == TimingMode.PseudoRealTime) _clock.Start();
+                if (timingMode == TimingMode.PseudoRealTime) _clock.Start(); // only use the clock thread if we need it
 
+                IO.Clear();
                 _instructionCycle = new Thread(new ThreadStart(InstructionCycle));
                 _instructionCycle.Start();
             }
@@ -123,9 +128,11 @@ namespace Zem80.Core
 
         public void ResetAndClearMemory(bool restartAfterReset = true)
         {
+            IO.SetResetState();
             Stop();
             Memory.Clear();
             Registers.Clear();
+            IO.Clear();
             Registers.SP = _topOfStack;
             if (restartAfterReset) Start(0, this.EndOnHalt, this.TimingMode);
         }
@@ -179,7 +186,7 @@ namespace Zem80.Core
             }
         }
 
-        public void RaiseNonMasktableInterrupt()
+        public void RaiseNonMaskableInterrupt()
         {
             IO.SetNMIState();
         }
@@ -423,7 +430,7 @@ namespace Zem80.Core
         {
             if (_pendingWaitCycles > 0)
             {
-                _onBeforeInsertWaitCycles?.Invoke(this, _pendingWaitCycles);
+                _beforeInsertWaitCycles?.Invoke(this, _pendingWaitCycles);
             }
 
             while (_pendingWaitCycles-- > 0)
@@ -541,6 +548,12 @@ namespace Zem80.Core
                 Timing.EndInterruptRequestAcknowledgeCycle();
             }
         }
+
+        // ITiming contains methods to execute the different types of MachineCycle that the Z80 supports
+        // These will be called mostly by the instruction decoder, stack operations and interrupt handlers, but some instruction
+        // microcode uses these methods (eg IN/OUT). 
+        // I segregated them onto an interface just to keep them logically partioned from the main API but without moving them out to a class.
+        // Calling code can get at these methods using the Processor.Timing property (or by casting, but don't do that, it's ugly).
 
         #region ITiming
         void ITiming.OpcodeFetchCycle(ushort address, byte data)
@@ -690,9 +703,13 @@ namespace Zem80.Core
 
             Registers = new Registers();
             Ports = new Ports(this);
-            Memory = new MemorySpace();
+            Memory = new MemoryBank();
             Memory.Initialise(this, map ?? new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES, true));
             IO = new ProcessorIO(this);
+
+            InterruptsEnabled = true;
+            TimingMode = TimingMode.FastAndFurious;
+            InterruptMode = InterruptMode.IM0;
 
             _topOfStack = topOfStackAddress ?? (ushort)(Memory.SizeInBytes - 3);
             Registers.SP = _topOfStack;
@@ -710,6 +727,7 @@ namespace Zem80.Core
             // speed so the effect is as if time itself is slowing and accelerating (by a tiny %) inside the emulation, and everything remains consistent.
             _clock = new ExternalClock(frequencyInMHz);
             _clock.OnTick += WhenTheClockTicks;
+            _startStopTimer = new Stopwatch();
         }
     }
 }
