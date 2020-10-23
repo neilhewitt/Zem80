@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <AssemblyName>Zem80.Core.Tests</AssemblyName>
     <RootNamespace>Zem80.Core.Tests</RootNamespace>
     <Platforms>AnyCPU;x64</Platforms>
@@ -24,6 +24,18 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Zem80_Core\Zem80_Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ZexNext.Core">
+      <HintPath>lib\ZexNext.Core.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="ZexNext\zexall.zip">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

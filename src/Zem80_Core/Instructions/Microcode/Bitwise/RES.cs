@@ -29,7 +29,7 @@ namespace Zem80.Core.Instructions
                     InstructionPrefix.FDCB => (ushort)(r.IY + offset),
                     _ => (ushort)0xFFFF
                 };
-                if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
+                if (instruction.IsIndexed) cpu.Cycle.InternalOperationCycle(5);
 
                 byte value = cpu.Memory.ReadByteAt(address, false);
                 value = value.SetBit(bitIndex, false);

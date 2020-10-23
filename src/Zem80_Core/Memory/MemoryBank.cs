@@ -18,7 +18,7 @@ namespace Zem80.Core.Memory
             if (!_initialised) throw new MemoryException();
             IMemorySegment segment = _map.SegmentFor(address);
             byte output = (segment?.ReadByteAt(AddressOffset(address, segment)) ?? 0x00); // 0x00 if address is unallocated
-            if (!noTiming) _cpu.Timing.MemoryReadCycle(AddressOffset(address, segment), output);
+            if (!noTiming) _cpu.Cycle.MemoryReadCycle(AddressOffset(address, segment), output);
             return output;
         }
 
@@ -66,7 +66,7 @@ namespace Zem80.Core.Memory
                 throw new MemoryNotPresentException("Readonly or unmapped");
             }
             segment.WriteByteAt(AddressOffset(address, segment), value);
-            if (!noTiming) _cpu.Timing.MemoryWriteCycle(AddressOffset(address, segment), value);
+            if (!noTiming) _cpu.Cycle.MemoryWriteCycle(AddressOffset(address, segment), value);
         }
 
         public void WriteBytesAt(ushort address, byte[] bytes, bool noTiming)

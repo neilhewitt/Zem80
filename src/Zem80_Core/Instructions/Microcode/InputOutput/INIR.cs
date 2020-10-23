@@ -18,7 +18,7 @@ namespace Zem80.Core.Instructions
             port.SignalRead();
             byte input = port.ReadByte(true);
             cpu.Memory.WriteByteAt(r.HL, input, false);
-            cpu.Timing.InternalOperationCycle(5);
+            cpu.Cycle.InternalOperationCycle(5);
             r.HL++;
             r.B--;
 

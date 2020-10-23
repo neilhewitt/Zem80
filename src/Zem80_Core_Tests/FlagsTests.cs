@@ -14,9 +14,9 @@ namespace Zem80.Core.Tests
 
         [TestCase("Sign", 0x7F)]
         [TestCase("Zero", 0xBF)]
-        [TestCase("Five", 0xDF)]
+        [TestCase("Y", 0xDF)]
         [TestCase("HalfCarry", 0xEF)]
-        [TestCase("Three", 0xF7)]
+        [TestCase("X", 0xF7)]
         [TestCase("ParityOverflow", 0xFB)]
         [TestCase("Subtract", 0xFD)]
         [TestCase("Carry", 0xFE)]

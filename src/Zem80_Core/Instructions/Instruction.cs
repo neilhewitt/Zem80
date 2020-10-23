@@ -14,8 +14,7 @@ namespace Zem80.Core.Instructions
         public string Mnemonic { get; private set; }
         public Condition Condition { get; private set; }
         public byte SizeInBytes { get; private set; }
-        public IReadOnlyList<MachineCycle> Timing { get; private set; }
-        public TimingExceptions TimingExceptions { get; private set; }
+        public Timing Timing { get; private set; }
         public bool IsIndexed => Prefix >= InstructionPrefix.DD && Prefix <= InstructionPrefix.FDCB;
         public bool IsConditional => Condition != Condition.None;
         public IMicrocode Microcode { get; private set; }
@@ -28,7 +27,7 @@ namespace Zem80.Core.Instructions
         public bool TargetsByteInMemory => (Target >= InstructionElement.AddressFromHL && Target <= InstructionElement.AddressFromIYAndOffset);
         public ByteRegister? CopyResultTo { get; private set; }
 
-        public Instruction(string fullOpcode, string mnemonic, Condition condition, InstructionElement target, InstructionElement source, InstructionElement arg1, InstructionElement arg2, byte sizeInBytes, MachineCycle[] machineCycles, ByteRegister? copyResultTo = ByteRegister.None, IMicrocode microcode = null)
+        public Instruction(string fullOpcode, string mnemonic, Condition condition, InstructionElement target, InstructionElement source, InstructionElement arg1, InstructionElement arg2, byte sizeInBytes, IEnumerable<MachineCycle> machineCycles, ByteRegister? copyResultTo = ByteRegister.None, IMicrocode microcode = null)
         {
             FullOpcode = fullOpcode;
             CopyResultTo = copyResultTo;
@@ -56,16 +55,7 @@ namespace Zem80.Core.Instructions
             }
 
             // deal with timing + any exceptions
-            Timing = new List<MachineCycle>(machineCycles);
-            bool odh4 = false, mr4 = false, mw5 = false;
-            if (Microcode is CALL)
-            {
-                // specifically for CALL instructions, the high byte operand read is 4 clock cycles rather than 3 *if* the condition is true (or there is no condition)
-                odh4 = true;
-            }
-            if (Timing.Any(x => x.Type == MachineCycleType.MemoryRead && x.TStates == 4)) mr4 = true;
-            if (Timing.Any(x => x.Type == MachineCycleType.MemoryWrite && x.TStates == 5)) mw5 = true;
-            TimingExceptions = new TimingExceptions(odh4, mr4, mw5);
+            Timing = new Timing(this, machineCycles);
         }
     }
 }

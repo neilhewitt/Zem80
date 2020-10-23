@@ -26,7 +26,7 @@ namespace Zem80.Core.Instructions
             flags.Y = (((byte)(value + cpu.Registers.A)) & 0x02) > 0; // copy bit 1 (note: non-standard behaviour)
 
             bool conditionTrue = (r.BC == 0);
-            if (conditionTrue) cpu.Timing.InternalOperationCycle(5);
+            if (conditionTrue) cpu.Cycle.InternalOperationCycle(5);
             else r.PC = package.InstructionAddress;
             
 

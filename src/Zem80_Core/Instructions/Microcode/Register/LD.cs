@@ -380,7 +380,7 @@ namespace Zem80.Core.Instructions
                             r.IXl = arg0;
                             break;
                         case 0x36: // LD (IX+o),n
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             writeOffset(r.IX, arg0, arg1);
                             break;
                         case 0x44: // LD B,IXh
@@ -390,7 +390,7 @@ namespace Zem80.Core.Instructions
                             r.B = r.IXl;
                             break;
                         case 0x46: // LD B,(IX+o)
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             r.B = readOffset(r.IX, arg0);
                             break;
                         case 0x4C: // LD C,IXh
@@ -400,7 +400,7 @@ namespace Zem80.Core.Instructions
                             r.C = r.IXl;
                             break;
                         case 0x4E: // LD C,(IX+o)
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             r.C = readOffset(r.IX, arg0);
                             break;
                         case 0x54: // LD D,IXh
@@ -410,7 +410,7 @@ namespace Zem80.Core.Instructions
                             r.D = r.IXl;
                             break;
                         case 0x56: // LD D,(IX+o)
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             r.D = readOffset(r.IX, arg0);
                             break;
                         case 0x5C: // LD E,IXh
@@ -420,7 +420,7 @@ namespace Zem80.Core.Instructions
                             r.E = r.IXl;
                             break;
                         case 0x5E: // LD E,(IX+o)
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             r.E = readOffset(r.IX, arg0);
                             break;
                         case 0x60: // LD IXh,B
@@ -445,7 +445,7 @@ namespace Zem80.Core.Instructions
                             r.IXh = r.A;
                             break;
                         case 0x66: // LD H,(IX+o)
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             r.H = readOffset(r.IX, arg0);
                             break;
                         case 0x68: // LD IXl,B
@@ -470,35 +470,35 @@ namespace Zem80.Core.Instructions
                             r.IXl = r.A;
                             break;
                         case 0x6E: // LD L,(IX+o)
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             r.L = readOffset(r.IX, arg0);
                             break;
                         case 0x70: // LD (IX+o),B
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             writeOffset(r.IX, arg0, r.B);
                             break;
                         case 0x71: // LD (IX+o),C
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             writeOffset(r.IX, arg0, r.C);
                             break;
                         case 0x72: // LD (IX+o),D
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             writeOffset(r.IX, arg0, r.D);
                             break;
                         case 0x73: // LD (IX+o),E
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             writeOffset(r.IX, arg0, r.E);
                             break;
                         case 0x74: // LD (IX+o),H
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             writeOffset(r.IX, arg0, r.H);
                             break;
                         case 0x75: // LD (IX+o),L
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             writeOffset(r.IX, arg0, r.L);
                             break;
                         case 0x77: // LD (IX+o),A
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             writeOffset(r.IX, arg0, r.A);
                             break;
                         case 0x7C: // LD A,IXh
@@ -508,7 +508,7 @@ namespace Zem80.Core.Instructions
                             r.A = r.IXl;
                             break;
                         case 0x7E: // LD A,(IX+o)
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             r.A = readOffset(r.IX, arg0);
                             break;
                         case 0xF9: // LD SP,IX
@@ -537,7 +537,7 @@ namespace Zem80.Core.Instructions
                             r.IYl = arg0;
                             break;
                         case 0x36: // LD (IY+o),n
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             writeOffset(r.IY, arg0, arg1);
                             break;
                         case 0x44: // LD B,IYh
@@ -547,7 +547,7 @@ namespace Zem80.Core.Instructions
                             r.B = r.IYl;
                             break;
                         case 0x46: // LD B,(IY+o)
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             r.B = readOffset(r.IY, arg0);
                             break;
                         case 0x4C: // LD C,IYh
@@ -557,7 +557,7 @@ namespace Zem80.Core.Instructions
                             r.C = r.IYl;
                             break;
                         case 0x4E: // LD C,(IY+o)
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             r.C = readOffset(r.IY, arg0);
                             break;
                         case 0x54: // LD D,IYh
@@ -567,7 +567,7 @@ namespace Zem80.Core.Instructions
                             r.D = r.IYl;
                             break;
                         case 0x56: // LD D,(IY+o)
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             r.D = readOffset(r.IY, arg0);
                             break;
                         case 0x5C: // LD E,IYh
@@ -577,7 +577,7 @@ namespace Zem80.Core.Instructions
                             r.E = r.IYl;
                             break;
                         case 0x5E: // LD E,(IY+o)
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             r.E = readOffset(r.IY, arg0);
                             break;
                         case 0x60: // LD IYh,B
@@ -602,7 +602,7 @@ namespace Zem80.Core.Instructions
                             r.IYh = r.A;
                             break;
                         case 0x66: // LD H,(IY+o)
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             r.H = readOffset(r.IY, arg0);
                             break;
                         case 0x68: // LD IYl,B
@@ -627,35 +627,35 @@ namespace Zem80.Core.Instructions
                             r.IYl = r.A;
                             break;
                         case 0x6E: // LD L,(IY+o)
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             r.L = readOffset(r.IY, arg0);
                             break;
                         case 0x70: // LD (IY+o),B
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             writeOffset(r.IY, arg0, r.B);
                             break;
                         case 0x71: // LD (IY+o),C
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             writeOffset(r.IY, arg0, r.C);
                             break;
                         case 0x72: // LD (IY+o),D
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             writeOffset(r.IY, arg0, r.D);
                             break;
                         case 0x73: // LD (IY+o),E
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             writeOffset(r.IY, arg0, r.E);
                             break;
                         case 0x74: // LD (IY+o),H
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             writeOffset(r.IY, arg0, r.H);
                             break;
                         case 0x75: // LD (IY+o),L
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             writeOffset(r.IY, arg0, r.L);
                             break;
                         case 0x77: // LD (IY+o),A
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             writeOffset(r.IY, arg0, r.A);
                             break;
                         case 0x7C: // LD A,IYh
@@ -665,7 +665,7 @@ namespace Zem80.Core.Instructions
                             r.A = r.IYl;
                             break;
                         case 0x7E: // LD A,(IY+o)
-                            cpu.Timing.InternalOperationCycle(5);
+                            cpu.Cycle.InternalOperationCycle(5);
                             r.A = readOffset(r.IY, arg0);
                             break;
                         case 0xF9: // LD SP,IY

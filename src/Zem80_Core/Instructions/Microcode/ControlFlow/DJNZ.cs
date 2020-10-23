@@ -13,7 +13,7 @@ namespace Zem80.Core.Instructions
 
             if (cpu.Registers.B > 0)
             {
-                cpu.Timing.InternalOperationCycle(5);
+                cpu.Cycle.InternalOperationCycle(5);
                 cpu.Registers.B--;
                 ushort address = (ushort)(cpu.Registers.PC - 2); // wind back to the address of the DJNZ instruction as PC has already moved on
 

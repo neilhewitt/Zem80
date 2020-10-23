@@ -878,7 +878,7 @@ namespace Zem80.Core.Instructions
                                 instruction.Argument1,
                                 instruction.Argument2,
                                 instruction.SizeInBytes,
-                                instruction.Timing.ToArray(),
+                                instruction.Timing.MachineCycles,
                                 (instruction.Mnemonic.StartsWith("BIT ") ? ByteRegister.None : (ByteRegister)i) // BIT instructions have no result to store
                                 );
                             undocumentedInstructions.Add(undocumentedInstruction);

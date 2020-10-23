@@ -14,17 +14,17 @@ namespace Zem80.Core.IO
 
         public byte ReadByte(bool bc)
         {
-            _cpu.Timing.BeginPortReadCycle(Number, bc);
+            _cpu.Cycle.BeginPortReadCycle(Number, bc);
             byte input = (byte)((_read != null) ? _read() : 0);
-            _cpu.Timing.CompletePortReadCycle(input);
+            _cpu.Cycle.CompletePortReadCycle(input);
             return input;
         }
 
         public void WriteByte(byte output, bool bc)
         {
-            _cpu.Timing.BeginPortWriteCycle(output, Number, bc);
+            _cpu.Cycle.BeginPortWriteCycle(output, Number, bc);
             if (_write != null) _write(output);
-            _cpu.Timing.CompletePortWriteCycle();
+            _cpu.Cycle.CompletePortWriteCycle();
         }
 
         public void SignalRead()

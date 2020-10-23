@@ -23,7 +23,7 @@ namespace Zem80.Core.Instructions
             }
             else
             {
-                if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
+                if (instruction.IsIndexed) cpu.Cycle.InternalOperationCycle(5);
                 value = instruction.MarshalSourceByte(data, cpu, out ushort address, out ByteRegister source);
                 byte valueXY = instruction.IsIndexed ? address.HighByte() : r.HL.HighByte();
                 flags.X = (valueXY & 0x08) > 0; // copy bit 3
