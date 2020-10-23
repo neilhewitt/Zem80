@@ -41,7 +41,7 @@ namespace Zem80.Core
         // There is a second 'shadow' bank of register values (AF', BC', DE', HL'). These are stored in _registers[6..13] (and in private fields for AF/AF').
         // To access these you call ExchangeAF (to get access to values in AF') or ExchangeBCDEHL (to get access to values in BC', DE' and HL').
 
-        // 16-bit special registers (index, special, IR, program counter)
+        // 16-bit special registers (index, stack pointer)
         public ushort IX { get { return Get16BitValue(14); } set { Set16BitValue(14, value); } }
         public ushort IY { get { return Get16BitValue(16); } set { Set16BitValue(16, value); } }
         public ushort SP { get { return Get16BitValue(18); } set { Set16BitValue(18, value); } }
@@ -56,6 +56,7 @@ namespace Zem80.Core
         public byte I { get { return _registers[20]; } set { _registers[20] = value; } }
         public byte R { get { return _registers[21]; } set { _registers[21] = value; } }
 
+        // I+R as a 16-bit pair
         public ushort IR { get { return Get16BitValue(20); } }
 
         // program counter

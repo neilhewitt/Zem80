@@ -20,10 +20,10 @@ namespace Zem80.Core.Memory
             return _pageMap[PageFromAddress(address)];
         }
 
-        public void Map(IMemorySegment entry, bool overwriteMappedPages = false)
+        public void Map(IMemorySegment segment, bool overwriteMappedPages = false)
         {
-            int size = (int)entry.SizeInBytes;
-            ushort startAddress = entry.StartAddress;
+            int size = (int)segment.SizeInBytes;
+            ushort startAddress = segment.StartAddress;
 
             if (startAddress % PAGE_SIZE_IN_BYTES > 0)
             {
@@ -32,7 +32,7 @@ namespace Zem80.Core.Memory
 
             if (startAddress + size > SizeInBytes)
             {
-                throw new MemoryMapException("Block would overflow the memory space which is " + SizeInBytes + " bytes.");
+                throw new MemoryMapException($"Block would overflow the memory space which is {SizeInBytes} bytes.");
             }
 
             int startPage = PageFromAddress(startAddress);
@@ -43,14 +43,14 @@ namespace Zem80.Core.Memory
                 throw new MemoryMapException("Would overwrite existing mapped page/s. Specify overwriteMappedPages = true to enable masking the existing memory."); 
             }
 
-            if (!_segments.Contains(entry))
+            if (!_segments.Contains(segment))
             {
-                _segments.Add(entry);
+                _segments.Add(segment);
             }
 
             for (int i = startPage; i <= endPage; i++)
             {
-                _pageMap[i] = entry;
+                _pageMap[i] = segment;
             }
         }
 

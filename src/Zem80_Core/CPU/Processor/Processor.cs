@@ -18,14 +18,13 @@ namespace Zem80.Core
         public const int IM1_INTERRUPT_ACKNOWLEDGE_TSTATES = 7;
         public const int IM2_INTERRUPT_ACKNOWLEDGE_TSTATES = 7;
 
-        private InstructionPackage _executingInstructionPackage;
 
         private bool _running;
         private bool _halted;
         private bool _suspendMachineCycles;
-        private ushort _topOfStack;
         private long _emulatedTStates;
 
+        private ushort _topOfStack;
         private int _pendingWaitCycles;
 
         private ExternalClock _clock;
@@ -33,6 +32,8 @@ namespace Zem80.Core
         private Stopwatch _startStopTimer;
 
         private Thread _instructionCycle;
+        private InstructionPackage _executingInstructionPackage;
+        private Func<byte> _interruptCallback;
 
         private EventHandler<InstructionPackage> _beforeExecute;
         private EventHandler<ExecutionResult> _afterExecute;
@@ -41,8 +42,6 @@ namespace Zem80.Core
         private EventHandler<HaltReason> _onHalt;
         private EventHandler<int> _beforeInsertWaitCycles;
         
-        private Func<byte> _interruptCallback;
-
         public IDebugProcessor Debug => this;
         public ICycle Cycle => this;
        
@@ -51,9 +50,8 @@ namespace Zem80.Core
         public Registers Registers { get; private set; }
         public MemoryBank Memory { get; private set; }
         public Ports Ports { get; private set; }
-        public InstructionPackage ExecutingInstructionPackage => _executingInstructionPackage;
         public ProcessorIO IO { get; private set; }
-        
+
         public InterruptMode InterruptMode { get; private set; }
         public bool InterruptsEnabled { get; private set; }
         public double FrequencyInMHz { get; private set; }
@@ -66,7 +64,7 @@ namespace Zem80.Core
         public event EventHandler<InstructionPackage> OnClockTick;
 
         // IDebugProcessor gives you access to these extra event handlers (and some methods) that are more... dangerous than the main API
-        // the Processor.Debug property gives access to the current instance as IDebugProcessor and makes it available to call on the current instance
+        // the Processor.Debug property gives access to the current instance as IDebugProcessor
 
         // Note: why yes, you do have to do event handlers this way if you want them to be on the interface and not on the type... no idea why
         // (basically, automatic properties don't work as events when they are explicitly on the interface, so we use a backing variable... old-school style)
@@ -289,7 +287,7 @@ namespace Zem80.Core
             InstructionData data = new InstructionData();
             ushort instructionAddress = Registers.PC;
 
-            b0 = OpcodeFetch(); // always at least one opcode byte
+            b0 = FetchOpcodeByte(); // always at least one opcode byte
             Registers.PC++;
 
             if (b0 == 0xCB || b0 == 0xDD || b0 == 0xED || b0 == 0xFD) // was byte 0 a prefix code?
@@ -298,45 +296,49 @@ namespace Zem80.Core
                 if ((b0 == 0xDD || b0 == 0xFD) && (b1 == 0xDD || b1 == 0xFD))
                 {
                     // sequences of 0xDD / 0xFD / either / or count as NOP until the final 0xDD / 0xFD which is then the prefix byte
-                    b1 = OpcodeFetch(); // need to call this even though we have the value, to generate correct timing
+                    b1 = FetchOpcodeByte(); // need to call this even though we have the value, to generate correct timing
                     Registers.PC++;
                     return new InstructionPackage(InstructionSet.NOP, data, instructionAddress);
                 }
                 else if ((b0 == 0xDD || b0 == 0xFD) && b1 == 0xCB)
                 {
                     // DDCB / FDCB: four-byte opcode = two prefix bytes + one displacement byte + one opcode byte - no four-byte instruction has any actual operand values
-                    b1 = OpcodeFetch();
+                    b1 = FetchOpcodeByte();
                     Registers.PC++;
-                    data.Argument1 = OperandFetch(); // displacement byte is the only 'operand'
+                    data.Argument1 = FetchOperandByte(); // displacement byte is the only 'operand'
                     Registers.PC++;
-                    b3 = OpcodeFetch();
+                    b3 = FetchOpcodeByte();
                     Registers.PC++;
                     if (!InstructionSet.Instructions.TryGetValue(b3 | b1 << 8 | b0 << 16, out instruction))
                     {
+                        // not a valid instruction - the Z80 spec says we should run a NOP instead
                         return new InstructionPackage(InstructionSet.NOP, data, (ushort)(instructionAddress));
                     }                    
 
                     return new InstructionPackage(instruction, data, instructionAddress);
                 }
-                else // all other prefixed instructions: a two-byte opcode + up to 2 operand bytes
+                else 
                 {
+                    // all other prefixed instructions: a two-byte opcode + up to 2 operand bytes
                     if (!InstructionSet.Instructions.TryGetValue(b1 | b0 << 8, out instruction))
                     {
+                        // not a valid instruction - the Z80 spec says we should run a NOP instead
                         return new InstructionPackage(InstructionSet.NOP, data, instructionAddress);
                     }
                     else
                     {
-                        b1 = OpcodeFetch(); // need to call this even though we have the value, to generate correct timing
-                        Registers.PC++; // advance PC to position of b1
-                        addTicksIfNeededForOpcodeFetch(); // some specific opcodes have longer opcode fetch cycles than normal
+                        b1 = FetchOpcodeByte(); // need to call this even though we have the value, to generate correct timing
+                        Registers.PC++;
+                        addTicksIfNeededForOpcodeFetch(); // (some specific opcodes have longer opcode fetch cycles than normal)
 
+                        // fetch the operand bytes (as required)
                         if (instruction.Argument1 != InstructionElement.None)
                         {
-                            data.Argument1 = OperandFetch();
+                            data.Argument1 = FetchOperandByte();
                             Registers.PC++;
                             if (instruction.Argument2 != InstructionElement.None)
                             {
-                                data.Argument2 = OperandFetch();
+                                data.Argument2 = FetchOperandByte();
                                 Registers.PC++;
                             }
                         }
@@ -355,9 +357,10 @@ namespace Zem80.Core
                     
                 addTicksIfNeededForOpcodeFetch();
 
+                // fetch the operand bytes (as required)
                 if (instruction.Argument1 != InstructionElement.None)
                 {
-                    data.Argument1 = OperandFetch();
+                    data.Argument1 = FetchOperandByte();
                     Registers.PC++;
                     if (instruction.Argument2 != InstructionElement.None)
                     {
@@ -373,7 +376,7 @@ namespace Zem80.Core
                             }
                         }
 
-                        data.Argument2 = OperandFetch();
+                        data.Argument2 = FetchOperandByte();
                         Registers.PC++;
                     }
                 }
@@ -414,7 +417,7 @@ namespace Zem80.Core
             }
             else
             {
-                while (_clockSemaphore == false);
+                while (_clockSemaphore == false); // pause until the next clock tick
                 _clockSemaphore = false;
                 _emulatedTStates++;
                 OnClockTick?.Invoke(this, _executingInstructionPackage);
@@ -423,6 +426,7 @@ namespace Zem80.Core
 
         private void WhenTheClockTicks(object sender, EventArgs e)
         {
+            // this is called by the external clock thread, but it's not synchronised (no need)
             _clockSemaphore = true;
         }
 
@@ -439,14 +443,14 @@ namespace Zem80.Core
             }
         }
 
-        private byte OpcodeFetch()
+        private byte FetchOpcodeByte()
         {
             byte opcode = Memory.ReadByteAt(Registers.PC, true);
             if (!_suspendMachineCycles) Cycle.OpcodeFetchCycle(Registers.PC, opcode);
             return opcode;
         }
 
-        private byte OperandFetch()
+        private byte FetchOperandByte()
         {
             byte operand = Memory.ReadByteAt(Registers.PC, true);
             if (!_suspendMachineCycles) Cycle.MemoryReadCycle(Registers.PC, operand);
@@ -543,19 +547,17 @@ namespace Zem80.Core
                         break;
                 }
 
-                _halted = false;
-
                 Cycle.EndInterruptRequestAcknowledgeCycle();
             }
         }
 
-        // ITiming contains methods to execute the different types of MachineCycle that the Z80 supports
+        // ICycle contains methods to execute the different types of MachineCycle that the Z80 supports
         // These will be called mostly by the instruction decoder, stack operations and interrupt handlers, but some instruction
         // microcode uses these methods (eg IN/OUT). 
         // I segregated them onto an interface just to keep them logically partioned from the main API but without moving them out to a class.
-        // Calling code can get at these methods using the Processor.Timing property (or by casting, but don't do that, it's ugly).
+        // Calling code can get at these methods using the Processor.Cycle property (or by casting, but don't do that, it's ugly).
 
-        #region ITiming
+        #region ICycle
         void ICycle.OpcodeFetchCycle(ushort address, byte data)
         {
             IO.SetOpcodeFetchState(address);
@@ -584,8 +586,8 @@ namespace Zem80.Core
             IO.EndMemoryReadState();
             WaitForNextClockTick();
 
-            if (ExecutingInstructionPackage != null &&
-                ExecutingInstructionPackage.Instruction.Timing.Exceptions.HasMemoryRead4)
+            if (_executingInstructionPackage != null &&
+                _executingInstructionPackage.Instruction.Timing.Exceptions.HasMemoryRead4)
             {
                 WaitForNextClockTick();
             }
@@ -601,8 +603,8 @@ namespace Zem80.Core
             IO.EndMemoryWriteState();
             WaitForNextClockTick();
 
-            if (ExecutingInstructionPackage != null &&
-                ExecutingInstructionPackage.Instruction.Timing.Exceptions.HasMemoryWrite5)
+            if (_executingInstructionPackage != null &&
+                _executingInstructionPackage.Instruction.Timing.Exceptions.HasMemoryWrite5)
             {
                 WaitForNextClockTick();
                 WaitForNextClockTick();

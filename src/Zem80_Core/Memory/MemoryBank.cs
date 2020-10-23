@@ -15,7 +15,8 @@ namespace Zem80.Core.Memory
 
         public byte ReadByteAt(ushort address, bool noTiming)
         {
-            if (!_initialised) throw new MemoryException();
+            if (!_initialised) throw new MemoryNotInitialisedException();
+
             IMemorySegment segment = _map.SegmentFor(address);
             byte output = (segment?.ReadByteAt(AddressOffset(address, segment)) ?? 0x00); // 0x00 if address is unallocated
             if (!noTiming) _cpu.Cycle.MemoryReadCycle(AddressOffset(address, segment), output);
@@ -24,7 +25,7 @@ namespace Zem80.Core.Memory
 
         public byte[] ReadBytesAt(ushort address, ushort numberOfBytes, bool noTiming)
         {
-            if (!_initialised) throw new MemoryException();
+            if (!_initialised) throw new MemoryNotInitialisedException();
 
             uint availableBytes = numberOfBytes;
             if (address + availableBytes >= SizeInBytes) availableBytes = SizeInBytes - address; // if this read overflows the end of memory, we can read only this many bytes
@@ -50,7 +51,7 @@ namespace Zem80.Core.Memory
 
         public ushort ReadWordAt(ushort address, bool noTiming)
         {
-            if (!_initialised) throw new MemoryException();
+            if (!_initialised) throw new MemoryNotInitialisedException();
 
             byte low = ReadByteAt(address, noTiming);
             byte high = ReadByteAt(++address, noTiming);
@@ -59,7 +60,8 @@ namespace Zem80.Core.Memory
 
         public void WriteByteAt(ushort address, byte value, bool noTiming)
         {
-            if (!_initialised) throw new MemoryException();
+            if (!_initialised) throw new MemoryNotInitialisedException();
+
             IMemorySegment segment = _map.SegmentFor(address);
             if (segment == null || segment.ReadOnly)
             {
@@ -71,28 +73,36 @@ namespace Zem80.Core.Memory
 
         public void WriteBytesAt(ushort address, byte[] bytes, bool noTiming)
         {
-            if (!noTiming)
+            // similar optimisation to ReadBytesAt above
+            if (noTiming)
+            {
+                if (!_initialised) throw new MemoryNotInitialisedException();
+
+                IMemorySegment segment = _map.SegmentFor(address);
+                if (segment == null || segment.ReadOnly)
+                {
+                    throw new MemoryNotPresentException("Readonly or unmapped");
+                }
+                else
+                {
+                    if (segment.SizeInBytes - AddressOffset(address, segment) <= bytes.Length)
+                    {
+                        segment.WriteBytesAt(AddressOffset(address, segment), bytes);
+                    }
+                }
+            }
+            else
             {
                 for (ushort i = 0; i < bytes.Length; i++)
                 {
                     WriteByteAt((ushort)(address + i), bytes[i], false);
                 }
             }
-            else
-            {
-                if (!_initialised) throw new MemoryException();
-                IMemorySegment segment = _map.SegmentFor(address);
-                if (segment == null || segment.ReadOnly)
-                {
-                    throw new MemoryNotPresentException("Readonly or unmapped");
-                }
-                segment.WriteBytesAt(AddressOffset(address, segment), bytes);
-            }
         }
 
         public void WriteWordAt(ushort address, ushort value, bool noTiming)
         {
-            if (!_initialised) throw new MemoryException();
+            if (!_initialised) throw new MemoryNotInitialisedException();
 
             WriteByteAt(address, (byte)(value % 256), noTiming);
             WriteByteAt(++address, (byte)(value / 256), noTiming);

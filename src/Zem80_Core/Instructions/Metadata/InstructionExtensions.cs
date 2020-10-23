@@ -14,6 +14,8 @@ namespace Zem80.Core.Instructions
 
         public static byte MarshalSourceByte(this Instruction instruction, InstructionData data, Processor cpu, out ushort address, out ByteRegister source)
         {
+            // this fetches a byte operand value for the instruction given, adjusting how it is fetched based on the addressing of the instruction
+
             Registers r = cpu.Registers;
             address = 0x0000;
 
@@ -21,16 +23,19 @@ namespace Zem80.Core.Instructions
             source = instruction.Source.AsByteRegister();
             if (source != ByteRegister.None)
             {
+                // operand comes from another byte register directly (eg LD A,B)
                 value = r[source];
             }
             else
             {
                 if (instruction.Argument1 == InstructionElement.ByteValue)
                 {
+                    // operand is supplied as an argument (eg LD A,n)
                     value = data.Argument1;
                 }
                 else if (instruction.Source == InstructionElement.None)
                 {
+                    // operand is fetched from a memory location but the source and target are the same (eg INC (HL) or INC (IX+d))
                     address = instruction.Target.AsWordRegister() switch
                     {
                         WordRegister.IX => (ushort)(r.IX + (sbyte)data.Argument1),
@@ -42,6 +47,7 @@ namespace Zem80.Core.Instructions
                 }
                 else
                 {
+                    // operand is fetched from a memory location and assigned elsewhere (eg LD A,(HL) or LD B,(IX+d))
                     address = instruction.Source.AsWordRegister() switch
                     {
                         WordRegister.IX => (ushort)(r.IX + (sbyte)data.Argument1),

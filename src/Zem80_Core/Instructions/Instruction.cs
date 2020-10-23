@@ -27,12 +27,16 @@ namespace Zem80.Core.Instructions
         public bool TargetsByteInMemory => (Target >= InstructionElement.AddressFromHL && Target <= InstructionElement.AddressFromIYAndOffset);
         public ByteRegister? CopyResultTo { get; private set; }
 
-        public Instruction(string fullOpcode, string mnemonic, Condition condition, InstructionElement target, InstructionElement source, InstructionElement arg1, InstructionElement arg2, byte sizeInBytes, IEnumerable<MachineCycle> machineCycles, ByteRegister? copyResultTo = ByteRegister.None, IMicrocode microcode = null)
+        public Instruction(string fullOpcode, string mnemonic, Condition condition, InstructionElement target, InstructionElement source, InstructionElement arg1, InstructionElement arg2, 
+            byte sizeInBytes, IEnumerable<MachineCycle> machineCycles, ByteRegister? copyResultTo = ByteRegister.None, IMicrocode microcode = null)
         {
             FullOpcode = fullOpcode;
             CopyResultTo = copyResultTo;
 
-            Prefix = fullOpcode.Length == 2 ? InstructionPrefix.Unprefixed : (InstructionPrefix)Enum.Parse(typeof(InstructionPrefix), fullOpcode[..^2], true);
+            Prefix = (fullOpcode.Length == 2) ? 
+                InstructionPrefix.Unprefixed : 
+                ((InstructionPrefix)Enum.Parse(typeof(InstructionPrefix), fullOpcode[..^2], true));
+           
             Opcode = byte.Parse(fullOpcode[^2..], NumberStyles.HexNumber);
             
             Mnemonic = mnemonic;

@@ -2,6 +2,8 @@
 {
     public enum LogicalOperation
     {
-        Or, And, Xor
+        Or, 
+        And, 
+        Xor
     }
 }

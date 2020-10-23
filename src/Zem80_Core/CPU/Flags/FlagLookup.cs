@@ -136,43 +136,11 @@ namespace Zem80.Core
             return flags;
         }
 
-        public static bool HalfCarry(byte first, byte second, bool carry, bool isSubtraction)
-        {
-            int c = carry ? 1 : 0;
-            int result = (isSubtraction ? (first - second - c) : (first + second + c));
-            byte r = (byte)(result & 0xFF);
-
-            return ((first ^ r ^ second) & 0x10) != 0;
-        }
-
-        public static bool HalfCarry(ushort first, ushort second, bool carry, bool isSubtraction)
-        {
-            int c = carry ? 1 : 0;
-            int result = (isSubtraction ? (first - second - c) : (first + second + c));
-            short r = (short)(result & 0xFFFF);
-
-            return ((first ^ r ^ second) & 0x1000) != 0;
-        }
-
-        public static bool Overflows(byte first, byte second, bool carry, bool isSubtraction)
-        {
-            int c = (carry ? 1 : 0);
-            int signed = (isSubtraction ? ((sbyte)first - (sbyte)second - c) : ((sbyte)first + (sbyte)second + c));
-            return (signed >= 0x80 || signed <= -0x81);
-        }
-
-        public static bool Overflows(ushort first, ushort second, bool carry, bool isSubtraction)
-        {
-            int c = (carry ? 1 : 0);
-            int signed = (isSubtraction ? ((short)first - (short)second - c) : ((short)first + (short)second + c));
-            return (signed >= 0x8000 || signed < -0x8000);
-        }
-
         private static Flags GetByteArithmeticFlags(byte startingValue, byte addOrSubtractValue, bool carry, bool subtract)
         {
             Flags flags = new Flags();
 
-            int result = subtract ? startingValue - addOrSubtractValue - (carry ? 1 : 0) : 
+            int result = subtract ? startingValue - addOrSubtractValue - (carry ? 1 : 0) :
                                     startingValue + addOrSubtractValue + (carry ? 1 : 0);
 
             flags.Zero = ((byte)result == 0);
@@ -241,6 +209,38 @@ namespace Zem80.Core
             flags.X = (result & 0x08) > 0; // copy bit 3
             flags.Y = (result & 0x20) > 0; // copy bit 5
             return flags;
-        }        
+        }
+
+        private static bool HalfCarry(byte first, byte second, bool carry, bool isSubtraction)
+        {
+            int c = carry ? 1 : 0;
+            int result = (isSubtraction ? (first - second - c) : (first + second + c));
+            byte r = (byte)(result & 0xFF);
+
+            return ((first ^ r ^ second) & 0x10) != 0;
+        }
+
+        private static bool HalfCarry(ushort first, ushort second, bool carry, bool isSubtraction)
+        {
+            int c = carry ? 1 : 0;
+            int result = (isSubtraction ? (first - second - c) : (first + second + c));
+            short r = (short)(result & 0xFFFF);
+
+            return ((first ^ r ^ second) & 0x1000) != 0;
+        }
+
+        private static bool Overflows(byte first, byte second, bool carry, bool isSubtraction)
+        {
+            int c = (carry ? 1 : 0);
+            int signed = (isSubtraction ? ((sbyte)first - (sbyte)second - c) : ((sbyte)first + (sbyte)second + c));
+            return (signed >= 0x80 || signed <= -0x81);
+        }
+
+        private static bool Overflows(ushort first, ushort second, bool carry, bool isSubtraction)
+        {
+            int c = (carry ? 1 : 0);
+            int signed = (isSubtraction ? ((short)first - (short)second - c) : ((short)first + (short)second + c));
+            return (signed >= 0x8000 || signed < -0x8000);
+        }
     }
 }

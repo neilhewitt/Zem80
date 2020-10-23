@@ -16,7 +16,7 @@ namespace Zem80.Core
         private Thread _clockThread;
         
         public double FrequencyInMhz { get; private set; }
-        public int TicksSinceStart { get; private set; }
+        public long TicksSinceStart { get; private set; }
         public bool Started => _running;
 
         public event EventHandler OnTick;

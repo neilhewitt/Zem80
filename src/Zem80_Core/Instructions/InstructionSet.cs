@@ -19,9 +19,9 @@ namespace Zem80.Core.Instructions
             {
                 var instructions = new List<Instruction>();
 
-                // We have to build the complete Z80 instruction set, with metadata to allow us to reflect on the instructions as we process them.
-                // Below is a (very long) table of Instruction object instantions wrapped in an 'instruction_build' block (so you can collapse them easily).
-                // Instruction constructor is: new Instruction(opcode, mnemonic, condition, target, source, argument1, argument2, sizeInBytes, machine cycles)
+                // we have to build the complete Z80 instruction set, with metadata to allow us to reflect on the instructions as we process them
+                // below is a (very long) table of Instruction object instantiations wrapped in an 'instruction_build' block (so you can collapse them easily)
+                // instruction constructor is: new Instruction(opcode, mnemonic, condition, target, source, argument1, argument2, sizeInBytes, machine cycles)
 
                 // ***********************   INSTRUCTION TABLE   ************************ 
 
@@ -834,8 +834,8 @@ namespace Zem80.Core.Instructions
                 // add the undocumented overloads for documented instructions
                 BuildUndocumentedOverloads(instructions);
 
-                // We add each instruction (plus the undocumented overloads) to a dictionary (keyed on the full 1-4 byte opcode as an integer [for lookup performance reasons]).
-                // This is expensive but only runs once.
+                // we add each instruction (plus the undocumented overloads) to a dictionary (keyed on the full 1-4 byte opcode as an integer for lookup performance reasons)
+                // this is expensive but only runs once
 
                 foreach (Instruction instruction in instructions)
                 {
@@ -851,10 +851,10 @@ namespace Zem80.Core.Instructions
 
             foreach (Instruction instruction in instructions)
             {
-                // Generate a matrix of undocumented extended instructions for the DDCB / FDCB opcodes, which copy the result of whatever the operation is to a byte register
-                // Each instruction gets 6 overloads which copy to registers A,B,C,D,E,H,L (except BIT, which gets the overloads but doesn't copy to a register - crazy, eh?)
+                // generate a matrix of undocumented extended instructions for the DDCB / FDCB opcodes, which copy the result of whatever the operation is to a byte register
+                // each instruction gets 6 overloads which copy to registers A,B,C,D,E,H,L (except BIT, which gets the overloads but doesn't copy to a register - crazy, eh?)
 
-                // This is quicker than adding all the overloads to the main instruction set list above
+                // this is quicker than adding all the overloads to the main instruction set list above as there would be hundreds of them
 
                 if (instruction.Prefix == InstructionPrefix.DDCB || instruction.Prefix == InstructionPrefix.FDCB)
                 {
@@ -871,7 +871,8 @@ namespace Zem80.Core.Instructions
 
                             Instruction undocumentedInstruction = new Instruction(
                                 opcodeAsString,
-                                instruction.Mnemonic + "," + ((ByteRegister)i).ToString(),
+                                // unofficial mnemonic form is eg RES 0,(IX+o),C - resets bit 0 of memory location (IX+o) and copies that byte to C
+                                instruction.Mnemonic + "," + ((ByteRegister)i).ToString(), 
                                 Condition.None,
                                 instruction.Target,
                                 instruction.Source,
