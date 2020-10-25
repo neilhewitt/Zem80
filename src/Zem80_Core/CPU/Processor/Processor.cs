@@ -511,15 +511,17 @@ namespace Zem80.Core
         {
             if (IO.INT && InterruptsEnabled)
             {
+                if (_interruptCallback == null && InterruptMode != InterruptMode.IM1)
+                {
+                    throw new InterruptException("Interrupt mode is " + InterruptMode.ToString() + " which requires a callback for reading data from the interrupting device. Callback was null.");
+                }
+
                 if (_halted)
                 {
                     Resume();
                 }
 
-                if (_interruptCallback == null && InterruptMode != InterruptMode.IM1)
-                {
-                    throw new InterruptException("Interrupt mode is " + InterruptMode.ToString() + " which requires a callback for reading data from the interrupting device. Callback was null.");
-                }
+                DisableInterrupts(); // we don't want any interrupts to our interrupt handler...
 
                 switch (InterruptMode)
                 {
