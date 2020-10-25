@@ -18,7 +18,6 @@ namespace Zem80.Core
         public const int IM1_INTERRUPT_ACKNOWLEDGE_TSTATES = 7;
         public const int IM2_INTERRUPT_ACKNOWLEDGE_TSTATES = 7;
 
-
         private bool _running;
         private bool _halted;
         private bool _suspendMachineCycles;
