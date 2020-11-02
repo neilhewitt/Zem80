@@ -462,15 +462,20 @@ namespace Zem80.Core
 
         private void InsertWaitCycles()
         {
-            if (_pendingWaitCycles > 0)
+            int cyclesToAdd = _pendingWaitCycles;
+
+            if (cyclesToAdd > 0)
             {
-                _beforeInsertWaitCycles?.Invoke(this, _pendingWaitCycles);
+                _beforeInsertWaitCycles?.Invoke(this, cyclesToAdd);
             }
 
-            while (_pendingWaitCycles-- > 0)
+            while (cyclesToAdd > 0)
             {
                 WaitForNextClockTick();
+                cyclesToAdd--;
             }
+
+            _pendingWaitCycles = 0;
         }
 
         private byte FetchOpcodeByte()

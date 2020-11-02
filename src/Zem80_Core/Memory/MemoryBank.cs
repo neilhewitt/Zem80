@@ -63,11 +63,11 @@ namespace Zem80.Core.Memory
             if (!_initialised) throw new MemoryNotInitialisedException();
 
             IMemorySegment segment = _map.SegmentFor(address);
-            if (segment == null || segment.ReadOnly)
+            if (segment != null || !segment.ReadOnly)
             {
-                throw new MemoryNotPresentException("Readonly or unmapped");
+                segment.WriteByteAt(AddressOffset(address, segment), value);
             }
-            segment.WriteByteAt(AddressOffset(address, segment), value);
+            
             if (!noTiming) _cpu.Cycle.MemoryWriteCycle(AddressOffset(address, segment), value);
         }
 
@@ -79,15 +79,18 @@ namespace Zem80.Core.Memory
                 if (!_initialised) throw new MemoryNotInitialisedException();
 
                 IMemorySegment segment = _map.SegmentFor(address);
-                if (segment == null || segment.ReadOnly)
-                {
-                    throw new MemoryNotPresentException("Readonly or unmapped");
-                }
-                else
+                if (segment != null || !segment.ReadOnly)
                 {
                     if (segment.SizeInBytes - AddressOffset(address, segment) <= bytes.Length)
                     {
                         segment.WriteBytesAt(AddressOffset(address, segment), bytes);
+                    }
+                    else
+                    {
+                        for (ushort i = 0; i < bytes.Length; i++)
+                        {
+                            WriteByteAt((ushort)(address + i), bytes[i], false);
+                        }
                     }
                 }
             }
