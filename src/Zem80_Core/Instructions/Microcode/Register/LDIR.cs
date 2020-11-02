@@ -28,7 +28,6 @@ namespace Zem80.Core.Instructions
             bool conditionTrue = (r.BC == 0);
             if (conditionTrue) cpu.Cycle.InternalOperationCycle(5);
             else r.PC = package.InstructionAddress;
-            
 
             return new ExecutionResult(package, flags);
         }

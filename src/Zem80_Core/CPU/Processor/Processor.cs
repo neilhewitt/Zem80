@@ -5,6 +5,8 @@ using System.Diagnostics;
 using Zem80.Core.Instructions;
 using Zem80.Core.Memory;
 using Zem80.Core.IO;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Zem80.Core
 {
@@ -40,6 +42,9 @@ namespace Zem80.Core
         private EventHandler _onStop;
         private EventHandler<HaltReason> _onHalt;
         private EventHandler<int> _beforeInsertWaitCycles;
+        private EventHandler<InstructionPackage> _onBreakpoint;
+
+        private IList<ushort> _breakpoints = new List<ushort>();
         
         public IDebugProcessor Debug => this;
         public ICycle Cycle => this;
@@ -59,6 +64,8 @@ namespace Zem80.Core
         public long EmulatedTStates => _emulatedTStates;
         public TimeSpan Elapsed => _startStopTimer.Elapsed;
 
+        IEnumerable<ushort> IDebugProcessor.Breakpoints => _breakpoints;
+
         // client code should use this event to synchronise activity with the CPU clock cyles
         public event EventHandler<InstructionPackage> OnClockTick;
 
@@ -73,7 +80,7 @@ namespace Zem80.Core
         event EventHandler IDebugProcessor.BeforeStart { add { _beforeStart += value; } remove { _beforeStart -= value; } }
         event EventHandler IDebugProcessor.OnStop { add { _onStop += value; } remove { _onStop -= value; } }
         event EventHandler<HaltReason> IDebugProcessor.OnHalt { add { _onHalt += value; } remove { _onHalt -= value; } }
-
+        event EventHandler<InstructionPackage> IDebugProcessor.OnBreakpoint { add { _onBreakpoint += value; } remove { _onBreakpoint -= value; } }
         public void Start(ushort address = 0x0000, bool endOnHalt = false, TimingMode timingMode = TimingMode.FastAndFurious)
         {
             if (!_running)
@@ -206,6 +213,23 @@ namespace Zem80.Core
             _pendingWaitCycles = waitCycles;
         }
 
+        void IDebugProcessor.AddBreakpoint(ushort address)
+        {
+            if (!_breakpoints.Contains(address))
+            {
+                _breakpoints.Add(address);
+            }    
+
+        }
+
+        void IDebugProcessor.RemoveBreakpoint(ushort address)
+        {
+            if (_breakpoints.Contains(address))
+            {
+                _breakpoints.Remove(address);
+            }
+        }
+
         private void InstructionCycle()
         {
             while (_running)
@@ -252,6 +276,13 @@ namespace Zem80.Core
             _executingInstructionPackage = package;
 
             // run the instruction microcode implementation
+
+            // check for breakpoints
+            if (_breakpoints.Contains(package.InstructionAddress))
+            {
+                _onBreakpoint?.Invoke(this, package);
+            }
+
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
             if (result.Flags != null) Registers.Flags.Value = result.Flags.Value;
             _afterExecute?.Invoke(this, result);

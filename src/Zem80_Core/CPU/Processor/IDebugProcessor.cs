@@ -12,6 +12,11 @@ namespace Zem80.Core
         event EventHandler OnStop;
         event EventHandler<HaltReason> OnHalt;
         event EventHandler<int> BeforeInsertWaitCycles;
+        event EventHandler<InstructionPackage> OnBreakpoint;
+
+        IEnumerable<ushort> Breakpoints { get; }
+        void AddBreakpoint(ushort address);
+        void RemoveBreakpoint(ushort address);
 
         ExecutionResult ExecuteDirect(byte[] opcode);
         ExecutionResult ExecuteDirect(InstructionPackage package);
