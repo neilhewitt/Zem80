@@ -208,7 +208,7 @@ namespace Zem80.Core
         public void AddWaitCycles(int waitCycles)
         {
             // Note that it's fine for client software to add wait cycles
-            // and then add again *before* the wait has happened.
+            // and then reset and add again *before* the wait has happened.
             // Waits are only actually inserted at certain points in the instruction cycle. 
             _pendingWaitCycles = waitCycles;
         }
@@ -275,14 +275,13 @@ namespace Zem80.Core
             _beforeExecute?.Invoke(this, package);
             _executingInstructionPackage = package;
 
-            // run the instruction microcode implementation
-
             // check for breakpoints
             if (_breakpoints.Contains(package.InstructionAddress))
             {
                 _onBreakpoint?.Invoke(this, package);
             }
 
+            // run the instruction microcode implementation
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
             if (result.Flags != null) Registers.Flags.Value = result.Flags.Value;
             _afterExecute?.Invoke(this, result);
@@ -505,12 +504,57 @@ namespace Zem80.Core
 
                 Push(WordRegister.PC);
                 Registers.PC = 0x0066;
-                _halted = false;
 
                 Cycle.EndInterruptRequestAcknowledgeCycle();
             }
 
             IO.EndNMIState();
+        }
+
+        private void HandleMaskableInterrupts()
+        {
+            if (IO.INT && InterruptsEnabled)
+            {
+                if (_interruptCallback == null && InterruptMode != InterruptMode.IM1)
+                {
+                    throw new InterruptException("Interrupt mode is " + InterruptMode.ToString() + " which requires a callback for reading data from the interrupting device. Callback was null.");
+                }
+
+                if (_halted)
+                {
+                    Resume();
+                }
+
+                DisableInterrupts(); // we don't want any interrupts to our interrupt handler...
+
+                switch (InterruptMode)
+                {
+                    case InterruptMode.IM0: // read instruction data from data bus in 1-4 opcode fetch cycles and execute resulting instruction - flags are set but PC is unaffected
+                        Cycle.BeginInterruptRequestAcknowledgeCycle(IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        InstructionPackage package = DecodeIM0Interrupt();
+                        ushort pc = Registers.PC;
+                        Push(WordRegister.PC);
+                        Execute(package);
+                        Registers.PC = pc;
+                        break;
+
+                    case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
+                        Cycle.BeginInterruptRequestAcknowledgeCycle(IM1_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        Push(WordRegister.PC);
+                        Registers.PC = 0x0038;
+                        break;
+
+                    case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
+                        _interruptCallback(); // device must populate data bus with low byte of address
+                        Cycle.BeginInterruptRequestAcknowledgeCycle(IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        Push(WordRegister.PC);
+                        ushort address = (ushort)((Registers.I * 256) + IO.DATA_BUS);
+                        Registers.PC = Memory.ReadWordAt(address, false);
+                        break;
+                }
+
+                Cycle.EndInterruptRequestAcknowledgeCycle();
+            }
         }
 
         private InstructionPackage DecodeIM0Interrupt()
@@ -543,50 +587,6 @@ namespace Zem80.Core
             return package;
         }
 
-        private void HandleMaskableInterrupts()
-        {
-            if (IO.INT && InterruptsEnabled)
-            {
-                if (_interruptCallback == null && InterruptMode != InterruptMode.IM1)
-                {
-                    throw new InterruptException("Interrupt mode is " + InterruptMode.ToString() + " which requires a callback for reading data from the interrupting device. Callback was null.");
-                }
-
-                if (_halted)
-                {
-                    Resume();
-                }
-
-                DisableInterrupts(); // we don't want any interrupts to our interrupt handler...
-
-                switch (InterruptMode)
-                {
-                    case InterruptMode.IM0: // read instruction data from data bus in 1-4 opcode fetch cycles and execute resulting instruction - flags are set but PC is unaffected
-                        Cycle.BeginInterruptRequestAcknowledgeCycle(IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
-                        InstructionPackage package = DecodeIM0Interrupt();
-                        ushort pc = Registers.PC;
-                        Execute(package);
-                        Registers.PC = pc;
-                        break;
-
-                    case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
-                        Cycle.BeginInterruptRequestAcknowledgeCycle(IM1_INTERRUPT_ACKNOWLEDGE_TSTATES);
-                        Push(WordRegister.PC);
-                        Registers.PC = 0x0038;
-                        break;
-
-                    case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
-                        _interruptCallback(); // device must populate data bus with low byte of address
-                        Cycle.BeginInterruptRequestAcknowledgeCycle(IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
-                        Push(WordRegister.PC);
-                        ushort address = (ushort)((Registers.I * 256) + IO.DATA_BUS);
-                        Registers.PC = Memory.ReadWordAt(address, false);
-                        break;
-                }
-
-                Cycle.EndInterruptRequestAcknowledgeCycle();
-            }
-        }
 
         // ICycle contains methods to execute the different types of MachineCycle that the Z80 supports
         // These will be called mostly by the instruction decoder, stack operations and interrupt handlers, but some instruction
