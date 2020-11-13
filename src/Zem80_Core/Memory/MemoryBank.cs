@@ -33,7 +33,7 @@ namespace Zem80.Core.Memory
             IMemorySegment segment = _map.SegmentFor(address);
             if (segment == null) return new byte[numberOfBytes]; // if memory is not allocated return all 0x00s
 
-            if (noTiming && (segment.SizeInBytes - AddressOffset(address, segment)) <= numberOfBytes)
+            if (noTiming && (segment.SizeInBytes - AddressOffset(address, segment)) >= numberOfBytes)
             {
                 // if the read fits entirely within the memory segment and we aren't generating read timing, then optimise for speed
                 return segment.ReadBytesAt(AddressOffset(address, segment), numberOfBytes);
@@ -81,7 +81,7 @@ namespace Zem80.Core.Memory
                 IMemorySegment segment = _map.SegmentFor(address);
                 if (segment != null || !segment.ReadOnly)
                 {
-                    if (segment.SizeInBytes - AddressOffset(address, segment) <= bytes.Length)
+                    if (segment.SizeInBytes - AddressOffset(address, segment) >= bytes.Length)
                     {
                         segment.WriteBytesAt(AddressOffset(address, segment), bytes);
                     }

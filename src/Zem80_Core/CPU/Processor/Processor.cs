@@ -24,9 +24,8 @@ namespace Zem80.Core
         private bool _halted;
         private bool _suspendMachineCycles;
         private long _emulatedTStates;
-
-        private ushort _topOfStack;
         private int _pendingWaitCycles;
+        private ushort _topOfStack;
 
         private ExternalClock _clock;
         private bool _clockSemaphore;
@@ -81,6 +80,7 @@ namespace Zem80.Core
         event EventHandler IDebugProcessor.OnStop { add { _onStop += value; } remove { _onStop -= value; } }
         event EventHandler<HaltReason> IDebugProcessor.OnHalt { add { _onHalt += value; } remove { _onHalt -= value; } }
         event EventHandler<InstructionPackage> IDebugProcessor.OnBreakpoint { add { _onBreakpoint += value; } remove { _onBreakpoint -= value; } }
+
         public void Start(ushort address = 0x0000, bool endOnHalt = false, TimingMode timingMode = TimingMode.FastAndFurious)
         {
             if (!_running)
@@ -89,8 +89,8 @@ namespace Zem80.Core
                 TimingMode = timingMode;
                 _emulatedTStates = 0;
 
-                _beforeStart?.Invoke(null, null);
                 Registers.PC = address; // ordinarily, execution will start at 0x0000, but this can be overridden
+                _beforeStart?.Invoke(null, null);
                 _running = true;
 
                 _startStopTimer.Reset();
@@ -215,6 +215,9 @@ namespace Zem80.Core
 
         void IDebugProcessor.AddBreakpoint(ushort address)
         {
+            // Note that the breakpoint functionality is *very* simple and not checked
+            // so if you add a breakpoint for an address which is not the start
+            // of an instruction in the code, it will never be triggered
             if (!_breakpoints.Contains(address))
             {
                 _breakpoints.Add(address);
@@ -261,8 +264,8 @@ namespace Zem80.Core
                 }
 
                 // run the decoded instruction and deal with timing / ticks
-                ExecutionResult result = Execute(package);
                 Registers.R++; // R is incremented after every instruction as a memory refresh initiator
+                ExecutionResult result = Execute(package);
                 _executingInstructionPackage = null;
 
                 HandleNonMaskableInterrupts();
@@ -525,7 +528,8 @@ namespace Zem80.Core
                     Resume();
                 }
 
-                DisableInterrupts(); // we don't want any interrupts to our interrupt handler...
+                bool interruptsEnabled = InterruptsEnabled;
+                DisableInterrupts(); // we don't want any interrupts to our interrupt handler... (this is only an issue for IM0)
 
                 switch (InterruptMode)
                 {
@@ -553,6 +557,7 @@ namespace Zem80.Core
                         break;
                 }
 
+                if (interruptsEnabled) EnableInterrupts(); // re-enable interrupts if they were enabled when we were called (would only not be in IM0 if the instruction supplied was DI!)
                 Cycle.EndInterruptRequestAcknowledgeCycle();
             }
         }
@@ -623,10 +628,13 @@ namespace Zem80.Core
             IO.EndMemoryReadState();
             WaitForNextClockTick();
 
-            if (_executingInstructionPackage != null &&
-                _executingInstructionPackage.Instruction.Timing.Exceptions.HasMemoryRead4)
+            Instruction instruction = _executingInstructionPackage?.Instruction;
+            if (instruction != null)
             {
-                WaitForNextClockTick();
+                if (instruction.Timing.Exceptions.HasMemoryRead4)
+                {
+                    WaitForNextClockTick();
+                }
             }
         }
 
@@ -640,11 +648,13 @@ namespace Zem80.Core
             IO.EndMemoryWriteState();
             WaitForNextClockTick();
 
-            if (_executingInstructionPackage != null &&
-                _executingInstructionPackage.Instruction.Timing.Exceptions.HasMemoryWrite5)
+            Instruction instruction = _executingInstructionPackage?.Instruction;
+            if (instruction != null)
             {
-                WaitForNextClockTick();
-                WaitForNextClockTick();
+                if (instruction.Timing.Exceptions.HasMemoryRead4)
+                {
+                    WaitForNextClockTick();
+                }
             }
         }
 

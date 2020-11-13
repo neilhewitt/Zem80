@@ -1,0 +1,35 @@
+			.org 5h
+			ld a,c
+			cp 2h
+			call z,charout
+			cp 9h
+			call z,strout
+			cp 3h
+			call z,byteout	
+			ret
+charout:	
+			ld a,e
+			out (0),a
+			ret
+byteout:
+			ld a,e
+			out (1),a
+			ret
+strout:		
+			push hl
+			push de
+			pop hl
+loop:		
+			ld a,(hl)
+			cp 24h
+			jr z,theend
+			out (0),a
+			ld de,0001h
+			add hl,de
+			jr loop
+theend:					
+			pop hl
+			ret
+
+
+        

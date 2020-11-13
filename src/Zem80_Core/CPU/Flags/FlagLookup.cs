@@ -70,7 +70,7 @@ namespace Zem80.Core
 
         public static Flags ByteArithmeticFlags(byte startingValue, int addOrSubtractValue, bool carry, bool subtract)
         {
-            if (EnablePrecalculation)
+            if (EnablePrecalculation && _initialised)
             {
                 return new Flags((subtract ?
                                     _subFlags8[startingValue, addOrSubtractValue, carry ? 1 : 0] :
@@ -85,7 +85,7 @@ namespace Zem80.Core
 
         public static Flags LogicalFlags(byte first, byte second, LogicalOperation operation)
         {
-            if (EnablePrecalculation)
+            if (EnablePrecalculation && _initialised)
             {
                 return new Flags(_logicalFlags[first, second, (int)operation]);
             }
@@ -97,7 +97,7 @@ namespace Zem80.Core
 
         public static Flags BitwiseFlags(byte value, BitwiseOperation operation, bool previousCarry)
         {
-            if (EnablePrecalculation)
+            if (EnablePrecalculation && _initialised)
             {
                 return new Flags(_bitwiseFlags[value, (int)operation, previousCarry ? 1 : 0]);
             }
