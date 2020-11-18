@@ -13,6 +13,10 @@ The first module of the project will be the Z80 core emulator itself. After this
 Beyond this, I *may* attempt to write a ZX Spectrum VM hosting the Z80.
 
 ## Project status
+18/11/20 - It looks like there are still some bugs within the emulation, despite it passing the Zexall tests, as my attempts to emulate the basic ZX Spectrum have failed. I can get the VM to boot and the ROM runs to the point where the Sinclair copyright message is displayed, but I can't get the line editor to work and this suggests that somewhere either a flag is not being set correctly or an instruction is not working properly. I am currently integrating some new tests ('Zexall2') which should give the whole instruction set a bigger workout and hopefully I'll find where things are going wrong. 
+
+**Given this, I don't think the emulator is ready to be used in real projects yet despite being V1.0. Emulating the Spectrum is not trivial but it should be straightforward and if I can't get this to work, chances are your project may not work either.**
+
 23/10/20 - Version 1.0 official. Made a few minor refactorings and added the ZexNext test framework (currently as a simple binary dependency - NuGet packaging will come) into the test suite. Note that these tests do take several seconds to run, so you should probably not run them for every single build. A full test suite and some documentation is my next project. 
 
 15/10/20 - Version 1.0 candidate (not yet declared)
