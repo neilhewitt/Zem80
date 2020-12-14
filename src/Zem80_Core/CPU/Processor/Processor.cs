@@ -56,12 +56,15 @@ namespace Zem80.Core
         public ProcessorIO IO { get; private set; }
 
         public InterruptMode InterruptMode { get; private set; }
-        public bool InterruptsEnabled { get; private set; }
+        public bool InterruptsEnabled => IFF1;
         public double FrequencyInMHz { get; private set; }
         public TimingMode TimingMode { get; private set; }
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; 
         public long EmulatedTStates => _emulatedTStates;
         public TimeSpan Elapsed => _startStopTimer.Elapsed;
+
+        internal bool IFF1 { get; set; }
+        internal bool IFF2 { get; set; }
 
         IEnumerable<ushort> IDebugProcessor.Breakpoints => _breakpoints;
 
@@ -197,12 +200,12 @@ namespace Zem80.Core
 
         public void DisableInterrupts()
         {
-            InterruptsEnabled = false;
+            IFF1 = false;
         }
 
         public void EnableInterrupts()
         {
-            InterruptsEnabled = true;
+            IFF1 = true;
         }
 
         public void AddWaitCycles(int waitCycles)
@@ -240,6 +243,9 @@ namespace Zem80.Core
                 InstructionPackage package = null;
                 ushort pc = Registers.PC;
 
+                HandleNonMaskableInterrupts();
+                HandleMaskableInterrupts();
+
                 if (!_halted)
                 {
                     // decode next instruction
@@ -250,6 +256,11 @@ namespace Zem80.Core
                         Stop();
                         return;
                     }
+
+                    // run the decoded instruction and deal with timing / ticks
+                    Registers.R++; // R is incremented after every instruction as a memory refresh initiator
+                    ExecutionResult result = Execute(package);
+                    _executingInstructionPackage = null;
                 }
                 else
                 {
@@ -258,18 +269,10 @@ namespace Zem80.Core
                         Stop();
                         return;
                     }
-                    // when halted, the CPU should execute NOP continuously
-                    Cycle.OpcodeFetchCycle(Registers.PC, InstructionSet.NOP.Opcode); // we still need to generate the right ticks + wait cycles for a NOP
-                    package = new InstructionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
+                    //// when halted, the CPU should execute NOP continuously
+                    //Cycle.OpcodeFetchCycle(Registers.PC, InstructionSet.NOP.Opcode); // we still need to generate the right ticks + wait cycles for a NOP
+                    //package = new InstructionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
                 }
-
-                // run the decoded instruction and deal with timing / ticks
-                Registers.R++; // R is incremented after every instruction as a memory refresh initiator
-                ExecutionResult result = Execute(package);
-                _executingInstructionPackage = null;
-
-                HandleNonMaskableInterrupts();
-                HandleMaskableInterrupts();
             }
         }
 
@@ -503,6 +506,9 @@ namespace Zem80.Core
                     Resume();
                 }
 
+                IFF2 = IFF1; // save flip-flop state ready for RETI/RETN
+                IFF1 = false; // disable maskable interrupts until RETI/RETN
+
                 Cycle.BeginInterruptRequestAcknowledgeCycle(NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
 
                 Push(WordRegister.PC);
@@ -528,7 +534,6 @@ namespace Zem80.Core
                     Resume();
                 }
 
-                bool interruptsEnabled = InterruptsEnabled;
                 DisableInterrupts(); // we don't want any interrupts to our interrupt handler... (this is only an issue for IM0)
 
                 switch (InterruptMode)
@@ -557,7 +562,6 @@ namespace Zem80.Core
                         break;
                 }
 
-                if (interruptsEnabled) EnableInterrupts(); // re-enable interrupts if they were enabled when we were called (would only not be in IM0 if the instruction supplied was DI!)
                 Cycle.EndInterruptRequestAcknowledgeCycle();
             }
         }
@@ -756,7 +760,7 @@ namespace Zem80.Core
             Memory.Initialise(this, map ?? new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES, true));
             IO = new ProcessorIO(this);
 
-            InterruptsEnabled = true;
+            IFF1 = true;
             TimingMode = TimingMode.FastAndFurious;
             InterruptMode = InterruptMode.IM0;
 

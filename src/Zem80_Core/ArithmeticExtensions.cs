@@ -121,6 +121,11 @@ namespace Zem80.Core
             return bits;
         }
 
+        public static byte Invert(this byte input)
+        {
+            return (byte)(input ^ 0xFF);
+        }
+
         public static bool EvenParity(this byte input)
         {
             return input.CountBits(true) % 2 == 0;
