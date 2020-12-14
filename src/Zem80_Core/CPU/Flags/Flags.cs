@@ -52,16 +52,6 @@ namespace Zem80.Core
             };
         }
 
-        public bool Check(bool? sign = null, bool? carry = null, bool? halfCarry = null, bool? parityOverflow = null, bool? subtract = null, bool? zero = null)
-        {
-            return (sign.HasValue ? Sign == sign : true &&
-                    carry.HasValue ? Carry == carry : true &&
-                    halfCarry.HasValue ? HalfCarry == halfCarry : true &&
-                    parityOverflow.HasValue ? ParityOverflow == parityOverflow : true &&
-                    subtract.HasValue ? Subtract == subtract : true &&
-                    zero.HasValue ? Zero == zero : true);
-        }
-
         // this is used by NUnit, so ignore the '0 references' and DO NOT REMOVE!
         public override bool Equals(object obj)
         {
