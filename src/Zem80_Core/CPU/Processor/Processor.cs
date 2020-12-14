@@ -148,12 +148,14 @@ namespace Zem80.Core
         {
             ushort value = Registers[register];
             Registers.SP--;
-            Cycle.StackWriteCycle(true, value.HighByte());
+            Cycle.BeginStackWriteCycle(true, value.HighByte());
             Memory.WriteByteAt(Registers.SP, value.HighByte(), true);
+            Cycle.EndStackWriteCycle();
 
             Registers.SP--;
-            Cycle.StackWriteCycle(false, value.LowByte());
+            Cycle.BeginStackWriteCycle(false, value.LowByte());
             Memory.WriteByteAt(Registers.SP, value.LowByte(), true);
+            Cycle.EndStackWriteCycle();
         }
 
         public void Pop(WordRegister register)
@@ -580,6 +582,7 @@ namespace Zem80.Core
             Registers.PC = address;
 
             _suspendMachineCycles = true;
+            
             for (int i = 0; i < 4; i++)
             {
                 byte value = _interruptCallback();
@@ -588,10 +591,11 @@ namespace Zem80.Core
             }
 
             InstructionPackage package = DecodeInstruction();
-            _suspendMachineCycles = false;
 
             Registers.PC = pc;
             Memory.WriteBytesAt(address, lastFour, true);
+            
+            _suspendMachineCycles = false;
 
             return package;
         }
@@ -655,8 +659,9 @@ namespace Zem80.Core
             Instruction instruction = _executingInstructionPackage?.Instruction;
             if (instruction != null)
             {
-                if (instruction.Timing.Exceptions.HasMemoryRead4)
+                if (instruction.Timing.Exceptions.HasMemoryWrite5)
                 {
+                    WaitForNextClockTick();
                     WaitForNextClockTick();
                 }
             }
@@ -679,13 +684,16 @@ namespace Zem80.Core
             WaitForNextClockTick();
         }
 
-        void ICycle.StackWriteCycle(bool highByte, byte data)
+        void ICycle.BeginStackWriteCycle(bool highByte, byte data)
         {
             IO.SetMemoryWriteState(Registers.SP, data);
             WaitForNextClockTick();
             WaitForNextClockTick();
             InsertWaitCycles();
+        }
 
+        void ICycle.EndStackWriteCycle()
+        {
             IO.EndMemoryWriteState();
             WaitForNextClockTick();
         }
