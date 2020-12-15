@@ -22,6 +22,7 @@ namespace Zem80.Core
 
         private bool _running;
         private bool _halted;
+        private HaltReason _reasonForLastHalt;
         private bool _suspendMachineCycles;
         private long _emulatedTStates;
         private int _pendingWaitCycles;
@@ -117,17 +118,6 @@ namespace Zem80.Core
             _onStop?.Invoke(null, null);
         }
 
-        public void Halt(HaltReason reason = HaltReason.HaltCalledDirectly)
-        {
-            _halted = true;
-            _onHalt?.Invoke(null, reason);
-        }
-
-        public void Resume()
-        {
-            _halted = false;
-        }
-
         public void RunUntilStopped()
         {
             while (_running) Thread.Sleep(0);
@@ -218,6 +208,27 @@ namespace Zem80.Core
             _pendingWaitCycles = waitCycles;
         }
 
+        public void Halt(HaltReason reason = HaltReason.HaltCalledDirectly)
+        {
+            if (!_halted)
+            {
+                _halted = true;
+                _reasonForLastHalt = reason;
+                _onHalt?.Invoke(null, reason);
+            }
+        }
+
+        public void Resume()
+        {
+            if (_halted)
+            {
+                _halted = false;
+                if (_reasonForLastHalt == HaltReason.HaltInstruction) Registers.PC++;
+                // if coming back from a HALT instruction (at next interrupt or by API override here), move the Program Counter on to step over the HALT instruction
+                // otherwise we'll HALT forever in a loop
+            }
+        }
+
         void IDebugProcessor.AddBreakpoint(ushort address)
         {
             // Note that the breakpoint functionality is *very* simple and not checked
@@ -248,9 +259,12 @@ namespace Zem80.Core
                 HandleNonMaskableInterrupts();
                 HandleMaskableInterrupts();
 
+                RefreshMemory();
                 if (!_halted)
                 {
-                    // decode next instruction
+                    // decode next instruction 
+                    // (note that the decode cycle leaves the Program Counter at the byte *after* this instruction unless it's adjusted by the instruction code itself,
+                    // this is how the program moves on to the next instruction)
                     package = DecodeInstruction();
                     if (package == null)
                     {
@@ -258,11 +272,6 @@ namespace Zem80.Core
                         Stop();
                         return;
                     }
-
-                    // run the decoded instruction and deal with timing / ticks
-                    Registers.R++; // R is incremented after every instruction as a memory refresh initiator
-                    ExecutionResult result = Execute(package);
-                    _executingInstructionPackage = null;
                 }
                 else
                 {
@@ -271,10 +280,20 @@ namespace Zem80.Core
                         Stop();
                         return;
                     }
-                    //// when halted, the CPU should execute NOP continuously
-                    //Cycle.OpcodeFetchCycle(Registers.PC, InstructionSet.NOP.Opcode); // we still need to generate the right ticks + wait cycles for a NOP
-                    //package = new InstructionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
+
+                    // run a NOP - by not decoding anything we leave the Program Counter where it was when we HALTed
+                    // the PC will be advanced on resume from the HALT instruction when the next interrupt is handled
+                    package = new InstructionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
                 }
+
+                // run the decoded instruction and deal with timing / ticks
+                ExecutionResult result = Execute(package);
+                _executingInstructionPackage = null;
+            }
+
+            void RefreshMemory()
+            {
+                Registers.R = (byte)(((Registers.R + 1) & 0x7F) | (Registers.R & 0x80)); // bits 0-6 of R are incremented as part of the memory refresh - bit 7 is preserved
             }
         }
 
