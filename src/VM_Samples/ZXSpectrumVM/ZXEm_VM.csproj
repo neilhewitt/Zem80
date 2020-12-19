@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <RootNamespace>ZXEm.VM</RootNamespace>
+    <AssemblyName>ZXEm.VM</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Zem80\src\Zem80_Core\Zem80_Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="ROM\48.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
