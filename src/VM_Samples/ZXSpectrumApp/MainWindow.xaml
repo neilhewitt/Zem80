@@ -1,0 +1,20 @@
+﻿<Window x:Class="ZXEm.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Name="Main"
+        Title="ZX Spectrum 48K Test UI" Height="600" Width="1000"
+        >
+    <Grid RenderOptions.BitmapScalingMode="HighQuality">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="800"></ColumnDefinition>
+            <ColumnDefinition></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Image x:Name="DisplaySurface" Grid.Column="0" Margin ="10" Stretch="Fill" Visibility="Visible" />
+        <ListBox x:Name="Code" Grid.Column="1" Margin="10" Visibility="Visible" >
+        </ListBox>
+        <Button Content="Toggle Code" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Top" Click="ToggleCode" Width="94" Margin="10,540,0,0" />
+    </Grid>
+</Window>
