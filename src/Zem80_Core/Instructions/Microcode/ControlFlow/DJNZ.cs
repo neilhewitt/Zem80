@@ -23,6 +23,8 @@ namespace Zem80.Core.Instructions
                 // instruction - hence we must add two bytes here to resolve the correct target address
                 address = (ushort)(address + (sbyte)data.Argument1 + 2);
                 cpu.Registers.PC = address;
+
+                cpu.Registers.WZ = address;
             }
 
             return new ExecutionResult(package, cpu.Registers.Flags);

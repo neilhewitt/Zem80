@@ -24,6 +24,7 @@ namespace Zem80.Core.Instructions
                 var subtraction = ALUOperations.Subtract(left, right, flags.Carry, true, flags);
                 r.HL = subtraction.Result;
                 flags = subtraction.Flags;
+                r.WZ = (ushort)(left + 1);
             }
             else
             {

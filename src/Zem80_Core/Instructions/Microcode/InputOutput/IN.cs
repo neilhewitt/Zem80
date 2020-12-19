@@ -19,13 +19,14 @@ namespace Zem80.Core.Instructions
                 Port port = cpu.Ports[portNumber];
                 port.SignalRead();
                 byte input = port.ReadByte(bc);
-                r[toRegister] = input;
+                if (toRegister != ByteRegister.F) r[toRegister] = input;
                 return input;
             }
 
             if (instruction.Prefix == InstructionPrefix.Unprefixed)
             {
                 // IN A,(n)
+                r.WZ = (ushort)((r.A << 8) + data.Argument1 + 1);
                 @in(data.Argument1, ByteRegister.A, false);
             }
             else
@@ -39,6 +40,7 @@ namespace Zem80.Core.Instructions
                 flags.Subtract = false;
                 flags.X = (input & 0x08) > 0; // copy bit 3
                 flags.Y = (input & 0x20) > 0; // copy bit 5
+                r.WZ = (ushort)(r.BC + 1);
             }
 
             return new ExecutionResult(package, flags);

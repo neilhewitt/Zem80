@@ -26,6 +26,7 @@ namespace Zem80.Core.Instructions
                 var sum = ALUOperations.Add(left, right, false, false, flags);
                 r[destination] = sum.Result;
                 flags = sum.Flags;
+                r.WZ = (ushort)(left + 1);
             }
             else
             {

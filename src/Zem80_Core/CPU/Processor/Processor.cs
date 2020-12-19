@@ -283,7 +283,15 @@ namespace Zem80.Core
 
                     // run a NOP - by not decoding anything we leave the Program Counter where it was when we HALTed
                     // the PC will be advanced on resume from the HALT instruction when the next interrupt is handled
+                    
+                    // since we're not decoding the instruction (it's HALT), we need to run the opcode fetch cycle for NOP
+                    // so that the clock ticks and attached devices can generate interrupts to bring the CPU out of HALT;
+                    // the following call does that..
+                    FetchOpcodeByte(); 
+
+                    // now send a NOP package to be executed
                     package = new InstructionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
+
                 }
 
                 // run the decoded instruction and deal with timing / ticks
@@ -308,8 +316,23 @@ namespace Zem80.Core
                 _onBreakpoint?.Invoke(this, package);
             }
 
+            if (package.Instruction.IsIndexed)
+            {
+                ushort wz = package.Instruction switch
+                {
+                    var i when i.Source == InstructionElement.AddressFromIXAndOffset => Registers.IX,
+                    var i when i.Source == InstructionElement.AddressFromIYAndOffset => Registers.IY,
+                    var i when i.Target == InstructionElement.AddressFromIXAndOffset => Registers.IX,
+                    var i when i.Target == InstructionElement.AddressFromIYAndOffset => Registers.IY,
+                    _ => 0
+                };
+                wz = (ushort)(wz + package.Data.Argument1);
+                Registers.WZ = wz;
+            }
+
             // run the instruction microcode implementation
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
+
             if (result.Flags != null) Registers.Flags.Value = result.Flags.Value;
             _afterExecute?.Invoke(this, result);
             
@@ -349,9 +372,9 @@ namespace Zem80.Core
             if (b0 == 0xCB || b0 == 0xDD || b0 == 0xED || b0 == 0xFD) // was byte 0 a prefix code?
             {
                 b1 = Memory.ReadByteAt(Registers.PC, true); // peek ahead
-                if ((b0 == 0xDD || b0 == 0xFD) && (b1 == 0xDD || b1 == 0xFD))
+                if ((b0 == 0xDD || b0 == 0xFD || b0 == 0xED) && (b1 == 0xDD || b1 == 0xFD || b1 == 0xED))
                 {
-                    // sequences of 0xDD / 0xFD / either / or count as NOP until the final 0xDD / 0xFD which is then the prefix byte
+                    // sequences of 0xDD / 0xFD / 0xED either / or count as NOP until the final 0xDD / 0xFD / 0xED which is then the prefix byte
                     b1 = FetchOpcodeByte(); // need to call this even though we have the value, to generate correct timing
                     Registers.PC++;
                     return new InstructionPackage(InstructionSet.NOP, data, instructionAddress);
@@ -534,6 +557,7 @@ namespace Zem80.Core
 
                 Push(WordRegister.PC);
                 Registers.PC = 0x0066;
+                Registers.WZ = Registers.PC;
 
                 Cycle.EndInterruptRequestAcknowledgeCycle();
             }
@@ -566,12 +590,14 @@ namespace Zem80.Core
                         Push(WordRegister.PC);
                         Execute(package);
                         Registers.PC = pc;
+                        Registers.WZ = Registers.PC;
                         break;
 
                     case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
                         Cycle.BeginInterruptRequestAcknowledgeCycle(IM1_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         Push(WordRegister.PC);
                         Registers.PC = 0x0038;
+                        Registers.WZ = Registers.PC;
                         break;
 
                     case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
@@ -580,6 +606,7 @@ namespace Zem80.Core
                         Push(WordRegister.PC);
                         ushort address = (ushort)((Registers.I * 256) + IO.DATA_BUS);
                         Registers.PC = Memory.ReadWordAt(address, false);
+                        Registers.WZ = Registers.PC;
                         break;
                 }
 

@@ -62,6 +62,8 @@ namespace Zem80.Core
         // program counter
         public ushort PC { get { return Get16BitValue(22); } set { Set16BitValue(22, value); } }
 
+        internal ushort WZ { get; set; } // internal register, never exposed to the outside world and not saved / restored with snapshot
+
         public Flags Flags => _flags;
 
         public void ExchangeAF()
@@ -101,6 +103,7 @@ namespace Zem80.Core
             _altFlags = new Flags();
             _accumulator = 0x00;
             _altAccumulator = 0x00;
+            WZ = 0x00;
         }
 
         private byte GetRegister(ByteRegister register)

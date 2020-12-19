@@ -19,6 +19,7 @@ namespace Zem80.Core.Instructions
             byte input = port.ReadByte(true);
             cpu.Memory.WriteByteAt(r.HL, input, false);
             r.HL++;
+            r.WZ = r.BC;
             r.B--;
 
             flags.Zero = (r.B == 0);
