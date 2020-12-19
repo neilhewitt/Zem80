@@ -20,6 +20,7 @@ namespace Zem80.Core.Instructions
             cpu.Memory.WriteByteAt(r.HL, input, false);
             cpu.Cycle.InternalOperationCycle(5);
             r.HL++;
+            r.WZ = r.BC;
             r.B--;
 
             flags.Zero = true;

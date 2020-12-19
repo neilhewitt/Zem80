@@ -17,9 +17,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_SimpleVM", "Zem80_Sim
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_Zexall", "Zem80_Zexall\Zem80_Zexall.csproj", "{6BF4132D-20D2-44A2-A2A6-9EB64D7DF6B3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrumVM", "..\..\ZXEm\src\ZXSpectrumVM\ZXSpectrumVM.csproj", "{3EF99D5F-BF4D-4DC5-A30F-3A855090CDD0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXEm_VM", "..\..\ZXEm\src\ZXSpectrumVM\ZXEm_VM.csproj", "{3EF99D5F-BF4D-4DC5-A30F-3A855090CDD0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrumApp", "..\..\ZXEm\src\ZXSpectrumApp\ZXSpectrumApp.csproj", "{FA3ED5B0-BAD2-4569-9FCB-4C9D1072AB3A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXEm_UI", "..\..\ZXEm\src\ZXSpectrumApp\ZXEm_UI.csproj", "{FA3ED5B0-BAD2-4569-9FCB-4C9D1072AB3A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

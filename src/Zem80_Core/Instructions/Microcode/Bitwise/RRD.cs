@@ -38,6 +38,8 @@ namespace Zem80.Core.Instructions
 
             // leave carry alone
 
+            cpu.Registers.WZ = (ushort)(cpu.Registers.HL + 1);
+
             return new ExecutionResult(package, cpu.Registers.Flags);
         }
 

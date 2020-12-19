@@ -35,7 +35,10 @@ namespace Zem80.Core.Instructions
             flags.Subtract = false;
             flags.X = (a & 0x08) > 0; // copy bit 3
             flags.Y = (a & 0x20) > 0; // copy bit 5
+
             // leave carry alone
+
+            cpu.Registers.WZ = (ushort)(cpu.Registers.HL + 1);
 
             return new ExecutionResult(package, cpu.Registers.Flags);
         }

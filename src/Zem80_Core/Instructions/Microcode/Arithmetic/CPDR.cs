@@ -32,8 +32,16 @@ namespace Zem80.Core.Instructions
             flags.Y = (valueXY & 0x02) > 0; // copy bit 1 (note: non-standard behaviour)
 
             bool conditionTrue = (compare.Result == 0 || cpu.Registers.BC == 0);
-            if (conditionTrue) cpu.Cycle.InternalOperationCycle(5);
-            else cpu.Registers.PC = package.InstructionAddress;
+            if (conditionTrue)
+            {
+                cpu.Cycle.InternalOperationCycle(5);
+                cpu.Registers.WZ++;
+            }
+            else
+            {
+                cpu.Registers.PC = package.InstructionAddress;
+                cpu.Registers.WZ = (ushort)(cpu.Registers.PC + 1);
+            }
 
             return new ExecutionResult(package, flags);
         }

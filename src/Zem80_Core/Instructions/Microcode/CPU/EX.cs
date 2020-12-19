@@ -22,10 +22,19 @@ namespace Zem80.Core.Instructions
             {
                 if (instruction.Target == InstructionElement.AddressFromSP)
                 {
-                    // EX (SP),HL/IX+o/IY+o
+                    // EX (SP),HL/IX/IY
+                    // get value of source register (HL or IX or IY) 
                     ushort value = instruction.MarshalSourceWord(data, cpu, out ushort address);
-                    r.HL = value;
+                    ushort valueAtSP = cpu.Memory.ReadWordAt(r.SP, true);
+
+                    // get word pointed to by the stack pointer into the source register
+                    r[instruction.Source.AsWordRegister()] = valueAtSP;
+
+                    // now store value taken originally to address in SP
                     cpu.Memory.WriteWordAt(r.SP, value, false);
+
+                    // set WZ internal register
+                    r.WZ = valueAtSP;
                 }
                 else
                 {

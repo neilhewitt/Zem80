@@ -71,12 +71,14 @@ namespace Zem80.Core.Instructions
                             break;
                         case 0x02: // LD (BC),A
                             writeByte(r.BC, r.A);
+                            r.WZ = ((byte)((r.BC + 1) & 0xFF), r.A).ToWord();
                             break;
                         case 0x06: // LD B,n
                             r.B = arg0;
                             break;
                         case 0x0A: // LD A,(BC)
                             r.A = readByte(r.BC);
+                            r.WZ = (ushort)(r.BC + 1);
                             break;
                         case 0x0E: // LD C,n
                             r.C = arg0;
@@ -86,12 +88,14 @@ namespace Zem80.Core.Instructions
                             break;
                         case 0x12: // LD (DE),A
                             writeByte(r.DE, r.A);
+                            r.WZ = ((byte)((r.DE + 1) & 0xFF), r.A).ToWord();
                             break;
                         case 0x16: // LD D,n
                             r.D = arg0;
                             break;
                         case 0x1A: // LD A,(DE)
                             r.A = readByte(r.DE);
+                            r.WZ = (ushort)(r.DE + 1);
                             break;
                         case 0x1E: // LD E,n
                             r.E = arg0;
@@ -116,12 +120,14 @@ namespace Zem80.Core.Instructions
                             break;
                         case 0x32: // LD (nn),A
                             writeByte(argWord, r.A);
+                            r.WZ = ((byte)((argWord + 1) & 0xFF), r.A).ToWord();
                             break;
                         case 0x36: // LD (HL),n
                             writeByte(r.HL, arg0);
                             break;
                         case 0x3A: // LD A,(nn)
                             r.A = readByte(argWord);
+                            r.WZ = (ushort)(argWord + 1);
                             break;
                         case 0x3E: // LD A,n
                             r.A = arg0;
@@ -326,6 +332,7 @@ namespace Zem80.Core.Instructions
                     {
                         case 0x43: // LD (nn),BC
                             writeWord(argWord, r.BC);
+                            r.WZ = (ushort)(argWord + 1);
                             break;
                         case 0x47: // LD I,A
                             r.I = r.A;
@@ -333,6 +340,7 @@ namespace Zem80.Core.Instructions
                             break;
                         case 0x4B: // LD BC,(nn)
                             r.BC = readWord(argWord);
+                            r.WZ = (ushort)(argWord + 1);
                             break;
                         case 0x4F: // LD R,A
                             r.R = r.A;
@@ -340,6 +348,7 @@ namespace Zem80.Core.Instructions
                             break;
                         case 0x53: // LD (nn),DE
                             writeWord(argWord, r.DE);
+                            r.WZ = (ushort)(argWord + 1);
                             break;
                         case 0x57: // LD A,I
                             r.A = r.I;
@@ -347,6 +356,7 @@ namespace Zem80.Core.Instructions
                             break;
                         case 0x5B: // LD DE,(nn)
                             r.DE = readWord(argWord);
+                            r.WZ = (ushort)(argWord + 1);
                             break;
                         case 0x5F: // LD A,R
                             r.A = r.R;
@@ -354,9 +364,11 @@ namespace Zem80.Core.Instructions
                             break;
                         case 0x73: // LD (nn),SP
                             writeWord(argWord, r.SP);
+                            r.WZ = (ushort)(argWord + 1);
                             break;
                         case 0x7B: // LD SP,(nn)
                             r.SP = readWord(argWord);
+                            r.WZ = (ushort)(argWord + 1);
                             break;
                     }
                     break;
@@ -369,12 +381,14 @@ namespace Zem80.Core.Instructions
                             break;
                         case 0x22: // LD (nn),IX
                             writeWord(argWord, r.IX);
+                            r.WZ = (ushort)(argWord + 1);
                             break;
                         case 0x26: // LD IXh,n
                             r.IXh = arg0;
                             break;
                         case 0x2A: // LD IX,(nn)
                             r.IX = readWord(argWord);
+                            r.WZ = (ushort)(argWord + 1);
                             break;
                         case 0x2E: // LD IXl,n
                             r.IXl = arg0;
@@ -526,12 +540,14 @@ namespace Zem80.Core.Instructions
                             break;
                         case 0x22: // LD (nn),IY
                             writeWord(argWord, r.IY);
+                            r.WZ = (ushort)(argWord + 1);
                             break;
                         case 0x26: // LD IYh,n
                             r.IYh = arg0;
                             break;
                         case 0x2A: // LD IY,(nn)
-                            r.IY = readWord(argWord);
+                            r.IY = readWord(argWord); 
+                            r.WZ = (ushort)(argWord + 1);
                             break;
                         case 0x2E: // LD IYl,n
                             r.IYl = arg0;
