@@ -20,9 +20,6 @@
     <None Update="initialise.bmp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="JSWAPRIL.bin">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="ROM\48.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
