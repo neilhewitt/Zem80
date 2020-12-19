@@ -12,8 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Zem80\src\Zem80_Core\Zem80_Core.csproj" />
-    <ProjectReference Include="..\ZXSpectrumVM\ZXEm_VM.csproj" />
+    <ProjectReference Include="..\..\Zem80_Core\Zem80_Core.csproj" />
+    <ProjectReference Include="..\ZXEm_VM\ZXEm_VM.csproj" />
   </ItemGroup>
 
   <ItemGroup>

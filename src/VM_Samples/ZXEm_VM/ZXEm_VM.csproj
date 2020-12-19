@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Zem80\src\Zem80_Core\Zem80_Core.csproj" />
+    <ProjectReference Include="..\..\Zem80_Core\Zem80_Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
