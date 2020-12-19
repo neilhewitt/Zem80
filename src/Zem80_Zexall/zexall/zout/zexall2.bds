@@ -1,0 +1,6057 @@
+binary-debuggable-source
+0000 0000 f zexall2.z80
+0000 0000 s 	title	'Z80 instruction set exerciser'
+0000 0000 s 
+0000 0000 s ; zexall.src - Z80 instruction set exerciser
+0000 0000 s ; Original Copyright (C) 1994  Frank D. Cringle
+0000 0000 s ; Changes at 03-Nov-2002 Copyright (C) 2002 J.G.Harston
+0000 0000 s ; + Source syntax tweeked to assemble with ZMAC Z80 Macro Assembler
+0000 0000 s ;   and MAXAM Assembler, marked in the source with 'jgh:'
+0000 0000 s ; + labels on equates mustn't have trailing colon
+0000 0000 s ; + macros don't understand <...> sequence, so parameters are passed
+0000 0000 s ;   explicitly
+0000 0000 s ; + ds n,c not supported, so strings are set to full explicity length
+0000 0000 s ;
+0000 0000 s ; This program is free software; you can redistribute it and/or
+0000 0000 s ; modify it under the terms of the GNU General Public License
+0000 0000 s ; as published by the Free Software Foundation; either version 2
+0000 0000 s ; of the License, or (at your option) any later version.
+0000 0000 s ;
+0000 0000 s ; This program is distributed in the hope that it will be useful,
+0000 0000 s ; but WITHOUT ANY WARRANTY; without even the implied warranty of
+0000 0000 s ; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+0000 0000 s ; GNU General Public License for more details.
+0000 0000 s ;
+0000 0000 s ; You should have received a copy of the GNU General Public License
+0000 0000 s ; along with this program; if not, write to the Free Software
+0000 0000 s ; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+0000 0000 s 
+0000 0000 s 	aseg
+0100 0100 s 	.org	100h
+0100 0100 s 
+0100 0100 d c31301
+0100 0100 s 	jp	start
+0103 0103 s 
+0103 0103 s ; machine state before test (needs to be at predictably constant address)
+0103 0103 s msbt:	ds	14
+0111 0111 s spbt:	ds	2
+0113 0113 s msbthi	equ	msbt / 0100h
+0113 0113 s msbtlo	equ	msbt & 0ffh
+0113 0113 s 
+0113 0113 s 
+0113 0113 s ; For the purposes of this test program, the machine state consists of:
+0113 0113 s ;	a 2 byte memory operand, followed by
+0113 0113 s ;	the registers iy,ix,hl,de,bc,af,sp
+0113 0113 s ; for a total of 16 bytes.
+0113 0113 s 
+0113 0113 s ; The program tests instructions (or groups of similar instructions)
+0113 0113 s ; by cycling through a sequence of machine states, executing the test
+0113 0113 s ; instruction for each one and running a 32-bit crc over the resulting
+0113 0113 s ; machine states.  At the end of the sequence the crc is compared to
+0113 0113 s ; an expected value that was found empirically on a real Z80.
+0113 0113 s 
+0113 0113 s ; A test case is defined by a descriptor which consists of:
+0113 0113 s ;	a flag mask byte,
+0113 0113 s ;	the base case,
+0113 0113 s ;	the incement vector,
+0113 0113 s ;	the shift vector,
+0113 0113 s ;	the expected crc,
+0113 0113 s ;	a short descriptive message.
+0113 0113 s ;
+0113 0113 s ; The flag mask byte is used to prevent undefined flag bits from
+0113 0113 s ; influencing the results.  Documented flags are as per Mostek Z80
+0113 0113 s ; Technical Manual.
+0113 0113 s ;
+0113 0113 s ; The next three parts of the descriptor are 20 byte vectors
+0113 0113 s ; corresponding to a 4 byte instruction and a 16 byte machine state.
+0113 0113 s ; The first part is the base case, which is the first test case of
+0113 0113 s ; the sequence.  This base is then modified according to the next 2
+0113 0113 s ; vectors.  Each 1 bit in the increment vector specifies a bit to be
+0113 0113 s ; cycled in the form of a binary counter.  For instance, if the byte
+0113 0113 s ; corresponding to the accumulator is set to 0ffh in the increment
+0113 0113 s ; vector, the test will be repeated for all 256 values of the
+0113 0113 s ; accumulator.  Note that 1 bits don't have to be contiguous.  The
+0113 0113 s ; number of test cases 'caused' by the increment vector is equal to
+0113 0113 s ; 2^(number of 1 bits).  The shift vector is similar, but specifies a
+0113 0113 s ; set of bits in the test case that are to be successively inverted.
+0113 0113 s ; Thus the shift vector 'causes' a number of test cases equal to the
+0113 0113 s ; number of 1 bits in it.
+0113 0113 s 
+0113 0113 s ; The total number of test cases is the product of those caused by the
+0113 0113 s ; counter and shift vectors and can easily become unweildy.  Each
+0113 0113 s ; individual test case can take a few milliseconds to execute, due to
+0113 0113 s ; the overhead of test setup and crc calculation, so test design is a
+0113 0113 s ; compromise between coverage and execution time.
+0113 0113 s 
+0113 0113 s ; This program is designed to detect differences between
+0113 0113 s ; implementations and is not ideal for diagnosing the causes of any
+0113 0113 s ; discrepancies.  However, provided a reference implementation (or
+0113 0113 s ; real system) is available, a failing test case can be isolated by
+0113 0113 s ; hand using a binary search of the test space.
+0113 0113 s 
+0113 0113 s 
+0113 0113 d 210080
+0113 0113 s start:	ld	hl,8000h
+0116 0116 d f9
+0116 0116 s 	ld	sp,hl
+0117 0117 d 11d41f
+0117 0117 s 	ld	de,msg1
+011a 011a d 0e09
+011a 011a s 	ld	c,9
+011c 011c d cdc81f
+011c 011c s 	call	bdos
+011f 011f s 
+011f 011f d 213801
+011f 011f s 	ld	hl,tests	; first test case
+0122 0122 d 7e
+0122 0122 s loop:	ld	a,(hl)		; end of list ?
+0123 0123 d 23
+0123 0123 s 	inc	hl
+0124 0124 d b6
+0124 0124 s 	or	(hl)
+0125 0125 d ca2f01
+0125 0125 s 	jp	z,done
+0128 0128 d 2b
+0128 0128 s 	dec	hl
+0129 0129 d cdf01c
+0129 0129 s 	call	stt
+012c 012c d c32201
+012c 012c s 	jp	loop
+012f 012f s 	
+012f 012f d 11f31f
+012f 012f s done:	ld	de,msg2
+0132 0132 d 0e09
+0132 0132 s 	ld	c,9
+0134 0134 d cdc81f
+0134 0134 s 	call	bdos
+0137 0137 d 76
+0137 0137 s 	halt
+0138 0138 s 
+0138 0138 s tests:
+0138 0138 d 7a01
+0138 0138 s 	dw	scfop
+013a 013a d d901
+013a 013a s 	dw	ccfop
+013c 013c s 	;dw	scfccf
+013c 013c s 	;dw	ccfscf
+013c 013c d ee05
+013c 013c s 	dw	bita
+013e 013e d 4d06
+013e 013e s 	dw	bithl
+0140 0140 d ac06
+0140 0140 s 	dw	bitx
+0142 0142 d 0b07
+0142 0142 s 	dw	bitz80
+0144 0144 s 	;dw	daaop		; can't use opcode as label
+0144 0144 s 	;dw	cplop
+0144 0144 s 	;dw	adc16
+0144 0144 s 	;dw	add16
+0144 0144 s 	;dw	add16x
+0144 0144 s 	;dw	add16y
+0144 0144 s 	;dw	alu8i
+0144 0144 d d104
+0144 0144 s 	dw	alu8r
+0146 0146 s 	;dw	alu8rx
+0146 0146 d 8f05
+0146 0146 s 	dw	alu8x
+0148 0148 d 6a07
+0148 0148 s 	dw	cpd1
+014a 014a d c907
+014a 014a s 	dw	cpi1
+014c 014c s 	;dw	inca
+014c 014c s 	;dw	incb
+014c 014c s 	;dw	incbc
+014c 014c s 	;dw	incc
+014c 014c s 	;dw	incd
+014c 014c s 	;dw	incde
+014c 014c s 	;dw	ince
+014c 014c s 	;dw	inch
+014c 014c s 	;dw	inchl
+014c 014c s 	;dw	incix
+014c 014c s 	;dw	inciy
+014c 014c s 	;dw	incl
+014c 014c d 5a0d
+014c 014c s 	dw	incm
+014e 014e s 	;dw	incsp
+014e 014e d 180e
+014e 014e s 	dw	incx
+0150 0150 s 	;dw	incxh
+0150 0150 s 	;dw	incxl
+0150 0150 s 	;dw	incyh
+0150 0150 s 	;dw	incyl
+0150 0150 s 	;dw	ld161
+0150 0150 s 	;dw	ld162
+0150 0150 s 	;dw	ld163
+0150 0150 s 	;dw	ld164
+0150 0150 s 	;dw	ld165
+0150 0150 s 	;dw	ld166
+0150 0150 s 	;dw	ld167
+0150 0150 s 	;dw	ld168
+0150 0150 s 	;dw	ld16im
+0150 0150 s 	;dw	ld16ix
+0150 0150 d a913
+0150 0150 s 	dw	ld8bd
+0152 0152 s 	;dw	ld8im
+0152 0152 d 6714
+0152 0152 s 	dw	ld8imx
+0154 0154 d c614
+0154 0154 s 	dw	ld8ix1
+0156 0156 d 2515
+0156 0156 s 	dw	ld8ix2
+0158 0158 d 8415
+0158 0158 s 	dw	ld8ix3
+015a 015a s 	;dw	ld8ixy
+015a 015a d 4216
+015a 015a s 	dw	ld8rr
+015c 015c d a116
+015c 015c s 	dw	ld8rrx
+015e 015e s 	;dw	lda
+015e 015e d 5f17
+015e 015e s 	dw	ldd1
+0160 0160 d be17
+0160 0160 s 	dw	ldd2
+0162 0162 d 1d18
+0162 0162 s 	dw	ldi1
+0164 0164 d 7c18
+0164 0164 s 	dw	ldi2
+0166 0166 s 	;dw	negop		; jgh: can't use opcode as label
+0166 0166 d 3a19
+0166 0166 s 	dw	rldop		; jgh: can't use opcode as label
+0168 0168 s 	;dw	rot8080
+0168 0168 d f819
+0168 0168 s 	dw	rotxy
+016a 016a d 571a
+016a 016a s 	dw	rotz80
+016c 016c d b61a
+016c 016c s 	dw	srz80
+016e 016e d 151b
+016e 016e s 	dw	srzx
+0170 0170 d 741b
+0170 0170 s 	dw	st8ix1
+0172 0172 d d31b
+0172 0172 s 	dw	st8ix2
+0174 0174 d 321c
+0174 0174 s 	dw	st8ix3
+0176 0176 d 911c
+0176 0176 s 	dw	stabd
+0178 0178 d 0000
+0178 0178 s 	dw	0
+017a 017a s 
+017a 017a s ; jgh: macro syntax changed for ZMAC and MAXAM
+017a 017a s ;	can't use opcodes as labels
+017a 017a s ;	ZMAC allows &nn as hex, so & removed from local labels
+017a 017a s ;
+017a 017a s tstr	macro	insn1,insn2,insn3,insn4,memop,riy,rix,rhl,rde,rbc,flags,acc,rsp,?lab
+017a 017a s ?lab:	db	insn1,insn2,insn3,insn4
+017a 017a s 	dw	memop,riy,rix,rhl,rde,rbc
+017a 017a s 	db	flags
+017a 017a s 	db	acc
+017a 017a s 	dw	rsp
+017a 017a s 	if	$-?lab ne 20
+017a 017a s 	error	'missing parameter'
+017a 017a s 	endif
+017a 017a s 	endm
+017a 017a s 
+017a 017a s tmsg	macro	msg,?lab
+017a 017a s ?lab:	db	msg
+017a 017a s 	if	$ ge ?lab+31
+017a 017a s 	error	'message too long'
+017a 017a s 	else
+017a 017a s ;	ds	?lab+30-$,'.'	; jgh: ZMAC/MAXAM don't have char parameter
+017a 017a s 	endif
+017a 017a s 	db	'$'
+017a 017a s 	endm
+017a 017a s 
+017a 017a s ; jgh: ZMAC/MAXAM don't recognise <n,m> syntax for macros, so full parameters given
+017a 017a s ; jgh: each tmsg has full string, as ZMAC/MAXAM don't have ds n,c pseudo-op
+017a 017a s 
+017a 017a s ; scf
+017a 017a d ff
+017a 017a s scfop:	    db	0ffh		; flag mask
+017b 017b s 	tstr	037h,0,0,0,02141h,009fah,01d60h,0a559h,08d5bh,09079h,004h,08eh,0299dh
+017b 017b d 37000000
+017b 017b s ?n0000:	db	037h,0,0,0
+017f 017f d 4121fa09601d59a55b8d7990
+017f 017f s 	dw	02141h,009fah,01d60h,0a559h,08d5bh,09079h
+018b 018b d 04
+018b 018b s 	db	004h
+018c 018c d 8e
+018c 018c s 	db	08eh
+018d 018d d 9d29
+018d 018d s 	dw	0299dh
+018f 018f s 	if	$-?n0000 ne 20
+018f 018f s 	error	'missing parameter'
+018f 018f s 	endif
+018f 018f s 	endm
+018f 018f s 	tstr	0,0,0,0,0,0,0,0,0,0,-1,-1,0	; (65536 cycles)
+018f 018f d 00000000
+018f 018f s ?n0001:	db	0,0,0,0
+0193 0193 d 000000000000000000000000
+0193 0193 s 	dw	0,0,0,0,0,0
+019f 019f d ff
+019f 019f s 	db	-1
+01a0 01a0 d ff
+01a0 01a0 s 	db	-1
+01a1 01a1 d 0000
+01a1 01a1 s 	dw	0
+01a3 01a3 s 	if	$-?n0001 ne 20
+01a3 01a3 s 	error	'missing parameter'
+01a3 01a3 s 	endif
+01a3 01a3 s 	endm
+01a3 01a3 s 	tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycle)
+01a3 01a3 d 00000000
+01a3 01a3 s ?n0002:	db	0,0,0,0
+01a7 01a7 d 000000000000000000000000
+01a7 01a7 s 	dw	0,0,0,0,0,0
+01b3 01b3 d 00
+01b3 01b3 s 	db	0
+01b4 01b4 d 00
+01b4 01b4 s 	db	0
+01b5 01b5 d 0000
+01b5 01b5 s 	dw	0
+01b7 01b7 s 	if	$-?n0002 ne 20
+01b7 01b7 s 	error	'missing parameter'
+01b7 01b7 s 	endif
+01b7 01b7 s 	endm
+01b7 01b7 d ff4ceb48
+01b7 01b7 s 	db	0ffh,04ch,0ebh,048h			; expected crc
+01bb 01bb d 7363662e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+01bb 01bb s 	db  	'scf..........................$'
+01d9 01d9 s 
+01d9 01d9 s ; ccf
+01d9 01d9 d ff
+01d9 01d9 s ccfop:	    db	0ffh		; flag mask
+01da 01da s 	tstr	03fh,0,0,0,02141h,009fah,01d60h,0a559h,08d5bh,09079h,004h,08eh,0299dh
+01da 01da d 3f000000
+01da 01da s ?n0003:	db	03fh,0,0,0
+01de 01de d 4121fa09601d59a55b8d7990
+01de 01de s 	dw	02141h,009fah,01d60h,0a559h,08d5bh,09079h
+01ea 01ea d 04
+01ea 01ea s 	db	004h
+01eb 01eb d 8e
+01eb 01eb s 	db	08eh
+01ec 01ec d 9d29
+01ec 01ec s 	dw	0299dh
+01ee 01ee s 	if	$-?n0003 ne 20
+01ee 01ee s 	error	'missing parameter'
+01ee 01ee s 	endif
+01ee 01ee s 	endm
+01ee 01ee s 	tstr	0,0,0,0,0,0,0,0,0,0,-1,-1,0	; (65536 cycles)
+01ee 01ee d 00000000
+01ee 01ee s ?n0004:	db	0,0,0,0
+01f2 01f2 d 000000000000000000000000
+01f2 01f2 s 	dw	0,0,0,0,0,0
+01fe 01fe d ff
+01fe 01fe s 	db	-1
+01ff 01ff d ff
+01ff 01ff s 	db	-1
+0200 0200 d 0000
+0200 0200 s 	dw	0
+0202 0202 s 	if	$-?n0004 ne 20
+0202 0202 s 	error	'missing parameter'
+0202 0202 s 	endif
+0202 0202 s 	endm
+0202 0202 s 	tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycle)
+0202 0202 d 00000000
+0202 0202 s ?n0005:	db	0,0,0,0
+0206 0206 d 000000000000000000000000
+0206 0206 s 	dw	0,0,0,0,0,0
+0212 0212 d 00
+0212 0212 s 	db	0
+0213 0213 d 00
+0213 0213 s 	db	0
+0214 0214 d 0000
+0214 0214 s 	dw	0
+0216 0216 s 	if	$-?n0005 ne 20
+0216 0216 s 	error	'missing parameter'
+0216 0216 s 	endif
+0216 0216 s 	endm
+0216 0216 d 573a3fa8
+0216 0216 s 	db	057h,03ah,03fh,0a8h			; expected crc
+021a 021a d 6363662e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+021a 021a s 	db  	'ccf..........................$'
+0238 0238 s 
+0238 0238 s ; scf,ccf
+0238 0238 d ff
+0238 0238 s scfccf:	    db	0ffh		; flag mask
+0239 0239 s 	tstr	037h,03fh,0,0,02141h,009fah,01d60h,0a559h,08d5bh,09079h,004h,08eh,0299dh
+0239 0239 d 373f0000
+0239 0239 s ?n0006:	db	037h,03fh,0,0
+023d 023d d 4121fa09601d59a55b8d7990
+023d 023d s 	dw	02141h,009fah,01d60h,0a559h,08d5bh,09079h
+0249 0249 d 04
+0249 0249 s 	db	004h
+024a 024a d 8e
+024a 024a s 	db	08eh
+024b 024b d 9d29
+024b 024b s 	dw	0299dh
+024d 024d s 	if	$-?n0006 ne 20
+024d 024d s 	error	'missing parameter'
+024d 024d s 	endif
+024d 024d s 	endm
+024d 024d s 	tstr	0,0,0,0,0,0,0,0,0,0,-1,-1,0	; (65536 cycles)
+024d 024d d 00000000
+024d 024d s ?n0007:	db	0,0,0,0
+0251 0251 d 000000000000000000000000
+0251 0251 s 	dw	0,0,0,0,0,0
+025d 025d d ff
+025d 025d s 	db	-1
+025e 025e d ff
+025e 025e s 	db	-1
+025f 025f d 0000
+025f 025f s 	dw	0
+0261 0261 s 	if	$-?n0007 ne 20
+0261 0261 s 	error	'missing parameter'
+0261 0261 s 	endif
+0261 0261 s 	endm
+0261 0261 s 	tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycle)
+0261 0261 d 00000000
+0261 0261 s ?n0008:	db	0,0,0,0
+0265 0265 d 000000000000000000000000
+0265 0265 s 	dw	0,0,0,0,0,0
+0271 0271 d 00
+0271 0271 s 	db	0
+0272 0272 d 00
+0272 0272 s 	db	0
+0273 0273 d 0000
+0273 0273 s 	dw	0
+0275 0275 s 	if	$-?n0008 ne 20
+0275 0275 s 	error	'missing parameter'
+0275 0275 s 	endif
+0275 0275 s 	endm
+0275 0275 d 425f3c91
+0275 0275 s 	db	042h,05fh,03ch,091h			; expected crc
+0279 0279 d 7363662b6363662e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0279 0279 s 	db  	'scf+ccf......................$'
+0297 0297 s 
+0297 0297 s ; ccf,scf
+0297 0297 d ff
+0297 0297 s ccfscf:	    db	0ffh		; flag mask
+0298 0298 s 	tstr	03fh,037h,0,0,02141h,009fah,01d60h,0a559h,08d5bh,09079h,004h,08eh,0299dh
+0298 0298 d 3f370000
+0298 0298 s ?n0009:	db	03fh,037h,0,0
+029c 029c d 4121fa09601d59a55b8d7990
+029c 029c s 	dw	02141h,009fah,01d60h,0a559h,08d5bh,09079h
+02a8 02a8 d 04
+02a8 02a8 s 	db	004h
+02a9 02a9 d 8e
+02a9 02a9 s 	db	08eh
+02aa 02aa d 9d29
+02aa 02aa s 	dw	0299dh
+02ac 02ac s 	if	$-?n0009 ne 20
+02ac 02ac s 	error	'missing parameter'
+02ac 02ac s 	endif
+02ac 02ac s 	endm
+02ac 02ac s 	tstr	0,0,0,0,0,0,0,0,0,0,-1,-1,0	; (65536 cycles)
+02ac 02ac d 00000000
+02ac 02ac s ?n0010:	db	0,0,0,0
+02b0 02b0 d 000000000000000000000000
+02b0 02b0 s 	dw	0,0,0,0,0,0
+02bc 02bc d ff
+02bc 02bc s 	db	-1
+02bd 02bd d ff
+02bd 02bd s 	db	-1
+02be 02be d 0000
+02be 02be s 	dw	0
+02c0 02c0 s 	if	$-?n0010 ne 20
+02c0 02c0 s 	error	'missing parameter'
+02c0 02c0 s 	endif
+02c0 02c0 s 	endm
+02c0 02c0 s 	tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycle)
+02c0 02c0 d 00000000
+02c0 02c0 s ?n0011:	db	0,0,0,0
+02c4 02c4 d 000000000000000000000000
+02c4 02c4 s 	dw	0,0,0,0,0,0
+02d0 02d0 d 00
+02d0 02d0 s 	db	0
+02d1 02d1 d 00
+02d1 02d1 s 	db	0
+02d2 02d2 d 0000
+02d2 02d2 s 	dw	0
+02d4 02d4 s 	if	$-?n0011 ne 20
+02d4 02d4 s 	error	'missing parameter'
+02d4 02d4 s 	endif
+02d4 02d4 s 	endm
+02d4 02d4 d 9e4dbc94
+02d4 02d4 s 	db	09eh,04dh,0bch,094h			; expected crc
+02d8 02d8 d 6363662b7363662e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+02d8 02d8 s 	db  	'ccf+scf......................$'
+02f6 02f6 s 
+02f6 02f6 s ; <adc,sbc> hl,<bc,de,hl,sp> (38,912 cycles)
+02f6 02f6 d ff
+02f6 02f6 s adc16:	db	0ffh		; flag mask
+02f7 02f7 s 	tstr	0edh,042h,0,0,0832ch,04f88h,0f22bh,0b339h,07e1fh,01563h,0d3h,089h,0465eh
+02f7 02f7 d ed420000
+02f7 02f7 s ?n0012:	db	0edh,042h,0,0
+02fb 02fb d 2c83884f2bf239b31f7e6315
+02fb 02fb s 	dw	0832ch,04f88h,0f22bh,0b339h,07e1fh,01563h
+0307 0307 d d3
+0307 0307 s 	db	0d3h
+0308 0308 d 89
+0308 0308 s 	db	089h
+0309 0309 d 5e46
+0309 0309 s 	dw	0465eh
+030b 030b s 	if	$-?n0012 ne 20
+030b 030b s 	error	'missing parameter'
+030b 030b s 	endif
+030b 030b s 	endm
+030b 030b s 	tstr	0,038h,0,0,0,0,0,0f821h,0,0,0,0,0	; (1024 cycles)
+030b 030b d 00380000
+030b 030b s ?n0013:	db	0,038h,0,0
+030f 030f d 00000000000021f800000000
+030f 030f s 	dw	0,0,0,0f821h,0,0
+031b 031b d 00
+031b 031b s 	db	0
+031c 031c d 00
+031c 031c s 	db	0
+031d 031d d 0000
+031d 031d s 	dw	0
+031f 031f s 	if	$-?n0013 ne 20
+031f 031f s 	error	'missing parameter'
+031f 031f s 	endif
+031f 031f s 	endm
+031f 031f s 	tstr	0,0,0,0,0,0,0,-1,-1,-1,0d7h,0,-1	; (38 cycles)
+031f 031f d 00000000
+031f 031f s ?n0014:	db	0,0,0,0
+0323 0323 d 000000000000ffffffffffff
+0323 0323 s 	dw	0,0,0,-1,-1,-1
+032f 032f d d7
+032f 032f s 	db	0d7h
+0330 0330 d 00
+0330 0330 s 	db	0
+0331 0331 d ffff
+0331 0331 s 	dw	-1
+0333 0333 s 	if	$-?n0014 ne 20
+0333 0333 s 	error	'missing parameter'
+0333 0333 s 	endif
+0333 0333 s 	endm
+0333 0333 d d48ad519
+0333 0333 s 	db	0d4h,08ah,0d5h,019h			; expected crc
+0337 0337 d 3c6164632c7362633e20686c2c3c62632c64652c686c2c73703e2e2e2e24
+0337 0337 s 	db	    '<adc,sbc> hl,<bc,de,hl,sp>...$'
+0355 0355 s 
+0355 0355 s ; add hl,<bc,de,hl,sp> (19,456 cycles)
+0355 0355 d ff
+0355 0355 s add16:	db	0ffh		; flag mask
+0356 0356 s 	tstr	9,0,0,0,0c4a5h,0c4c7h,0d226h,0a050h,058eah,08566h,0c6h,0deh,09bc9h
+0356 0356 d 09000000
+0356 0356 s ?n0015:	db	9,0,0,0
+035a 035a d a5c4c7c426d250a0ea586685
+035a 035a s 	dw	0c4a5h,0c4c7h,0d226h,0a050h,058eah,08566h
+0366 0366 d c6
+0366 0366 s 	db	0c6h
+0367 0367 d de
+0367 0367 s 	db	0deh
+0368 0368 d c99b
+0368 0368 s 	dw	09bc9h
+036a 036a s 	if	$-?n0015 ne 20
+036a 036a s 	error	'missing parameter'
+036a 036a s 	endif
+036a 036a s 	endm
+036a 036a s 	tstr	030h,0,0,0,0,0,0,0f821h,0,0,0,0,0	; (512 cycles)
+036a 036a d 30000000
+036a 036a s ?n0016:	db	030h,0,0,0
+036e 036e d 00000000000021f800000000
+036e 036e s 	dw	0,0,0,0f821h,0,0
+037a 037a d 00
+037a 037a s 	db	0
+037b 037b d 00
+037b 037b s 	db	0
+037c 037c d 0000
+037c 037c s 	dw	0
+037e 037e s 	if	$-?n0016 ne 20
+037e 037e s 	error	'missing parameter'
+037e 037e s 	endif
+037e 037e s 	endm
+037e 037e s 	tstr	0,0,0,0,0,0,0,-1,-1,-1,0d7h,0,-1	; (38 cycles)
+037e 037e d 00000000
+037e 037e s ?n0017:	db	0,0,0,0
+0382 0382 d 000000000000ffffffffffff
+0382 0382 s 	dw	0,0,0,-1,-1,-1
+038e 038e d d7
+038e 038e s 	db	0d7h
+038f 038f d 00
+038f 038f s 	db	0
+0390 0390 d ffff
+0390 0390 s 	dw	-1
+0392 0392 s 	if	$-?n0017 ne 20
+0392 0392 s 	error	'missing parameter'
+0392 0392 s 	endif
+0392 0392 s 	endm
+0392 0392 d d9a4ca05
+0392 0392 s 	db	0d9h,0a4h,0cah,005h			; expected crc
+0396 0396 d 61646420686c2c3c62632c64652c686c2c73703e2e2e2e2e2e2e2e2e2e24
+0396 0396 s 	db  	'add hl,<bc,de,hl,sp>.........$'
+03b4 03b4 s 
+03b4 03b4 s ; add ix,<bc,de,ix,sp> (19,456 cycles)
+03b4 03b4 d ff
+03b4 03b4 s add16x:	db	0ffh		; flag mask
+03b5 03b5 s 	tstr	0ddh,9,0,0,0ddach,0c294h,0635bh,033d3h,06a76h,0fa20h,094h,068h,036f5h
+03b5 03b5 d dd090000
+03b5 03b5 s ?n0018:	db	0ddh,9,0,0
+03b9 03b9 d acdd94c25b63d333766a20fa
+03b9 03b9 s 	dw	0ddach,0c294h,0635bh,033d3h,06a76h,0fa20h
+03c5 03c5 d 94
+03c5 03c5 s 	db	094h
+03c6 03c6 d 68
+03c6 03c6 s 	db	068h
+03c7 03c7 d f536
+03c7 03c7 s 	dw	036f5h
+03c9 03c9 s 	if	$-?n0018 ne 20
+03c9 03c9 s 	error	'missing parameter'
+03c9 03c9 s 	endif
+03c9 03c9 s 	endm
+03c9 03c9 s 	tstr	0,030h,0,0,0,0,0f821h,0,0,0,0,0,0	; (512 cycles)
+03c9 03c9 d 00300000
+03c9 03c9 s ?n0019:	db	0,030h,0,0
+03cd 03cd d 0000000021f8000000000000
+03cd 03cd s 	dw	0,0,0f821h,0,0,0
+03d9 03d9 d 00
+03d9 03d9 s 	db	0
+03da 03da d 00
+03da 03da s 	db	0
+03db 03db d 0000
+03db 03db s 	dw	0
+03dd 03dd s 	if	$-?n0019 ne 20
+03dd 03dd s 	error	'missing parameter'
+03dd 03dd s 	endif
+03dd 03dd s 	endm
+03dd 03dd s 	tstr	0,0,0,0,0,0,-1,0,-1,-1,0d7h,0,-1	; (38 cycles)
+03dd 03dd d 00000000
+03dd 03dd s ?n0020:	db	0,0,0,0
+03e1 03e1 d 00000000ffff0000ffffffff
+03e1 03e1 s 	dw	0,0,-1,0,-1,-1
+03ed 03ed d d7
+03ed 03ed s 	db	0d7h
+03ee 03ee d 00
+03ee 03ee s 	db	0
+03ef 03ef d ffff
+03ef 03ef s 	dw	-1
+03f1 03f1 s 	if	$-?n0020 ne 20
+03f1 03f1 s 	error	'missing parameter'
+03f1 03f1 s 	endif
+03f1 03f1 s 	endm
+03f1 03f1 d b1df8ec0
+03f1 03f1 s 	db	0b1h,0dfh,08eh,0c0h			; expected crc
+03f5 03f5 d 6164642069782c3c62632c64652c69782c73703e2e2e2e2e2e2e2e2e2e24
+03f5 03f5 s 	db  	'add ix,<bc,de,ix,sp>.........$'
+0413 0413 s 
+0413 0413 s ; add iy,<bc,de,iy,sp> (19,456 cycles)
+0413 0413 d ff
+0413 0413 s add16y:	db	0ffh		; flag mask
+0414 0414 s 	tstr	0fdh,9,0,0,0c7c2h,0f407h,051c1h,03e96h,00bf4h,0510fh,092h,01eh,071eah
+0414 0414 d fd090000
+0414 0414 s ?n0021:	db	0fdh,9,0,0
+0418 0418 d c2c707f4c151963ef40b0f51
+0418 0418 s 	dw	0c7c2h,0f407h,051c1h,03e96h,00bf4h,0510fh
+0424 0424 d 92
+0424 0424 s 	db	092h
+0425 0425 d 1e
+0425 0425 s 	db	01eh
+0426 0426 d ea71
+0426 0426 s 	dw	071eah
+0428 0428 s 	if	$-?n0021 ne 20
+0428 0428 s 	error	'missing parameter'
+0428 0428 s 	endif
+0428 0428 s 	endm
+0428 0428 s 	tstr	0,030h,0,0,0,0f821h,0,0,0,0,0,0,0	; (512 cycles)
+0428 0428 d 00300000
+0428 0428 s ?n0022:	db	0,030h,0,0
+042c 042c d 000021f80000000000000000
+042c 042c s 	dw	0,0f821h,0,0,0,0
+0438 0438 d 00
+0438 0438 s 	db	0
+0439 0439 d 00
+0439 0439 s 	db	0
+043a 043a d 0000
+043a 043a s 	dw	0
+043c 043c s 	if	$-?n0022 ne 20
+043c 043c s 	error	'missing parameter'
+043c 043c s 	endif
+043c 043c s 	endm
+043c 043c s 	tstr	0,0,0,0,0,-1,0,0,-1,-1,0d7h,0,-1	; (38 cycles)
+043c 043c d 00000000
+043c 043c s ?n0023:	db	0,0,0,0
+0440 0440 d 0000ffff00000000ffffffff
+0440 0440 s 	dw	0,-1,0,0,-1,-1
+044c 044c d d7
+044c 044c s 	db	0d7h
+044d 044d d 00
+044d 044d s 	db	0
+044e 044e d ffff
+044e 044e s 	dw	-1
+0450 0450 s 	if	$-?n0023 ne 20
+0450 0450 s 	error	'missing parameter'
+0450 0450 s 	endif
+0450 0450 s 	endm
+0450 0450 d 39c8589b
+0450 0450 s 	db	039h,0c8h,058h,09bh			; expected crc
+0454 0454 d 6164642069792c3c62632c64652c69792c73703e2e2e2e2e2e2e2e2e2e24
+0454 0454 s 	db  	'add iy,<bc,de,iy,sp>.........$'
+0472 0472 s 
+0472 0472 s ; aluop a,nn (28,672 cycles)
+0472 0472 d ff
+0472 0472 s alu8i:	db	0ffh		; flag mask
+0473 0473 s 	tstr	0c6h,0,0,0,009140h,07e3ch,07a67h,0df6dh,05b61h,00b29h,010h,066h,085b2h
+0473 0473 d c6000000
+0473 0473 s ?n0024:	db	0c6h,0,0,0
+0477 0477 d 40913c7e677a6ddf615b290b
+0477 0477 s 	dw	009140h,07e3ch,07a67h,0df6dh,05b61h,00b29h
+0483 0483 d 10
+0483 0483 s 	db	010h
+0484 0484 d 66
+0484 0484 s 	db	066h
+0485 0485 d b285
+0485 0485 s 	dw	085b2h
+0487 0487 s 	if	$-?n0024 ne 20
+0487 0487 s 	error	'missing parameter'
+0487 0487 s 	endif
+0487 0487 s 	endm
+0487 0487 s 	tstr	038h,0,0,0,0,0,0,0,0,0,0,-1,0		; (2048 cycles)
+0487 0487 d 38000000
+0487 0487 s ?n0025:	db	038h,0,0,0
+048b 048b d 000000000000000000000000
+048b 048b s 	dw	0,0,0,0,0,0
+0497 0497 d 00
+0497 0497 s 	db	0
+0498 0498 d ff
+0498 0498 s 	db	-1
+0499 0499 d 0000
+0499 0499 s 	dw	0
+049b 049b s 	if	$-?n0025 ne 20
+049b 049b s 	error	'missing parameter'
+049b 049b s 	endif
+049b 049b s 	endm
+049b 049b s 	tstr	0,-1,0,0,0,0,0,0,0,0,0d7h,0,0		; (14 cycles)
+049b 049b d 00ff0000
+049b 049b s ?n0026:	db	0,-1,0,0
+049f 049f d 000000000000000000000000
+049f 049f s 	dw	0,0,0,0,0,0
+04ab 04ab d d7
+04ab 04ab s 	db	0d7h
+04ac 04ac d 00
+04ac 04ac s 	db	0
+04ad 04ad d 0000
+04ad 04ad s 	dw	0
+04af 04af s 	if	$-?n0026 ne 20
+04af 04af s 	error	'missing parameter'
+04af 04af s 	endif
+04af 04af s 	endm
+04af 04af d 51c19c2e
+04af 04af s 	db	051h,0c1h,09ch,02eh			; expected crc
+04b3 04b3 d 616c756f7020612c6e6e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+04b3 04b3 s 	db  	'aluop a,nn...................$'
+04d1 04d1 s 
+04d1 04d1 s ; aluop a,<b,c,d,e,h,l,(hl),a> (753,664 cycles)
+04d1 04d1 d ff
+04d1 04d1 s alu8r:	db	0ffh		; flag mask
+04d2 04d2 s 	tstr	080h,0,0,0,0c53eh,0573ah,04c4dh,msbt,0e309h,0a666h,0d0h,03bh,0adbbh
+04d2 04d2 d 80000000
+04d2 04d2 s ?n0027:	db	080h,0,0,0
+04d6 04d6 d 3ec53a574d4c030109e366a6
+04d6 04d6 s 	dw	0c53eh,0573ah,04c4dh,msbt,0e309h,0a666h
+04e2 04e2 d d0
+04e2 04e2 s 	db	0d0h
+04e3 04e3 d 3b
+04e3 04e3 s 	db	03bh
+04e4 04e4 d bbad
+04e4 04e4 s 	dw	0adbbh
+04e6 04e6 s 	if	$-?n0027 ne 20
+04e6 04e6 s 	error	'missing parameter'
+04e6 04e6 s 	endif
+04e6 04e6 s 	endm
+04e6 04e6 s 	tstr	03fh,0,0,0,0,0,0,0,0,0,0,-1,0		; (16,384 cycles)
+04e6 04e6 d 3f000000
+04e6 04e6 s ?n0028:	db	03fh,0,0,0
+04ea 04ea d 000000000000000000000000
+04ea 04ea s 	dw	0,0,0,0,0,0
+04f6 04f6 d 00
+04f6 04f6 s 	db	0
+04f7 04f7 d ff
+04f7 04f7 s 	db	-1
+04f8 04f8 d 0000
+04f8 04f8 s 	dw	0
+04fa 04fa s 	if	$-?n0028 ne 20
+04fa 04fa s 	error	'missing parameter'
+04fa 04fa s 	endif
+04fa 04fa s 	endm
+04fa 04fa s 	tstr	0,0,0,0,0ffh,0,0,0,-1,-1,0d7h,0,0	; (46 cycles)
+04fa 04fa d 00000000
+04fa 04fa s ?n0029:	db	0,0,0,0
+04fe 04fe d ff00000000000000ffffffff
+04fe 04fe s 	dw	0ffh,0,0,0,-1,-1
+050a 050a d d7
+050a 050a s 	db	0d7h
+050b 050b d 00
+050b 050b s 	db	0
+050c 050c d 0000
+050c 050c s 	dw	0
+050e 050e s 	if	$-?n0029 ne 20
+050e 050e s 	error	'missing parameter'
+050e 050e s 	endif
+050e 050e s 	endm
+050e 050e d 1dfd7864
+050e 050e s 	db	01dh,0fdh,078h,064h			; expected crc
+0512 0512 d 616c756f7020612c3c622c632c642c652c682c6c2c28686c292c613e2e24
+0512 0512 s 	db  	'aluop a,<b,c,d,e,h,l,(hl),a>.$'
+0530 0530 s 
+0530 0530 s ; aluop a,<ixh,ixl,iyh,iyl> (376,832 cycles)
+0530 0530 d ff
+0530 0530 s alu8rx:	db	0ffh		; flag mask
+0531 0531 s 	tstr	0ddh,084h,0,0,0d6f7h,0c76eh,0accfh,02847h,022ddh,0c035h,0c5h,038h,0234bh
+0531 0531 d dd840000
+0531 0531 s ?n0030:	db	0ddh,084h,0,0
+0535 0535 d f7d66ec7cfac4728dd2235c0
+0535 0535 s 	dw	0d6f7h,0c76eh,0accfh,02847h,022ddh,0c035h
+0541 0541 d c5
+0541 0541 s 	db	0c5h
+0542 0542 d 38
+0542 0542 s 	db	038h
+0543 0543 d 4b23
+0543 0543 s 	dw	0234bh
+0545 0545 s 	if	$-?n0030 ne 20
+0545 0545 s 	error	'missing parameter'
+0545 0545 s 	endif
+0545 0545 s 	endm
+0545 0545 s 	tstr	020h,039h,0,0,0,0,0,0,0,0,0,-1,0	; (8,192 cycles)
+0545 0545 d 20390000
+0545 0545 s ?n0031:	db	020h,039h,0,0
+0549 0549 d 000000000000000000000000
+0549 0549 s 	dw	0,0,0,0,0,0
+0555 0555 d 00
+0555 0555 s 	db	0
+0556 0556 d ff
+0556 0556 s 	db	-1
+0557 0557 d 0000
+0557 0557 s 	dw	0
+0559 0559 s 	if	$-?n0031 ne 20
+0559 0559 s 	error	'missing parameter'
+0559 0559 s 	endif
+0559 0559 s 	endm
+0559 0559 s 	tstr	0,0,0,0,0ffh,0,0,0,-1,-1,0d7h,0,0	; (46 cycles)
+0559 0559 d 00000000
+0559 0559 s ?n0032:	db	0,0,0,0
+055d 055d d ff00000000000000ffffffff
+055d 055d s 	dw	0ffh,0,0,0,-1,-1
+0569 0569 d d7
+0569 0569 s 	db	0d7h
+056a 056a d 00
+056a 056a s 	db	0
+056b 056b d 0000
+056b 056b s 	dw	0
+056d 056d s 	if	$-?n0032 ne 20
+056d 056d s 	error	'missing parameter'
+056d 056d s 	endif
+056d 056d s 	endm
+056d 056d d a886cc44
+056d 056d s 	db	0a8h,086h,0cch,044h			; expected crc
+0571 0571 d 616c756f7020612c3c6978682c69786c2c6979682c69796c3e2e2e2e2e24
+0571 0571 s 	db  	'aluop a,<ixh,ixl,iyh,iyl>....$'
+058f 058f s 
+058f 058f s ; aluop a,(<ix,iy>+1) (229,376 cycles)
+058f 058f d ff
+058f 058f s alu8x:	db	0ffh		; flag mask
+0590 0590 s 	tstr	0ddh,086h,1,0,090b7h,msbt-1,msbt-1,032fdh,0406eh,0c1dch,045h,06eh,0e5fah
+0590 0590 d dd860100
+0590 0590 s ?n0033:	db	0ddh,086h,1,0
+0594 0594 d b79002010201fd326e40dcc1
+0594 0594 s 	dw	090b7h,msbt-1,msbt-1,032fdh,0406eh,0c1dch
+05a0 05a0 d 45
+05a0 05a0 s 	db	045h
+05a1 05a1 d 6e
+05a1 05a1 s 	db	06eh
+05a2 05a2 d fae5
+05a2 05a2 s 	dw	0e5fah
+05a4 05a4 s 	if	$-?n0033 ne 20
+05a4 05a4 s 	error	'missing parameter'
+05a4 05a4 s 	endif
+05a4 05a4 s 	endm
+05a4 05a4 s 	tstr	020h,038h,0,0,0,1,1,0,0,0,0,-1,0	; (16,384 cycles)
+05a4 05a4 d 20380000
+05a4 05a4 s ?n0034:	db	020h,038h,0,0
+05a8 05a8 d 000001000100000000000000
+05a8 05a8 s 	dw	0,1,1,0,0,0
+05b4 05b4 d 00
+05b4 05b4 s 	db	0
+05b5 05b5 d ff
+05b5 05b5 s 	db	-1
+05b6 05b6 d 0000
+05b6 05b6 s 	dw	0
+05b8 05b8 s 	if	$-?n0034 ne 20
+05b8 05b8 s 	error	'missing parameter'
+05b8 05b8 s 	endif
+05b8 05b8 s 	endm
+05b8 05b8 s 	tstr	0,0,0,0,0ffh,0,0,0,0,0,0d7h,0,0		; (14 cycles)
+05b8 05b8 d 00000000
+05b8 05b8 s ?n0035:	db	0,0,0,0
+05bc 05bc d ff0000000000000000000000
+05bc 05bc s 	dw	0ffh,0,0,0,0,0
+05c8 05c8 d d7
+05c8 05c8 s 	db	0d7h
+05c9 05c9 d 00
+05c9 05c9 s 	db	0
+05ca 05ca d 0000
+05ca 05ca s 	dw	0
+05cc 05cc s 	if	$-?n0035 ne 20
+05cc 05cc s 	error	'missing parameter'
+05cc 05cc s 	endif
+05cc 05cc s 	endm
+05cc 05cc d 52185ea5
+05cc 05cc s 	db	052h,018h,05eh,0a5h			; expected crc
+05d0 05d0 d 616c756f7020612c283c69782c69793e2b31292e2e2e2e2e2e2e2e2e2e24
+05d0 05d0 s 	db  	'aluop a,(<ix,iy>+1)..........$'
+05ee 05ee s 
+05ee 05ee s ; bit n,a
+05ee 05ee d ff
+05ee 05ee s bita:	db	0ffh		; flag mask
+05ef 05ef s 	tstr	0cbh,047h,0,0,03ef1h,09dfch,07acch,msbt,0be61h,07a86h,050h,024h,01998h
+05ef 05ef d cb470000
+05ef 05ef s ?n0036:	db	0cbh,047h,0,0
+05f3 05f3 d f13efc9dcc7a030161be867a
+05f3 05f3 s 	dw	03ef1h,09dfch,07acch,msbt,0be61h,07a86h
+05ff 05ff d 50
+05ff 05ff s 	db	050h
+0600 0600 d 24
+0600 0600 s 	db	024h
+0601 0601 d 9819
+0601 0601 s 	dw	01998h
+0603 0603 s 	if	$-?n0036 ne 20
+0603 0603 s 	error	'missing parameter'
+0603 0603 s 	endif
+0603 0603 s 	endm
+0603 0603 s 	tstr	0,038h,0,0,0,0,0,0,0,0,-1,0,0		; (1024 cycles)
+0603 0603 d 00380000
+0603 0603 s ?n0037:	db	0,038h,0,0
+0607 0607 d 000000000000000000000000
+0607 0607 s 	dw	0,0,0,0,0,0
+0613 0613 d ff
+0613 0613 s 	db	-1
+0614 0614 d 00
+0614 0614 s 	db	0
+0615 0615 d 0000
+0615 0615 s 	dw	0
+0617 0617 s 	if	$-?n0037 ne 20
+0617 0617 s 	error	'missing parameter'
+0617 0617 s 	endif
+0617 0617 s 	endm
+0617 0617 s 	tstr	0,0,0,0,0,0,0,0,0,0,0,-1,0		; (8 cycles)
+0617 0617 d 00000000
+0617 0617 s ?n0038:	db	0,0,0,0
+061b 061b d 000000000000000000000000
+061b 061b s 	dw	0,0,0,0,0,0
+0627 0627 d 00
+0627 0627 s 	db	0
+0628 0628 d ff
+0628 0628 s 	db	-1
+0629 0629 d 0000
+0629 0629 s 	dw	0
+062b 062b s 	if	$-?n0038 ne 20
+062b 062b s 	error	'missing parameter'
+062b 062b s 	endif
+062b 062b s 	endm
+062b 062b d 7ecb589d
+062b 062b s 	db	07eh,0cbh,058h,09dh			; expected crc
+062f 062f d 626974206e2c612e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+062f 062f s 	db  	'bit n,a......................$'
+064d 064d s 
+064d 064d s ; bit n,(hl)
+064d 064d d ff
+064d 064d s bithl:	db	0ffh		; flag mask
+064e 064e s 	tstr	0cbh,046h,0,0,03ef1h,09dfch,07acch,msbt,0be61h,07a86h,050h,024h,01998h
+064e 064e d cb460000
+064e 064e s ?n0039:	db	0cbh,046h,0,0
+0652 0652 d f13efc9dcc7a030161be867a
+0652 0652 s 	dw	03ef1h,09dfch,07acch,msbt,0be61h,07a86h
+065e 065e d 50
+065e 065e s 	db	050h
+065f 065f d 24
+065f 065f s 	db	024h
+0660 0660 d 9819
+0660 0660 s 	dw	01998h
+0662 0662 s 	if	$-?n0039 ne 20
+0662 0662 s 	error	'missing parameter'
+0662 0662 s 	endif
+0662 0662 s 	endm
+0662 0662 s 	tstr	0,038h,0,0,0,0,0,0,0,0,-1,0,0		; (1024 cycles)
+0662 0662 d 00380000
+0662 0662 s ?n0040:	db	0,038h,0,0
+0666 0666 d 000000000000000000000000
+0666 0666 s 	dw	0,0,0,0,0,0
+0672 0672 d ff
+0672 0672 s 	db	-1
+0673 0673 d 00
+0673 0673 s 	db	0
+0674 0674 d 0000
+0674 0674 s 	dw	0
+0676 0676 s 	if	$-?n0040 ne 20
+0676 0676 s 	error	'missing parameter'
+0676 0676 s 	endif
+0676 0676 s 	endm
+0676 0676 s 	tstr	0,0,0,0,0ffh,0,0,0,0,0,0,0,0		; (8 cycles)
+0676 0676 d 00000000
+0676 0676 s ?n0041:	db	0,0,0,0
+067a 067a d ff0000000000000000000000
+067a 067a s 	dw	0ffh,0,0,0,0,0
+0686 0686 d 00
+0686 0686 s 	db	0
+0687 0687 d 00
+0687 0687 s 	db	0
+0688 0688 d 0000
+0688 0688 s 	dw	0
+068a 068a s 	if	$-?n0041 ne 20
+068a 068a s 	error	'missing parameter'
+068a 068a s 	endif
+068a 068a s 	endm
+068a 068a d 916541e5
+068a 068a s 	db	091h,065h,041h,0e5h			; expected crc
+068e 068e d 626974206e2c28686c292e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+068e 068e s 	db  	'bit n,(hl)...................$'
+06ac 06ac s 
+06ac 06ac s ; bit n,(<ix,iy>+1) (2048 cycles)
+06ac 06ac d ff
+06ac 06ac s bitx:	db	0ffh		; flag mask
+06ad 06ad s 	tstr	0ddh,0cbh,1,046h,02075h,msbt-1,msbt-1,03cfch,0a79ah,03d74h,051h,027h,0ca14h
+06ad 06ad d ddcb0146
+06ad 06ad s ?n0042:	db	0ddh,0cbh,1,046h
+06b1 06b1 d 752002010201fc3c9aa7743d
+06b1 06b1 s 	dw	02075h,msbt-1,msbt-1,03cfch,0a79ah,03d74h
+06bd 06bd d 51
+06bd 06bd s 	db	051h
+06be 06be d 27
+06be 06be s 	db	027h
+06bf 06bf d 14ca
+06bf 06bf s 	dw	0ca14h
+06c1 06c1 s 	if	$-?n0042 ne 20
+06c1 06c1 s 	error	'missing parameter'
+06c1 06c1 s 	endif
+06c1 06c1 s 	endm
+06c1 06c1 s 	tstr	020h,0,0,038h,0,0,0,0,0,0,053h,0,0	; (256 cycles)
+06c1 06c1 d 20000038
+06c1 06c1 s ?n0043:	db	020h,0,0,038h
+06c5 06c5 d 000000000000000000000000
+06c5 06c5 s 	dw	0,0,0,0,0,0
+06d1 06d1 d 53
+06d1 06d1 s 	db	053h
+06d2 06d2 d 00
+06d2 06d2 s 	db	0
+06d3 06d3 d 0000
+06d3 06d3 s 	dw	0
+06d5 06d5 s 	if	$-?n0043 ne 20
+06d5 06d5 s 	error	'missing parameter'
+06d5 06d5 s 	endif
+06d5 06d5 s 	endm
+06d5 06d5 s 	tstr	0,0,0,0,0ffh,0,0,0,0,0,0,0,0		; (8 cycles)
+06d5 06d5 d 00000000
+06d5 06d5 s ?n0044:	db	0,0,0,0
+06d9 06d9 d ff0000000000000000000000
+06d9 06d9 s 	dw	0ffh,0,0,0,0,0
+06e5 06e5 d 00
+06e5 06e5 s 	db	0
+06e6 06e6 d 00
+06e6 06e6 s 	db	0
+06e7 06e7 d 0000
+06e7 06e7 s 	dw	0
+06e9 06e9 s 	if	$-?n0044 ne 20
+06e9 06e9 s 	error	'missing parameter'
+06e9 06e9 s 	endif
+06e9 06e9 s 	endm
+06e9 06e9 d e1d4a896
+06e9 06e9 s 	db	0e1h,0d4h,0a8h,096h			; expected crc
+06ed 06ed d 626974206e2c283c69782c69793e2b31292e2e2e2e2e2e2e2e2e2e2e2e24
+06ed 06ed s 	db  	'bit n,(<ix,iy>+1)............$'
+070b 070b s 
+070b 070b s ; bit n,<b,c,d,e,h,l,(hl),a> (49,152 cycles)
+070b 070b d ff
+070b 070b s bitz80:	db	0ffh		; flag mask
+070c 070c s 	tstr	0cbh,040h,0,0,03ef1h,09dfch,07acch,msbt,0be61h,07a86h,050h,024h,01998h
+070c 070c d cb400000
+070c 070c s ?n0045:	db	0cbh,040h,0,0
+0710 0710 d f13efc9dcc7a030161be867a
+0710 0710 s 	dw	03ef1h,09dfch,07acch,msbt,0be61h,07a86h
+071c 071c d 50
+071c 071c s 	db	050h
+071d 071d d 24
+071d 071d s 	db	024h
+071e 071e d 9819
+071e 071e s 	dw	01998h
+0720 0720 s 	if	$-?n0045 ne 20
+0720 0720 s 	error	'missing parameter'
+0720 0720 s 	endif
+0720 0720 s 	endm
+0720 0720 s 	tstr	0,03fh,0,0,0,0,0,0,0,0,053h,0,0		; (1024 cycles)
+0720 0720 d 003f0000
+0720 0720 s ?n0046:	db	0,03fh,0,0
+0724 0724 d 000000000000000000000000
+0724 0724 s 	dw	0,0,0,0,0,0
+0730 0730 d 53
+0730 0730 s 	db	053h
+0731 0731 d 00
+0731 0731 s 	db	0
+0732 0732 d 0000
+0732 0732 s 	dw	0
+0734 0734 s 	if	$-?n0046 ne 20
+0734 0734 s 	error	'missing parameter'
+0734 0734 s 	endif
+0734 0734 s 	endm
+0734 0734 s 	tstr	0,0,0,0,0ffh,0,0,0,-1,-1,0,-1,0		; (48 cycles)
+0734 0734 d 00000000
+0734 0734 s ?n0047:	db	0,0,0,0
+0738 0738 d ff00000000000000ffffffff
+0738 0738 s 	dw	0ffh,0,0,0,-1,-1
+0744 0744 d 00
+0744 0744 s 	db	0
+0745 0745 d ff
+0745 0745 s 	db	-1
+0746 0746 d 0000
+0746 0746 s 	dw	0
+0748 0748 s 	if	$-?n0047 ne 20
+0748 0748 s 	error	'missing parameter'
+0748 0748 s 	endif
+0748 0748 s 	endm
+0748 0748 d f554d742
+0748 0748 s 	db	0f5h,054h,0d7h,042h			; expected crc
+074c 074c d 626974206e2c3c622c632c642c652c682c6c2c28686c292c613e2e2e2e24
+074c 074c s 	db  	'bit n,<b,c,d,e,h,l,(hl),a>...$'
+076a 076a s 
+076a 076a s ; cpd<r> (1) (6144 cycles)
+076a 076a d ff
+076a 076a s cpd1:	db	0ffh		; flag mask
+076b 076b s 	tstr	0edh,0a9h,0,0,0c7b6h,072b4h,018f6h,msbt+17,08dbdh,1,0c0h,030h,094a3h
+076b 076b d eda90000
+076b 076b s ?n0048:	db	0edh,0a9h,0,0
+076f 076f d b6c7b472f6181401bd8d0100
+076f 076f s 	dw	0c7b6h,072b4h,018f6h,msbt+17,08dbdh,1
+077b 077b d c0
+077b 077b s 	db	0c0h
+077c 077c d 30
+077c 077c s 	db	030h
+077d 077d d a394
+077d 077d s 	dw	094a3h
+077f 077f s 	if	$-?n0048 ne 20
+077f 077f s 	error	'missing parameter'
+077f 077f s 	endif
+077f 077f s 	endm
+077f 077f s 	tstr	0,010h,0,0,0,0,0,0,0,010,0,-1,0		; (1024 cycles)
+077f 077f d 00100000
+077f 077f s ?n0049:	db	0,010h,0,0
+0783 0783 d 000000000000000000000a00
+0783 0783 s 	dw	0,0,0,0,0,010
+078f 078f d 00
+078f 078f s 	db	0
+0790 0790 d ff
+0790 0790 s 	db	-1
+0791 0791 d 0000
+0791 0791 s 	dw	0
+0793 0793 s 	if	$-?n0049 ne 20
+0793 0793 s 	error	'missing parameter'
+0793 0793 s 	endif
+0793 0793 s 	endm
+0793 0793 s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0793 0793 d 00000000
+0793 0793 s ?n0050:	db	0,0,0,0
+0797 0797 d 000000000000000000000000
+0797 0797 s 	dw	0,0,0,0,0,0
+07a3 07a3 d d7
+07a3 07a3 s 	db	0d7h
+07a4 07a4 d 00
+07a4 07a4 s 	db	0
+07a5 07a5 d 0000
+07a5 07a5 s 	dw	0
+07a7 07a7 s 	if	$-?n0050 ne 20
+07a7 07a7 s 	error	'missing parameter'
+07a7 07a7 s 	endif
+07a7 07a7 s 	endm
+07a7 07a7 d d06b9c15
+07a7 07a7 s 	db	0d0h,06bh,09ch,015h			; expected crc
+07ab 07ab d 6370643c723e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+07ab 07ab s 	db  	'cpd<r>.......................$'
+07c9 07c9 s 
+07c9 07c9 s ; cpi<r> (1) (6144 cycles)
+07c9 07c9 d ff
+07c9 07c9 s cpi1:	db	0ffh		; flag mask
+07ca 07ca s 	tstr	0edh,0a1h,0,0,04d48h,0af4ah,0906bh,msbt,04e71h,1,093h,06ah,0907ch
+07ca 07ca d eda10000
+07ca 07ca s ?n0051:	db	0edh,0a1h,0,0
+07ce 07ce d 484d4aaf6b900301714e0100
+07ce 07ce s 	dw	04d48h,0af4ah,0906bh,msbt,04e71h,1
+07da 07da d 93
+07da 07da s 	db	093h
+07db 07db d 6a
+07db 07db s 	db	06ah
+07dc 07dc d 7c90
+07dc 07dc s 	dw	0907ch
+07de 07de s 	if	$-?n0051 ne 20
+07de 07de s 	error	'missing parameter'
+07de 07de s 	endif
+07de 07de s 	endm
+07de 07de s 	tstr	0,010h,0,0,0,0,0,0,0,010,0,-1,0		; (1024 cycles)
+07de 07de d 00100000
+07de 07de s ?n0052:	db	0,010h,0,0
+07e2 07e2 d 000000000000000000000a00
+07e2 07e2 s 	dw	0,0,0,0,0,010
+07ee 07ee d 00
+07ee 07ee s 	db	0
+07ef 07ef d ff
+07ef 07ef s 	db	-1
+07f0 07f0 d 0000
+07f0 07f0 s 	dw	0
+07f2 07f2 s 	if	$-?n0052 ne 20
+07f2 07f2 s 	error	'missing parameter'
+07f2 07f2 s 	endif
+07f2 07f2 s 	endm
+07f2 07f2 s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+07f2 07f2 d 00000000
+07f2 07f2 s ?n0053:	db	0,0,0,0
+07f6 07f6 d 000000000000000000000000
+07f6 07f6 s 	dw	0,0,0,0,0,0
+0802 0802 d d7
+0802 0802 s 	db	0d7h
+0803 0803 d 00
+0803 0803 s 	db	0
+0804 0804 d 0000
+0804 0804 s 	dw	0
+0806 0806 s 	if	$-?n0053 ne 20
+0806 0806 s 	error	'missing parameter'
+0806 0806 s 	endif
+0806 0806 s 	endm
+0806 0806 d 683e7b2a
+0806 0806 s 	db	068h,03eh,07bh,02ah			; expected crc
+080a 080a d 6370693c723e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+080a 080a s 	db  	'cpi<r>.......................$'
+0828 0828 s 
+0828 0828 s ; daa
+0828 0828 d ff
+0828 0828 s daaop:	db	0ffh		; flag mask
+0829 0829 s 	tstr	027h,0,0,0,02141h,009fah,01d60h,0a559h,08d5bh,09079h,004h,08eh,0299dh
+0829 0829 d 27000000
+0829 0829 s ?n0054:	db	027h,0,0,0
+082d 082d d 4121fa09601d59a55b8d7990
+082d 082d s 	dw	02141h,009fah,01d60h,0a559h,08d5bh,09079h
+0839 0839 d 04
+0839 0839 s 	db	004h
+083a 083a d 8e
+083a 083a s 	db	08eh
+083b 083b d 9d29
+083b 083b s 	dw	0299dh
+083d 083d s 	if	$-?n0054 ne 20
+083d 083d s 	error	'missing parameter'
+083d 083d s 	endif
+083d 083d s 	endm
+083d 083d s 	tstr	0,0,0,0,0,0,0,0,0,0,-1,-1,0	; (65,536 cycles)
+083d 083d d 00000000
+083d 083d s ?n0055:	db	0,0,0,0
+0841 0841 d 000000000000000000000000
+0841 0841 s 	dw	0,0,0,0,0,0
+084d 084d d ff
+084d 084d s 	db	-1
+084e 084e d ff
+084e 084e s 	db	-1
+084f 084f d 0000
+084f 084f s 	dw	0
+0851 0851 s 	if	$-?n0055 ne 20
+0851 0851 s 	error	'missing parameter'
+0851 0851 s 	endif
+0851 0851 s 	endm
+0851 0851 s 	tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycle)
+0851 0851 d 00000000
+0851 0851 s ?n0056:	db	0,0,0,0
+0855 0855 d 000000000000000000000000
+0855 0855 s 	dw	0,0,0,0,0,0
+0861 0861 d 00
+0861 0861 s 	db	0
+0862 0862 d 00
+0862 0862 s 	db	0
+0863 0863 d 0000
+0863 0863 s 	dw	0
+0865 0865 s 	if	$-?n0056 ne 20
+0865 0865 s 	error	'missing parameter'
+0865 0865 s 	endif
+0865 0865 s 	endm
+0865 0865 d 93c38500
+0865 0865 s 	db	093h,0c3h,085h,000h			; expected crc
+0869 0869 d 6461612e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0869 0869 s 	db  	'daa..........................$'
+0887 0887 s 
+0887 0887 s ; cpl
+0887 0887 d ff
+0887 0887 s cplop:	db	0ffh		; flag mask
+0888 0888 s 	tstr	02fh,0,0,0,02141h,009fah,01d60h,0a559h,08d5bh,09079h,004h,08eh,0299dh
+0888 0888 d 2f000000
+0888 0888 s ?n0057:	db	02fh,0,0,0
+088c 088c d 4121fa09601d59a55b8d7990
+088c 088c s 	dw	02141h,009fah,01d60h,0a559h,08d5bh,09079h
+0898 0898 d 04
+0898 0898 s 	db	004h
+0899 0899 d 8e
+0899 0899 s 	db	08eh
+089a 089a d 9d29
+089a 089a s 	dw	0299dh
+089c 089c s 	if	$-?n0057 ne 20
+089c 089c s 	error	'missing parameter'
+089c 089c s 	endif
+089c 089c s 	endm
+089c 089c s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,-1,0	; (16384 cycles)
+089c 089c d 00000000
+089c 089c s ?n0058:	db	0,0,0,0
+08a0 08a0 d 000000000000000000000000
+08a0 08a0 s 	dw	0,0,0,0,0,0
+08ac 08ac d d7
+08ac 08ac s 	db	0d7h
+08ad 08ad d ff
+08ad 08ad s 	db	-1
+08ae 08ae d 0000
+08ae 08ae s 	dw	0
+08b0 08b0 s 	if	$-?n0058 ne 20
+08b0 08b0 s 	error	'missing parameter'
+08b0 08b0 s 	endif
+08b0 08b0 s 	endm
+08b0 08b0 s 	tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycle)
+08b0 08b0 d 00000000
+08b0 08b0 s ?n0059:	db	0,0,0,0
+08b4 08b4 d 000000000000000000000000
+08b4 08b4 s 	dw	0,0,0,0,0,0
+08c0 08c0 d 00
+08c0 08c0 s 	db	0
+08c1 08c1 d 00
+08c1 08c1 s 	db	0
+08c2 08c2 d 0000
+08c2 08c2 s 	dw	0
+08c4 08c4 s 	if	$-?n0059 ne 20
+08c4 08c4 s 	error	'missing parameter'
+08c4 08c4 s 	endif
+08c4 08c4 s 	endm
+08c4 08c4 d 7e08aada
+08c4 08c4 s 	db	07eh,008h,0aah,0dah			; expected crc
+08c8 08c8 d 63706c2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+08c8 08c8 s 	db  	'cpl..........................$'
+08e6 08e6 s 
+08e6 08e6 s ; <inc,dec> a (3072 cycles)
+08e6 08e6 d ff
+08e6 08e6 s inca:	db	0ffh		; flag mask
+08e7 08e7 s 	tstr	03ch,0,0,0,04adfh,0d5d8h,0e598h,08a2bh,0a7b0h,0431bh,044h,05ah,0d030h
+08e7 08e7 d 3c000000
+08e7 08e7 s ?n0060:	db	03ch,0,0,0
+08eb 08eb d df4ad8d598e52b8ab0a71b43
+08eb 08eb s 	dw	04adfh,0d5d8h,0e598h,08a2bh,0a7b0h,0431bh
+08f7 08f7 d 44
+08f7 08f7 s 	db	044h
+08f8 08f8 d 5a
+08f8 08f8 s 	db	05ah
+08f9 08f9 d 30d0
+08f9 08f9 s 	dw	0d030h
+08fb 08fb s 	if	$-?n0060 ne 20
+08fb 08fb s 	error	'missing parameter'
+08fb 08fb s 	endif
+08fb 08fb s 	endm
+08fb 08fb s 	tstr	001h,0,0,0,0,0,0,0,0,0,0,-1,0		; (512 cycles)
+08fb 08fb d 01000000
+08fb 08fb s ?n0061:	db	001h,0,0,0
+08ff 08ff d 000000000000000000000000
+08ff 08ff s 	dw	0,0,0,0,0,0
+090b 090b d 00
+090b 090b s 	db	0
+090c 090c d ff
+090c 090c s 	db	-1
+090d 090d d 0000
+090d 090d s 	dw	0
+090f 090f s 	if	$-?n0061 ne 20
+090f 090f s 	error	'missing parameter'
+090f 090f s 	endif
+090f 090f s 	endm
+090f 090f s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+090f 090f d 00000000
+090f 090f s ?n0062:	db	0,0,0,0
+0913 0913 d 000000000000000000000000
+0913 0913 s 	dw	0,0,0,0,0,0
+091f 091f d d7
+091f 091f s 	db	0d7h
+0920 0920 d 00
+0920 0920 s 	db	0
+0921 0921 d 0000
+0921 0921 s 	dw	0
+0923 0923 s 	if	$-?n0062 ne 20
+0923 0923 s 	error	'missing parameter'
+0923 0923 s 	endif
+0923 0923 s 	endm
+0923 0923 d 81fa8100
+0923 0923 s 	db	081h,0fah,081h,000h			; expected crc
+0927 0927 d 3c696e632c6465633e20612e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0927 0927 s 	db  	'<inc,dec> a..................$'
+0945 0945 s 
+0945 0945 s ; <inc,dec> b (3072 cycles)
+0945 0945 d ff
+0945 0945 s incb:	db	0ffh		; flag mask
+0946 0946 s 	tstr	004h,0,0,0,0d623h,0432dh,07a61h,08180h,05a86h,01e85h,086h,058h,09bbbh
+0946 0946 d 04000000
+0946 0946 s ?n0063:	db	004h,0,0,0
+094a 094a d 23d62d43617a8081865a851e
+094a 094a s 	dw	0d623h,0432dh,07a61h,08180h,05a86h,01e85h
+0956 0956 d 86
+0956 0956 s 	db	086h
+0957 0957 d 58
+0957 0957 s 	db	058h
+0958 0958 d bb9b
+0958 0958 s 	dw	09bbbh
+095a 095a s 	if	$-?n0063 ne 20
+095a 095a s 	error	'missing parameter'
+095a 095a s 	endif
+095a 095a s 	endm
+095a 095a s 	tstr	001h,0,0,0,0,0,0,0,0,0ff00h,0,0,0	; (512 cycles)
+095a 095a d 01000000
+095a 095a s ?n0064:	db	001h,0,0,0
+095e 095e d 0000000000000000000000ff
+095e 095e s 	dw	0,0,0,0,0,0ff00h
+096a 096a d 00
+096a 096a s 	db	0
+096b 096b d 00
+096b 096b s 	db	0
+096c 096c d 0000
+096c 096c s 	dw	0
+096e 096e s 	if	$-?n0064 ne 20
+096e 096e s 	error	'missing parameter'
+096e 096e s 	endif
+096e 096e s 	endm
+096e 096e s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+096e 096e d 00000000
+096e 096e s ?n0065:	db	0,0,0,0
+0972 0972 d 000000000000000000000000
+0972 0972 s 	dw	0,0,0,0,0,0
+097e 097e d d7
+097e 097e s 	db	0d7h
+097f 097f d 00
+097f 097f s 	db	0
+0980 0980 d 0000
+0980 0980 s 	dw	0
+0982 0982 s 	if	$-?n0065 ne 20
+0982 0982 s 	error	'missing parameter'
+0982 0982 s 	endif
+0982 0982 s 	endm
+0982 0982 d 77f35a73
+0982 0982 s 	db	077h,0f3h,05ah,073h			; expected crc
+0986 0986 d 3c696e632c6465633e20622e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0986 0986 s 	db  	'<inc,dec> b..................$'
+09a4 09a4 s 
+09a4 09a4 s ; <inc,dec> bc (1536 cycles)
+09a4 09a4 d ff
+09a4 09a4 s incbc:	db	0ffh		; flag mask
+09a5 09a5 s 	tstr	003h,0,0,0,0cd97h,044abh,08dc9h,0e3e3h,011cch,0e8a4h,002h,049h,02a4dh
+09a5 09a5 d 03000000
+09a5 09a5 s ?n0066:	db	003h,0,0,0
+09a9 09a9 d 97cdab44c98de3e3cc11a4e8
+09a9 09a9 s 	dw	0cd97h,044abh,08dc9h,0e3e3h,011cch,0e8a4h
+09b5 09b5 d 02
+09b5 09b5 s 	db	002h
+09b6 09b6 d 49
+09b6 09b6 s 	db	049h
+09b7 09b7 d 4d2a
+09b7 09b7 s 	dw	02a4dh
+09b9 09b9 s 	if	$-?n0066 ne 20
+09b9 09b9 s 	error	'missing parameter'
+09b9 09b9 s 	endif
+09b9 09b9 s 	endm
+09b9 09b9 s 	tstr	008h,0,0,0,0,0,0,0,0,0f821h,0,0,0	; (256 cycles)
+09b9 09b9 d 08000000
+09b9 09b9 s ?n0067:	db	008h,0,0,0
+09bd 09bd d 0000000000000000000021f8
+09bd 09bd s 	dw	0,0,0,0,0,0f821h
+09c9 09c9 d 00
+09c9 09c9 s 	db	0
+09ca 09ca d 00
+09ca 09ca s 	db	0
+09cb 09cb d 0000
+09cb 09cb s 	dw	0
+09cd 09cd s 	if	$-?n0067 ne 20
+09cd 09cd s 	error	'missing parameter'
+09cd 09cd s 	endif
+09cd 09cd s 	endm
+09cd 09cd s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+09cd 09cd d 00000000
+09cd 09cd s ?n0068:	db	0,0,0,0
+09d1 09d1 d 000000000000000000000000
+09d1 09d1 s 	dw	0,0,0,0,0,0
+09dd 09dd d d7
+09dd 09dd s 	db	0d7h
+09de 09de d 00
+09de 09de s 	db	0
+09df 09df d 0000
+09df 09df s 	dw	0
+09e1 09e1 s 	if	$-?n0068 ne 20
+09e1 09e1 s 	error	'missing parameter'
+09e1 09e1 s 	endif
+09e1 09e1 s 	endm
+09e1 09e1 d d2ae3bec
+09e1 09e1 s 	db	0d2h,0aeh,03bh,0ech			; expected crc
+09e5 09e5 d 3c696e632c6465633e2062632e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+09e5 09e5 s 	db  	'<inc,dec> bc.................$'
+0a03 0a03 s 
+0a03 0a03 s ; <inc,dec> c (3072 cycles)
+0a03 0a03 d ff
+0a03 0a03 s incc:	db	0ffh		; flag mask
+0a04 0a04 s 	tstr	00ch,0,0,0,0d789h,00935h,0055bh,09f85h,08b27h,0d208h,095h,005h,00660h
+0a04 0a04 d 0c000000
+0a04 0a04 s ?n0069:	db	00ch,0,0,0
+0a08 0a08 d 89d735095b05859f278b08d2
+0a08 0a08 s 	dw	0d789h,00935h,0055bh,09f85h,08b27h,0d208h
+0a14 0a14 d 95
+0a14 0a14 s 	db	095h
+0a15 0a15 d 05
+0a15 0a15 s 	db	005h
+0a16 0a16 d 6006
+0a16 0a16 s 	dw	00660h
+0a18 0a18 s 	if	$-?n0069 ne 20
+0a18 0a18 s 	error	'missing parameter'
+0a18 0a18 s 	endif
+0a18 0a18 s 	endm
+0a18 0a18 s 	tstr	001h,0,0,0,0,0,0,0,0,0ffh,0,0,0		; (512 cycles)
+0a18 0a18 d 01000000
+0a18 0a18 s ?n0070:	db	001h,0,0,0
+0a1c 0a1c d 00000000000000000000ff00
+0a1c 0a1c s 	dw	0,0,0,0,0,0ffh
+0a28 0a28 d 00
+0a28 0a28 s 	db	0
+0a29 0a29 d 00
+0a29 0a29 s 	db	0
+0a2a 0a2a d 0000
+0a2a 0a2a s 	dw	0
+0a2c 0a2c s 	if	$-?n0070 ne 20
+0a2c 0a2c s 	error	'missing parameter'
+0a2c 0a2c s 	endif
+0a2c 0a2c s 	endm
+0a2c 0a2c s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0a2c 0a2c d 00000000
+0a2c 0a2c s ?n0071:	db	0,0,0,0
+0a30 0a30 d 000000000000000000000000
+0a30 0a30 s 	dw	0,0,0,0,0,0
+0a3c 0a3c d d7
+0a3c 0a3c s 	db	0d7h
+0a3d 0a3d d 00
+0a3d 0a3d s 	db	0
+0a3e 0a3e d 0000
+0a3e 0a3e s 	dw	0
+0a40 0a40 s 	if	$-?n0071 ne 20
+0a40 0a40 s 	error	'missing parameter'
+0a40 0a40 s 	endif
+0a40 0a40 s 	endm
+0a40 0a40 d 1af612a7
+0a40 0a40 s 	db	01ah,0f6h,012h,0a7h			; expected crc
+0a44 0a44 d 3c696e632c6465633e20632e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0a44 0a44 s 	db  	'<inc,dec> c..................$'
+0a62 0a62 s 
+0a62 0a62 s ; <inc,dec> d (3072 cycles)
+0a62 0a62 d ff
+0a62 0a62 s incd:	db	0ffh		; flag mask
+0a63 0a63 s 	tstr	014h,0,0,0,0a0eah,05fbah,065fbh,0981ch,038cch,0debch,043h,05ch,003bdh
+0a63 0a63 d 14000000
+0a63 0a63 s ?n0072:	db	014h,0,0,0
+0a67 0a67 d eaa0ba5ffb651c98cc38bcde
+0a67 0a67 s 	dw	0a0eah,05fbah,065fbh,0981ch,038cch,0debch
+0a73 0a73 d 43
+0a73 0a73 s 	db	043h
+0a74 0a74 d 5c
+0a74 0a74 s 	db	05ch
+0a75 0a75 d bd03
+0a75 0a75 s 	dw	003bdh
+0a77 0a77 s 	if	$-?n0072 ne 20
+0a77 0a77 s 	error	'missing parameter'
+0a77 0a77 s 	endif
+0a77 0a77 s 	endm
+0a77 0a77 s 	tstr	001h,0,0,0,0,0,0,0,0ff00h,0,0,0,0	; (512 cycles)
+0a77 0a77 d 01000000
+0a77 0a77 s ?n0073:	db	001h,0,0,0
+0a7b 0a7b d 000000000000000000ff0000
+0a7b 0a7b s 	dw	0,0,0,0,0ff00h,0
+0a87 0a87 d 00
+0a87 0a87 s 	db	0
+0a88 0a88 d 00
+0a88 0a88 s 	db	0
+0a89 0a89 d 0000
+0a89 0a89 s 	dw	0
+0a8b 0a8b s 	if	$-?n0073 ne 20
+0a8b 0a8b s 	error	'missing parameter'
+0a8b 0a8b s 	endif
+0a8b 0a8b s 	endm
+0a8b 0a8b s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0a8b 0a8b d 00000000
+0a8b 0a8b s ?n0074:	db	0,0,0,0
+0a8f 0a8f d 000000000000000000000000
+0a8f 0a8f s 	dw	0,0,0,0,0,0
+0a9b 0a9b d d7
+0a9b 0a9b s 	db	0d7h
+0a9c 0a9c d 00
+0a9c 0a9c s 	db	0
+0a9d 0a9d d 0000
+0a9d 0a9d s 	dw	0
+0a9f 0a9f s 	if	$-?n0074 ne 20
+0a9f 0a9f s 	error	'missing parameter'
+0a9f 0a9f s 	endif
+0a9f 0a9f s 	endm
+0a9f 0a9f d d146bf51
+0a9f 0a9f s 	db	0d1h,046h,0bfh,051h			; expected crc
+0aa3 0aa3 d 3c696e632c6465633e20642e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0aa3 0aa3 s 	db  	'<inc,dec> d..................$'
+0ac1 0ac1 s 
+0ac1 0ac1 s ; <inc,dec> de (1536 cycles)
+0ac1 0ac1 d ff
+0ac1 0ac1 s incde:	db	0ffh		; flag mask
+0ac2 0ac2 s 	tstr	013h,0,0,0,0342eh,0131dh,028c9h,00acah,09967h,03a2eh,092h,0f6h,09d54h
+0ac2 0ac2 d 13000000
+0ac2 0ac2 s ?n0075:	db	013h,0,0,0
+0ac6 0ac6 d 2e341d13c928ca0a67992e3a
+0ac6 0ac6 s 	dw	0342eh,0131dh,028c9h,00acah,09967h,03a2eh
+0ad2 0ad2 d 92
+0ad2 0ad2 s 	db	092h
+0ad3 0ad3 d f6
+0ad3 0ad3 s 	db	0f6h
+0ad4 0ad4 d 549d
+0ad4 0ad4 s 	dw	09d54h
+0ad6 0ad6 s 	if	$-?n0075 ne 20
+0ad6 0ad6 s 	error	'missing parameter'
+0ad6 0ad6 s 	endif
+0ad6 0ad6 s 	endm
+0ad6 0ad6 s 	tstr	008h,0,0,0,0,0,0,0,0f821h,0,0,0,0	; (256 cycles)
+0ad6 0ad6 d 08000000
+0ad6 0ad6 s ?n0076:	db	008h,0,0,0
+0ada 0ada d 000000000000000021f80000
+0ada 0ada s 	dw	0,0,0,0,0f821h,0
+0ae6 0ae6 d 00
+0ae6 0ae6 s 	db	0
+0ae7 0ae7 d 00
+0ae7 0ae7 s 	db	0
+0ae8 0ae8 d 0000
+0ae8 0ae8 s 	dw	0
+0aea 0aea s 	if	$-?n0076 ne 20
+0aea 0aea s 	error	'missing parameter'
+0aea 0aea s 	endif
+0aea 0aea s 	endm
+0aea 0aea s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0aea 0aea d 00000000
+0aea 0aea s ?n0077:	db	0,0,0,0
+0aee 0aee d 000000000000000000000000
+0aee 0aee s 	dw	0,0,0,0,0,0
+0afa 0afa d d7
+0afa 0afa s 	db	0d7h
+0afb 0afb d 00
+0afb 0afb s 	db	0
+0afc 0afc d 0000
+0afc 0afc s 	dw	0
+0afe 0afe s 	if	$-?n0077 ne 20
+0afe 0afe s 	error	'missing parameter'
+0afe 0afe s 	endif
+0afe 0afe s 	endm
+0afe 0afe d aec6d42c
+0afe 0afe s 	db	0aeh,0c6h,0d4h,02ch			; expected crc
+0b02 0b02 d 3c696e632c6465633e2064652e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0b02 0b02 s 	db  	'<inc,dec> de.................$'
+0b20 0b20 s 
+0b20 0b20 s ; <inc,dec> e (3072 cycles)
+0b20 0b20 d ff
+0b20 0b20 s ince:	db	0ffh		; flag mask
+0b21 0b21 s 	tstr	01ch,0,0,0,0602fh,04c0dh,02402h,0e2f5h,0a0f4h,0a10ah,013h,032h,05925h
+0b21 0b21 d 1c000000
+0b21 0b21 s ?n0078:	db	01ch,0,0,0
+0b25 0b25 d 2f600d4c0224f5e2f4a00aa1
+0b25 0b25 s 	dw	0602fh,04c0dh,02402h,0e2f5h,0a0f4h,0a10ah
+0b31 0b31 d 13
+0b31 0b31 s 	db	013h
+0b32 0b32 d 32
+0b32 0b32 s 	db	032h
+0b33 0b33 d 2559
+0b33 0b33 s 	dw	05925h
+0b35 0b35 s 	if	$-?n0078 ne 20
+0b35 0b35 s 	error	'missing parameter'
+0b35 0b35 s 	endif
+0b35 0b35 s 	endm
+0b35 0b35 s 	tstr	001h,0,0,0,0,0,0,0,0ffh,0,0,0,0		; (512 cycles)
+0b35 0b35 d 01000000
+0b35 0b35 s ?n0079:	db	001h,0,0,0
+0b39 0b39 d 0000000000000000ff000000
+0b39 0b39 s 	dw	0,0,0,0,0ffh,0
+0b45 0b45 d 00
+0b45 0b45 s 	db	0
+0b46 0b46 d 00
+0b46 0b46 s 	db	0
+0b47 0b47 d 0000
+0b47 0b47 s 	dw	0
+0b49 0b49 s 	if	$-?n0079 ne 20
+0b49 0b49 s 	error	'missing parameter'
+0b49 0b49 s 	endif
+0b49 0b49 s 	endm
+0b49 0b49 s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0b49 0b49 d 00000000
+0b49 0b49 s ?n0080:	db	0,0,0,0
+0b4d 0b4d d 000000000000000000000000
+0b4d 0b4d s 	dw	0,0,0,0,0,0
+0b59 0b59 d d7
+0b59 0b59 s 	db	0d7h
+0b5a 0b5a d 00
+0b5a 0b5a s 	db	0
+0b5b 0b5b d 0000
+0b5b 0b5b s 	dw	0
+0b5d 0b5d s 	if	$-?n0080 ne 20
+0b5d 0b5d s 	error	'missing parameter'
+0b5d 0b5d s 	endif
+0b5d 0b5d s 	endm
+0b5d 0b5d d ca8c6ac2
+0b5d 0b5d s 	db	0cah,08ch,06ah,0c2h			; expected crc
+0b61 0b61 d 3c696e632c6465633e20652e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0b61 0b61 s 	db  	'<inc,dec> e..................$'
+0b7f 0b7f s 
+0b7f 0b7f s ; <inc,dec> h (3072 cycles)
+0b7f 0b7f d ff
+0b7f 0b7f s inch:	db	0ffh		; flag mask
+0b80 0b80 s 	tstr	024h,0,0,0,01506h,0f2ebh,0e8ddh,0262bh,011a6h,0bc1ah,017h,006h,02818h
+0b80 0b80 d 24000000
+0b80 0b80 s ?n0081:	db	024h,0,0,0
+0b84 0b84 d 0615ebf2dde82b26a6111abc
+0b84 0b84 s 	dw	01506h,0f2ebh,0e8ddh,0262bh,011a6h,0bc1ah
+0b90 0b90 d 17
+0b90 0b90 s 	db	017h
+0b91 0b91 d 06
+0b91 0b91 s 	db	006h
+0b92 0b92 d 1828
+0b92 0b92 s 	dw	02818h
+0b94 0b94 s 	if	$-?n0081 ne 20
+0b94 0b94 s 	error	'missing parameter'
+0b94 0b94 s 	endif
+0b94 0b94 s 	endm
+0b94 0b94 s 	tstr	001h,0,0,0,0,0,0,0ff00h,0,0,0,0,0	; (512 cycles)
+0b94 0b94 d 01000000
+0b94 0b94 s ?n0082:	db	001h,0,0,0
+0b98 0b98 d 00000000000000ff00000000
+0b98 0b98 s 	dw	0,0,0,0ff00h,0,0
+0ba4 0ba4 d 00
+0ba4 0ba4 s 	db	0
+0ba5 0ba5 d 00
+0ba5 0ba5 s 	db	0
+0ba6 0ba6 d 0000
+0ba6 0ba6 s 	dw	0
+0ba8 0ba8 s 	if	$-?n0082 ne 20
+0ba8 0ba8 s 	error	'missing parameter'
+0ba8 0ba8 s 	endif
+0ba8 0ba8 s 	endm
+0ba8 0ba8 s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0ba8 0ba8 d 00000000
+0ba8 0ba8 s ?n0083:	db	0,0,0,0
+0bac 0bac d 000000000000000000000000
+0bac 0bac s 	dw	0,0,0,0,0,0
+0bb8 0bb8 d d7
+0bb8 0bb8 s 	db	0d7h
+0bb9 0bb9 d 00
+0bb9 0bb9 s 	db	0
+0bba 0bba d 0000
+0bba 0bba s 	dw	0
+0bbc 0bbc s 	if	$-?n0083 ne 20
+0bbc 0bbc s 	error	'missing parameter'
+0bbc 0bbc s 	endif
+0bbc 0bbc s 	endm
+0bbc 0bbc d 560f955e
+0bbc 0bbc s 	db	056h,00fh,095h,05eh			; expected crc
+0bc0 0bc0 d 3c696e632c6465633e20682e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0bc0 0bc0 s 	db  	'<inc,dec> h..................$'
+0bde 0bde s 
+0bde 0bde s ; <inc,dec> hl (1536 cycles)
+0bde 0bde d ff
+0bde 0bde s inchl:	db	0ffh		; flag mask
+0bdf 0bdf s 	tstr	023h,0,0,0,0c3f4h,007a5h,01b6dh,04f04h,0e2c2h,0822ah,057h,0e0h,0c3e1h
+0bdf 0bdf d 23000000
+0bdf 0bdf s ?n0084:	db	023h,0,0,0
+0be3 0be3 d f4c3a5076d1b044fc2e22a82
+0be3 0be3 s 	dw	0c3f4h,007a5h,01b6dh,04f04h,0e2c2h,0822ah
+0bef 0bef d 57
+0bef 0bef s 	db	057h
+0bf0 0bf0 d e0
+0bf0 0bf0 s 	db	0e0h
+0bf1 0bf1 d e1c3
+0bf1 0bf1 s 	dw	0c3e1h
+0bf3 0bf3 s 	if	$-?n0084 ne 20
+0bf3 0bf3 s 	error	'missing parameter'
+0bf3 0bf3 s 	endif
+0bf3 0bf3 s 	endm
+0bf3 0bf3 s 	tstr	008h,0,0,0,0,0,0,0f821h,0,0,0,0,0	; (256 cycles)
+0bf3 0bf3 d 08000000
+0bf3 0bf3 s ?n0085:	db	008h,0,0,0
+0bf7 0bf7 d 00000000000021f800000000
+0bf7 0bf7 s 	dw	0,0,0,0f821h,0,0
+0c03 0c03 d 00
+0c03 0c03 s 	db	0
+0c04 0c04 d 00
+0c04 0c04 s 	db	0
+0c05 0c05 d 0000
+0c05 0c05 s 	dw	0
+0c07 0c07 s 	if	$-?n0085 ne 20
+0c07 0c07 s 	error	'missing parameter'
+0c07 0c07 s 	endif
+0c07 0c07 s 	endm
+0c07 0c07 s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0c07 0c07 d 00000000
+0c07 0c07 s ?n0086:	db	0,0,0,0
+0c0b 0c0b d 000000000000000000000000
+0c0b 0c0b s 	dw	0,0,0,0,0,0
+0c17 0c17 d d7
+0c17 0c17 s 	db	0d7h
+0c18 0c18 d 00
+0c18 0c18 s 	db	0
+0c19 0c19 d 0000
+0c19 0c19 s 	dw	0
+0c1b 0c1b s 	if	$-?n0086 ne 20
+0c1b 0c1b s 	error	'missing parameter'
+0c1b 0c1b s 	endif
+0c1b 0c1b s 	endm
+0c1b 0c1b d fc0d6d4a
+0c1b 0c1b s 	db	0fch,00dh,06dh,04ah			; expected crc
+0c1f 0c1f d 3c696e632c6465633e20686c2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0c1f 0c1f s 	db  	'<inc,dec> hl.................$'
+0c3d 0c3d s 
+0c3d 0c3d s ; <inc,dec> ix (1536 cycles)
+0c3d 0c3d d ff
+0c3d 0c3d s incix:	db	0ffh		; flag mask
+0c3e 0c3e s 	tstr	0ddh,023h,0,0,0bc3ch,00d9bh,0e081h,0adfdh,09a7fh,096e5h,013h,085h,00be2h
+0c3e 0c3e d dd230000
+0c3e 0c3e s ?n0087:	db	0ddh,023h,0,0
+0c42 0c42 d 3cbc9b0d81e0fdad7f9ae596
+0c42 0c42 s 	dw	0bc3ch,00d9bh,0e081h,0adfdh,09a7fh,096e5h
+0c4e 0c4e d 13
+0c4e 0c4e s 	db	013h
+0c4f 0c4f d 85
+0c4f 0c4f s 	db	085h
+0c50 0c50 d e20b
+0c50 0c50 s 	dw	00be2h
+0c52 0c52 s 	if	$-?n0087 ne 20
+0c52 0c52 s 	error	'missing parameter'
+0c52 0c52 s 	endif
+0c52 0c52 s 	endm
+0c52 0c52 s 	tstr	0,8,0,0,0,0,0f821h,0,0,0,0,0,0		; (256 cycles)
+0c52 0c52 d 00080000
+0c52 0c52 s ?n0088:	db	0,8,0,0
+0c56 0c56 d 0000000021f8000000000000
+0c56 0c56 s 	dw	0,0,0f821h,0,0,0
+0c62 0c62 d 00
+0c62 0c62 s 	db	0
+0c63 0c63 d 00
+0c63 0c63 s 	db	0
+0c64 0c64 d 0000
+0c64 0c64 s 	dw	0
+0c66 0c66 s 	if	$-?n0088 ne 20
+0c66 0c66 s 	error	'missing parameter'
+0c66 0c66 s 	endif
+0c66 0c66 s 	endm
+0c66 0c66 s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0c66 0c66 d 00000000
+0c66 0c66 s ?n0089:	db	0,0,0,0
+0c6a 0c6a d 000000000000000000000000
+0c6a 0c6a s 	dw	0,0,0,0,0,0
+0c76 0c76 d d7
+0c76 0c76 s 	db	0d7h
+0c77 0c77 d 00
+0c77 0c77 s 	db	0
+0c78 0c78 d 0000
+0c78 0c78 s 	dw	0
+0c7a 0c7a s 	if	$-?n0089 ne 20
+0c7a 0c7a s 	error	'missing parameter'
+0c7a 0c7a s 	endif
+0c7a 0c7a s 	endm
+0c7a 0c7a d a54dbe31
+0c7a 0c7a s 	db	0a5h,04dh,0beh,031h			; expected crc
+0c7e 0c7e d 3c696e632c6465633e2069782e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0c7e 0c7e s 	db  	'<inc,dec> ix.................$'
+0c9c 0c9c s 
+0c9c 0c9c s ; <inc,dec> iy (1536 cycles)
+0c9c 0c9c d ff
+0c9c 0c9c s inciy:	db	0ffh		; flag mask
+0c9d 0c9d s 	tstr	0fdh,023h,0,0,09402h,0637ah,03182h,0c65ah,0b2e9h,0abb4h,016h,0f2h,06d05h
+0c9d 0c9d d fd230000
+0c9d 0c9d s ?n0090:	db	0fdh,023h,0,0
+0ca1 0ca1 d 02947a6382315ac6e9b2b4ab
+0ca1 0ca1 s 	dw	09402h,0637ah,03182h,0c65ah,0b2e9h,0abb4h
+0cad 0cad d 16
+0cad 0cad s 	db	016h
+0cae 0cae d f2
+0cae 0cae s 	db	0f2h
+0caf 0caf d 056d
+0caf 0caf s 	dw	06d05h
+0cb1 0cb1 s 	if	$-?n0090 ne 20
+0cb1 0cb1 s 	error	'missing parameter'
+0cb1 0cb1 s 	endif
+0cb1 0cb1 s 	endm
+0cb1 0cb1 s 	tstr	0,8,0,0,0,0f821h,0,0,0,0,0,0,0		; (256 cycles)
+0cb1 0cb1 d 00080000
+0cb1 0cb1 s ?n0091:	db	0,8,0,0
+0cb5 0cb5 d 000021f80000000000000000
+0cb5 0cb5 s 	dw	0,0f821h,0,0,0,0
+0cc1 0cc1 d 00
+0cc1 0cc1 s 	db	0
+0cc2 0cc2 d 00
+0cc2 0cc2 s 	db	0
+0cc3 0cc3 d 0000
+0cc3 0cc3 s 	dw	0
+0cc5 0cc5 s 	if	$-?n0091 ne 20
+0cc5 0cc5 s 	error	'missing parameter'
+0cc5 0cc5 s 	endif
+0cc5 0cc5 s 	endm
+0cc5 0cc5 s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0cc5 0cc5 d 00000000
+0cc5 0cc5 s ?n0092:	db	0,0,0,0
+0cc9 0cc9 d 000000000000000000000000
+0cc9 0cc9 s 	dw	0,0,0,0,0,0
+0cd5 0cd5 d d7
+0cd5 0cd5 s 	db	0d7h
+0cd6 0cd6 d 00
+0cd6 0cd6 s 	db	0
+0cd7 0cd7 d 0000
+0cd7 0cd7 s 	dw	0
+0cd9 0cd9 s 	if	$-?n0092 ne 20
+0cd9 0cd9 s 	error	'missing parameter'
+0cd9 0cd9 s 	endif
+0cd9 0cd9 s 	endm
+0cd9 0cd9 d 505d51a3
+0cd9 0cd9 s 	db	050h,05dh,051h,0a3h			; expected crc
+0cdd 0cdd d 3c696e632c6465633e2069792e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0cdd 0cdd s 	db  	'<inc,dec> iy.................$'
+0cfb 0cfb s 
+0cfb 0cfb s ; <inc,dec> l (3072 cycles)
+0cfb 0cfb d ff
+0cfb 0cfb s incl:	db	0ffh		; flag mask
+0cfc 0cfc s 	tstr	02ch,0,0,0,08031h,0a520h,04356h,0b409h,0f4c1h,0dfa2h,0d1h,03ch,03ea2h
+0cfc 0cfc d 2c000000
+0cfc 0cfc s ?n0093:	db	02ch,0,0,0
+0d00 0d00 d 318020a5564309b4c1f4a2df
+0d00 0d00 s 	dw	08031h,0a520h,04356h,0b409h,0f4c1h,0dfa2h
+0d0c 0d0c d d1
+0d0c 0d0c s 	db	0d1h
+0d0d 0d0d d 3c
+0d0d 0d0d s 	db	03ch
+0d0e 0d0e d a23e
+0d0e 0d0e s 	dw	03ea2h
+0d10 0d10 s 	if	$-?n0093 ne 20
+0d10 0d10 s 	error	'missing parameter'
+0d10 0d10 s 	endif
+0d10 0d10 s 	endm
+0d10 0d10 s 	tstr	001h,0,0,0,0,0,0,0ffh,0,0,0,0,0		; (512 cycles)
+0d10 0d10 d 01000000
+0d10 0d10 s ?n0094:	db	001h,0,0,0
+0d14 0d14 d 000000000000ff0000000000
+0d14 0d14 s 	dw	0,0,0,0ffh,0,0
+0d20 0d20 d 00
+0d20 0d20 s 	db	0
+0d21 0d21 d 00
+0d21 0d21 s 	db	0
+0d22 0d22 d 0000
+0d22 0d22 s 	dw	0
+0d24 0d24 s 	if	$-?n0094 ne 20
+0d24 0d24 s 	error	'missing parameter'
+0d24 0d24 s 	endif
+0d24 0d24 s 	endm
+0d24 0d24 s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0d24 0d24 d 00000000
+0d24 0d24 s ?n0095:	db	0,0,0,0
+0d28 0d28 d 000000000000000000000000
+0d28 0d28 s 	dw	0,0,0,0,0,0
+0d34 0d34 d d7
+0d34 0d34 s 	db	0d7h
+0d35 0d35 d 00
+0d35 0d35 s 	db	0
+0d36 0d36 d 0000
+0d36 0d36 s 	dw	0
+0d38 0d38 s 	if	$-?n0095 ne 20
+0d38 0d38 s 	error	'missing parameter'
+0d38 0d38 s 	endif
+0d38 0d38 s 	endm
+0d38 0d38 d a0a1b49f
+0d38 0d38 s 	db	0a0h,0a1h,0b4h,09fh			; expected crc
+0d3c 0d3c d 3c696e632c6465633e206c2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0d3c 0d3c s 	db  	'<inc,dec> l..................$'
+0d5a 0d5a s 
+0d5a 0d5a s ; <inc,dec> (hl) (3072 cycles)
+0d5a 0d5a d ff
+0d5a 0d5a s incm:	db	0ffh		; flag mask
+0d5b 0d5b s 	tstr	034h,0,0,0,0b856h,00c7ch,0e53eh,msbt,0877eh,0da58h,015h,05ch,01f37h
+0d5b 0d5b d 34000000
+0d5b 0d5b s ?n0096:	db	034h,0,0,0
+0d5f 0d5f d 56b87c0c3ee503017e8758da
+0d5f 0d5f s 	dw	0b856h,00c7ch,0e53eh,msbt,0877eh,0da58h
+0d6b 0d6b d 15
+0d6b 0d6b s 	db	015h
+0d6c 0d6c d 5c
+0d6c 0d6c s 	db	05ch
+0d6d 0d6d d 371f
+0d6d 0d6d s 	dw	01f37h
+0d6f 0d6f s 	if	$-?n0096 ne 20
+0d6f 0d6f s 	error	'missing parameter'
+0d6f 0d6f s 	endif
+0d6f 0d6f s 	endm
+0d6f 0d6f s 	tstr	001h,0,0,0,0ffh,0,0,0,0,0,0,0,0		; (512 cycles)
+0d6f 0d6f d 01000000
+0d6f 0d6f s ?n0097:	db	001h,0,0,0
+0d73 0d73 d ff0000000000000000000000
+0d73 0d73 s 	dw	0ffh,0,0,0,0,0
+0d7f 0d7f d 00
+0d7f 0d7f s 	db	0
+0d80 0d80 d 00
+0d80 0d80 s 	db	0
+0d81 0d81 d 0000
+0d81 0d81 s 	dw	0
+0d83 0d83 s 	if	$-?n0097 ne 20
+0d83 0d83 s 	error	'missing parameter'
+0d83 0d83 s 	endif
+0d83 0d83 s 	endm
+0d83 0d83 s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0d83 0d83 d 00000000
+0d83 0d83 s ?n0098:	db	0,0,0,0
+0d87 0d87 d 000000000000000000000000
+0d87 0d87 s 	dw	0,0,0,0,0,0
+0d93 0d93 d d7
+0d93 0d93 s 	db	0d7h
+0d94 0d94 d 00
+0d94 0d94 s 	db	0
+0d95 0d95 d 0000
+0d95 0d95 s 	dw	0
+0d97 0d97 s 	if	$-?n0098 ne 20
+0d97 0d97 s 	error	'missing parameter'
+0d97 0d97 s 	endif
+0d97 0d97 s 	endm
+0d97 0d97 d 1ca0ece9
+0d97 0d97 s 	db	01ch,0a0h,0ech,0e9h			; expected crc
+0d9b 0d9b d 3c696e632c6465633e2028686c292e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0d9b 0d9b s 	db  	'<inc,dec> (hl)...............$'
+0db9 0db9 s 
+0db9 0db9 s ; <inc,dec> sp (1536 cycles)
+0db9 0db9 d ff
+0db9 0db9 s incsp:	db	0ffh		; flag mask
+0dba 0dba s 	tstr	033h,0,0,0,0346fh,0d482h,0d169h,0deb6h,0a494h,0f476h,053h,002h,0855bh
+0dba 0dba d 33000000
+0dba 0dba s ?n0099:	db	033h,0,0,0
+0dbe 0dbe d 6f3482d469d1b6de94a476f4
+0dbe 0dbe s 	dw	0346fh,0d482h,0d169h,0deb6h,0a494h,0f476h
+0dca 0dca d 53
+0dca 0dca s 	db	053h
+0dcb 0dcb d 02
+0dcb 0dcb s 	db	002h
+0dcc 0dcc d 5b85
+0dcc 0dcc s 	dw	0855bh
+0dce 0dce s 	if	$-?n0099 ne 20
+0dce 0dce s 	error	'missing parameter'
+0dce 0dce s 	endif
+0dce 0dce s 	endm
+0dce 0dce s 	tstr	008h,0,0,0,0,0,0,0,0,0,0,0,0f821h	; (256 cycles)
+0dce 0dce d 08000000
+0dce 0dce s ?n0100:	db	008h,0,0,0
+0dd2 0dd2 d 000000000000000000000000
+0dd2 0dd2 s 	dw	0,0,0,0,0,0
+0dde 0dde d 00
+0dde 0dde s 	db	0
+0ddf 0ddf d 00
+0ddf 0ddf s 	db	0
+0de0 0de0 d 21f8
+0de0 0de0 s 	dw	0f821h
+0de2 0de2 s 	if	$-?n0100 ne 20
+0de2 0de2 s 	error	'missing parameter'
+0de2 0de2 s 	endif
+0de2 0de2 s 	endm
+0de2 0de2 s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0de2 0de2 d 00000000
+0de2 0de2 s ?n0101:	db	0,0,0,0
+0de6 0de6 d 000000000000000000000000
+0de6 0de6 s 	dw	0,0,0,0,0,0
+0df2 0df2 d d7
+0df2 0df2 s 	db	0d7h
+0df3 0df3 d 00
+0df3 0df3 s 	db	0
+0df4 0df4 d 0000
+0df4 0df4 s 	dw	0
+0df6 0df6 s 	if	$-?n0101 ne 20
+0df6 0df6 s 	error	'missing parameter'
+0df6 0df6 s 	endif
+0df6 0df6 s 	endm
+0df6 0df6 d 5dacd527
+0df6 0df6 s 	db	05dh,0ach,0d5h,027h			; expected crc
+0dfa 0dfa d 3c696e632c6465633e2073702e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0dfa 0dfa s 	db  	'<inc,dec> sp.................$'
+0e18 0e18 s 
+0e18 0e18 s ; <inc,dec> (<ix,iy>+1) (6144 cycles)
+0e18 0e18 d ff
+0e18 0e18 s incx:	db	0ffh		; flag mask
+0e19 0e19 s 	tstr	0ddh,034h,1,0,0fa6eh,msbt-1,msbt-1,02c28h,08894h,05057h,016h,033h,0286fh
+0e19 0e19 d dd340100
+0e19 0e19 s ?n0102:	db	0ddh,034h,1,0
+0e1d 0e1d d 6efa02010201282c94885750
+0e1d 0e1d s 	dw	0fa6eh,msbt-1,msbt-1,02c28h,08894h,05057h
+0e29 0e29 d 16
+0e29 0e29 s 	db	016h
+0e2a 0e2a d 33
+0e2a 0e2a s 	db	033h
+0e2b 0e2b d 6f28
+0e2b 0e2b s 	dw	0286fh
+0e2d 0e2d s 	if	$-?n0102 ne 20
+0e2d 0e2d s 	error	'missing parameter'
+0e2d 0e2d s 	endif
+0e2d 0e2d s 	endm
+0e2d 0e2d s 	tstr	020h,1,0,0,0ffh,0,0,0,0,0,0,0,0		; (1024 cycles)
+0e2d 0e2d d 20010000
+0e2d 0e2d s ?n0103:	db	020h,1,0,0
+0e31 0e31 d ff0000000000000000000000
+0e31 0e31 s 	dw	0ffh,0,0,0,0,0
+0e3d 0e3d d 00
+0e3d 0e3d s 	db	0
+0e3e 0e3e d 00
+0e3e 0e3e s 	db	0
+0e3f 0e3f d 0000
+0e3f 0e3f s 	dw	0
+0e41 0e41 s 	if	$-?n0103 ne 20
+0e41 0e41 s 	error	'missing parameter'
+0e41 0e41 s 	endif
+0e41 0e41 s 	endm
+0e41 0e41 s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0e41 0e41 d 00000000
+0e41 0e41 s ?n0104:	db	0,0,0,0
+0e45 0e45 d 000000000000000000000000
+0e45 0e45 s 	dw	0,0,0,0,0,0
+0e51 0e51 d d7
+0e51 0e51 s 	db	0d7h
+0e52 0e52 d 00
+0e52 0e52 s 	db	0
+0e53 0e53 d 0000
+0e53 0e53 s 	dw	0
+0e55 0e55 s 	if	$-?n0104 ne 20
+0e55 0e55 s 	error	'missing parameter'
+0e55 0e55 s 	endif
+0e55 0e55 s 	endm
+0e55 0e55 d ff601665
+0e55 0e55 s 	db	0ffh,060h,016h,065h			; expected crc
+0e59 0e59 d 3c696e632c6465633e20283c69782c69793e2b31292e2e2e2e2e2e2e2e24
+0e59 0e59 s 	db  	'<inc,dec> (<ix,iy>+1)........$'
+0e77 0e77 s 
+0e77 0e77 s ; <inc,dec> ixh (3072 cycles)
+0e77 0e77 d ff
+0e77 0e77 s incxh:	db	0ffh		; flag mask
+0e78 0e78 s 	tstr	0ddh,024h,0,0,0b838h,0316ch,0c6d4h,03e01h,08358h,015b4h,081h,0deh,04259h
+0e78 0e78 d dd240000
+0e78 0e78 s ?n0105:	db	0ddh,024h,0,0
+0e7c 0e7c d 38b86c31d4c6013e5883b415
+0e7c 0e7c s 	dw	0b838h,0316ch,0c6d4h,03e01h,08358h,015b4h
+0e88 0e88 d 81
+0e88 0e88 s 	db	081h
+0e89 0e89 d de
+0e89 0e89 s 	db	0deh
+0e8a 0e8a d 5942
+0e8a 0e8a s 	dw	04259h
+0e8c 0e8c s 	if	$-?n0105 ne 20
+0e8c 0e8c s 	error	'missing parameter'
+0e8c 0e8c s 	endif
+0e8c 0e8c s 	endm
+0e8c 0e8c s 	tstr	0,1,0,0,0,0ff00h,0,0,0,0,0,0,0		; (512 cycles)
+0e8c 0e8c d 00010000
+0e8c 0e8c s ?n0106:	db	0,1,0,0
+0e90 0e90 d 000000ff0000000000000000
+0e90 0e90 s 	dw	0,0ff00h,0,0,0,0
+0e9c 0e9c d 00
+0e9c 0e9c s 	db	0
+0e9d 0e9d d 00
+0e9d 0e9d s 	db	0
+0e9e 0e9e d 0000
+0e9e 0e9e s 	dw	0
+0ea0 0ea0 s 	if	$-?n0106 ne 20
+0ea0 0ea0 s 	error	'missing parameter'
+0ea0 0ea0 s 	endif
+0ea0 0ea0 s 	endm
+0ea0 0ea0 s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0ea0 0ea0 d 00000000
+0ea0 0ea0 s ?n0107:	db	0,0,0,0
+0ea4 0ea4 d 000000000000000000000000
+0ea4 0ea4 s 	dw	0,0,0,0,0,0
+0eb0 0eb0 d d7
+0eb0 0eb0 s 	db	0d7h
+0eb1 0eb1 d 00
+0eb1 0eb1 s 	db	0
+0eb2 0eb2 d 0000
+0eb2 0eb2 s 	dw	0
+0eb4 0eb4 s 	if	$-?n0107 ne 20
+0eb4 0eb4 s 	error	'missing parameter'
+0eb4 0eb4 s 	endif
+0eb4 0eb4 s 	endm
+0eb4 0eb4 d 6f463662
+0eb4 0eb4 s 	db	06fh,046h,036h,062h			; expected crc
+0eb8 0eb8 d 3c696e632c6465633e206978682e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0eb8 0eb8 s 	db  	'<inc,dec> ixh................$'
+0ed6 0ed6 s 
+0ed6 0ed6 s ; <inc,dec> ixl (3072 cycles)
+0ed6 0ed6 d ff
+0ed6 0ed6 s incxl:	db	0ffh		; flag mask
+0ed7 0ed7 s 	tstr	0ddh,02ch,0,0,04d14h,07460h,076d4h,006e7h,032a2h,0213ch,0d6h,0d7h,099a5h
+0ed7 0ed7 d dd2c0000
+0ed7 0ed7 s ?n0108:	db	0ddh,02ch,0,0
+0edb 0edb d 144d6074d476e706a2323c21
+0edb 0edb s 	dw	04d14h,07460h,076d4h,006e7h,032a2h,0213ch
+0ee7 0ee7 d d6
+0ee7 0ee7 s 	db	0d6h
+0ee8 0ee8 d d7
+0ee8 0ee8 s 	db	0d7h
+0ee9 0ee9 d a599
+0ee9 0ee9 s 	dw	099a5h
+0eeb 0eeb s 	if	$-?n0108 ne 20
+0eeb 0eeb s 	error	'missing parameter'
+0eeb 0eeb s 	endif
+0eeb 0eeb s 	endm
+0eeb 0eeb s 	tstr	0,1,0,0,0,0ffh,0,0,0,0,0,0,0		; (512 cycles)
+0eeb 0eeb d 00010000
+0eeb 0eeb s ?n0109:	db	0,1,0,0
+0eef 0eef d 0000ff000000000000000000
+0eef 0eef s 	dw	0,0ffh,0,0,0,0
+0efb 0efb d 00
+0efb 0efb s 	db	0
+0efc 0efc d 00
+0efc 0efc s 	db	0
+0efd 0efd d 0000
+0efd 0efd s 	dw	0
+0eff 0eff s 	if	$-?n0109 ne 20
+0eff 0eff s 	error	'missing parameter'
+0eff 0eff s 	endif
+0eff 0eff s 	endm
+0eff 0eff s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0eff 0eff d 00000000
+0eff 0eff s ?n0110:	db	0,0,0,0
+0f03 0f03 d 000000000000000000000000
+0f03 0f03 s 	dw	0,0,0,0,0,0
+0f0f 0f0f d d7
+0f0f 0f0f s 	db	0d7h
+0f10 0f10 d 00
+0f10 0f10 s 	db	0
+0f11 0f11 d 0000
+0f11 0f11 s 	dw	0
+0f13 0f13 s 	if	$-?n0110 ne 20
+0f13 0f13 s 	error	'missing parameter'
+0f13 0f13 s 	endif
+0f13 0f13 s 	endm
+0f13 0f13 d 027bef2c
+0f13 0f13 s 	db	002h,07bh,0efh,02ch			; expected crc
+0f17 0f17 d 3c696e632c6465633e2069786c2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0f17 0f17 s 	db  	'<inc,dec> ixl................$'
+0f35 0f35 s 
+0f35 0f35 s ; <inc,dec> iyh (3072 cycles)
+0f35 0f35 d ff
+0f35 0f35 s incyh:	db	0ffh		; flag mask
+0f36 0f36 s 	tstr	0ddh,024h,0,0,02836h,09f6fh,09116h,061b9h,082cbh,0e219h,092h,073h,0a98ch
+0f36 0f36 d dd240000
+0f36 0f36 s ?n0111:	db	0ddh,024h,0,0
+0f3a 0f3a d 36286f9f1691b961cb8219e2
+0f3a 0f3a s 	dw	02836h,09f6fh,09116h,061b9h,082cbh,0e219h
+0f46 0f46 d 92
+0f46 0f46 s 	db	092h
+0f47 0f47 d 73
+0f47 0f47 s 	db	073h
+0f48 0f48 d 8ca9
+0f48 0f48 s 	dw	0a98ch
+0f4a 0f4a s 	if	$-?n0111 ne 20
+0f4a 0f4a s 	error	'missing parameter'
+0f4a 0f4a s 	endif
+0f4a 0f4a s 	endm
+0f4a 0f4a s 	tstr	0,1,0,0,0ff00h,0,0,0,0,0,0,0,0		; (512 cycles)
+0f4a 0f4a d 00010000
+0f4a 0f4a s ?n0112:	db	0,1,0,0
+0f4e 0f4e d 00ff00000000000000000000
+0f4e 0f4e s 	dw	0ff00h,0,0,0,0,0
+0f5a 0f5a d 00
+0f5a 0f5a s 	db	0
+0f5b 0f5b d 00
+0f5b 0f5b s 	db	0
+0f5c 0f5c d 0000
+0f5c 0f5c s 	dw	0
+0f5e 0f5e s 	if	$-?n0112 ne 20
+0f5e 0f5e s 	error	'missing parameter'
+0f5e 0f5e s 	endif
+0f5e 0f5e s 	endm
+0f5e 0f5e s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0f5e 0f5e d 00000000
+0f5e 0f5e s ?n0113:	db	0,0,0,0
+0f62 0f62 d 000000000000000000000000
+0f62 0f62 s 	dw	0,0,0,0,0,0
+0f6e 0f6e d d7
+0f6e 0f6e s 	db	0d7h
+0f6f 0f6f d 00
+0f6f 0f6f s 	db	0
+0f70 0f70 d 0000
+0f70 0f70 s 	dw	0
+0f72 0f72 s 	if	$-?n0113 ne 20
+0f72 0f72 s 	error	'missing parameter'
+0f72 0f72 s 	endif
+0f72 0f72 s 	endm
+0f72 0f72 d 2d966cf3
+0f72 0f72 s 	db	02dh,096h,06ch,0f3h			; expected crc
+0f76 0f76 d 3c696e632c6465633e206979682e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0f76 0f76 s 	db  	'<inc,dec> iyh................$'
+0f94 0f94 s 
+0f94 0f94 s ; <inc,dec> iyl (3072 cycles)
+0f94 0f94 d ff
+0f94 0f94 s incyl:	db	0ffh		; flag mask
+0f95 0f95 s 	tstr	0ddh,02ch,0,0,0d7c6h,062d5h,0a09eh,07039h,03e7eh,09f12h,090h,0d9h,0220fh
+0f95 0f95 d dd2c0000
+0f95 0f95 s ?n0114:	db	0ddh,02ch,0,0
+0f99 0f99 d c6d7d5629ea039707e3e129f
+0f99 0f99 s 	dw	0d7c6h,062d5h,0a09eh,07039h,03e7eh,09f12h
+0fa5 0fa5 d 90
+0fa5 0fa5 s 	db	090h
+0fa6 0fa6 d d9
+0fa6 0fa6 s 	db	0d9h
+0fa7 0fa7 d 0f22
+0fa7 0fa7 s 	dw	0220fh
+0fa9 0fa9 s 	if	$-?n0114 ne 20
+0fa9 0fa9 s 	error	'missing parameter'
+0fa9 0fa9 s 	endif
+0fa9 0fa9 s 	endm
+0fa9 0fa9 s 	tstr	0,1,0,0,0ffh,0,0,0,0,0,0,0,0		; (512 cycles)
+0fa9 0fa9 d 00010000
+0fa9 0fa9 s ?n0115:	db	0,1,0,0
+0fad 0fad d ff0000000000000000000000
+0fad 0fad s 	dw	0ffh,0,0,0,0,0
+0fb9 0fb9 d 00
+0fb9 0fb9 s 	db	0
+0fba 0fba d 00
+0fba 0fba s 	db	0
+0fbb 0fbb d 0000
+0fbb 0fbb s 	dw	0
+0fbd 0fbd s 	if	$-?n0115 ne 20
+0fbd 0fbd s 	error	'missing parameter'
+0fbd 0fbd s 	endif
+0fbd 0fbd s 	endm
+0fbd 0fbd s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+0fbd 0fbd d 00000000
+0fbd 0fbd s ?n0116:	db	0,0,0,0
+0fc1 0fc1 d 000000000000000000000000
+0fc1 0fc1 s 	dw	0,0,0,0,0,0
+0fcd 0fcd d d7
+0fcd 0fcd s 	db	0d7h
+0fce 0fce d 00
+0fce 0fce s 	db	0
+0fcf 0fcf d 0000
+0fcf 0fcf s 	dw	0
+0fd1 0fd1 s 	if	$-?n0116 ne 20
+0fd1 0fd1 s 	error	'missing parameter'
+0fd1 0fd1 s 	endif
+0fd1 0fd1 s 	endm
+0fd1 0fd1 d 36c11e75
+0fd1 0fd1 s 	db	036h,0c1h,01eh,075h			; expected crc
+0fd5 0fd5 d 3c696e632c6465633e2069796c2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+0fd5 0fd5 s 	db  	'<inc,dec> iyl................$'
+0ff3 0ff3 s 
+0ff3 0ff3 s ; ld <bc,de>,(nnnn) (32 cycles)
+0ff3 0ff3 d ff
+0ff3 0ff3 s ld161:	db	0ffh		; flag mask
+0ff4 0ff4 s 	tstr	0edh,04bh,msbtlo,msbthi,0f9a8h,0f559h,093a4h,0f5edh,06f96h,0d968h,086h,0e6h,04bd8h
+0ff4 0ff4 d ed4b0301
+0ff4 0ff4 s ?n0117:	db	0edh,04bh,msbtlo,msbthi
+0ff8 0ff8 d a8f959f5a493edf5966f68d9
+0ff8 0ff8 s 	dw	0f9a8h,0f559h,093a4h,0f5edh,06f96h,0d968h
+1004 1004 d 86
+1004 1004 s 	db	086h
+1005 1005 d e6
+1005 1005 s 	db	0e6h
+1006 1006 d d84b
+1006 1006 s 	dw	04bd8h
+1008 1008 s 	if	$-?n0117 ne 20
+1008 1008 s 	error	'missing parameter'
+1008 1008 s 	endif
+1008 1008 s 	endm
+1008 1008 s 	tstr	0,010h,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+1008 1008 d 00100000
+1008 1008 s ?n0118:	db	0,010h,0,0
+100c 100c d 000000000000000000000000
+100c 100c s 	dw	0,0,0,0,0,0
+1018 1018 d 00
+1018 1018 s 	db	0
+1019 1019 d 00
+1019 1019 s 	db	0
+101a 101a d 0000
+101a 101a s 	dw	0
+101c 101c s 	if	$-?n0118 ne 20
+101c 101c s 	error	'missing parameter'
+101c 101c s 	endif
+101c 101c s 	endm
+101c 101c s 	tstr	0,0,0,0,-1,0,0,0,0,0,0,0,0		; (16 cycles)
+101c 101c d 00000000
+101c 101c s ?n0119:	db	0,0,0,0
+1020 1020 d ffff00000000000000000000
+1020 1020 s 	dw	-1,0,0,0,0,0
+102c 102c d 00
+102c 102c s 	db	0
+102d 102d d 00
+102d 102d s 	db	0
+102e 102e d 0000
+102e 102e s 	dw	0
+1030 1030 s 	if	$-?n0119 ne 20
+1030 1030 s 	error	'missing parameter'
+1030 1030 s 	endif
+1030 1030 s 	endm
+1030 1030 d 4d45a9ac
+1030 1030 s 	db	04dh,045h,0a9h,0ach			; expected crc
+1034 1034 d 6c64203c62632c64653e2c286e6e6e6e292e2e2e2e2e2e2e2e2e2e2e2e24
+1034 1034 s 	db  	'ld <bc,de>,(nnnn)............$'
+1052 1052 s 
+1052 1052 s ; ld hl,(nnnn) (16 cycles)
+1052 1052 d ff
+1052 1052 s ld162:	db	0ffh		; flag mask
+1053 1053 s 	tstr	02ah,msbtlo,msbthi,0,09863h,07830h,02077h,0b1feh,0b9fah,0abb8h,004h,006h,06015h
+1053 1053 d 2a030100
+1053 1053 s ?n0120:	db	02ah,msbtlo,msbthi,0
+1057 1057 d 639830787720feb1fab9b8ab
+1057 1057 s 	dw	09863h,07830h,02077h,0b1feh,0b9fah,0abb8h
+1063 1063 d 04
+1063 1063 s 	db	004h
+1064 1064 d 06
+1064 1064 s 	db	006h
+1065 1065 d 1560
+1065 1065 s 	dw	06015h
+1067 1067 s 	if	$-?n0120 ne 20
+1067 1067 s 	error	'missing parameter'
+1067 1067 s 	endif
+1067 1067 s 	endm
+1067 1067 s 	tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycle)
+1067 1067 d 00000000
+1067 1067 s ?n0121:	db	0,0,0,0
+106b 106b d 000000000000000000000000
+106b 106b s 	dw	0,0,0,0,0,0
+1077 1077 d 00
+1077 1077 s 	db	0
+1078 1078 d 00
+1078 1078 s 	db	0
+1079 1079 d 0000
+1079 1079 s 	dw	0
+107b 107b s 	if	$-?n0121 ne 20
+107b 107b s 	error	'missing parameter'
+107b 107b s 	endif
+107b 107b s 	endm
+107b 107b s 	tstr	0,0,0,0,-1,0,0,0,0,0,0,0,0		; (16 cycles)
+107b 107b d 00000000
+107b 107b s ?n0122:	db	0,0,0,0
+107f 107f d ffff00000000000000000000
+107f 107f s 	dw	-1,0,0,0,0,0
+108b 108b d 00
+108b 108b s 	db	0
+108c 108c d 00
+108c 108c s 	db	0
+108d 108d d 0000
+108d 108d s 	dw	0
+108f 108f s 	if	$-?n0122 ne 20
+108f 108f s 	error	'missing parameter'
+108f 108f s 	endif
+108f 108f s 	endm
+108f 108f d 5f972487
+108f 108f s 	db	05fh,097h,024h,087h			; expected crc
+1093 1093 d 6c6420686c2c286e6e6e6e292e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+1093 1093 s 	db  	'ld hl,(nnnn).................$'
+10b1 10b1 s 	
+10b1 10b1 s ; ld sp,(nnnn) (16 cycles)
+10b1 10b1 d ff
+10b1 10b1 s ld163:	db	0ffh		; flag mask
+10b2 10b2 s 	tstr	0edh,07bh,msbtlo,msbthi,08dfch,057d7h,02161h,0ca18h,0c185h,027dah,083h,01eh,0f460h
+10b2 10b2 d ed7b0301
+10b2 10b2 s ?n0123:	db	0edh,07bh,msbtlo,msbthi
+10b6 10b6 d fc8dd757612118ca85c1da27
+10b6 10b6 s 	dw	08dfch,057d7h,02161h,0ca18h,0c185h,027dah
+10c2 10c2 d 83
+10c2 10c2 s 	db	083h
+10c3 10c3 d 1e
+10c3 10c3 s 	db	01eh
+10c4 10c4 d 60f4
+10c4 10c4 s 	dw	0f460h
+10c6 10c6 s 	if	$-?n0123 ne 20
+10c6 10c6 s 	error	'missing parameter'
+10c6 10c6 s 	endif
+10c6 10c6 s 	endm
+10c6 10c6 s 	tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycles)
+10c6 10c6 d 00000000
+10c6 10c6 s ?n0124:	db	0,0,0,0
+10ca 10ca d 000000000000000000000000
+10ca 10ca s 	dw	0,0,0,0,0,0
+10d6 10d6 d 00
+10d6 10d6 s 	db	0
+10d7 10d7 d 00
+10d7 10d7 s 	db	0
+10d8 10d8 d 0000
+10d8 10d8 s 	dw	0
+10da 10da s 	if	$-?n0124 ne 20
+10da 10da s 	error	'missing parameter'
+10da 10da s 	endif
+10da 10da s 	endm
+10da 10da s 	tstr	0,0,0,0,-1,0,0,0,0,0,0,0,0		; (16 cycles)
+10da 10da d 00000000
+10da 10da s ?n0125:	db	0,0,0,0
+10de 10de d ffff00000000000000000000
+10de 10de s 	dw	-1,0,0,0,0,0
+10ea 10ea d 00
+10ea 10ea s 	db	0
+10eb 10eb d 00
+10eb 10eb s 	db	0
+10ec 10ec d 0000
+10ec 10ec s 	dw	0
+10ee 10ee s 	if	$-?n0125 ne 20
+10ee 10ee s 	error	'missing parameter'
+10ee 10ee s 	endif
+10ee 10ee s 	endm
+10ee 10ee d 7acea11b
+10ee 10ee s 	db	07ah,0ceh,0a1h,01bh			; expected crc
+10f2 10f2 d 6c642073702c286e6e6e6e292e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+10f2 10f2 s 	db  	'ld sp,(nnnn).................$'
+1110 1110 s 
+1110 1110 s ; ld <ix,iy>,(nnnn) (32 cycles)
+1110 1110 d ff
+1110 1110 s ld164:	db	0ffh		; flag mask
+1111 1111 s 	tstr	0ddh,02ah,msbtlo,msbthi,0ded7h,0a6fah,0f780h,0244ch,087deh,0bcc2h,016h,063h,04c96h
+1111 1111 d dd2a0301
+1111 1111 s ?n0126:	db	0ddh,02ah,msbtlo,msbthi
+1115 1115 d d7defaa680f74c24de87c2bc
+1115 1115 s 	dw	0ded7h,0a6fah,0f780h,0244ch,087deh,0bcc2h
+1121 1121 d 16
+1121 1121 s 	db	016h
+1122 1122 d 63
+1122 1122 s 	db	063h
+1123 1123 d 964c
+1123 1123 s 	dw	04c96h
+1125 1125 s 	if	$-?n0126 ne 20
+1125 1125 s 	error	'missing parameter'
+1125 1125 s 	endif
+1125 1125 s 	endm
+1125 1125 s 	tstr	020h,0,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+1125 1125 d 20000000
+1125 1125 s ?n0127:	db	020h,0,0,0
+1129 1129 d 000000000000000000000000
+1129 1129 s 	dw	0,0,0,0,0,0
+1135 1135 d 00
+1135 1135 s 	db	0
+1136 1136 d 00
+1136 1136 s 	db	0
+1137 1137 d 0000
+1137 1137 s 	dw	0
+1139 1139 s 	if	$-?n0127 ne 20
+1139 1139 s 	error	'missing parameter'
+1139 1139 s 	endif
+1139 1139 s 	endm
+1139 1139 s 	tstr	0,0,0,0,-1,0,0,0,0,0,0,0,0		; (16 cycles)
+1139 1139 d 00000000
+1139 1139 s ?n0128:	db	0,0,0,0
+113d 113d d ffff00000000000000000000
+113d 113d s 	dw	-1,0,0,0,0,0
+1149 1149 d 00
+1149 1149 s 	db	0
+114a 114a d 00
+114a 114a s 	db	0
+114b 114b d 0000
+114b 114b s 	dw	0
+114d 114d s 	if	$-?n0128 ne 20
+114d 114d s 	error	'missing parameter'
+114d 114d s 	endif
+114d 114d s 	endm
+114d 114d d 858bf16d
+114d 114d s 	db	085h,08bh,0f1h,06dh			; expected crc
+1151 1151 d 6c64203c69782c69793e2c286e6e6e6e292e2e2e2e2e2e2e2e2e2e2e2e24
+1151 1151 s 	db  	'ld <ix,iy>,(nnnn)............$'
+116f 116f s 	
+116f 116f s ; ld (nnnn),<bc,de> (64 cycles)
+116f 116f d ff
+116f 116f s ld165:	db	0ffh		; flag mask
+1170 1170 s 	tstr	0edh,043h,msbtlo,msbthi,01f98h,0844dh,0e8ach,0c9edh,0c95dh,08f61h,080h,03fh,0c7bfh
+1170 1170 d ed430301
+1170 1170 s ?n0129:	db	0edh,043h,msbtlo,msbthi
+1174 1174 d 981f4d84ace8edc95dc9618f
+1174 1174 s 	dw	01f98h,0844dh,0e8ach,0c9edh,0c95dh,08f61h
+1180 1180 d 80
+1180 1180 s 	db	080h
+1181 1181 d 3f
+1181 1181 s 	db	03fh
+1182 1182 d bfc7
+1182 1182 s 	dw	0c7bfh
+1184 1184 s 	if	$-?n0129 ne 20
+1184 1184 s 	error	'missing parameter'
+1184 1184 s 	endif
+1184 1184 s 	endm
+1184 1184 s 	tstr	0,010h,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+1184 1184 d 00100000
+1184 1184 s ?n0130:	db	0,010h,0,0
+1188 1188 d 000000000000000000000000
+1188 1188 s 	dw	0,0,0,0,0,0
+1194 1194 d 00
+1194 1194 s 	db	0
+1195 1195 d 00
+1195 1195 s 	db	0
+1196 1196 d 0000
+1196 1196 s 	dw	0
+1198 1198 s 	if	$-?n0130 ne 20
+1198 1198 s 	error	'missing parameter'
+1198 1198 s 	endif
+1198 1198 s 	endm
+1198 1198 s 	tstr	0,0,0,0,0,0,0,0,-1,-1,0,0,0		; (32 cycles)
+1198 1198 d 00000000
+1198 1198 s ?n0131:	db	0,0,0,0
+119c 119c d 0000000000000000ffffffff
+119c 119c s 	dw	0,0,0,0,-1,-1
+11a8 11a8 d 00
+11a8 11a8 s 	db	0
+11a9 11a9 d 00
+11a9 11a9 s 	db	0
+11aa 11aa d 0000
+11aa 11aa s 	dw	0
+11ac 11ac s 	if	$-?n0131 ne 20
+11ac 11ac s 	error	'missing parameter'
+11ac 11ac s 	endif
+11ac 11ac s 	endm
+11ac 11ac d 641e8715
+11ac 11ac s 	db	064h,01eh,087h,015h			; expected crc
+11b0 11b0 d 6c6420286e6e6e6e292c3c62632c64653e2e2e2e2e2e2e2e2e2e2e2e2e24
+11b0 11b0 s 	db  	'ld (nnnn),<bc,de>............$'
+11ce 11ce s 
+11ce 11ce s ; ld (nnnn),hl (16 cycles)
+11ce 11ce d ff
+11ce 11ce s ld166:	db	0ffh		; flag mask
+11cf 11cf s 	tstr	022h,msbtlo,msbthi,0,0d003h,07772h,07f53h,03f72h,064eah,0e180h,010h,02dh,035e9h
+11cf 11cf d 22030100
+11cf 11cf s ?n0132:	db	022h,msbtlo,msbthi,0
+11d3 11d3 d 03d07277537f723fea6480e1
+11d3 11d3 s 	dw	0d003h,07772h,07f53h,03f72h,064eah,0e180h
+11df 11df d 10
+11df 11df s 	db	010h
+11e0 11e0 d 2d
+11e0 11e0 s 	db	02dh
+11e1 11e1 d e935
+11e1 11e1 s 	dw	035e9h
+11e3 11e3 s 	if	$-?n0132 ne 20
+11e3 11e3 s 	error	'missing parameter'
+11e3 11e3 s 	endif
+11e3 11e3 s 	endm
+11e3 11e3 s 	tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycle)
+11e3 11e3 d 00000000
+11e3 11e3 s ?n0133:	db	0,0,0,0
+11e7 11e7 d 000000000000000000000000
+11e7 11e7 s 	dw	0,0,0,0,0,0
+11f3 11f3 d 00
+11f3 11f3 s 	db	0
+11f4 11f4 d 00
+11f4 11f4 s 	db	0
+11f5 11f5 d 0000
+11f5 11f5 s 	dw	0
+11f7 11f7 s 	if	$-?n0133 ne 20
+11f7 11f7 s 	error	'missing parameter'
+11f7 11f7 s 	endif
+11f7 11f7 s 	endm
+11f7 11f7 s 	tstr	0,0,0,0,0,0,0,-1,0,0,0,0,0		; (16 cycles)
+11f7 11f7 d 00000000
+11f7 11f7 s ?n0134:	db	0,0,0,0
+11fb 11fb d 000000000000ffff00000000
+11fb 11fb s 	dw	0,0,0,-1,0,0
+1207 1207 d 00
+1207 1207 s 	db	0
+1208 1208 d 00
+1208 1208 s 	db	0
+1209 1209 d 0000
+1209 1209 s 	dw	0
+120b 120b s 	if	$-?n0134 ne 20
+120b 120b s 	error	'missing parameter'
+120b 120b s 	endif
+120b 120b s 	endm
+120b 120b d a3608b47
+120b 120b s 	db	0a3h,060h,08bh,047h			; expected crc
+120f 120f d 6c6420286e6e6e6e292c686c2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+120f 120f s 	db  	'ld (nnnn),hl.................$'
+122d 122d s 
+122d 122d s ; ld (nnnn),sp (16 cycles)
+122d 122d d ff
+122d 122d s ld167:	db	0ffh		; flag mask
+122e 122e s 	tstr	0edh,073h,msbtlo,msbthi,0c0dch,0d1d6h,0ed5ah,0f356h,0afdah,06ca7h,044h,09fh,03f0ah
+122e 122e d ed730301
+122e 122e s ?n0135:	db	0edh,073h,msbtlo,msbthi
+1232 1232 d dcc0d6d15aed56f3daafa76c
+1232 1232 s 	dw	0c0dch,0d1d6h,0ed5ah,0f356h,0afdah,06ca7h
+123e 123e d 44
+123e 123e s 	db	044h
+123f 123f d 9f
+123f 123f s 	db	09fh
+1240 1240 d 0a3f
+1240 1240 s 	dw	03f0ah
+1242 1242 s 	if	$-?n0135 ne 20
+1242 1242 s 	error	'missing parameter'
+1242 1242 s 	endif
+1242 1242 s 	endm
+1242 1242 s 	tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycle)
+1242 1242 d 00000000
+1242 1242 s ?n0136:	db	0,0,0,0
+1246 1246 d 000000000000000000000000
+1246 1246 s 	dw	0,0,0,0,0,0
+1252 1252 d 00
+1252 1252 s 	db	0
+1253 1253 d 00
+1253 1253 s 	db	0
+1254 1254 d 0000
+1254 1254 s 	dw	0
+1256 1256 s 	if	$-?n0136 ne 20
+1256 1256 s 	error	'missing parameter'
+1256 1256 s 	endif
+1256 1256 s 	endm
+1256 1256 s 	tstr	0,0,0,0,0,0,0,0,0,0,0,0,-1		; (16 cycles)
+1256 1256 d 00000000
+1256 1256 s ?n0137:	db	0,0,0,0
+125a 125a d 000000000000000000000000
+125a 125a s 	dw	0,0,0,0,0,0
+1266 1266 d 00
+1266 1266 s 	db	0
+1267 1267 d 00
+1267 1267 s 	db	0
+1268 1268 d ffff
+1268 1268 s 	dw	-1
+126a 126a s 	if	$-?n0137 ne 20
+126a 126a s 	error	'missing parameter'
+126a 126a s 	endif
+126a 126a s 	endm
+126a 126a d 16585fd7
+126a 126a s 	db	016h,058h,05fh,0d7h			; expected crc
+126e 126e d 6c6420286e6e6e6e292c73702e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+126e 126e s 	db  	'ld (nnnn),sp.................$'
+128c 128c s 
+128c 128c s ; ld (nnnn),<ix,iy> (64 cycles)
+128c 128c d ff
+128c 128c s ld168:	db	0ffh		; flag mask
+128d 128d s 	tstr	0ddh,022h,msbtlo,msbthi,06cc3h,00d91h,06900h,08ef8h,0e3d6h,0c3f7h,0c6h,0d9h,0c2dfh
+128d 128d d dd220301
+128d 128d s ?n0138:	db	0ddh,022h,msbtlo,msbthi
+1291 1291 d c36c910d0069f88ed6e3f7c3
+1291 1291 s 	dw	06cc3h,00d91h,06900h,08ef8h,0e3d6h,0c3f7h
+129d 129d d c6
+129d 129d s 	db	0c6h
+129e 129e d d9
+129e 129e s 	db	0d9h
+129f 129f d dfc2
+129f 129f s 	dw	0c2dfh
+12a1 12a1 s 	if	$-?n0138 ne 20
+12a1 12a1 s 	error	'missing parameter'
+12a1 12a1 s 	endif
+12a1 12a1 s 	endm
+12a1 12a1 s 	tstr	020h,0,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+12a1 12a1 d 20000000
+12a1 12a1 s ?n0139:	db	020h,0,0,0
+12a5 12a5 d 000000000000000000000000
+12a5 12a5 s 	dw	0,0,0,0,0,0
+12b1 12b1 d 00
+12b1 12b1 s 	db	0
+12b2 12b2 d 00
+12b2 12b2 s 	db	0
+12b3 12b3 d 0000
+12b3 12b3 s 	dw	0
+12b5 12b5 s 	if	$-?n0139 ne 20
+12b5 12b5 s 	error	'missing parameter'
+12b5 12b5 s 	endif
+12b5 12b5 s 	endm
+12b5 12b5 s 	tstr	0,0,0,0,0,-1,-1,0,0,0,0,0,0		; (32 cycles)
+12b5 12b5 d 00000000
+12b5 12b5 s ?n0140:	db	0,0,0,0
+12b9 12b9 d 0000ffffffff000000000000
+12b9 12b9 s 	dw	0,-1,-1,0,0,0
+12c5 12c5 d 00
+12c5 12c5 s 	db	0
+12c6 12c6 d 00
+12c6 12c6 s 	db	0
+12c7 12c7 d 0000
+12c7 12c7 s 	dw	0
+12c9 12c9 s 	if	$-?n0140 ne 20
+12c9 12c9 s 	error	'missing parameter'
+12c9 12c9 s 	endif
+12c9 12c9 s 	endm
+12c9 12c9 d ba102a6b
+12c9 12c9 s 	db	0bah,010h,02ah,06bh			; expected crc
+12cd 12cd d 6c6420286e6e6e6e292c3c69782c69793e2e2e2e2e2e2e2e2e2e2e2e2e24
+12cd 12cd s 	db  	'ld (nnnn),<ix,iy>............$'
+12eb 12eb s 
+12eb 12eb s ; ld <bc,de,hl,sp>,nnnn (64 cycles)
+12eb 12eb d ff
+12eb 12eb s ld16im:	db	0ffh		; flag mask
+12ec 12ec s 	tstr	1,0,0,0,05c1ch,02d46h,08eb9h,06078h,074b1h,0b30eh,046h,0d1h,030cch
+12ec 12ec d 01000000
+12ec 12ec s ?n0141:	db	1,0,0,0
+12f0 12f0 d 1c5c462db98e7860b1740eb3
+12f0 12f0 s 	dw	05c1ch,02d46h,08eb9h,06078h,074b1h,0b30eh
+12fc 12fc d 46
+12fc 12fc s 	db	046h
+12fd 12fd d d1
+12fd 12fd s 	db	0d1h
+12fe 12fe d cc30
+12fe 12fe s 	dw	030cch
+1300 1300 s 	if	$-?n0141 ne 20
+1300 1300 s 	error	'missing parameter'
+1300 1300 s 	endif
+1300 1300 s 	endm
+1300 1300 s 	tstr	030h,0,0,0,0,0,0,0,0,0,0,0,0		; (4 cycles)
+1300 1300 d 30000000
+1300 1300 s ?n0142:	db	030h,0,0,0
+1304 1304 d 000000000000000000000000
+1304 1304 s 	dw	0,0,0,0,0,0
+1310 1310 d 00
+1310 1310 s 	db	0
+1311 1311 d 00
+1311 1311 s 	db	0
+1312 1312 d 0000
+1312 1312 s 	dw	0
+1314 1314 s 	if	$-?n0142 ne 20
+1314 1314 s 	error	'missing parameter'
+1314 1314 s 	endif
+1314 1314 s 	endm
+1314 1314 s 	tstr	0,0ffh,0ffh,0,0,0,0,0,0,0,0,0,0		; (16 cycles)
+1314 1314 d 00ffff00
+1314 1314 s ?n0143:	db	0,0ffh,0ffh,0
+1318 1318 d 000000000000000000000000
+1318 1318 s 	dw	0,0,0,0,0,0
+1324 1324 d 00
+1324 1324 s 	db	0
+1325 1325 d 00
+1325 1325 s 	db	0
+1326 1326 d 0000
+1326 1326 s 	dw	0
+1328 1328 s 	if	$-?n0143 ne 20
+1328 1328 s 	error	'missing parameter'
+1328 1328 s 	endif
+1328 1328 s 	endm
+1328 1328 d de391969
+1328 1328 s 	db	0deh,039h,019h,069h			; expected crc
+132c 132c d 6c64203c62632c64652c686c2c73703e2c6e6e6e6e2e2e2e2e2e2e2e2e24
+132c 132c s 	db  	'ld <bc,de,hl,sp>,nnnn........$'
+134a 134a s 
+134a 134a s ; ld <ix,iy>,nnnn (32 cycles)
+134a 134a d ff
+134a 134a s ld16ix:	db	0ffh		; flag mask
+134b 134b s 	tstr	0ddh,021h,0,0,087e8h,02006h,0bd12h,0b69bh,07253h,0a1e5h,051h,013h,0f1bdh
+134b 134b d dd210000
+134b 134b s ?n0144:	db	0ddh,021h,0,0
+134f 134f d e887062012bd9bb65372e5a1
+134f 134f s 	dw	087e8h,02006h,0bd12h,0b69bh,07253h,0a1e5h
+135b 135b d 51
+135b 135b s 	db	051h
+135c 135c d 13
+135c 135c s 	db	013h
+135d 135d d bdf1
+135d 135d s 	dw	0f1bdh
+135f 135f s 	if	$-?n0144 ne 20
+135f 135f s 	error	'missing parameter'
+135f 135f s 	endif
+135f 135f s 	endm
+135f 135f s 	tstr	020h,0,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+135f 135f d 20000000
+135f 135f s ?n0145:	db	020h,0,0,0
+1363 1363 d 000000000000000000000000
+1363 1363 s 	dw	0,0,0,0,0,0
+136f 136f d 00
+136f 136f s 	db	0
+1370 1370 d 00
+1370 1370 s 	db	0
+1371 1371 d 0000
+1371 1371 s 	dw	0
+1373 1373 s 	if	$-?n0145 ne 20
+1373 1373 s 	error	'missing parameter'
+1373 1373 s 	endif
+1373 1373 s 	endm
+1373 1373 s 	tstr	0,0,0ffh,0ffh,0,0,0,0,0,0,0,0,0		; (16 cycles)
+1373 1373 d 0000ffff
+1373 1373 s ?n0146:	db	0,0,0ffh,0ffh
+1377 1377 d 000000000000000000000000
+1377 1377 s 	dw	0,0,0,0,0,0
+1383 1383 d 00
+1383 1383 s 	db	0
+1384 1384 d 00
+1384 1384 s 	db	0
+1385 1385 d 0000
+1385 1385 s 	dw	0
+1387 1387 s 	if	$-?n0146 ne 20
+1387 1387 s 	error	'missing parameter'
+1387 1387 s 	endif
+1387 1387 s 	endm
+1387 1387 d 227dd525
+1387 1387 s 	db	022h,07dh,0d5h,025h			; expected crc
+138b 138b d 6c64203c69782c69793e2c6e6e6e6e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+138b 138b s 	db  	'ld <ix,iy>,nnnn..............$'
+13a9 13a9 s 
+13a9 13a9 s ; ld a,<(bc),(de)> (44 cycles)
+13a9 13a9 d ff
+13a9 13a9 s ld8bd:	db	0ffh		; flag mask
+13aa 13aa s 	tstr	00ah,0,0,0,0b3a8h,01d2ah,07f8eh,042ach,msbt,msbt,0c6h,0b1h,0ef8eh
+13aa 13aa d 0a000000
+13aa 13aa s ?n0147:	db	00ah,0,0,0
+13ae 13ae d a8b32a1d8e7fac4203010301
+13ae 13ae s 	dw	0b3a8h,01d2ah,07f8eh,042ach,msbt,msbt
+13ba 13ba d c6
+13ba 13ba s 	db	0c6h
+13bb 13bb d b1
+13bb 13bb s 	db	0b1h
+13bc 13bc d 8eef
+13bc 13bc s 	dw	0ef8eh
+13be 13be s 	if	$-?n0147 ne 20
+13be 13be s 	error	'missing parameter'
+13be 13be s 	endif
+13be 13be s 	endm
+13be 13be s 	tstr	010h,0,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+13be 13be d 10000000
+13be 13be s ?n0148:	db	010h,0,0,0
+13c2 13c2 d 000000000000000000000000
+13c2 13c2 s 	dw	0,0,0,0,0,0
+13ce 13ce d 00
+13ce 13ce s 	db	0
+13cf 13cf d 00
+13cf 13cf s 	db	0
+13d0 13d0 d 0000
+13d0 13d0 s 	dw	0
+13d2 13d2 s 	if	$-?n0148 ne 20
+13d2 13d2 s 	error	'missing parameter'
+13d2 13d2 s 	endif
+13d2 13d2 s 	endm
+13d2 13d2 s 	tstr	0,0,0,0,0ffh,0,0,0,0,0,0d7h,-1,0	; (22 cycles)
+13d2 13d2 d 00000000
+13d2 13d2 s ?n0149:	db	0,0,0,0
+13d6 13d6 d ff0000000000000000000000
+13d6 13d6 s 	dw	0ffh,0,0,0,0,0
+13e2 13e2 d d7
+13e2 13e2 s 	db	0d7h
+13e3 13e3 d ff
+13e3 13e3 s 	db	-1
+13e4 13e4 d 0000
+13e4 13e4 s 	dw	0
+13e6 13e6 s 	if	$-?n0149 ne 20
+13e6 13e6 s 	error	'missing parameter'
+13e6 13e6 s 	endif
+13e6 13e6 s 	endm
+13e6 13e6 d 3bc66a71
+13e6 13e6 s 	db	03bh,0c6h,06ah,071h			; expected crc
+13ea 13ea d 6c6420612c3c286263292c286465293e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+13ea 13ea s 	db  	'ld a,<(bc),(de)>.............$'
+1408 1408 s 
+1408 1408 s ; ld <b,c,d,e,h,l,(hl),a>,nn (64 cycles)
+1408 1408 d ff
+1408 1408 s ld8im:	db	0ffh		; flag mask
+1409 1409 s 	tstr	6,0,0,0,0c407h,0f49dh,0d13dh,00339h,0de89h,07455h,053h,0c0h,05509h
+1409 1409 d 06000000
+1409 1409 s ?n0150:	db	6,0,0,0
+140d 140d d 07c49df43dd1390389de5574
+140d 140d s 	dw	0c407h,0f49dh,0d13dh,00339h,0de89h,07455h
+1419 1419 d 53
+1419 1419 s 	db	053h
+141a 141a d c0
+141a 141a s 	db	0c0h
+141b 141b d 0955
+141b 141b s 	dw	05509h
+141d 141d s 	if	$-?n0150 ne 20
+141d 141d s 	error	'missing parameter'
+141d 141d s 	endif
+141d 141d s 	endm
+141d 141d s 	tstr	038h,0,0,0,0,0,0,0,0,0,0,0,0		; (8 cycles)
+141d 141d d 38000000
+141d 141d s ?n0151:	db	038h,0,0,0
+1421 1421 d 000000000000000000000000
+1421 1421 s 	dw	0,0,0,0,0,0
+142d 142d d 00
+142d 142d s 	db	0
+142e 142e d 00
+142e 142e s 	db	0
+142f 142f d 0000
+142f 142f s 	dw	0
+1431 1431 s 	if	$-?n0151 ne 20
+1431 1431 s 	error	'missing parameter'
+1431 1431 s 	endif
+1431 1431 s 	endm
+1431 1431 s 	tstr	0,0,0,0,0,0,0,0,0,0,0,-1,0		; (8 cycles)
+1431 1431 d 00000000
+1431 1431 s ?n0152:	db	0,0,0,0
+1435 1435 d 000000000000000000000000
+1435 1435 s 	dw	0,0,0,0,0,0
+1441 1441 d 00
+1441 1441 s 	db	0
+1442 1442 d ff
+1442 1442 s 	db	-1
+1443 1443 d 0000
+1443 1443 s 	dw	0
+1445 1445 s 	if	$-?n0152 ne 20
+1445 1445 s 	error	'missing parameter'
+1445 1445 s 	endif
+1445 1445 s 	endm
+1445 1445 d f1dab556
+1445 1445 s 	db	0f1h,0dah,0b5h,056h			; expected crc
+1449 1449 d 6c64203c622c632c642c652c682c6c2c28686c292c613e2c6e6e2e2e2e24
+1449 1449 s 	db  	'ld <b,c,d,e,h,l,(hl),a>,nn...$'
+1467 1467 s 
+1467 1467 s ; ld (<ix,iy>+1),nn (32 cycles)
+1467 1467 d ff
+1467 1467 s ld8imx:	db	0ffh		; flag mask
+1468 1468 s 	tstr	0ddh,036h,1,0,01b45h,msbt-1,msbt-1,0d5c1h,061c7h,0bdc4h,0c0h,085h,0cd16h
+1468 1468 d dd360100
+1468 1468 s ?n0153:	db	0ddh,036h,1,0
+146c 146c d 451b02010201c1d5c761c4bd
+146c 146c s 	dw	01b45h,msbt-1,msbt-1,0d5c1h,061c7h,0bdc4h
+1478 1478 d c0
+1478 1478 s 	db	0c0h
+1479 1479 d 85
+1479 1479 s 	db	085h
+147a 147a d 16cd
+147a 147a s 	dw	0cd16h
+147c 147c s 	if	$-?n0153 ne 20
+147c 147c s 	error	'missing parameter'
+147c 147c s 	endif
+147c 147c s 	endm
+147c 147c s 	tstr	020h,0,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+147c 147c d 20000000
+147c 147c s ?n0154:	db	020h,0,0,0
+1480 1480 d 000000000000000000000000
+1480 1480 s 	dw	0,0,0,0,0,0
+148c 148c d 00
+148c 148c s 	db	0
+148d 148d d 00
+148d 148d s 	db	0
+148e 148e d 0000
+148e 148e s 	dw	0
+1490 1490 s 	if	$-?n0154 ne 20
+1490 1490 s 	error	'missing parameter'
+1490 1490 s 	endif
+1490 1490 s 	endm
+1490 1490 s 	tstr	0,0,0,-1,0,0,0,0,0,0,0,-1,0		; (16 cycles)
+1490 1490 d 000000ff
+1490 1490 s ?n0155:	db	0,0,0,-1
+1494 1494 d 000000000000000000000000
+1494 1494 s 	dw	0,0,0,0,0,0
+14a0 14a0 d 00
+14a0 14a0 s 	db	0
+14a1 14a1 d ff
+14a1 14a1 s 	db	-1
+14a2 14a2 d 0000
+14a2 14a2 s 	dw	0
+14a4 14a4 s 	if	$-?n0155 ne 20
+14a4 14a4 s 	error	'missing parameter'
+14a4 14a4 s 	endif
+14a4 14a4 s 	endm
+14a4 14a4 d e80cff11
+14a4 14a4 s 	db	0e8h,00ch,0ffh,011h			; expected crc
+14a8 14a8 d 6c6420283c69782c69793e2b31292c6e6e2e2e2e2e2e2e2e2e2e2e2e2e24
+14a8 14a8 s 	db  	'ld (<ix,iy>+1),nn............$'
+14c6 14c6 s 
+14c6 14c6 s ; ld <b,c,d,e>,(<ix,iy>+1) (512 cycles)
+14c6 14c6 d ff
+14c6 14c6 s ld8ix1:	db	0ffh		; flag mask
+14c7 14c7 s 	tstr	0ddh,046h,1,0,0d016h,msbt-1,msbt-1,04260h,07f39h,00404h,097h,04ah,0d085h
+14c7 14c7 d dd460100
+14c7 14c7 s ?n0156:	db	0ddh,046h,1,0
+14cb 14cb d 16d0020102016042397f0404
+14cb 14cb s 	dw	0d016h,msbt-1,msbt-1,04260h,07f39h,00404h
+14d7 14d7 d 97
+14d7 14d7 s 	db	097h
+14d8 14d8 d 4a
+14d8 14d8 s 	db	04ah
+14d9 14d9 d 85d0
+14d9 14d9 s 	dw	0d085h
+14db 14db s 	if	$-?n0156 ne 20
+14db 14db s 	error	'missing parameter'
+14db 14db s 	endif
+14db 14db s 	endm
+14db 14db s 	tstr	020h,018h,0,0,0,1,1,0,0,0,0,0,0		; (32 cycles)
+14db 14db d 20180000
+14db 14db s ?n0157:	db	020h,018h,0,0
+14df 14df d 000001000100000000000000
+14df 14df s 	dw	0,1,1,0,0,0
+14eb 14eb d 00
+14eb 14eb s 	db	0
+14ec 14ec d 00
+14ec 14ec s 	db	0
+14ed 14ed d 0000
+14ed 14ed s 	dw	0
+14ef 14ef s 	if	$-?n0157 ne 20
+14ef 14ef s 	error	'missing parameter'
+14ef 14ef s 	endif
+14ef 14ef s 	endm
+14ef 14ef s 	tstr	0,0,0,0,-1,0,0,0,0,0,0,0,0		; (16 cycles)
+14ef 14ef d 00000000
+14ef 14ef s ?n0158:	db	0,0,0,0
+14f3 14f3 d ffff00000000000000000000
+14f3 14f3 s 	dw	-1,0,0,0,0,0
+14ff 14ff d 00
+14ff 14ff s 	db	0
+1500 1500 d 00
+1500 1500 s 	db	0
+1501 1501 d 0000
+1501 1501 s 	dw	0
+1503 1503 s 	if	$-?n0158 ne 20
+1503 1503 s 	error	'missing parameter'
+1503 1503 s 	endif
+1503 1503 s 	endm
+1503 1503 d 360f0182
+1503 1503 s 	db	036h,00fh,001h,082h			; expected crc
+1507 1507 d 6c64203c622c632c642c653e2c283c69782c69793e2b31292e2e2e2e2e24
+1507 1507 s 	db  	'ld <b,c,d,e>,(<ix,iy>+1).....$'
+1525 1525 s 
+1525 1525 s ; ld <h,l>,(<ix,iy>+1) (256 cycles)
+1525 1525 d ff
+1525 1525 s ld8ix2:	db	0ffh		; flag mask
+1526 1526 s 	tstr	0ddh,066h,1,0,084e0h,msbt-1,msbt-1,09c52h,0a799h,049b6h,093h,000h,0eeadh
+1526 1526 d dd660100
+1526 1526 s ?n0159:	db	0ddh,066h,1,0
+152a 152a d e08402010201529c99a7b649
+152a 152a s 	dw	084e0h,msbt-1,msbt-1,09c52h,0a799h,049b6h
+1536 1536 d 93
+1536 1536 s 	db	093h
+1537 1537 d 00
+1537 1537 s 	db	000h
+1538 1538 d adee
+1538 1538 s 	dw	0eeadh
+153a 153a s 	if	$-?n0159 ne 20
+153a 153a s 	error	'missing parameter'
+153a 153a s 	endif
+153a 153a s 	endm
+153a 153a s 	tstr	020h,008h,0,0,0,1,1,0,0,0,0,0,0		; (16 cycles)
+153a 153a d 20080000
+153a 153a s ?n0160:	db	020h,008h,0,0
+153e 153e d 000001000100000000000000
+153e 153e s 	dw	0,1,1,0,0,0
+154a 154a d 00
+154a 154a s 	db	0
+154b 154b d 00
+154b 154b s 	db	0
+154c 154c d 0000
+154c 154c s 	dw	0
+154e 154e s 	if	$-?n0160 ne 20
+154e 154e s 	error	'missing parameter'
+154e 154e s 	endif
+154e 154e s 	endm
+154e 154e s 	tstr	0,0,0,0,-1,0,0,0,0,0,0,0,0		; (16 cycles)
+154e 154e d 00000000
+154e 154e s ?n0161:	db	0,0,0,0
+1552 1552 d ffff00000000000000000000
+1552 1552 s 	dw	-1,0,0,0,0,0
+155e 155e d 00
+155e 155e s 	db	0
+155f 155f d 00
+155f 155f s 	db	0
+1560 1560 d 0000
+1560 1560 s 	dw	0
+1562 1562 s 	if	$-?n0161 ne 20
+1562 1562 s 	error	'missing parameter'
+1562 1562 s 	endif
+1562 1562 s 	endm
+1562 1562 d b7ba0c9c
+1562 1562 s 	db	0b7h,0bah,00ch,09ch			; expected crc
+1566 1566 d 6c64203c682c6c3e2c283c69782c69793e2b31292e2e2e2e2e2e2e2e2e24
+1566 1566 s 	db  	'ld <h,l>,(<ix,iy>+1).........$'
+1584 1584 s 
+1584 1584 s ; ld a,(<ix,iy>+1) (128 cycles)
+1584 1584 d ff
+1584 1584 s ld8ix3:	db	0ffh		; flag mask
+1585 1585 s 	tstr	0ddh,07eh,1,0,0d8b6h,msbt-1,msbt-1,0c612h,0df07h,09cd0h,043h,0a6h,0a0e5h
+1585 1585 d dd7e0100
+1585 1585 s ?n0162:	db	0ddh,07eh,1,0
+1589 1589 d b6d80201020112c607dfd09c
+1589 1589 s 	dw	0d8b6h,msbt-1,msbt-1,0c612h,0df07h,09cd0h
+1595 1595 d 43
+1595 1595 s 	db	043h
+1596 1596 d a6
+1596 1596 s 	db	0a6h
+1597 1597 d e5a0
+1597 1597 s 	dw	0a0e5h
+1599 1599 s 	if	$-?n0162 ne 20
+1599 1599 s 	error	'missing parameter'
+1599 1599 s 	endif
+1599 1599 s 	endm
+1599 1599 s 	tstr	020h,0,0,0,0,1,1,0,0,0,0,0,0		; (8 cycles)
+1599 1599 d 20000000
+1599 1599 s ?n0163:	db	020h,0,0,0
+159d 159d d 000001000100000000000000
+159d 159d s 	dw	0,1,1,0,0,0
+15a9 15a9 d 00
+15a9 15a9 s 	db	0
+15aa 15aa d 00
+15aa 15aa s 	db	0
+15ab 15ab d 0000
+15ab 15ab s 	dw	0
+15ad 15ad s 	if	$-?n0163 ne 20
+15ad 15ad s 	error	'missing parameter'
+15ad 15ad s 	endif
+15ad 15ad s 	endm
+15ad 15ad s 	tstr	0,0,0,0,-1,0,0,0,0,0,0,0,0		; (16 cycles)
+15ad 15ad d 00000000
+15ad 15ad s ?n0164:	db	0,0,0,0
+15b1 15b1 d ffff00000000000000000000
+15b1 15b1 s 	dw	-1,0,0,0,0,0
+15bd 15bd d 00
+15bd 15bd s 	db	0
+15be 15be d 00
+15be 15be s 	db	0
+15bf 15bf d 0000
+15bf 15bf s 	dw	0
+15c1 15c1 s 	if	$-?n0164 ne 20
+15c1 15c1 s 	error	'missing parameter'
+15c1 15c1 s 	endif
+15c1 15c1 s 	endm
+15c1 15c1 d e75a1e63
+15c1 15c1 s 	db	0e7h,05ah,01eh,063h			; expected crc
+15c5 15c5 d 6c6420612c283c69782c69793e2b31292e2e2e2e2e2e2e2e2e2e2e2e2e24
+15c5 15c5 s 	db  	'ld a,(<ix,iy>+1).............$'
+15e3 15e3 s 
+15e3 15e3 s ; ld <ixh,ixl,iyh,iyl>,nn (32 cycles)
+15e3 15e3 d ff
+15e3 15e3 s ld8ixy:	db	0ffh		; flag mask
+15e4 15e4 s 	tstr	0ddh,026h,0,0,03c53h,04640h,0e179h,07711h,0c107h,01afah,081h,0adh,05d9bh
+15e4 15e4 d dd260000
+15e4 15e4 s ?n0165:	db	0ddh,026h,0,0
+15e8 15e8 d 533c404679e1117707c1fa1a
+15e8 15e8 s 	dw	03c53h,04640h,0e179h,07711h,0c107h,01afah
+15f4 15f4 d 81
+15f4 15f4 s 	db	081h
+15f5 15f5 d ad
+15f5 15f5 s 	db	0adh
+15f6 15f6 d 9b5d
+15f6 15f6 s 	dw	05d9bh
+15f8 15f8 s 	if	$-?n0165 ne 20
+15f8 15f8 s 	error	'missing parameter'
+15f8 15f8 s 	endif
+15f8 15f8 s 	endm
+15f8 15f8 s 	tstr	020h,8,0,0,0,0,0,0,0,0,0,0,0		; (4 cycles)
+15f8 15f8 d 20080000
+15f8 15f8 s ?n0166:	db	020h,8,0,0
+15fc 15fc d 000000000000000000000000
+15fc 15fc s 	dw	0,0,0,0,0,0
+1608 1608 d 00
+1608 1608 s 	db	0
+1609 1609 d 00
+1609 1609 s 	db	0
+160a 160a d 0000
+160a 160a s 	dw	0
+160c 160c s 	if	$-?n0166 ne 20
+160c 160c s 	error	'missing parameter'
+160c 160c s 	endif
+160c 160c s 	endm
+160c 160c s 	tstr	0,0,0,0,0,0,0,0,0,0,0,-1,0		; (8 cycles)
+160c 160c d 00000000
+160c 160c s ?n0167:	db	0,0,0,0
+1610 1610 d 000000000000000000000000
+1610 1610 s 	dw	0,0,0,0,0,0
+161c 161c d 00
+161c 161c s 	db	0
+161d 161d d ff
+161d 161d s 	db	-1
+161e 161e d 0000
+161e 161e s 	dw	0
+1620 1620 s 	if	$-?n0167 ne 20
+1620 1620 s 	error	'missing parameter'
+1620 1620 s 	endif
+1620 1620 s 	endm
+1620 1620 d 24e8828b
+1620 1620 s 	db	024h,0e8h,082h,08bh			; expected crc
+1624 1624 d 6c64203c6978682c69786c2c6979682c69796c3e2c6e6e2e2e2e2e2e2e24
+1624 1624 s 	db  	'ld <ixh,ixl,iyh,iyl>,nn......$'
+1642 1642 s 
+1642 1642 s ; ld <b,c,d,e,h,l,a>,<b,c,d,e,h,l,a> (3456 cycles)
+1642 1642 d ff
+1642 1642 s ld8rr:	db	0ffh		; flag mask
+1643 1643 s 	tstr	040h,0,0,0,072a4h,0a024h,061ach,msbt,082c7h,0718fh,097h,08fh,0ef8eh
+1643 1643 d 40000000
+1643 1643 s ?n0168:	db	040h,0,0,0
+1647 1647 d a47224a0ac610301c7828f71
+1647 1647 s 	dw	072a4h,0a024h,061ach,msbt,082c7h,0718fh
+1653 1653 d 97
+1653 1653 s 	db	097h
+1654 1654 d 8f
+1654 1654 s 	db	08fh
+1655 1655 d 8eef
+1655 1655 s 	dw	0ef8eh
+1657 1657 s 	if	$-?n0168 ne 20
+1657 1657 s 	error	'missing parameter'
+1657 1657 s 	endif
+1657 1657 s 	endm
+1657 1657 s 	tstr	03fh,0,0,0,0,0,0,0,0,0,0,0,0		; (64 cycles)
+1657 1657 d 3f000000
+1657 1657 s ?n0169:	db	03fh,0,0,0
+165b 165b d 000000000000000000000000
+165b 165b s 	dw	0,0,0,0,0,0
+1667 1667 d 00
+1667 1667 s 	db	0
+1668 1668 d 00
+1668 1668 s 	db	0
+1669 1669 d 0000
+1669 1669 s 	dw	0
+166b 166b s 	if	$-?n0169 ne 20
+166b 166b s 	error	'missing parameter'
+166b 166b s 	endif
+166b 166b s 	endm
+166b 166b s 	tstr	0,0,0,0,0ffh,0,0,0,-1,-1,0d7h,-1,0	; (54 cycles)
+166b 166b d 00000000
+166b 166b s ?n0170:	db	0,0,0,0
+166f 166f d ff00000000000000ffffffff
+166f 166f s 	dw	0ffh,0,0,0,-1,-1
+167b 167b d d7
+167b 167b s 	db	0d7h
+167c 167c d ff
+167c 167c s 	db	-1
+167d 167d d 0000
+167d 167d s 	dw	0
+167f 167f s 	if	$-?n0170 ne 20
+167f 167f s 	error	'missing parameter'
+167f 167f s 	endif
+167f 167f s 	endm
+167f 167f d 437589be
+167f 167f s 	db	043h,075h,089h,0beh			; expected crc
+1683 1683 d 6c64203c62636465686c613e2c3c62636465686c613e2e2e2e2e2e2e2e24
+1683 1683 s 	db  	'ld <bcdehla>,<bcdehla>.......$'
+16a1 16a1 s 
+16a1 16a1 s ; ld <b,c,d,e,ixy,a>,<b,c,d,e,ixy,a> (6912 cycles)
+16a1 16a1 d ff
+16a1 16a1 s ld8rrx:	db	0ffh		; flag mask
+16a2 16a2 s 	tstr	0ddh,040h,0,0,0bcc5h,msbt,msbt,msbt,02fc2h,098c0h,083h,01fh,03bcdh
+16a2 16a2 d dd400000
+16a2 16a2 s ?n0171:	db	0ddh,040h,0,0
+16a6 16a6 d c5bc030103010301c22fc098
+16a6 16a6 s 	dw	0bcc5h,msbt,msbt,msbt,02fc2h,098c0h
+16b2 16b2 d 83
+16b2 16b2 s 	db	083h
+16b3 16b3 d 1f
+16b3 16b3 s 	db	01fh
+16b4 16b4 d cd3b
+16b4 16b4 s 	dw	03bcdh
+16b6 16b6 s 	if	$-?n0171 ne 20
+16b6 16b6 s 	error	'missing parameter'
+16b6 16b6 s 	endif
+16b6 16b6 s 	endm
+16b6 16b6 s 	tstr	020h,03fh,0,0,0,0,0,0,0,0,0,0,0		; (128 cycles)
+16b6 16b6 d 203f0000
+16b6 16b6 s ?n0172:	db	020h,03fh,0,0
+16ba 16ba d 000000000000000000000000
+16ba 16ba s 	dw	0,0,0,0,0,0
+16c6 16c6 d 00
+16c6 16c6 s 	db	0
+16c7 16c7 d 00
+16c7 16c7 s 	db	0
+16c8 16c8 d 0000
+16c8 16c8 s 	dw	0
+16ca 16ca s 	if	$-?n0172 ne 20
+16ca 16ca s 	error	'missing parameter'
+16ca 16ca s 	endif
+16ca 16ca s 	endm
+16ca 16ca s 	tstr	0,0,0,0,0ffh,0,0,0,-1,-1,0d7h,-1,0	; (54 cycles)
+16ca 16ca d 00000000
+16ca 16ca s ?n0173:	db	0,0,0,0
+16ce 16ce d ff00000000000000ffffffff
+16ce 16ce s 	dw	0ffh,0,0,0,-1,-1
+16da 16da d d7
+16da 16da s 	db	0d7h
+16db 16db d ff
+16db 16db s 	db	-1
+16dc 16dc d 0000
+16dc 16dc s 	dw	0
+16de 16de s 	if	$-?n0173 ne 20
+16de 16de s 	error	'missing parameter'
+16de 16de s 	endif
+16de 16de s 	endm
+16de 16de d f163ae1a
+16de 16de s 	db	0f1h,063h,0aeh,01ah			; expected crc
+16e2 16e2 d 6c64203c626364657879613e2c3c626364657879613e2e2e2e2e2e2e2e24
+16e2 16e2 s 	db  	'ld <bcdexya>,<bcdexya>.......$'
+1700 1700 s 
+1700 1700 s ; ld a,(nnnn) / ld (nnnn),a (44 cycles)
+1700 1700 d ff
+1700 1700 s lda:	db	0ffh		; flag mask
+1701 1701 s 	tstr	032h,msbtlo,msbthi,0,0fd68h,0f4ech,044a0h,0b543h,00653h,0cdbah,0d2h,04fh,01fd8h
+1701 1701 d 32030100
+1701 1701 s ?n0174:	db	032h,msbtlo,msbthi,0
+1705 1705 d 68fdecf4a04443b55306bacd
+1705 1705 s 	dw	0fd68h,0f4ech,044a0h,0b543h,00653h,0cdbah
+1711 1711 d d2
+1711 1711 s 	db	0d2h
+1712 1712 d 4f
+1712 1712 s 	db	04fh
+1713 1713 d d81f
+1713 1713 s 	dw	01fd8h
+1715 1715 s 	if	$-?n0174 ne 20
+1715 1715 s 	error	'missing parameter'
+1715 1715 s 	endif
+1715 1715 s 	endm
+1715 1715 s 	tstr	008h,0,0,0,0,0,0,0,0,0,0,0,0		; (2 cycle)
+1715 1715 d 08000000
+1715 1715 s ?n0175:	db	008h,0,0,0
+1719 1719 d 000000000000000000000000
+1719 1719 s 	dw	0,0,0,0,0,0
+1725 1725 d 00
+1725 1725 s 	db	0
+1726 1726 d 00
+1726 1726 s 	db	0
+1727 1727 d 0000
+1727 1727 s 	dw	0
+1729 1729 s 	if	$-?n0175 ne 20
+1729 1729 s 	error	'missing parameter'
+1729 1729 s 	endif
+1729 1729 s 	endm
+1729 1729 s 	tstr	0,0,0,0,0ffh,0,0,0,0,0,0d7h,-1,0	; (22 cycles)
+1729 1729 d 00000000
+1729 1729 s ?n0176:	db	0,0,0,0
+172d 172d d ff0000000000000000000000
+172d 172d s 	dw	0ffh,0,0,0,0,0
+1739 1739 d d7
+1739 1739 s 	db	0d7h
+173a 173a d ff
+173a 173a s 	db	-1
+173b 173b d 0000
+173b 173b s 	dw	0
+173d 173d s 	if	$-?n0176 ne 20
+173d 173d s 	error	'missing parameter'
+173d 173d s 	endif
+173d 173d s 	endm
+173d 173d d c9262de5
+173d 173d s 	db	0c9h,026h,02dh,0e5h			; expected crc
+1741 1741 d 6c6420612c286e6e6e6e29202f206c6420286e6e6e6e292c612e2e2e2e24
+1741 1741 s 	db  	'ld a,(nnnn) / ld (nnnn),a....$'
+175f 175f s 
+175f 175f s ; ldd<r> (1) (44 cycles)
+175f 175f d ff
+175f 175f s ldd1:	db	0ffh		; flag mask
+1760 1760 s 	tstr	0edh,0a8h,0,0,09852h,068fah,066a1h,msbt+3,msbt+1,1,0c1h,068h,020b7h
+1760 1760 d eda80000
+1760 1760 s ?n0177:	db	0edh,0a8h,0,0
+1764 1764 d 5298fa68a166060104010100
+1764 1764 s 	dw	09852h,068fah,066a1h,msbt+3,msbt+1,1
+1770 1770 d c1
+1770 1770 s 	db	0c1h
+1771 1771 d 68
+1771 1771 s 	db	068h
+1772 1772 d b720
+1772 1772 s 	dw	020b7h
+1774 1774 s 	if	$-?n0177 ne 20
+1774 1774 s 	error	'missing parameter'
+1774 1774 s 	endif
+1774 1774 s 	endm
+1774 1774 s 	tstr	0,010h,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+1774 1774 d 00100000
+1774 1774 s ?n0178:	db	0,010h,0,0
+1778 1778 d 000000000000000000000000
+1778 1778 s 	dw	0,0,0,0,0,0
+1784 1784 d 00
+1784 1784 s 	db	0
+1785 1785 d 00
+1785 1785 s 	db	0
+1786 1786 d 0000
+1786 1786 s 	dw	0
+1788 1788 s 	if	$-?n0178 ne 20
+1788 1788 s 	error	'missing parameter'
+1788 1788 s 	endif
+1788 1788 s 	endm
+1788 1788 s 	tstr	0,0,0,0,-1,0,0,0,0,0,0d7h,0,0		; (22 cycles)
+1788 1788 d 00000000
+1788 1788 s ?n0179:	db	0,0,0,0
+178c 178c d ffff00000000000000000000
+178c 178c s 	dw	-1,0,0,0,0,0
+1798 1798 d d7
+1798 1798 s 	db	0d7h
+1799 1799 d 00
+1799 1799 s 	db	0
+179a 179a d 0000
+179a 179a s 	dw	0
+179c 179c s 	if	$-?n0179 ne 20
+179c 179c s 	error	'missing parameter'
+179c 179c s 	endif
+179c 179c s 	endm
+179c 179c d 39e295ed
+179c 179c s 	db	039h,0e2h,095h,0edh			; expected crc
+17a0 17a0 d 6c64643c723e202831292e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+17a0 17a0 s 	db  	'ldd<r> (1)...................$'
+17be 17be s 
+17be 17be s ; ldd<r> (2) (44 cycles)
+17be 17be d ff
+17be 17be s ldd2:	db	0ffh		; flag mask
+17bf 17bf s 	tstr	0edh,0a8h,0,0,0f12eh,0eb2ah,0d5bah,msbt+3,msbt+1,2,047h,0ffh,0fbe4h
+17bf 17bf d eda80000
+17bf 17bf s ?n0180:	db	0edh,0a8h,0,0
+17c3 17c3 d 2ef12aebbad5060104010200
+17c3 17c3 s 	dw	0f12eh,0eb2ah,0d5bah,msbt+3,msbt+1,2
+17cf 17cf d 47
+17cf 17cf s 	db	047h
+17d0 17d0 d ff
+17d0 17d0 s 	db	0ffh
+17d1 17d1 d e4fb
+17d1 17d1 s 	dw	0fbe4h
+17d3 17d3 s 	if	$-?n0180 ne 20
+17d3 17d3 s 	error	'missing parameter'
+17d3 17d3 s 	endif
+17d3 17d3 s 	endm
+17d3 17d3 s 	tstr	0,010h,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+17d3 17d3 d 00100000
+17d3 17d3 s ?n0181:	db	0,010h,0,0
+17d7 17d7 d 000000000000000000000000
+17d7 17d7 s 	dw	0,0,0,0,0,0
+17e3 17e3 d 00
+17e3 17e3 s 	db	0
+17e4 17e4 d 00
+17e4 17e4 s 	db	0
+17e5 17e5 d 0000
+17e5 17e5 s 	dw	0
+17e7 17e7 s 	if	$-?n0181 ne 20
+17e7 17e7 s 	error	'missing parameter'
+17e7 17e7 s 	endif
+17e7 17e7 s 	endm
+17e7 17e7 s 	tstr	0,0,0,0,-1,0,0,0,0,0,0d7h,0,0		; (22 cycles)
+17e7 17e7 d 00000000
+17e7 17e7 s ?n0182:	db	0,0,0,0
+17eb 17eb d ffff00000000000000000000
+17eb 17eb s 	dw	-1,0,0,0,0,0
+17f7 17f7 d d7
+17f7 17f7 s 	db	0d7h
+17f8 17f8 d 00
+17f8 17f8 s 	db	0
+17f9 17f9 d 0000
+17f9 17f9 s 	dw	0
+17fb 17fb s 	if	$-?n0182 ne 20
+17fb 17fb s 	error	'missing parameter'
+17fb 17fb s 	endif
+17fb 17fb s 	endm
+17fb 17fb d 94cb8f65
+17fb 17fb s 	db	094h,0cbh,08fh,065h			; expected crc
+17ff 17ff d 6c64643c723e202832292e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+17ff 17ff s 	db  	'ldd<r> (2)...................$'
+181d 181d s 
+181d 181d s ; ldi<r> (1) (44 cycles)
+181d 181d d ff
+181d 181d s ldi1:	db	0ffh		; flag mask
+181e 181e s 	tstr	0edh,0a0h,0,0,0fe30h,003cdh,06058h,msbt+2,msbt,1,004h,060h,02688h
+181e 181e d eda00000
+181e 181e s ?n0183:	db	0edh,0a0h,0,0
+1822 1822 d 30fecd035860050103010100
+1822 1822 s 	dw	0fe30h,003cdh,06058h,msbt+2,msbt,1
+182e 182e d 04
+182e 182e s 	db	004h
+182f 182f d 60
+182f 182f s 	db	060h
+1830 1830 d 8826
+1830 1830 s 	dw	02688h
+1832 1832 s 	if	$-?n0183 ne 20
+1832 1832 s 	error	'missing parameter'
+1832 1832 s 	endif
+1832 1832 s 	endm
+1832 1832 s 	tstr	0,010h,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+1832 1832 d 00100000
+1832 1832 s ?n0184:	db	0,010h,0,0
+1836 1836 d 000000000000000000000000
+1836 1836 s 	dw	0,0,0,0,0,0
+1842 1842 d 00
+1842 1842 s 	db	0
+1843 1843 d 00
+1843 1843 s 	db	0
+1844 1844 d 0000
+1844 1844 s 	dw	0
+1846 1846 s 	if	$-?n0184 ne 20
+1846 1846 s 	error	'missing parameter'
+1846 1846 s 	endif
+1846 1846 s 	endm
+1846 1846 s 	tstr	0,0,0,0,-1,0,0,0,0,0,0d7h,0,0		; (22 cycles)
+1846 1846 d 00000000
+1846 1846 s ?n0185:	db	0,0,0,0
+184a 184a d ffff00000000000000000000
+184a 184a s 	dw	-1,0,0,0,0,0
+1856 1856 d d7
+1856 1856 s 	db	0d7h
+1857 1857 d 00
+1857 1857 s 	db	0
+1858 1858 d 0000
+1858 1858 s 	dw	0
+185a 185a s 	if	$-?n0185 ne 20
+185a 185a s 	error	'missing parameter'
+185a 185a s 	endif
+185a 185a s 	endm
+185a 185a d 5a940255
+185a 185a s 	db	05ah,094h,002h,055h			; expected crc
+185e 185e d 6c64693c723e202831292e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+185e 185e s 	db  	'ldi<r> (1)...................$'
+187c 187c s 
+187c 187c s ; ldi<r> (2) (44 cycles)
+187c 187c d ff
+187c 187c s ldi2:	db	0ffh		; flag mask
+187d 187d s 	tstr	0edh,0a0h,0,0,04aceh,0c26eh,0b188h,msbt+2,msbt,2,014h,02dh,0a39fh
+187d 187d d eda00000
+187d 187d s ?n0186:	db	0edh,0a0h,0,0
+1881 1881 d ce4a6ec288b1050103010200
+1881 1881 s 	dw	04aceh,0c26eh,0b188h,msbt+2,msbt,2
+188d 188d d 14
+188d 188d s 	db	014h
+188e 188e d 2d
+188e 188e s 	db	02dh
+188f 188f d 9fa3
+188f 188f s 	dw	0a39fh
+1891 1891 s 	if	$-?n0186 ne 20
+1891 1891 s 	error	'missing parameter'
+1891 1891 s 	endif
+1891 1891 s 	endm
+1891 1891 s 	tstr	0,010h,0,0,0,0,0,0,0,0,0,0,0		; (2 cycles)
+1891 1891 d 00100000
+1891 1891 s ?n0187:	db	0,010h,0,0
+1895 1895 d 000000000000000000000000
+1895 1895 s 	dw	0,0,0,0,0,0
+18a1 18a1 d 00
+18a1 18a1 s 	db	0
+18a2 18a2 d 00
+18a2 18a2 s 	db	0
+18a3 18a3 d 0000
+18a3 18a3 s 	dw	0
+18a5 18a5 s 	if	$-?n0187 ne 20
+18a5 18a5 s 	error	'missing parameter'
+18a5 18a5 s 	endif
+18a5 18a5 s 	endm
+18a5 18a5 s 	tstr	0,0,0,0,-1,0,0,0,0,0,0d7h,0,0		; (22 cycles)
+18a5 18a5 d 00000000
+18a5 18a5 s ?n0188:	db	0,0,0,0
+18a9 18a9 d ffff00000000000000000000
+18a9 18a9 s 	dw	-1,0,0,0,0,0
+18b5 18b5 d d7
+18b5 18b5 s 	db	0d7h
+18b6 18b6 d 00
+18b6 18b6 s 	db	0
+18b7 18b7 d 0000
+18b7 18b7 s 	dw	0
+18b9 18b9 s 	if	$-?n0188 ne 20
+18b9 18b9 s 	error	'missing parameter'
+18b9 18b9 s 	endif
+18b9 18b9 s 	endm
+18b9 18b9 d 44fc622a
+18b9 18b9 s 	db	044h,0fch,062h,02ah			; expected crc
+18bd 18bd d 6c64693c723e202832292e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+18bd 18bd s 	db  	'ldi<r> (2)...................$'
+18db 18db s 
+18db 18db s ; neg (16,384 cycles)
+18db 18db d ff
+18db 18db s negop:	db	0ffh		; flag mask
+18dc 18dc s 	tstr	0edh,044h,0,0,038a2h,05f6bh,0d934h,057e4h,0d2d6h,04642h,043h,05ah,009cch
+18dc 18dc d ed440000
+18dc 18dc s ?n0189:	db	0edh,044h,0,0
+18e0 18e0 d a2386b5f34d9e457d6d24246
+18e0 18e0 s 	dw	038a2h,05f6bh,0d934h,057e4h,0d2d6h,04642h
+18ec 18ec d 43
+18ec 18ec s 	db	043h
+18ed 18ed d 5a
+18ed 18ed s 	db	05ah
+18ee 18ee d cc09
+18ee 18ee s 	dw	009cch
+18f0 18f0 s 	if	$-?n0189 ne 20
+18f0 18f0 s 	error	'missing parameter'
+18f0 18f0 s 	endif
+18f0 18f0 s 	endm
+18f0 18f0 s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,-1,0		; (16,384 cycles)
+18f0 18f0 d 00000000
+18f0 18f0 s ?n0190:	db	0,0,0,0
+18f4 18f4 d 000000000000000000000000
+18f4 18f4 s 	dw	0,0,0,0,0,0
+1900 1900 d d7
+1900 1900 s 	db	0d7h
+1901 1901 d ff
+1901 1901 s 	db	-1
+1902 1902 d 0000
+1902 1902 s 	dw	0
+1904 1904 s 	if	$-?n0190 ne 20
+1904 1904 s 	error	'missing parameter'
+1904 1904 s 	endif
+1904 1904 s 	endm
+1904 1904 s 	tstr	0,0,0,0,0,0,0,0,0,0,0,0,0		; (1 cycle)
+1904 1904 d 00000000
+1904 1904 s ?n0191:	db	0,0,0,0
+1908 1908 d 000000000000000000000000
+1908 1908 s 	dw	0,0,0,0,0,0
+1914 1914 d 00
+1914 1914 s 	db	0
+1915 1915 d 00
+1915 1915 s 	db	0
+1916 1916 d 0000
+1916 1916 s 	dw	0
+1918 1918 s 	if	$-?n0191 ne 20
+1918 1918 s 	error	'missing parameter'
+1918 1918 s 	endif
+1918 1918 s 	endm
+1918 1918 d d638dd6a
+1918 1918 s 	db	0d6h,038h,0ddh,06ah			; expected crc
+191c 191c d 6e65672e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+191c 191c s 	db  	'neg..........................$'
+193a 193a s 
+193a 193a s ; <rld,rrd> (7168 cycles)
+193a 193a d ff
+193a 193a s rldop:	db	0ffh		; flag mask
+193b 193b s 	tstr	0edh,067h,0,0,091cbh,0c48bh,0fa62h,msbt,0e720h,0b479h,040h,006h,08ae2h
+193b 193b d ed670000
+193b 193b s ?n0192:	db	0edh,067h,0,0
+193f 193f d cb918bc462fa030120e779b4
+193f 193f s 	dw	091cbh,0c48bh,0fa62h,msbt,0e720h,0b479h
+194b 194b d 40
+194b 194b s 	db	040h
+194c 194c d 06
+194c 194c s 	db	006h
+194d 194d d e28a
+194d 194d s 	dw	08ae2h
+194f 194f s 	if	$-?n0192 ne 20
+194f 194f s 	error	'missing parameter'
+194f 194f s 	endif
+194f 194f s 	endm
+194f 194f s 	tstr	0,8,0,0,0ffh,0,0,0,0,0,0,0,0		; (512 cycles)
+194f 194f d 00080000
+194f 194f s ?n0193:	db	0,8,0,0
+1953 1953 d ff0000000000000000000000
+1953 1953 s 	dw	0ffh,0,0,0,0,0
+195f 195f d 00
+195f 195f s 	db	0
+1960 1960 d 00
+1960 1960 s 	db	0
+1961 1961 d 0000
+1961 1961 s 	dw	0
+1963 1963 s 	if	$-?n0193 ne 20
+1963 1963 s 	error	'missing parameter'
+1963 1963 s 	endif
+1963 1963 s 	endm
+1963 1963 s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,-1,0		; (14 cycles)
+1963 1963 d 00000000
+1963 1963 s ?n0194:	db	0,0,0,0
+1967 1967 d 000000000000000000000000
+1967 1967 s 	dw	0,0,0,0,0,0
+1973 1973 d d7
+1973 1973 s 	db	0d7h
+1974 1974 d ff
+1974 1974 s 	db	-1
+1975 1975 d 0000
+1975 1975 s 	dw	0
+1977 1977 s 	if	$-?n0194 ne 20
+1977 1977 s 	error	'missing parameter'
+1977 1977 s 	endif
+1977 1977 s 	endm
+1977 1977 d 1bbc0551
+1977 1977 s 	db	01bh,0bch,005h,051h			; expected crc
+197b 197b d 3c7272642c726c643e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+197b 197b s 	db  	'<rrd,rld>....................$'
+1999 1999 s 
+1999 1999 s ; <rlca,rrca,rla,rra> (6144 cycles)
+1999 1999 d ff
+1999 1999 s rot8080: db	0ffh		; flag mask
+199a 199a s 	tstr	7,0,0,0,0cb92h,06d43h,00a90h,0c284h,00c53h,0f50eh,091h,0ebh,040fch
+199a 199a d 07000000
+199a 199a s ?n0195:	db	7,0,0,0
+199e 199e d 92cb436d900a84c2530c0ef5
+199e 199e s 	dw	0cb92h,06d43h,00a90h,0c284h,00c53h,0f50eh
+19aa 19aa d 91
+19aa 19aa s 	db	091h
+19ab 19ab d eb
+19ab 19ab s 	db	0ebh
+19ac 19ac d fc40
+19ac 19ac s 	dw	040fch
+19ae 19ae s 	if	$-?n0195 ne 20
+19ae 19ae s 	error	'missing parameter'
+19ae 19ae s 	endif
+19ae 19ae s 	endm
+19ae 19ae s 	tstr	018h,0,0,0,0,0,0,0,0,0,0,-1,0		; (1024 cycles)
+19ae 19ae d 18000000
+19ae 19ae s ?n0196:	db	018h,0,0,0
+19b2 19b2 d 000000000000000000000000
+19b2 19b2 s 	dw	0,0,0,0,0,0
+19be 19be d 00
+19be 19be s 	db	0
+19bf 19bf d ff
+19bf 19bf s 	db	-1
+19c0 19c0 d 0000
+19c0 19c0 s 	dw	0
+19c2 19c2 s 	if	$-?n0196 ne 20
+19c2 19c2 s 	error	'missing parameter'
+19c2 19c2 s 	endif
+19c2 19c2 s 	endm
+19c2 19c2 s 	tstr	0,0,0,0,0,0,0,0,0,0,0d7h,0,0		; (6 cycles)
+19c2 19c2 d 00000000
+19c2 19c2 s ?n0197:	db	0,0,0,0
+19c6 19c6 d 000000000000000000000000
+19c6 19c6 s 	dw	0,0,0,0,0,0
+19d2 19d2 d d7
+19d2 19d2 s 	db	0d7h
+19d3 19d3 d 00
+19d3 19d3 s 	db	0
+19d4 19d4 d 0000
+19d4 19d4 s 	dw	0
+19d6 19d6 s 	if	$-?n0197 ne 20
+19d6 19d6 s 	error	'missing parameter'
+19d6 19d6 s 	endif
+19d6 19d6 s 	endm
+19d6 19d6 d 9ba3807c
+19d6 19d6 s 	db	09bh,0a3h,080h,07ch			; expected crc
+19da 19da d 3c726c63612c727263612c726c612c7272613e2e2e2e2e2e2e2e2e2e2e24
+19da 19da s 	db  	'<rlca,rrca,rla,rra>..........$'
+19f8 19f8 s 
+19f8 19f8 s ; shift/rotate (<ix,iy>+1) (416 cycles)
+19f8 19f8 d ff
+19f8 19f8 s rotxy:	db	0ffh		; flag mask
+19f9 19f9 s 	tstr	0ddh,0cbh,1,6,0ddafh,msbt-1,msbt-1,0ff3ch,0dbf6h,094f4h,082h,080h,061d9h
+19f9 19f9 d ddcb0106
+19f9 19f9 s ?n0198:	db	0ddh,0cbh,1,6
+19fd 19fd d afdd020102013cfff6dbf494
+19fd 19fd s 	dw	0ddafh,msbt-1,msbt-1,0ff3ch,0dbf6h,094f4h
+1a09 1a09 d 82
+1a09 1a09 s 	db	082h
+1a0a 1a0a d 80
+1a0a 1a0a s 	db	080h
+1a0b 1a0b d d961
+1a0b 1a0b s 	dw	061d9h
+1a0d 1a0d s 	if	$-?n0198 ne 20
+1a0d 1a0d s 	error	'missing parameter'
+1a0d 1a0d s 	endif
+1a0d 1a0d s 	endm
+1a0d 1a0d s 	tstr	020h,0,0,038h,0,0,0,0,0,0,080h,0,0	; (32 cycles)
+1a0d 1a0d d 20000038
+1a0d 1a0d s ?n0199:	db	020h,0,0,038h
+1a11 1a11 d 000000000000000000000000
+1a11 1a11 s 	dw	0,0,0,0,0,0
+1a1d 1a1d d 80
+1a1d 1a1d s 	db	080h
+1a1e 1a1e d 00
+1a1e 1a1e s 	db	0
+1a1f 1a1f d 0000
+1a1f 1a1f s 	dw	0
+1a21 1a21 s 	if	$-?n0199 ne 20
+1a21 1a21 s 	error	'missing parameter'
+1a21 1a21 s 	endif
+1a21 1a21 s 	endm
+1a21 1a21 s 	tstr	0,0,0,0,0ffh,0,0,0,0,0,057h,0,0		; (13 cycles)
+1a21 1a21 d 00000000
+1a21 1a21 s ?n0200:	db	0,0,0,0
+1a25 1a25 d ff0000000000000000000000
+1a25 1a25 s 	dw	0ffh,0,0,0,0,0
+1a31 1a31 d 57
+1a31 1a31 s 	db	057h
+1a32 1a32 d 00
+1a32 1a32 s 	db	0
+1a33 1a33 d 0000
+1a33 1a33 s 	dw	0
+1a35 1a35 s 	if	$-?n0200 ne 20
+1a35 1a35 s 	error	'missing parameter'
+1a35 1a35 s 	endif
+1a35 1a35 s 	endm
+1a35 1a35 d 4c0653f1
+1a35 1a35 s 	db	04ch,006h,053h,0f1h			; expected crc
+1a39 1a39 d 7368662f726f7420283c69782c69793e2b31292e2e2e2e2e2e2e2e2e2e24
+1a39 1a39 s 	db  	'shf/rot (<ix,iy>+1)..........$'
+1a57 1a57 s 
+1a57 1a57 s ; shift/rotate <b,c,d,e,h,l,(hl),a> (6784 cycles)
+1a57 1a57 d ff
+1a57 1a57 s rotz80:	db	0ffh		; flag mask
+1a58 1a58 s 	tstr	0cbh,0,0,0,0ccebh,05d4ah,0e007h,msbt,01395h,030eeh,043h,078h,03dadh
+1a58 1a58 d cb000000
+1a58 1a58 s ?n0201:	db	0cbh,0,0,0
+1a5c 1a5c d ebcc4a5d07e003019513ee30
+1a5c 1a5c s 	dw	0ccebh,05d4ah,0e007h,msbt,01395h,030eeh
+1a68 1a68 d 43
+1a68 1a68 s 	db	043h
+1a69 1a69 d 78
+1a69 1a69 s 	db	078h
+1a6a 1a6a d ad3d
+1a6a 1a6a s 	dw	03dadh
+1a6c 1a6c s 	if	$-?n0201 ne 20
+1a6c 1a6c s 	error	'missing parameter'
+1a6c 1a6c s 	endif
+1a6c 1a6c s 	endm
+1a6c 1a6c s 	tstr	0,03fh,0,0,0,0,0,0,0,0,080h,0,0		; (128 cycles)
+1a6c 1a6c d 003f0000
+1a6c 1a6c s ?n0202:	db	0,03fh,0,0
+1a70 1a70 d 000000000000000000000000
+1a70 1a70 s 	dw	0,0,0,0,0,0
+1a7c 1a7c d 80
+1a7c 1a7c s 	db	080h
+1a7d 1a7d d 00
+1a7d 1a7d s 	db	0
+1a7e 1a7e d 0000
+1a7e 1a7e s 	dw	0
+1a80 1a80 s 	if	$-?n0202 ne 20
+1a80 1a80 s 	error	'missing parameter'
+1a80 1a80 s 	endif
+1a80 1a80 s 	endm
+1a80 1a80 s 	tstr	0,0,0,0,0ffh,0,0,0,-1,-1,057h,-1,0	; (53 cycles)
+1a80 1a80 d 00000000
+1a80 1a80 s ?n0203:	db	0,0,0,0
+1a84 1a84 d ff00000000000000ffffffff
+1a84 1a84 s 	dw	0ffh,0,0,0,-1,-1
+1a90 1a90 d 57
+1a90 1a90 s 	db	057h
+1a91 1a91 d ff
+1a91 1a91 s 	db	-1
+1a92 1a92 d 0000
+1a92 1a92 s 	dw	0
+1a94 1a94 s 	if	$-?n0203 ne 20
+1a94 1a94 s 	error	'missing parameter'
+1a94 1a94 s 	endif
+1a94 1a94 s 	endm
+1a94 1a94 d 36bc1fc3
+1a94 1a94 s 	db	036h,0bch,01fh,0c3h			; expected crc
+1a98 1a98 d 7368662f726f74203c622c632c642c652c682c6c2c28686c292c613e2e24
+1a98 1a98 s 	db  	'shf/rot <b,c,d,e,h,l,(hl),a>.$'
+1ab6 1ab6 s 
+1ab6 1ab6 s ; <set,res> n,<b,c,d,e,h,l,(hl),a> (7936 cycles)
+1ab6 1ab6 d ff
+1ab6 1ab6 s srz80:	db	0ffh		; flag mask
+1ab7 1ab7 s 	tstr	0cbh,080h,0,0,02cd5h,097abh,039ffh,msbt,0d14bh,06ab2h,053h,027h,0b538h
+1ab7 1ab7 d cb800000
+1ab7 1ab7 s ?n0204:	db	0cbh,080h,0,0
+1abb 1abb d d52cab97ff3903014bd1b26a
+1abb 1abb s 	dw	02cd5h,097abh,039ffh,msbt,0d14bh,06ab2h
+1ac7 1ac7 d 53
+1ac7 1ac7 s 	db	053h
+1ac8 1ac8 d 27
+1ac8 1ac8 s 	db	027h
+1ac9 1ac9 d 38b5
+1ac9 1ac9 s 	dw	0b538h
+1acb 1acb s 	if	$-?n0204 ne 20
+1acb 1acb s 	error	'missing parameter'
+1acb 1acb s 	endif
+1acb 1acb s 	endm
+1acb 1acb s 	tstr	0,07fh,0,0,0,0,0,0,0,0,0,0,0		; (128 cycles)
+1acb 1acb d 007f0000
+1acb 1acb s ?n0205:	db	0,07fh,0,0
+1acf 1acf d 000000000000000000000000
+1acf 1acf s 	dw	0,0,0,0,0,0
+1adb 1adb d 00
+1adb 1adb s 	db	0
+1adc 1adc d 00
+1adc 1adc s 	db	0
+1add 1add d 0000
+1add 1add s 	dw	0
+1adf 1adf s 	if	$-?n0205 ne 20
+1adf 1adf s 	error	'missing parameter'
+1adf 1adf s 	endif
+1adf 1adf s 	endm
+1adf 1adf s 	tstr	0,0,0,0,0ffh,0,0,0,-1,-1,0d7h,-1,0	; (62 cycles)
+1adf 1adf d 00000000
+1adf 1adf s ?n0206:	db	0,0,0,0
+1ae3 1ae3 d ff00000000000000ffffffff
+1ae3 1ae3 s 	dw	0ffh,0,0,0,-1,-1
+1aef 1aef d d7
+1aef 1aef s 	db	0d7h
+1af0 1af0 d ff
+1af0 1af0 s 	db	-1
+1af1 1af1 d 0000
+1af1 1af1 s 	dw	0
+1af3 1af3 s 	if	$-?n0206 ne 20
+1af3 1af3 s 	error	'missing parameter'
+1af3 1af3 s 	endif
+1af3 1af3 s 	endm
+1af3 1af3 d 775e8975
+1af3 1af3 s 	db	077h,05eh,089h,075h			; expected crc
+1af7 1af7 d 3c7365742c7265733e206e2c3c62636465686c28686c29613e2e2e2e2e24
+1af7 1af7 s 	db  	'<set,res> n,<bcdehl(hl)a>....$'
+1b15 1b15 s 
+1b15 1b15 s ; <set,res> n,(<ix,iy>+1) (1792 cycles)
+1b15 1b15 d ff
+1b15 1b15 s srzx:	db	0ffh		; flag mask
+1b16 1b16 s 	tstr	0ddh,0cbh,1,086h,0fb44h,msbt-1,msbt-1,0ba09h,068beh,032d8h,010h,05eh,0a867h
+1b16 1b16 d ddcb0186
+1b16 1b16 s ?n0207:	db	0ddh,0cbh,1,086h
+1b1a 1b1a d 44fb0201020109babe68d832
+1b1a 1b1a s 	dw	0fb44h,msbt-1,msbt-1,0ba09h,068beh,032d8h
+1b26 1b26 d 10
+1b26 1b26 s 	db	010h
+1b27 1b27 d 5e
+1b27 1b27 s 	db	05eh
+1b28 1b28 d 67a8
+1b28 1b28 s 	dw	0a867h
+1b2a 1b2a s 	if	$-?n0207 ne 20
+1b2a 1b2a s 	error	'missing parameter'
+1b2a 1b2a s 	endif
+1b2a 1b2a s 	endm
+1b2a 1b2a s 	tstr	020h,0,0,078h,0,0,0,0,0,0,0,0,0	; (128 cycles)
+1b2a 1b2a d 20000078
+1b2a 1b2a s ?n0208:	db	020h,0,0,078h
+1b2e 1b2e d 000000000000000000000000
+1b2e 1b2e s 	dw	0,0,0,0,0,0
+1b3a 1b3a d 00
+1b3a 1b3a s 	db	0
+1b3b 1b3b d 00
+1b3b 1b3b s 	db	0
+1b3c 1b3c d 0000
+1b3c 1b3c s 	dw	0
+1b3e 1b3e s 	if	$-?n0208 ne 20
+1b3e 1b3e s 	error	'missing parameter'
+1b3e 1b3e s 	endif
+1b3e 1b3e s 	endm
+1b3e 1b3e s 	tstr	0,0,0,0,0ffh,0,0,0,0,0,0d7h,0,0		;(14 cycles)
+1b3e 1b3e d 00000000
+1b3e 1b3e s ?n0209:	db	0,0,0,0
+1b42 1b42 d ff0000000000000000000000
+1b42 1b42 s 	dw	0ffh,0,0,0,0,0
+1b4e 1b4e d d7
+1b4e 1b4e s 	db	0d7h
+1b4f 1b4f d 00
+1b4f 1b4f s 	db	0
+1b50 1b50 d 0000
+1b50 1b50 s 	dw	0
+1b52 1b52 s 	if	$-?n0209 ne 20
+1b52 1b52 s 	error	'missing parameter'
+1b52 1b52 s 	endif
+1b52 1b52 s 	endm
+1b52 1b52 d fa9f51d4
+1b52 1b52 s 	db	0fah,09fh,051h,0d4h			; expected crc
+1b56 1b56 d 3c7365742c7265733e206e2c283c69782c69793e2b31292e2e2e2e2e2e24
+1b56 1b56 s 	db  	'<set,res> n,(<ix,iy>+1)......$'
+1b74 1b74 s 
+1b74 1b74 s ; ld (<ix,iy>+1),<b,c,d,e> (1024 cycles)
+1b74 1b74 d ff
+1b74 1b74 s st8ix1:	db	0ffh		; flag mask
+1b75 1b75 s 	tstr	0ddh,070h,1,0,0270dh,msbt-1,msbt-1,0b73ah,0887bh,099eeh,086h,070h,0ca07h
+1b75 1b75 d dd700100
+1b75 1b75 s ?n0210:	db	0ddh,070h,1,0
+1b79 1b79 d 0d27020102013ab77b88ee99
+1b79 1b79 s 	dw	0270dh,msbt-1,msbt-1,0b73ah,0887bh,099eeh
+1b85 1b85 d 86
+1b85 1b85 s 	db	086h
+1b86 1b86 d 70
+1b86 1b86 s 	db	070h
+1b87 1b87 d 07ca
+1b87 1b87 s 	dw	0ca07h
+1b89 1b89 s 	if	$-?n0210 ne 20
+1b89 1b89 s 	error	'missing parameter'
+1b89 1b89 s 	endif
+1b89 1b89 s 	endm
+1b89 1b89 s 	tstr	020h,003h,0,0,0,1,1,0,0,0,0,0,0		; (32 cycles)
+1b89 1b89 d 20030000
+1b89 1b89 s ?n0211:	db	020h,003h,0,0
+1b8d 1b8d d 000001000100000000000000
+1b8d 1b8d s 	dw	0,1,1,0,0,0
+1b99 1b99 d 00
+1b99 1b99 s 	db	0
+1b9a 1b9a d 00
+1b9a 1b9a s 	db	0
+1b9b 1b9b d 0000
+1b9b 1b9b s 	dw	0
+1b9d 1b9d s 	if	$-?n0211 ne 20
+1b9d 1b9d s 	error	'missing parameter'
+1b9d 1b9d s 	endif
+1b9d 1b9d s 	endm
+1b9d 1b9d s 	tstr	0,0,0,0,0,0,0,0,-1,-1,0,0,0		; (32 cycles)
+1b9d 1b9d d 00000000
+1b9d 1b9d s ?n0212:	db	0,0,0,0
+1ba1 1ba1 d 0000000000000000ffffffff
+1ba1 1ba1 s 	dw	0,0,0,0,-1,-1
+1bad 1bad d 00
+1bad 1bad s 	db	0
+1bae 1bae d 00
+1bae 1bae s 	db	0
+1baf 1baf d 0000
+1baf 1baf s 	dw	0
+1bb1 1bb1 s 	if	$-?n0212 ne 20
+1bb1 1bb1 s 	error	'missing parameter'
+1bb1 1bb1 s 	endif
+1bb1 1bb1 s 	endm
+1bb1 1bb1 d dc962025
+1bb1 1bb1 s 	db	0dch,096h,020h,025h			; expected crc
+1bb5 1bb5 d 6c6420283c69782c69793e2b31292c3c622c632c642c653e2e2e2e2e2e24
+1bb5 1bb5 s 	db  	'ld (<ix,iy>+1),<b,c,d,e>.....$'
+1bd3 1bd3 s 
+1bd3 1bd3 s ; ld (<ix,iy>+1),<h,l> (256 cycles)
+1bd3 1bd3 d ff
+1bd3 1bd3 s st8ix2:	db	0ffh		; flag mask
+1bd4 1bd4 s 	tstr	0ddh,074h,1,0,0b664h,msbt-1,msbt-1,0e8ach,0b5f5h,0aafeh,012h,010h,09566h
+1bd4 1bd4 d dd740100
+1bd4 1bd4 s ?n0213:	db	0ddh,074h,1,0
+1bd8 1bd8 d 64b602010201ace8f5b5feaa
+1bd8 1bd8 s 	dw	0b664h,msbt-1,msbt-1,0e8ach,0b5f5h,0aafeh
+1be4 1be4 d 12
+1be4 1be4 s 	db	012h
+1be5 1be5 d 10
+1be5 1be5 s 	db	010h
+1be6 1be6 d 6695
+1be6 1be6 s 	dw	09566h
+1be8 1be8 s 	if	$-?n0213 ne 20
+1be8 1be8 s 	error	'missing parameter'
+1be8 1be8 s 	endif
+1be8 1be8 s 	endm
+1be8 1be8 s 	tstr	020h,001h,0,0,0,1,1,0,0,0,0,0,0		; (16 cycles)
+1be8 1be8 d 20010000
+1be8 1be8 s ?n0214:	db	020h,001h,0,0
+1bec 1bec d 000001000100000000000000
+1bec 1bec s 	dw	0,1,1,0,0,0
+1bf8 1bf8 d 00
+1bf8 1bf8 s 	db	0
+1bf9 1bf9 d 00
+1bf9 1bf9 s 	db	0
+1bfa 1bfa d 0000
+1bfa 1bfa s 	dw	0
+1bfc 1bfc s 	if	$-?n0214 ne 20
+1bfc 1bfc s 	error	'missing parameter'
+1bfc 1bfc s 	endif
+1bfc 1bfc s 	endm
+1bfc 1bfc s 	tstr	0,0,0,0,0,0,0,-1,0,0,0,0,0		; (32 cycles)
+1bfc 1bfc d 00000000
+1bfc 1bfc s ?n0215:	db	0,0,0,0
+1c00 1c00 d 000000000000ffff00000000
+1c00 1c00 s 	dw	0,0,0,-1,0,0
+1c0c 1c0c d 00
+1c0c 1c0c s 	db	0
+1c0d 1c0d d 00
+1c0d 1c0d s 	db	0
+1c0e 1c0e d 0000
+1c0e 1c0e s 	dw	0
+1c10 1c10 s 	if	$-?n0215 ne 20
+1c10 1c10 s 	error	'missing parameter'
+1c10 1c10 s 	endif
+1c10 1c10 s 	endm
+1c10 1c10 d 278ac9ae
+1c10 1c10 s 	db	027h,08ah,0c9h,0aeh			; expected crc
+1c14 1c14 d 6c6420283c69782c69793e2b31292c3c682c6c3e2e2e2e2e2e2e2e2e2e24
+1c14 1c14 s 	db  	'ld (<ix,iy>+1),<h,l>.........$'
+1c32 1c32 s 
+1c32 1c32 s ; ld (<ix,iy>+1),a (64 cycles)
+1c32 1c32 d ff
+1c32 1c32 s st8ix3:	db	0ffh		; flag mask
+1c33 1c33 s 	tstr	0ddh,077h,1,0,067afh,msbt-1,msbt-1,04f13h,00644h,0bcd7h,050h,0ach,05fafh
+1c33 1c33 d dd770100
+1c33 1c33 s ?n0216:	db	0ddh,077h,1,0
+1c37 1c37 d af6702010201134f4406d7bc
+1c37 1c37 s 	dw	067afh,msbt-1,msbt-1,04f13h,00644h,0bcd7h
+1c43 1c43 d 50
+1c43 1c43 s 	db	050h
+1c44 1c44 d ac
+1c44 1c44 s 	db	0ach
+1c45 1c45 d af5f
+1c45 1c45 s 	dw	05fafh
+1c47 1c47 s 	if	$-?n0216 ne 20
+1c47 1c47 s 	error	'missing parameter'
+1c47 1c47 s 	endif
+1c47 1c47 s 	endm
+1c47 1c47 s 	tstr	020h,0,0,0,0,1,1,0,0,0,0,0,0		; (8 cycles)
+1c47 1c47 d 20000000
+1c47 1c47 s ?n0217:	db	020h,0,0,0
+1c4b 1c4b d 000001000100000000000000
+1c4b 1c4b s 	dw	0,1,1,0,0,0
+1c57 1c57 d 00
+1c57 1c57 s 	db	0
+1c58 1c58 d 00
+1c58 1c58 s 	db	0
+1c59 1c59 d 0000
+1c59 1c59 s 	dw	0
+1c5b 1c5b s 	if	$-?n0217 ne 20
+1c5b 1c5b s 	error	'missing parameter'
+1c5b 1c5b s 	endif
+1c5b 1c5b s 	endm
+1c5b 1c5b s 	tstr	0,0,0,0,0,0,0,0,0,0,0,-1,0		; (8 cycles)
+1c5b 1c5b d 00000000
+1c5b 1c5b s ?n0218:	db	0,0,0,0
+1c5f 1c5f d 000000000000000000000000
+1c5f 1c5f s 	dw	0,0,0,0,0,0
+1c6b 1c6b d 00
+1c6b 1c6b s 	db	0
+1c6c 1c6c d ff
+1c6c 1c6c s 	db	-1
+1c6d 1c6d d 0000
+1c6d 1c6d s 	dw	0
+1c6f 1c6f s 	if	$-?n0218 ne 20
+1c6f 1c6f s 	error	'missing parameter'
+1c6f 1c6f s 	endif
+1c6f 1c6f s 	endm
+1c6f 1c6f d d1022a13
+1c6f 1c6f s 	db	0d1h,002h,02ah,013h			; expected crc
+1c73 1c73 d 6c6420283c69782c69793e2b31292c612e2e2e2e2e2e2e2e2e2e2e2e2e24
+1c73 1c73 s 	db  	'ld (<ix,iy>+1),a.............$'
+1c91 1c91 s 
+1c91 1c91 s ; ld (<bc,de>),a (96 cycles)
+1c91 1c91 d ff
+1c91 1c91 s stabd:	db	0ffh		; flag mask
+1c92 1c92 s 	tstr	2,0,0,0,00c3bh,0b592h,06cffh,0959eh,msbt,msbt+1,0c1h,021h,0bde7h
+1c92 1c92 d 02000000
+1c92 1c92 s ?n0219:	db	2,0,0,0
+1c96 1c96 d 3b0c92b5ff6c9e9503010401
+1c96 1c96 s 	dw	00c3bh,0b592h,06cffh,0959eh,msbt,msbt+1
+1ca2 1ca2 d c1
+1ca2 1ca2 s 	db	0c1h
+1ca3 1ca3 d 21
+1ca3 1ca3 s 	db	021h
+1ca4 1ca4 d e7bd
+1ca4 1ca4 s 	dw	0bde7h
+1ca6 1ca6 s 	if	$-?n0219 ne 20
+1ca6 1ca6 s 	error	'missing parameter'
+1ca6 1ca6 s 	endif
+1ca6 1ca6 s 	endm
+1ca6 1ca6 s 	tstr	018h,0,0,0,0,0,0,0,0,0,0,0,0		; (4 cycles)
+1ca6 1ca6 d 18000000
+1ca6 1ca6 s ?n0220:	db	018h,0,0,0
+1caa 1caa d 000000000000000000000000
+1caa 1caa s 	dw	0,0,0,0,0,0
+1cb6 1cb6 d 00
+1cb6 1cb6 s 	db	0
+1cb7 1cb7 d 00
+1cb7 1cb7 s 	db	0
+1cb8 1cb8 d 0000
+1cb8 1cb8 s 	dw	0
+1cba 1cba s 	if	$-?n0220 ne 20
+1cba 1cba s 	error	'missing parameter'
+1cba 1cba s 	endif
+1cba 1cba s 	endm
+1cba 1cba s 	tstr	0,0,0,0,-1,0,0,0,0,0,0,-1,0		; (24 cycles)
+1cba 1cba d 00000000
+1cba 1cba s ?n0221:	db	0,0,0,0
+1cbe 1cbe d ffff00000000000000000000
+1cbe 1cbe s 	dw	-1,0,0,0,0,0
+1cca 1cca d 00
+1cca 1cca s 	db	0
+1ccb 1ccb d ff
+1ccb 1ccb s 	db	-1
+1ccc 1ccc d 0000
+1ccc 1ccc s 	dw	0
+1cce 1cce s 	if	$-?n0221 ne 20
+1cce 1cce s 	error	'missing parameter'
+1cce 1cce s 	endif
+1cce 1cce s 	endm
+1cce 1cce d 19caed2f
+1cce 1cce s 	db	019h,0cah,0edh,02fh			; expected crc
+1cd2 1cd2 d 6c6420283c62632c64653e292c612e2e2e2e2e2e2e2e2e2e2e2e2e2e2e24
+1cd2 1cd2 s 	db  	'ld (<bc,de>),a...............$'
+1cf0 1cf0 s 
+1cf0 1cf0 s ; start test pointed to by (hl)
+1cf0 1cf0 d e5
+1cf0 1cf0 s stt:	push	hl
+1cf1 1cf1 d 7e
+1cf1 1cf1 s 	ld	a,(hl)		; get pointer to test
+1cf2 1cf2 d 23
+1cf2 1cf2 s 	inc	hl
+1cf3 1cf3 d 66
+1cf3 1cf3 s 	ld	h,(hl)
+1cf4 1cf4 d 6f
+1cf4 1cf4 s 	ld	l,a
+1cf5 1cf5 d 7e
+1cf5 1cf5 s 	ld	a,(hl)		; flag mask
+1cf6 1cf6 d 32731f
+1cf6 1cf6 s 	ld	(flgmsk+1),a
+1cf9 1cf9 d 23
+1cf9 1cf9 s 	inc	hl
+1cfa 1cfa d e5
+1cfa 1cfa s 	push	hl
+1cfb 1cfb d 111400
+1cfb 1cfb s 	ld	de,20
+1cfe 1cfe d 19
+1cfe 1cfe s 	add	hl,de		; point to incmask
+1cff 1cff d 11e81e
+1cff 1cff s 	ld	de,counter
+1d02 1d02 d cd571e
+1d02 1d02 s 	call	initmask
+1d05 1d05 d e1
+1d05 1d05 s 	pop	hl
+1d06 1d06 d e5
+1d06 1d06 s 	push	hl
+1d07 1d07 d 112800
+1d07 1d07 s 	ld	de,20+20
+1d0a 1d0a d 19
+1d0a 1d0a s 	add	hl,de		; point to scanmask
+1d0b 1d0b d 11101f
+1d0b 1d0b s 	ld	de,shifter
+1d0e 1d0e d cd571e
+1d0e 1d0e s 	call	initmask
+1d11 1d11 d 21101f
+1d11 1d11 s 	ld	hl,shifter
+1d14 1d14 d 3601
+1d14 1d14 s 	ld	(hl),1		; first bit
+1d16 1d16 d e1
+1d16 1d16 s 	pop	hl
+1d17 1d17 d e5
+1d17 1d17 s 	push	hl
+1d18 1d18 d 11501f
+1d18 1d18 s 	ld	de,iut		; copy initial instruction under test
+1d1b 1d1b d 010400
+1d1b 1d1b s 	ld	bc,4
+1d1e 1d1e d edb0
+1d1e 1d1e s 	ldir
+1d20 1d20 d 110301
+1d20 1d20 s 	ld	de,msbt		; copy initial machine state
+1d23 1d23 d 011000
+1d23 1d23 s 	ld	bc,16
+1d26 1d26 d edb0
+1d26 1d26 s 	ldir
+1d28 1d28 d 112c00
+1d28 1d28 s 	ld	de,20+20+4	; skip incmask, scanmask and expcrc
+1d2b 1d2b d 19
+1d2b 1d2b s 	add	hl,de
+1d2c 1d2c d eb
+1d2c 1d2c s 	ex	de,hl
+1d2d 1d2d d 0e09
+1d2d 1d2d s 	ld	c,9
+1d2f 1d2f d cdc81f
+1d2f 1d2f s 	call	bdos		; show test name
+1d32 1d32 d cd6d20
+1d32 1d32 s 	call	initcrc		; initialise crc
+1d35 1d35 s ; test loop
+1d35 1d35 d 3a501f
+1d35 1d35 s tlp:	ld	a,(iut)
+1d38 1d38 d fe76
+1d38 1d38 s 	cp	076h		; pragmatically avoid halt intructions
+1d3a 1d3a d ca4c1d
+1d3a 1d3a s 	jp	z,tlp2
+1d3d 1d3d d e6df
+1d3d 1d3d s 	and	a,0dfh
+1d3f 1d3f d fedd
+1d3f 1d3f s 	cp	0ddh
+1d41 1d41 d c2491d
+1d41 1d41 s 	jp	nz,tlp1
+1d44 1d44 d 3a511f
+1d44 1d44 s 	ld	a,(iut+1)
+1d47 1d47 d fe76
+1d47 1d47 s 	cp	076h
+1d49 1d49 d c4381f
+1d49 1d49 s tlp1:	call	nz,test		; execute the test instruction
+1d4c 1d4c d cd971e
+1d4c 1d4c s tlp2:	call	count		; increment the counter
+1d4f 1d4f d c4bb1e
+1d4f 1d4f s 	call	nz,shift	; shift the scan bit
+1d52 1d52 d e1
+1d52 1d52 s 	pop	hl		; pointer to test case
+1d53 1d53 d ca881d
+1d53 1d53 s 	jp	z,tlp3		; done if shift returned NZ
+1d56 1d56 d 113c00
+1d56 1d56 s 	ld	de,20+20+20
+1d59 1d59 d 19
+1d59 1d59 s 	add	hl,de		; point to expected crc
+1d5a 1d5a d cd2e20
+1d5a 1d5a s 	call	cmpcrc
+1d5d 1d5d d 110420
+1d5d 1d5d s 	ld	de,okmsg
+1d60 1d60 d ca7f1d
+1d60 1d60 s 	jp	z,tlpok
+1d63 1d63 d 110b20
+1d63 1d63 s 	ld	de,ermsg1
+1d66 1d66 d 0e09
+1d66 1d66 s 	ld	c,9
+1d68 1d68 d cdc81f
+1d68 1d68 s 	call	bdos
+1d6b 1d6b d cda71f
+1d6b 1d6b s 	call	phex8
+1d6e 1d6e d 112620
+1d6e 1d6e s 	ld	de,ermsg2
+1d71 1d71 d 0e09
+1d71 1d71 s 	ld	c,9
+1d73 1d73 d cdc81f
+1d73 1d73 s 	call	bdos
+1d76 1d76 d 218120
+1d76 1d76 s 	ld	hl,crcval
+1d79 1d79 d cda71f
+1d79 1d79 s 	call	phex8
+1d7c 1d7c d 110120
+1d7c 1d7c s 	ld	de,crlf
+1d7f 1d7f d 0e09
+1d7f 1d7f s tlpok:	ld	c,9
+1d81 1d81 d cdc81f
+1d81 1d81 s 	call	bdos
+1d84 1d84 d e1
+1d84 1d84 s 	pop	hl
+1d85 1d85 d 23
+1d85 1d85 s 	inc	hl
+1d86 1d86 d 23
+1d86 1d86 s 	inc	hl
+1d87 1d87 d c9
+1d87 1d87 s 	ret
+1d88 1d88 s 
+1d88 1d88 d e5
+1d88 1d88 s tlp3:	push	hl
+1d89 1d89 d 3e01
+1d89 1d89 s 	ld	a,1		; initialise count and shift scanners
+1d8b 1d8b d 32fe1d
+1d8b 1d8b s 	ld	(cntbit),a
+1d8e 1d8e d 32221e
+1d8e 1d8e s 	ld	(shfbit),a
+1d91 1d91 d 21e81e
+1d91 1d91 s 	ld	hl,counter
+1d94 1d94 d 22ff1d
+1d94 1d94 s 	ld	(cntbyt),hl
+1d97 1d97 d 21101f
+1d97 1d97 s 	ld	hl,shifter
+1d9a 1d9a d 22231e
+1d9a 1d9a s 	ld	(shfbyt),hl
+1d9d 1d9d s 
+1d9d 1d9d d 0604
+1d9d 1d9d s 	ld	b,4		; bytes in iut field
+1d9f 1d9f d e1
+1d9f 1d9f s 	pop	hl		; pointer to test case
+1da0 1da0 d e5
+1da0 1da0 s 	push	hl
+1da1 1da1 d 11501f
+1da1 1da1 s 	ld	de,iut
+1da4 1da4 d cdb21d
+1da4 1da4 s 	call	setup		; setup iut
+1da7 1da7 d 0610
+1da7 1da7 s 	ld	b,16		; bytes in machine state
+1da9 1da9 d 110301
+1da9 1da9 s 	ld	de,msbt
+1dac 1dac d cdb21d
+1dac 1dac s 	call	setup		; setup machine state
+1daf 1daf d c3351d
+1daf 1daf s 	jp	tlp
+1db2 1db2 s 
+1db2 1db2 s ; setup a field of the test case
+1db2 1db2 s ; b  = number of bytes
+1db2 1db2 s ; hl = pointer to base case
+1db2 1db2 s ; de = destination
+1db2 1db2 d cdbb1d
+1db2 1db2 s setup:	call	subyte
+1db5 1db5 d 23
+1db5 1db5 s 	inc	hl
+1db6 1db6 d 05
+1db6 1db6 s 	dec	b
+1db7 1db7 d c2b21d
+1db7 1db7 s 	jp	nz,setup
+1dba 1dba d c9
+1dba 1dba s 	ret
+1dbb 1dbb s 
+1dbb 1dbb d c5
+1dbb 1dbb s subyte:	push	bc
+1dbc 1dbc d d5
+1dbc 1dbc s 	push	de
+1dbd 1dbd d e5
+1dbd 1dbd s 	push	hl
+1dbe 1dbe d 4e
+1dbe 1dbe s 	ld	c,(hl)		; get base byte
+1dbf 1dbf d 111400
+1dbf 1dbf s 	ld	de,20
+1dc2 1dc2 d 19
+1dc2 1dc2 s 	add	hl,de		; point to incmask
+1dc3 1dc3 d 7e
+1dc3 1dc3 s 	ld	a,(hl)
+1dc4 1dc4 d fe00
+1dc4 1dc4 s 	cp	0
+1dc6 1dc6 d cadc1d
+1dc6 1dc6 s 	jp	z,subshf
+1dc9 1dc9 d 0608
+1dc9 1dc9 s 	ld	b,8		; 8 bits
+1dcb 1dcb d 0f
+1dcb 1dcb s subclp:	rrca
+1dcc 1dcc d f5
+1dcc 1dcc s 	push	af
+1dcd 1dcd d 3e00
+1dcd 1dcd s 	ld	a,0
+1dcf 1dcf d dc011e
+1dcf 1dcf s 	call	c,nxtcbit	; get next counter bit if mask bit was set
+1dd2 1dd2 d a9
+1dd2 1dd2 s 	xor	c		; flip bit if counter bit was set
+1dd3 1dd3 d 0f
+1dd3 1dd3 s 	rrca
+1dd4 1dd4 d 4f
+1dd4 1dd4 s 	ld	c,a
+1dd5 1dd5 d f1
+1dd5 1dd5 s 	pop	af
+1dd6 1dd6 d 05
+1dd6 1dd6 s 	dec	b
+1dd7 1dd7 d c2cb1d
+1dd7 1dd7 s 	jp	nz,subclp
+1dda 1dda d 0608
+1dda 1dda s 	ld	b,8
+1ddc 1ddc d 111400
+1ddc 1ddc s subshf:	ld	de,20
+1ddf 1ddf d 19
+1ddf 1ddf s 	add	hl,de		; point to shift mask
+1de0 1de0 d 7e
+1de0 1de0 s 	ld	a,(hl)
+1de1 1de1 d fe00
+1de1 1de1 s 	cp	0
+1de3 1de3 d caf71d
+1de3 1de3 s 	jp	z,substr
+1de6 1de6 d 0608
+1de6 1de6 s 	ld	b,8		; 8 bits
+1de8 1de8 d 0f
+1de8 1de8 s sbshf1:	rrca
+1de9 1de9 d f5
+1de9 1de9 s 	push	af
+1dea 1dea d 3e00
+1dea 1dea s 	ld	a,0
+1dec 1dec d dc251e
+1dec 1dec s 	call	c,nxtsbit	; get next shifter bit if mask bit was set
+1def 1def d a9
+1def 1def s 	xor	c		; flip bit if shifter bit was set
+1df0 1df0 d 0f
+1df0 1df0 s 	rrca
+1df1 1df1 d 4f
+1df1 1df1 s 	ld	c,a
+1df2 1df2 d f1
+1df2 1df2 s 	pop	af
+1df3 1df3 d 05
+1df3 1df3 s 	dec	b
+1df4 1df4 d c2e81d
+1df4 1df4 s 	jp	nz,sbshf1
+1df7 1df7 d e1
+1df7 1df7 s substr:	pop	hl
+1df8 1df8 d d1
+1df8 1df8 s 	pop	de
+1df9 1df9 d 79
+1df9 1df9 s 	ld	a,c
+1dfa 1dfa d 12
+1dfa 1dfa s 	ld	(de),a		; mangled byte to destination
+1dfb 1dfb d 13
+1dfb 1dfb s 	inc	de
+1dfc 1dfc d c1
+1dfc 1dfc s 	pop	bc
+1dfd 1dfd d c9
+1dfd 1dfd s 	ret
+1dfe 1dfe s 
+1dfe 1dfe s ; get next counter bit in low bit of a
+1dfe 1dfe s cntbit:	ds	1
+1dff 1dff s cntbyt:	ds	2
+1e01 1e01 s 
+1e01 1e01 d c5
+1e01 1e01 s nxtcbit: push	bc
+1e02 1e02 d e5
+1e02 1e02 s 	push	hl
+1e03 1e03 d 2aff1d
+1e03 1e03 s 	ld	hl,(cntbyt)
+1e06 1e06 d 46
+1e06 1e06 s 	ld	b,(hl)
+1e07 1e07 d 21fe1d
+1e07 1e07 s 	ld	hl,cntbit
+1e0a 1e0a d 7e
+1e0a 1e0a s 	ld	a,(hl)
+1e0b 1e0b d 4f
+1e0b 1e0b s 	ld	c,a
+1e0c 1e0c d 07
+1e0c 1e0c s 	rlca
+1e0d 1e0d d 77
+1e0d 1e0d s 	ld	(hl),a
+1e0e 1e0e d fe01
+1e0e 1e0e s 	cp	a,1
+1e10 1e10 d c21a1e
+1e10 1e10 s 	jp	nz,ncb1
+1e13 1e13 d 2aff1d
+1e13 1e13 s 	ld	hl,(cntbyt)
+1e16 1e16 d 23
+1e16 1e16 s 	inc	hl
+1e17 1e17 d 22ff1d
+1e17 1e17 s 	ld	(cntbyt),hl
+1e1a 1e1a d 78
+1e1a 1e1a s ncb1:	ld	a,b
+1e1b 1e1b d a1
+1e1b 1e1b s 	and	c
+1e1c 1e1c d e1
+1e1c 1e1c s 	pop	hl
+1e1d 1e1d d c1
+1e1d 1e1d s 	pop	bc
+1e1e 1e1e d c8
+1e1e 1e1e s 	ret	z
+1e1f 1e1f d 3e01
+1e1f 1e1f s 	ld	a,1
+1e21 1e21 d c9
+1e21 1e21 s 	ret
+1e22 1e22 s 	
+1e22 1e22 s ; get next shifter bit in low bit of a
+1e22 1e22 s shfbit:	ds	1
+1e23 1e23 s shfbyt:	ds	2
+1e25 1e25 s 
+1e25 1e25 d c5
+1e25 1e25 s nxtsbit: push	bc
+1e26 1e26 d e5
+1e26 1e26 s 	push	hl
+1e27 1e27 d 2a231e
+1e27 1e27 s 	ld	hl,(shfbyt)
+1e2a 1e2a d 46
+1e2a 1e2a s 	ld	b,(hl)
+1e2b 1e2b d 21221e
+1e2b 1e2b s 	ld	hl,shfbit
+1e2e 1e2e d 7e
+1e2e 1e2e s 	ld	a,(hl)
+1e2f 1e2f d 4f
+1e2f 1e2f s 	ld	c,a
+1e30 1e30 d 07
+1e30 1e30 s 	rlca
+1e31 1e31 d 77
+1e31 1e31 s 	ld	(hl),a
+1e32 1e32 d fe01
+1e32 1e32 s 	cp	a,1
+1e34 1e34 d c23e1e
+1e34 1e34 s 	jp	nz,nsb1
+1e37 1e37 d 2a231e
+1e37 1e37 s 	ld	hl,(shfbyt)
+1e3a 1e3a d 23
+1e3a 1e3a s 	inc	hl
+1e3b 1e3b d 22231e
+1e3b 1e3b s 	ld	(shfbyt),hl
+1e3e 1e3e d 78
+1e3e 1e3e s nsb1:	ld	a,b
+1e3f 1e3f d a1
+1e3f 1e3f s 	and	c
+1e40 1e40 d e1
+1e40 1e40 s 	pop	hl
+1e41 1e41 d c1
+1e41 1e41 s 	pop	bc
+1e42 1e42 d c8
+1e42 1e42 s 	ret	z
+1e43 1e43 d 3e01
+1e43 1e43 s 	ld	a,1
+1e45 1e45 d c9
+1e45 1e45 s 	ret
+1e46 1e46 s 	
+1e46 1e46 s 
+1e46 1e46 s ; clear memory at hl, bc bytes
+1e46 1e46 d f5
+1e46 1e46 s clrmem:	push	af
+1e47 1e47 d c5
+1e47 1e47 s 	push	bc
+1e48 1e48 d d5
+1e48 1e48 s 	push	de
+1e49 1e49 d e5
+1e49 1e49 s 	push	hl
+1e4a 1e4a d 3600
+1e4a 1e4a s 	ld	(hl),0
+1e4c 1e4c d 54
+1e4c 1e4c s 	ld	d,h
+1e4d 1e4d d 5d
+1e4d 1e4d s 	ld	e,l
+1e4e 1e4e d 13
+1e4e 1e4e s 	inc	de
+1e4f 1e4f d 0b
+1e4f 1e4f s 	dec	bc
+1e50 1e50 d edb0
+1e50 1e50 s 	ldir
+1e52 1e52 d e1
+1e52 1e52 s 	pop	hl
+1e53 1e53 d d1
+1e53 1e53 s 	pop	de
+1e54 1e54 d c1
+1e54 1e54 s 	pop	bc
+1e55 1e55 d f1
+1e55 1e55 s 	pop	af
+1e56 1e56 d c9
+1e56 1e56 s 	ret
+1e57 1e57 s 
+1e57 1e57 s ; initialise counter or shifter
+1e57 1e57 s ; de = pointer to work area for counter or shifter
+1e57 1e57 s ; hl = pointer to mask
+1e57 1e57 s initmask:
+1e57 1e57 d d5
+1e57 1e57 s 	push	de
+1e58 1e58 d eb
+1e58 1e58 s 	ex	de,hl
+1e59 1e59 d 012800
+1e59 1e59 s 	ld	bc,20+20
+1e5c 1e5c d cd461e
+1e5c 1e5c s 	call	clrmem		; clear work area
+1e5f 1e5f d eb
+1e5f 1e5f s 	ex	de,hl
+1e60 1e60 d 0614
+1e60 1e60 s 	ld	b,20		; byte counter
+1e62 1e62 d 0e01
+1e62 1e62 s 	ld	c,1		; first bit
+1e64 1e64 d 1600
+1e64 1e64 s 	ld	d,0		; bit counter
+1e66 1e66 d 5e
+1e66 1e66 s imlp:	ld	e,(hl)
+1e67 1e67 d 7b
+1e67 1e67 s imlp1:	ld	a,e
+1e68 1e68 d a1
+1e68 1e68 s 	and	a,c
+1e69 1e69 d ca6d1e
+1e69 1e69 s 	jp	z,imlp2
+1e6c 1e6c d 14
+1e6c 1e6c s 	inc	d
+1e6d 1e6d d 79
+1e6d 1e6d s imlp2:	ld	a,c
+1e6e 1e6e d 07
+1e6e 1e6e s 	rlca
+1e6f 1e6f d 4f
+1e6f 1e6f s 	ld	c,a
+1e70 1e70 d fe01
+1e70 1e70 s 	cp	a,1
+1e72 1e72 d c2671e
+1e72 1e72 s 	jp	nz,imlp1
+1e75 1e75 d 23
+1e75 1e75 s 	inc	hl
+1e76 1e76 d 05
+1e76 1e76 s 	dec	b
+1e77 1e77 d c2661e
+1e77 1e77 s 	jp	nz,imlp
+1e7a 1e7a s ; got number of 1-bits in mask in reg d
+1e7a 1e7a d 7a
+1e7a 1e7a s 	ld	a,d
+1e7b 1e7b d e6f8
+1e7b 1e7b s 	and	0f8h
+1e7d 1e7d d 0f
+1e7d 1e7d s 	rrca
+1e7e 1e7e d 0f
+1e7e 1e7e s 	rrca
+1e7f 1e7f d 0f
+1e7f 1e7f s 	rrca			; divide by 8 (get byte offset)
+1e80 1e80 d 6f
+1e80 1e80 s 	ld	l,a
+1e81 1e81 d 2600
+1e81 1e81 s 	ld	h,0
+1e83 1e83 d 7a
+1e83 1e83 s 	ld	a,d
+1e84 1e84 d e607
+1e84 1e84 s 	and	a,7		; bit offset
+1e86 1e86 d 3c
+1e86 1e86 s 	inc	a
+1e87 1e87 d 47
+1e87 1e87 s 	ld	b,a
+1e88 1e88 d 3e80
+1e88 1e88 s 	ld	a,080h
+1e8a 1e8a d 07
+1e8a 1e8a s imlp3:	rlca
+1e8b 1e8b d 05
+1e8b 1e8b s 	dec	b
+1e8c 1e8c d c28a1e
+1e8c 1e8c s 	jp	nz,imlp3
+1e8f 1e8f d d1
+1e8f 1e8f s 	pop	de
+1e90 1e90 d 19
+1e90 1e90 s 	add	hl,de
+1e91 1e91 d 111400
+1e91 1e91 s 	ld	de,20
+1e94 1e94 d 19
+1e94 1e94 s 	add	hl,de
+1e95 1e95 d 77
+1e95 1e95 s 	ld	(hl),a
+1e96 1e96 d c9
+1e96 1e96 s 	ret
+1e97 1e97 s 
+1e97 1e97 s ; multi-byte counter
+1e97 1e97 d c5
+1e97 1e97 s count:	push	bc
+1e98 1e98 d d5
+1e98 1e98 s 	push	de
+1e99 1e99 d e5
+1e99 1e99 s 	push	hl
+1e9a 1e9a d 21e81e
+1e9a 1e9a s 	ld	hl,counter	; 20 byte counter starts here
+1e9d 1e9d d 111400
+1e9d 1e9d s 	ld	de,20		; somewhere in here is the stop bit
+1ea0 1ea0 d eb
+1ea0 1ea0 s 	ex	de,hl
+1ea1 1ea1 d 19
+1ea1 1ea1 s 	add	hl,de
+1ea2 1ea2 d eb
+1ea2 1ea2 s 	ex	de,hl
+1ea3 1ea3 d 34
+1ea3 1ea3 s cntlp:	inc	(hl)
+1ea4 1ea4 d 7e
+1ea4 1ea4 s 	ld	a,(hl)
+1ea5 1ea5 d fe00
+1ea5 1ea5 s 	cp	0
+1ea7 1ea7 d cab61e
+1ea7 1ea7 s 	jp	z,cntlp1	; overflow to next byte
+1eaa 1eaa d 47
+1eaa 1eaa s 	ld	b,a
+1eab 1eab d 1a
+1eab 1eab s 	ld	a,(de)
+1eac 1eac d a0
+1eac 1eac s 	and	a,b		; test for terminal value
+1ead 1ead d cab21e
+1ead 1ead s 	jp	z,cntend
+1eb0 1eb0 d 3600
+1eb0 1eb0 s 	ld	(hl),0		; reset to zero
+1eb2 1eb2 d c1
+1eb2 1eb2 s cntend:	pop	bc
+1eb3 1eb3 d d1
+1eb3 1eb3 s 	pop	de
+1eb4 1eb4 d e1
+1eb4 1eb4 s 	pop	hl
+1eb5 1eb5 d c9
+1eb5 1eb5 s 	ret
+1eb6 1eb6 s 
+1eb6 1eb6 d 23
+1eb6 1eb6 s cntlp1:	inc	hl
+1eb7 1eb7 d 13
+1eb7 1eb7 s 	inc	de
+1eb8 1eb8 d c3a31e
+1eb8 1eb8 s 	jp	cntlp
+1ebb 1ebb s 	
+1ebb 1ebb s 
+1ebb 1ebb s ; multi-byte shifter
+1ebb 1ebb d c5
+1ebb 1ebb s shift:	push	bc
+1ebc 1ebc d d5
+1ebc 1ebc s 	push	de
+1ebd 1ebd d e5
+1ebd 1ebd s 	push	hl
+1ebe 1ebe d 21101f
+1ebe 1ebe s 	ld	hl,shifter	; 20 byte shift register starts here
+1ec1 1ec1 d 111400
+1ec1 1ec1 s 	ld	de,20		; somewhere in here is the stop bit
+1ec4 1ec4 d eb
+1ec4 1ec4 s 	ex	de,hl
+1ec5 1ec5 d 19
+1ec5 1ec5 s 	add	hl,de
+1ec6 1ec6 d eb
+1ec6 1ec6 s 	ex	de,hl
+1ec7 1ec7 d 7e
+1ec7 1ec7 s shflp:	ld	a,(hl)
+1ec8 1ec8 d b7
+1ec8 1ec8 s 	or	a
+1ec9 1ec9 d cae31e
+1ec9 1ec9 s 	jp	z,shflp1
+1ecc 1ecc d 47
+1ecc 1ecc s 	ld	b,a
+1ecd 1ecd d 1a
+1ecd 1ecd s 	ld	a,(de)
+1ece 1ece d a0
+1ece 1ece s 	and	b
+1ecf 1ecf d c2df1e
+1ecf 1ecf s 	jp	nz,shlpe
+1ed2 1ed2 d 78
+1ed2 1ed2 s 	ld	a,b
+1ed3 1ed3 d 07
+1ed3 1ed3 s 	rlca
+1ed4 1ed4 d fe01
+1ed4 1ed4 s 	cp	a,1
+1ed6 1ed6 d c2dd1e
+1ed6 1ed6 s 	jp	nz,shflp2
+1ed9 1ed9 d 3600
+1ed9 1ed9 s 	ld	(hl),0
+1edb 1edb d 23
+1edb 1edb s 	inc	hl
+1edc 1edc d 13
+1edc 1edc s 	inc	de
+1edd 1edd d 77
+1edd 1edd s shflp2:	ld	(hl),a
+1ede 1ede d af
+1ede 1ede s 	xor	a		; set Z
+1edf 1edf d e1
+1edf 1edf s shlpe:	pop	hl
+1ee0 1ee0 d d1
+1ee0 1ee0 s 	pop	de
+1ee1 1ee1 d c1
+1ee1 1ee1 s 	pop	bc
+1ee2 1ee2 d c9
+1ee2 1ee2 s 	ret
+1ee3 1ee3 d 23
+1ee3 1ee3 s shflp1:	inc	hl
+1ee4 1ee4 d 13
+1ee4 1ee4 s 	inc	de
+1ee5 1ee5 d c3c71e
+1ee5 1ee5 s 	jp	shflp
+1ee8 1ee8 s 
+1ee8 1ee8 s counter: ds	2*20
+1f10 1f10 s shifter: ds	2*20
+1f38 1f38 s 
+1f38 1f38 s ; test harness
+1f38 1f38 d f5
+1f38 1f38 s test:	push	af
+1f39 1f39 d c5
+1f39 1f39 s 	push	bc
+1f3a 1f3a d d5
+1f3a 1f3a s 	push	de
+1f3b 1f3b d e5
+1f3b 1f3b s 	push	hl
+1f3c 1f3c s       if	0
+1f3c 1f3c s 	ld	de,crlf
+1f3c 1f3c s 	ld	c,9
+1f3c 1f3c s 	call	bdos
+1f3c 1f3c s 	ld	hl,iut
+1f3c 1f3c s 	ld	b,4
+1f3c 1f3c s 	call	hexstr
+1f3c 1f3c s 	ld	e,' '
+1f3c 1f3c s 	ld	c,2
+1f3c 1f3c s 	call	bdos
+1f3c 1f3c s 	ld	b,16
+1f3c 1f3c s 	ld	hl,msbt
+1f3c 1f3c s 	call	hexstr
+1f3c 1f3c s       endif	
+1f3c 1f3c d f3
+1f3c 1f3c s 	di			; disable interrupts
+1f3d 1f3d d ed739b1f
+1f3d 1f3d s 	ld	(spsav),sp	; save stack pointer
+1f41 1f41 d 310501
+1f41 1f41 s 	ld	sp,msbt+2	; point to test-case machine state
+1f44 1f44 d fde1
+1f44 1f44 s 	pop	iy		; and load all regs
+1f46 1f46 d dde1
+1f46 1f46 s 	pop	ix
+1f48 1f48 d e1
+1f48 1f48 s 	pop	hl
+1f49 1f49 d d1
+1f49 1f49 s 	pop	de
+1f4a 1f4a d c1
+1f4a 1f4a s 	pop	bc
+1f4b 1f4b d f1
+1f4b 1f4b s 	pop	af
+1f4c 1f4c d ed7b1101
+1f4c 1f4c s 	ld	sp,(spbt)
+1f50 1f50 s iut:	ds	4		; max 4 byte instruction under test
+1f54 1f54 d ed73991f
+1f54 1f54 s 	ld	(spat),sp	; save stack pointer
+1f58 1f58 d 31991f
+1f58 1f58 s 	ld	sp,spat
+1f5b 1f5b d f5
+1f5b 1f5b s 	push	af		; save other registers
+1f5c 1f5c d c5
+1f5c 1f5c s 	push	bc
+1f5d 1f5d d d5
+1f5d 1f5d s 	push	de
+1f5e 1f5e d e5
+1f5e 1f5e s 	push	hl
+1f5f 1f5f d dde5
+1f5f 1f5f s 	push	ix
+1f61 1f61 d fde5
+1f61 1f61 s 	push	iy
+1f63 1f63 d ed7b9b1f
+1f63 1f63 s 	ld	sp,(spsav)	; restore stack pointer
+1f67 1f67 d fb
+1f67 1f67 s 	ei			; enable interrupts
+1f68 1f68 d 2a0301
+1f68 1f68 s 	ld	hl,(msbt)	; copy memory operand
+1f6b 1f6b d 228b1f
+1f6b 1f6b s 	ld	(msat),hl
+1f6e 1f6e d 21971f
+1f6e 1f6e s 	ld	hl,flgsat	; flags after test
+1f71 1f71 d 7e
+1f71 1f71 s 	ld	a,(hl)
+1f72 1f72 d e6d7
+1f72 1f72 s flgmsk:	and	a,0d7h		; mask-out irrelevant bits (self-modified code!)
+1f74 1f74 d 77
+1f74 1f74 s 	ld	(hl),a
+1f75 1f75 d 0610
+1f75 1f75 s 	ld	b,16		; total of 16 bytes of state
+1f77 1f77 d 118b1f
+1f77 1f77 s 	ld	de,msat
+1f7a 1f7a d 218120
+1f7a 1f7a s 	ld	hl,crcval
+1f7d 1f7d d 1a
+1f7d 1f7d s tcrc:	ld	a,(de)
+1f7e 1f7e d 13
+1f7e 1f7e s 	inc	de
+1f7f 1f7f d cd4520
+1f7f 1f7f s 	call	updcrc		; accumulate crc of this test case
+1f82 1f82 d 05
+1f82 1f82 s 	dec	b
+1f83 1f83 d c27d1f
+1f83 1f83 s 	jp	nz,tcrc
+1f86 1f86 s       if	0
+1f86 1f86 s 	ld	e,' '
+1f86 1f86 s 	ld	c,2
+1f86 1f86 s 	call	bdos
+1f86 1f86 s 	ld	hl,crcval
+1f86 1f86 s 	call	phex8
+1f86 1f86 s 	ld	de,crlf
+1f86 1f86 s 	ld	c,9
+1f86 1f86 s 	call	bdos
+1f86 1f86 s 	ld	hl,msat
+1f86 1f86 s 	ld	b,16
+1f86 1f86 s 	call	hexstr
+1f86 1f86 s 	ld	de,crlf
+1f86 1f86 s 	ld	c,9
+1f86 1f86 s 	call	bdos
+1f86 1f86 s       endif
+1f86 1f86 d e1
+1f86 1f86 s 	pop	hl
+1f87 1f87 d d1
+1f87 1f87 s 	pop	de
+1f88 1f88 d c1
+1f88 1f88 s 	pop	bc
+1f89 1f89 d f1
+1f89 1f89 s 	pop	af
+1f8a 1f8a d c9
+1f8a 1f8a s 	ret
+1f8b 1f8b s 
+1f8b 1f8b s ; machine state after test
+1f8b 1f8b s msat:	ds	14	; memop,iy,ix,hl,de,bc,af
+1f99 1f99 s spat:	ds	2	; stack pointer after test
+1f9b 1f9b s ; ZMAC/MAXAM doesn't like ':' after label with EQUs
+1f9b 1f9b s flgsat	equ	spat-2	; flags
+1f9b 1f9b s 
+1f9b 1f9b s spsav:	ds	2	; saved stack pointer
+1f9d 1f9d s 
+1f9d 1f9d s ; display hex string (pointer in hl, byte count in b)
+1f9d 1f9d d 7e
+1f9d 1f9d s hexstr:	ld	a,(hl)
+1f9e 1f9e d cdb91f
+1f9e 1f9e s 	call	phex2
+1fa1 1fa1 d 23
+1fa1 1fa1 s 	inc	hl
+1fa2 1fa2 d 05
+1fa2 1fa2 s 	dec	b
+1fa3 1fa3 d c29d1f
+1fa3 1fa3 s 	jp	nz,hexstr
+1fa6 1fa6 d c9
+1fa6 1fa6 s 	ret
+1fa7 1fa7 s 
+1fa7 1fa7 s ; display hex
+1fa7 1fa7 s ; display the big-endian 32-bit value pointed to by hl
+1fa7 1fa7 d f5
+1fa7 1fa7 s phex8:	push	af
+1fa8 1fa8 d c5
+1fa8 1fa8 s 	push	bc
+1fa9 1fa9 d e5
+1fa9 1fa9 s 	push	hl
+1faa 1faa d 0604
+1faa 1faa s 	ld	b,4
+1fac 1fac d 7e
+1fac 1fac s ph8lp:	ld	a,(hl)
+1fad 1fad d cdb91f
+1fad 1fad s 	call	phex2
+1fb0 1fb0 d 23
+1fb0 1fb0 s 	inc	hl
+1fb1 1fb1 d 05
+1fb1 1fb1 s 	dec	b
+1fb2 1fb2 d c2ac1f
+1fb2 1fb2 s 	jp	nz,ph8lp
+1fb5 1fb5 d e1
+1fb5 1fb5 s 	pop	hl
+1fb6 1fb6 d c1
+1fb6 1fb6 s 	pop	bc
+1fb7 1fb7 d f1
+1fb7 1fb7 s 	pop	af
+1fb8 1fb8 d c9
+1fb8 1fb8 s 	ret
+1fb9 1fb9 s 
+1fb9 1fb9 s ; display byte in a
+1fb9 1fb9 d f5
+1fb9 1fb9 s phex2:	push	af
+1fba 1fba d c5
+1fba 1fba s 	push	bc
+1fbb 1fbb d d5
+1fbb 1fbb s 	push	de
+1fbc 1fbc d e5
+1fbc 1fbc s 	push	hl
+1fbd 1fbd d 5f
+1fbd 1fbd s 	ld	e,a
+1fbe 1fbe d 0e03
+1fbe 1fbe s 	ld	c,3
+1fc0 1fc0 d cdc81f
+1fc0 1fc0 s 	call	bdos
+1fc3 1fc3 d e1
+1fc3 1fc3 s 	pop	hl
+1fc4 1fc4 d d1
+1fc4 1fc4 s 	pop	de
+1fc5 1fc5 d c1
+1fc5 1fc5 s 	pop	bc
+1fc6 1fc6 d f1
+1fc6 1fc6 s 	pop	af
+1fc7 1fc7 d c9
+1fc7 1fc7 s 	ret
+1fc8 1fc8 s 
+1fc8 1fc8 d f5
+1fc8 1fc8 s bdos:	push	af
+1fc9 1fc9 d c5
+1fc9 1fc9 s 	push	bc
+1fca 1fca d d5
+1fca 1fca s 	push	de
+1fcb 1fcb d e5
+1fcb 1fcb s 	push	hl
+1fcc 1fcc d cd0500
+1fcc 1fcc s 	call	5
+1fcf 1fcf d e1
+1fcf 1fcf s 	pop	hl
+1fd0 1fd0 d d1
+1fd0 1fd0 s 	pop	de
+1fd1 1fd1 d c1
+1fd1 1fd1 s 	pop	bc
+1fd2 1fd2 d f1
+1fd2 1fd2 s 	pop	af
+1fd3 1fd3 d c9
+1fd3 1fd3 s 	ret
+1fd4 1fd4 s 
+1fd4 1fd4 d 5a3830616c6c20696e737472756374696f6e206578657263697365720a0d24
+1fd4 1fd4 s msg1:	db	'Z80all instruction exerciser',10,13,'$'
+1ff3 1ff3 d 546573747320636f6d706c657465
+1ff3 1ff3 s msg2:	db	'Tests complete'
+2001 2001 d 0a0d24
+2001 2001 s crlf:	db	10,13,'$'
+2004 2004 d 20204f4b0a0d24
+2004 2004 s okmsg:	db	'  OK',10,13,'$'
+200b 200b d 20204552524f52202a2a2a2a206372632065787065637465643a24
+200b 200b s ermsg1:	db	'  ERROR **** crc expected:$'
+2026 2026 d 20666f756e643a24
+2026 2026 s ermsg2:	db	' found:$'
+202e 202e s 
+202e 202e s ; compare crc
+202e 202e s ; hl points to value to compare to crcval
+202e 202e d c5
+202e 202e s cmpcrc:	push	bc
+202f 202f d d5
+202f 202f s 	push	de
+2030 2030 d e5
+2030 2030 s 	push	hl
+2031 2031 d 118120
+2031 2031 s 	ld	de,crcval
+2034 2034 d 0604
+2034 2034 s 	ld	b,4
+2036 2036 d 1a
+2036 2036 s cclp:	ld	a,(de)
+2037 2037 d be
+2037 2037 s 	cp	a,(hl)
+2038 2038 d c24120
+2038 2038 s 	jp	nz,cce
+203b 203b d 23
+203b 203b s 	inc	hl
+203c 203c d 13
+203c 203c s 	inc	de
+203d 203d d 05
+203d 203d s 	dec	b
+203e 203e d c23620
+203e 203e s 	jp	nz,cclp
+2041 2041 d e1
+2041 2041 s cce:	pop	hl
+2042 2042 d d1
+2042 2042 s 	pop	de
+2043 2043 d c1
+2043 2043 s 	pop	bc
+2044 2044 d c9
+2044 2044 s 	ret
+2045 2045 s 
+2045 2045 s ; 32-bit crc routine
+2045 2045 s ; entry: a contains next byte, hl points to crc
+2045 2045 s ; exit:  crc updated
+2045 2045 d f5
+2045 2045 s updcrc:	push	af
+2046 2046 d c5
+2046 2046 s 	push	bc
+2047 2047 d d5
+2047 2047 s 	push	de
+2048 2048 d e5
+2048 2048 s 	push	hl
+2049 2049 d e5
+2049 2049 s 	push	hl
+204a 204a d 110300
+204a 204a s 	ld	de,3
+204d 204d d 19
+204d 204d s 	add	hl,de	; point to low byte of old crc
+204e 204e d ae
+204e 204e s 	xor	a,(hl)	; xor with new byte
+204f 204f d 6f
+204f 204f s 	ld	l,a
+2050 2050 d 2600
+2050 2050 s 	ld	h,0
+2052 2052 d 29
+2052 2052 s 	add	hl,hl	; use result as index into table of 4 byte entries
+2053 2053 d 29
+2053 2053 s 	add	hl,hl
+2054 2054 d eb
+2054 2054 s 	ex	de,hl
+2055 2055 d 218520
+2055 2055 s 	ld	hl,crctab
+2058 2058 d 19
+2058 2058 s 	add	hl,de	; point to selected entry in crctab
+2059 2059 d eb
+2059 2059 s 	ex	de,hl
+205a 205a d e1
+205a 205a s 	pop	hl
+205b 205b d 010400
+205b 205b s 	ld	bc,4	; c = byte count, b = accumulator
+205e 205e d 1a
+205e 205e s crclp:	ld	a,(de)
+205f 205f d a8
+205f 205f s 	xor	a,b
+2060 2060 d 46
+2060 2060 s 	ld	b,(hl)
+2061 2061 d 77
+2061 2061 s 	ld	(hl),a
+2062 2062 d 13
+2062 2062 s 	inc	de
+2063 2063 d 23
+2063 2063 s 	inc	hl
+2064 2064 d 0d
+2064 2064 s 	dec	c
+2065 2065 d c25e20
+2065 2065 s 	jp	nz,crclp
+2068 2068 s       if	0
+2068 2068 s 	ld	hl,crcval
+2068 2068 s 	call	phex8
+2068 2068 s 	ld	de,crlf
+2068 2068 s 	ld	c,9
+2068 2068 s 	call	bdos
+2068 2068 s       endif
+2068 2068 d e1
+2068 2068 s 	pop	hl
+2069 2069 d d1
+2069 2069 s 	pop	de
+206a 206a d c1
+206a 206a s 	pop	bc
+206b 206b d f1
+206b 206b s 	pop	af
+206c 206c d c9
+206c 206c s 	ret
+206d 206d s 
+206d 206d d f5
+206d 206d s initcrc:push	af
+206e 206e d c5
+206e 206e s 	push	bc
+206f 206f d e5
+206f 206f s 	push	hl
+2070 2070 d 218120
+2070 2070 s 	ld	hl,crcval
+2073 2073 d 3eff
+2073 2073 s 	ld	a,0ffh
+2075 2075 d 0604
+2075 2075 s 	ld	b,4
+2077 2077 d 77
+2077 2077 s icrclp:	ld	(hl),a
+2078 2078 d 23
+2078 2078 s 	inc	hl
+2079 2079 d 05
+2079 2079 s 	dec	b
+207a 207a d c27720
+207a 207a s 	jp	nz,icrclp
+207d 207d d e1
+207d 207d s 	pop	hl
+207e 207e d c1
+207e 207e s 	pop	bc
+207f 207f d f1
+207f 207f s 	pop	af
+2080 2080 d c9
+2080 2080 s 	ret
+2081 2081 s 
+2081 2081 s crcval	ds	4
+2085 2085 s 
+2085 2085 d 00000000
+2085 2085 s crctab:	db	000h,000h,000h,000h
+2089 2089 d 77073096
+2089 2089 s 	db	077h,007h,030h,096h
+208d 208d d ee0e612c
+208d 208d s 	db	0eeh,00eh,061h,02ch
+2091 2091 d 990951ba
+2091 2091 s 	db	099h,009h,051h,0bah
+2095 2095 d 076dc419
+2095 2095 s 	db	007h,06dh,0c4h,019h
+2099 2099 d 706af48f
+2099 2099 s 	db	070h,06ah,0f4h,08fh
+209d 209d d e963a535
+209d 209d s 	db	0e9h,063h,0a5h,035h
+20a1 20a1 d 9e6495a3
+20a1 20a1 s 	db	09eh,064h,095h,0a3h
+20a5 20a5 d 0edb8832
+20a5 20a5 s 	db	00eh,0dbh,088h,032h
+20a9 20a9 d 79dcb8a4
+20a9 20a9 s 	db	079h,0dch,0b8h,0a4h
+20ad 20ad d e0d5e91e
+20ad 20ad s 	db	0e0h,0d5h,0e9h,01eh
+20b1 20b1 d 97d2d988
+20b1 20b1 s 	db	097h,0d2h,0d9h,088h
+20b5 20b5 d 09b64c2b
+20b5 20b5 s 	db	009h,0b6h,04ch,02bh
+20b9 20b9 d 7eb17cbd
+20b9 20b9 s 	db	07eh,0b1h,07ch,0bdh
+20bd 20bd d e7b82d07
+20bd 20bd s 	db	0e7h,0b8h,02dh,007h
+20c1 20c1 d 90bf1d91
+20c1 20c1 s 	db	090h,0bfh,01dh,091h
+20c5 20c5 d 1db71064
+20c5 20c5 s 	db	01dh,0b7h,010h,064h
+20c9 20c9 d 6ab020f2
+20c9 20c9 s 	db	06ah,0b0h,020h,0f2h
+20cd 20cd d f3b97148
+20cd 20cd s 	db	0f3h,0b9h,071h,048h
+20d1 20d1 d 84be41de
+20d1 20d1 s 	db	084h,0beh,041h,0deh
+20d5 20d5 d 1adad47d
+20d5 20d5 s 	db	01ah,0dah,0d4h,07dh
+20d9 20d9 d 6ddde4eb
+20d9 20d9 s 	db	06dh,0ddh,0e4h,0ebh
+20dd 20dd d f4d4b551
+20dd 20dd s 	db	0f4h,0d4h,0b5h,051h
+20e1 20e1 d 83d385c7
+20e1 20e1 s 	db	083h,0d3h,085h,0c7h
+20e5 20e5 d 136c9856
+20e5 20e5 s 	db	013h,06ch,098h,056h
+20e9 20e9 d 646ba8c0
+20e9 20e9 s 	db	064h,06bh,0a8h,0c0h
+20ed 20ed d fd62f97a
+20ed 20ed s 	db	0fdh,062h,0f9h,07ah
+20f1 20f1 d 8a65c9ec
+20f1 20f1 s 	db	08ah,065h,0c9h,0ech
+20f5 20f5 d 14015c4f
+20f5 20f5 s 	db	014h,001h,05ch,04fh
+20f9 20f9 d 63066cd9
+20f9 20f9 s 	db	063h,006h,06ch,0d9h
+20fd 20fd d fa0f3d63
+20fd 20fd s 	db	0fah,00fh,03dh,063h
+2101 2101 d 8d080df5
+2101 2101 s 	db	08dh,008h,00dh,0f5h
+2105 2105 d 3b6e20c8
+2105 2105 s 	db	03bh,06eh,020h,0c8h
+2109 2109 d 4c69105e
+2109 2109 s 	db	04ch,069h,010h,05eh
+210d 210d d d56041e4
+210d 210d s 	db	0d5h,060h,041h,0e4h
+2111 2111 d a2677172
+2111 2111 s 	db	0a2h,067h,071h,072h
+2115 2115 d 3c03e4d1
+2115 2115 s 	db	03ch,003h,0e4h,0d1h
+2119 2119 d 4b04d447
+2119 2119 s 	db	04bh,004h,0d4h,047h
+211d 211d d d20d85fd
+211d 211d s 	db	0d2h,00dh,085h,0fdh
+2121 2121 d a50ab56b
+2121 2121 s 	db	0a5h,00ah,0b5h,06bh
+2125 2125 d 35b5a8fa
+2125 2125 s 	db	035h,0b5h,0a8h,0fah
+2129 2129 d 42b2986c
+2129 2129 s 	db	042h,0b2h,098h,06ch
+212d 212d d dbbbc9d6
+212d 212d s 	db	0dbh,0bbh,0c9h,0d6h
+2131 2131 d acbcf940
+2131 2131 s 	db	0ach,0bch,0f9h,040h
+2135 2135 d 32d86ce3
+2135 2135 s 	db	032h,0d8h,06ch,0e3h
+2139 2139 d 45df5c75
+2139 2139 s 	db	045h,0dfh,05ch,075h
+213d 213d d dcd60dcf
+213d 213d s 	db	0dch,0d6h,00dh,0cfh
+2141 2141 d abd13d59
+2141 2141 s 	db	0abh,0d1h,03dh,059h
+2145 2145 d 26d930ac
+2145 2145 s 	db	026h,0d9h,030h,0ach
+2149 2149 d 51de003a
+2149 2149 s 	db	051h,0deh,000h,03ah
+214d 214d d c8d75180
+214d 214d s 	db	0c8h,0d7h,051h,080h
+2151 2151 d bfd06116
+2151 2151 s 	db	0bfh,0d0h,061h,016h
+2155 2155 d 21b4f4b5
+2155 2155 s 	db	021h,0b4h,0f4h,0b5h
+2159 2159 d 56b3c423
+2159 2159 s 	db	056h,0b3h,0c4h,023h
+215d 215d d cfba9599
+215d 215d s 	db	0cfh,0bah,095h,099h
+2161 2161 d b8bda50f
+2161 2161 s 	db	0b8h,0bdh,0a5h,00fh
+2165 2165 d 2802b89e
+2165 2165 s 	db	028h,002h,0b8h,09eh
+2169 2169 d 5f058808
+2169 2169 s 	db	05fh,005h,088h,008h
+216d 216d d c60cd9b2
+216d 216d s 	db	0c6h,00ch,0d9h,0b2h
+2171 2171 d b10be924
+2171 2171 s 	db	0b1h,00bh,0e9h,024h
+2175 2175 d 2f6f7c87
+2175 2175 s 	db	02fh,06fh,07ch,087h
+2179 2179 d 58684c11
+2179 2179 s 	db	058h,068h,04ch,011h
+217d 217d d c1611dab
+217d 217d s 	db	0c1h,061h,01dh,0abh
+2181 2181 d b6662d3d
+2181 2181 s 	db	0b6h,066h,02dh,03dh
+2185 2185 d 76dc4190
+2185 2185 s 	db	076h,0dch,041h,090h
+2189 2189 d 01db7106
+2189 2189 s 	db	001h,0dbh,071h,006h
+218d 218d d 98d220bc
+218d 218d s 	db	098h,0d2h,020h,0bch
+2191 2191 d efd5102a
+2191 2191 s 	db	0efh,0d5h,010h,02ah
+2195 2195 d 71b18589
+2195 2195 s 	db	071h,0b1h,085h,089h
+2199 2199 d 06b6b51f
+2199 2199 s 	db	006h,0b6h,0b5h,01fh
+219d 219d d 9fbfe4a5
+219d 219d s 	db	09fh,0bfh,0e4h,0a5h
+21a1 21a1 d e8b8d433
+21a1 21a1 s 	db	0e8h,0b8h,0d4h,033h
+21a5 21a5 d 7807c9a2
+21a5 21a5 s 	db	078h,007h,0c9h,0a2h
+21a9 21a9 d 0f00f934
+21a9 21a9 s 	db	00fh,000h,0f9h,034h
+21ad 21ad d 9609a88e
+21ad 21ad s 	db	096h,009h,0a8h,08eh
+21b1 21b1 d e10e9818
+21b1 21b1 s 	db	0e1h,00eh,098h,018h
+21b5 21b5 d 7f6a0dbb
+21b5 21b5 s 	db	07fh,06ah,00dh,0bbh
+21b9 21b9 d 086d3d2d
+21b9 21b9 s 	db	008h,06dh,03dh,02dh
+21bd 21bd d 91646c97
+21bd 21bd s 	db	091h,064h,06ch,097h
+21c1 21c1 d e6635c01
+21c1 21c1 s 	db	0e6h,063h,05ch,001h
+21c5 21c5 d 6b6b51f4
+21c5 21c5 s 	db	06bh,06bh,051h,0f4h
+21c9 21c9 d 1c6c6162
+21c9 21c9 s 	db	01ch,06ch,061h,062h
+21cd 21cd d 856530d8
+21cd 21cd s 	db	085h,065h,030h,0d8h
+21d1 21d1 d f262004e
+21d1 21d1 s 	db	0f2h,062h,000h,04eh
+21d5 21d5 d 6c0695ed
+21d5 21d5 s 	db	06ch,006h,095h,0edh
+21d9 21d9 d 1b01a57b
+21d9 21d9 s 	db	01bh,001h,0a5h,07bh
+21dd 21dd d 8208f4c1
+21dd 21dd s 	db	082h,008h,0f4h,0c1h
+21e1 21e1 d f50fc457
+21e1 21e1 s 	db	0f5h,00fh,0c4h,057h
+21e5 21e5 d 65b0d9c6
+21e5 21e5 s 	db	065h,0b0h,0d9h,0c6h
+21e9 21e9 d 12b7e950
+21e9 21e9 s 	db	012h,0b7h,0e9h,050h
+21ed 21ed d 8bbeb8ea
+21ed 21ed s 	db	08bh,0beh,0b8h,0eah
+21f1 21f1 d fcb9887c
+21f1 21f1 s 	db	0fch,0b9h,088h,07ch
+21f5 21f5 d 62dd1ddf
+21f5 21f5 s 	db	062h,0ddh,01dh,0dfh
+21f9 21f9 d 15da2d49
+21f9 21f9 s 	db	015h,0dah,02dh,049h
+21fd 21fd d 8cd37cf3
+21fd 21fd s 	db	08ch,0d3h,07ch,0f3h
+2201 2201 d fbd44c65
+2201 2201 s 	db	0fbh,0d4h,04ch,065h
+2205 2205 d 4db26158
+2205 2205 s 	db	04dh,0b2h,061h,058h
+2209 2209 d 3ab551ce
+2209 2209 s 	db	03ah,0b5h,051h,0ceh
+220d 220d d a3bc0074
+220d 220d s 	db	0a3h,0bch,000h,074h
+2211 2211 d d4bb30e2
+2211 2211 s 	db	0d4h,0bbh,030h,0e2h
+2215 2215 d 4adfa541
+2215 2215 s 	db	04ah,0dfh,0a5h,041h
+2219 2219 d 3dd895d7
+2219 2219 s 	db	03dh,0d8h,095h,0d7h
+221d 221d d a4d1c46d
+221d 221d s 	db	0a4h,0d1h,0c4h,06dh
+2221 2221 d d3d6f4fb
+2221 2221 s 	db	0d3h,0d6h,0f4h,0fbh
+2225 2225 d 4369e96a
+2225 2225 s 	db	043h,069h,0e9h,06ah
+2229 2229 d 346ed9fc
+2229 2229 s 	db	034h,06eh,0d9h,0fch
+222d 222d d ad678846
+222d 222d s 	db	0adh,067h,088h,046h
+2231 2231 d da60b8d0
+2231 2231 s 	db	0dah,060h,0b8h,0d0h
+2235 2235 d 44042d73
+2235 2235 s 	db	044h,004h,02dh,073h
+2239 2239 d 33031de5
+2239 2239 s 	db	033h,003h,01dh,0e5h
+223d 223d d aa0a4c5f
+223d 223d s 	db	0aah,00ah,04ch,05fh
+2241 2241 d dd0d7cc9
+2241 2241 s 	db	0ddh,00dh,07ch,0c9h
+2245 2245 d 5005713c
+2245 2245 s 	db	050h,005h,071h,03ch
+2249 2249 d 270241aa
+2249 2249 s 	db	027h,002h,041h,0aah
+224d 224d d be0b1010
+224d 224d s 	db	0beh,00bh,010h,010h
+2251 2251 d c90c2086
+2251 2251 s 	db	0c9h,00ch,020h,086h
+2255 2255 d 5768b525
+2255 2255 s 	db	057h,068h,0b5h,025h
+2259 2259 d 206f85b3
+2259 2259 s 	db	020h,06fh,085h,0b3h
+225d 225d d b966d409
+225d 225d s 	db	0b9h,066h,0d4h,009h
+2261 2261 d ce61e49f
+2261 2261 s 	db	0ceh,061h,0e4h,09fh
+2265 2265 d 5edef90e
+2265 2265 s 	db	05eh,0deh,0f9h,00eh
+2269 2269 d 29d9c998
+2269 2269 s 	db	029h,0d9h,0c9h,098h
+226d 226d d b0d09822
+226d 226d s 	db	0b0h,0d0h,098h,022h
+2271 2271 d c7d7a8b4
+2271 2271 s 	db	0c7h,0d7h,0a8h,0b4h
+2275 2275 d 59b33d17
+2275 2275 s 	db	059h,0b3h,03dh,017h
+2279 2279 d 2eb40d81
+2279 2279 s 	db	02eh,0b4h,00dh,081h
+227d 227d d b7bd5c3b
+227d 227d s 	db	0b7h,0bdh,05ch,03bh
+2281 2281 d c0ba6cad
+2281 2281 s 	db	0c0h,0bah,06ch,0adh
+2285 2285 d edb88320
+2285 2285 s 	db	0edh,0b8h,083h,020h
+2289 2289 d 9abfb3b6
+2289 2289 s 	db	09ah,0bfh,0b3h,0b6h
+228d 228d d 03b6e20c
+228d 228d s 	db	003h,0b6h,0e2h,00ch
+2291 2291 d 74b1d29a
+2291 2291 s 	db	074h,0b1h,0d2h,09ah
+2295 2295 d ead54739
+2295 2295 s 	db	0eah,0d5h,047h,039h
+2299 2299 d 9dd277af
+2299 2299 s 	db	09dh,0d2h,077h,0afh
+229d 229d d 04db2615
+229d 229d s 	db	004h,0dbh,026h,015h
+22a1 22a1 d 73dc1683
+22a1 22a1 s 	db	073h,0dch,016h,083h
+22a5 22a5 d e3630b12
+22a5 22a5 s 	db	0e3h,063h,00bh,012h
+22a9 22a9 d 94643b84
+22a9 22a9 s 	db	094h,064h,03bh,084h
+22ad 22ad d 0d6d6a3e
+22ad 22ad s 	db	00dh,06dh,06ah,03eh
+22b1 22b1 d 7a6a5aa8
+22b1 22b1 s 	db	07ah,06ah,05ah,0a8h
+22b5 22b5 d e40ecf0b
+22b5 22b5 s 	db	0e4h,00eh,0cfh,00bh
+22b9 22b9 d 9309ff9d
+22b9 22b9 s 	db	093h,009h,0ffh,09dh
+22bd 22bd d 0a00ae27
+22bd 22bd s 	db	00ah,000h,0aeh,027h
+22c1 22c1 d 7d079eb1
+22c1 22c1 s 	db	07dh,007h,09eh,0b1h
+22c5 22c5 d f00f9344
+22c5 22c5 s 	db	0f0h,00fh,093h,044h
+22c9 22c9 d 8708a3d2
+22c9 22c9 s 	db	087h,008h,0a3h,0d2h
+22cd 22cd d 1e01f268
+22cd 22cd s 	db	01eh,001h,0f2h,068h
+22d1 22d1 d 6906c2fe
+22d1 22d1 s 	db	069h,006h,0c2h,0feh
+22d5 22d5 d f762575d
+22d5 22d5 s 	db	0f7h,062h,057h,05dh
+22d9 22d9 d 806567cb
+22d9 22d9 s 	db	080h,065h,067h,0cbh
+22dd 22dd d 196c3671
+22dd 22dd s 	db	019h,06ch,036h,071h
+22e1 22e1 d 6e6b06e7
+22e1 22e1 s 	db	06eh,06bh,006h,0e7h
+22e5 22e5 d fed41b76
+22e5 22e5 s 	db	0feh,0d4h,01bh,076h
+22e9 22e9 d 89d32be0
+22e9 22e9 s 	db	089h,0d3h,02bh,0e0h
+22ed 22ed d 10da7a5a
+22ed 22ed s 	db	010h,0dah,07ah,05ah
+22f1 22f1 d 67dd4acc
+22f1 22f1 s 	db	067h,0ddh,04ah,0cch
+22f5 22f5 d f9b9df6f
+22f5 22f5 s 	db	0f9h,0b9h,0dfh,06fh
+22f9 22f9 d 8ebeeff9
+22f9 22f9 s 	db	08eh,0beh,0efh,0f9h
+22fd 22fd d 17b7be43
+22fd 22fd s 	db	017h,0b7h,0beh,043h
+2301 2301 d 60b08ed5
+2301 2301 s 	db	060h,0b0h,08eh,0d5h
+2305 2305 d d6d6a3e8
+2305 2305 s 	db	0d6h,0d6h,0a3h,0e8h
+2309 2309 d a1d1937e
+2309 2309 s 	db	0a1h,0d1h,093h,07eh
+230d 230d d 38d8c2c4
+230d 230d s 	db	038h,0d8h,0c2h,0c4h
+2311 2311 d 4fdff252
+2311 2311 s 	db	04fh,0dfh,0f2h,052h
+2315 2315 d d1bb67f1
+2315 2315 s 	db	0d1h,0bbh,067h,0f1h
+2319 2319 d a6bc5767
+2319 2319 s 	db	0a6h,0bch,057h,067h
+231d 231d d 3fb506dd
+231d 231d s 	db	03fh,0b5h,006h,0ddh
+2321 2321 d 48b2364b
+2321 2321 s 	db	048h,0b2h,036h,04bh
+2325 2325 d d80d2bda
+2325 2325 s 	db	0d8h,00dh,02bh,0dah
+2329 2329 d af0a1b4c
+2329 2329 s 	db	0afh,00ah,01bh,04ch
+232d 232d d 36034af6
+232d 232d s 	db	036h,003h,04ah,0f6h
+2331 2331 d 41047a60
+2331 2331 s 	db	041h,004h,07ah,060h
+2335 2335 d df60efc3
+2335 2335 s 	db	0dfh,060h,0efh,0c3h
+2339 2339 d a867df55
+2339 2339 s 	db	0a8h,067h,0dfh,055h
+233d 233d d 316e8eef
+233d 233d s 	db	031h,06eh,08eh,0efh
+2341 2341 d 4669be79
+2341 2341 s 	db	046h,069h,0beh,079h
+2345 2345 d cb61b38c
+2345 2345 s 	db	0cbh,061h,0b3h,08ch
+2349 2349 d bc66831a
+2349 2349 s 	db	0bch,066h,083h,01ah
+234d 234d d 256fd2a0
+234d 234d s 	db	025h,06fh,0d2h,0a0h
+2351 2351 d 5268e236
+2351 2351 s 	db	052h,068h,0e2h,036h
+2355 2355 d cc0c7795
+2355 2355 s 	db	0cch,00ch,077h,095h
+2359 2359 d bb0b4703
+2359 2359 s 	db	0bbh,00bh,047h,003h
+235d 235d d 220216b9
+235d 235d s 	db	022h,002h,016h,0b9h
+2361 2361 d 5505262f
+2361 2361 s 	db	055h,005h,026h,02fh
+2365 2365 d c5ba3bbe
+2365 2365 s 	db	0c5h,0bah,03bh,0beh
+2369 2369 d b2bd0b28
+2369 2369 s 	db	0b2h,0bdh,00bh,028h
+236d 236d d 2bb45a92
+236d 236d s 	db	02bh,0b4h,05ah,092h
+2371 2371 d 5cb36a04
+2371 2371 s 	db	05ch,0b3h,06ah,004h
+2375 2375 d c2d7ffa7
+2375 2375 s 	db	0c2h,0d7h,0ffh,0a7h
+2379 2379 d b5d0cf31
+2379 2379 s 	db	0b5h,0d0h,0cfh,031h
+237d 237d d 2cd99e8b
+237d 237d s 	db	02ch,0d9h,09eh,08bh
+2381 2381 d 5bdeae1d
+2381 2381 s 	db	05bh,0deh,0aeh,01dh
+2385 2385 d 9b64c2b0
+2385 2385 s 	db	09bh,064h,0c2h,0b0h
+2389 2389 d ec63f226
+2389 2389 s 	db	0ech,063h,0f2h,026h
+238d 238d d 756aa39c
+238d 238d s 	db	075h,06ah,0a3h,09ch
+2391 2391 d 026d930a
+2391 2391 s 	db	002h,06dh,093h,00ah
+2395 2395 d 9c0906a9
+2395 2395 s 	db	09ch,009h,006h,0a9h
+2399 2399 d eb0e363f
+2399 2399 s 	db	0ebh,00eh,036h,03fh
+239d 239d d 72076785
+239d 239d s 	db	072h,007h,067h,085h
+23a1 23a1 d 05005713
+23a1 23a1 s 	db	005h,000h,057h,013h
+23a5 23a5 d 95bf4a82
+23a5 23a5 s 	db	095h,0bfh,04ah,082h
+23a9 23a9 d e2b87a14
+23a9 23a9 s 	db	0e2h,0b8h,07ah,014h
+23ad 23ad d 7bb12bae
+23ad 23ad s 	db	07bh,0b1h,02bh,0aeh
+23b1 23b1 d 0cb61b38
+23b1 23b1 s 	db	00ch,0b6h,01bh,038h
+23b5 23b5 d 92d28e9b
+23b5 23b5 s 	db	092h,0d2h,08eh,09bh
+23b9 23b9 d e5d5be0d
+23b9 23b9 s 	db	0e5h,0d5h,0beh,00dh
+23bd 23bd d 7cdcefb7
+23bd 23bd s 	db	07ch,0dch,0efh,0b7h
+23c1 23c1 d 0bdbdf21
+23c1 23c1 s 	db	00bh,0dbh,0dfh,021h
+23c5 23c5 d 86d3d2d4
+23c5 23c5 s 	db	086h,0d3h,0d2h,0d4h
+23c9 23c9 d f1d4e242
+23c9 23c9 s 	db	0f1h,0d4h,0e2h,042h
+23cd 23cd d 68ddb3f8
+23cd 23cd s 	db	068h,0ddh,0b3h,0f8h
+23d1 23d1 d 1fda836e
+23d1 23d1 s 	db	01fh,0dah,083h,06eh
+23d5 23d5 d 81be16cd
+23d5 23d5 s 	db	081h,0beh,016h,0cdh
+23d9 23d9 d f6b9265b
+23d9 23d9 s 	db	0f6h,0b9h,026h,05bh
+23dd 23dd d 6fb077e1
+23dd 23dd s 	db	06fh,0b0h,077h,0e1h
+23e1 23e1 d 18b74777
+23e1 23e1 s 	db	018h,0b7h,047h,077h
+23e5 23e5 d 88085ae6
+23e5 23e5 s 	db	088h,008h,05ah,0e6h
+23e9 23e9 d ff0f6a70
+23e9 23e9 s 	db	0ffh,00fh,06ah,070h
+23ed 23ed d 66063bca
+23ed 23ed s 	db	066h,006h,03bh,0cah
+23f1 23f1 d 11010b5c
+23f1 23f1 s 	db	011h,001h,00bh,05ch
+23f5 23f5 d 8f659eff
+23f5 23f5 s 	db	08fh,065h,09eh,0ffh
+23f9 23f9 d f862ae69
+23f9 23f9 s 	db	0f8h,062h,0aeh,069h
+23fd 23fd d 616bffd3
+23fd 23fd s 	db	061h,06bh,0ffh,0d3h
+2401 2401 d 166ccf45
+2401 2401 s 	db	016h,06ch,0cfh,045h
+2405 2405 d a00ae278
+2405 2405 s 	db	0a0h,00ah,0e2h,078h
+2409 2409 d d70dd2ee
+2409 2409 s 	db	0d7h,00dh,0d2h,0eeh
+240d 240d d 4e048354
+240d 240d s 	db	04eh,004h,083h,054h
+2411 2411 d 3903b3c2
+2411 2411 s 	db	039h,003h,0b3h,0c2h
+2415 2415 d a7672661
+2415 2415 s 	db	0a7h,067h,026h,061h
+2419 2419 d d06016f7
+2419 2419 s 	db	0d0h,060h,016h,0f7h
+241d 241d d 4969474d
+241d 241d s 	db	049h,069h,047h,04dh
+2421 2421 d 3e6e77db
+2421 2421 s 	db	03eh,06eh,077h,0dbh
+2425 2425 d aed16a4a
+2425 2425 s 	db	0aeh,0d1h,06ah,04ah
+2429 2429 d d9d65adc
+2429 2429 s 	db	0d9h,0d6h,05ah,0dch
+242d 242d d 40df0b66
+242d 242d s 	db	040h,0dfh,00bh,066h
+2431 2431 d 37d83bf0
+2431 2431 s 	db	037h,0d8h,03bh,0f0h
+2435 2435 d a9bcae53
+2435 2435 s 	db	0a9h,0bch,0aeh,053h
+2439 2439 d debb9ec5
+2439 2439 s 	db	0deh,0bbh,09eh,0c5h
+243d 243d d 47b2cf7f
+243d 243d s 	db	047h,0b2h,0cfh,07fh
+2441 2441 d 30b5ffe9
+2441 2441 s 	db	030h,0b5h,0ffh,0e9h
+2445 2445 d bdbdf21c
+2445 2445 s 	db	0bdh,0bdh,0f2h,01ch
+2449 2449 d cabac28a
+2449 2449 s 	db	0cah,0bah,0c2h,08ah
+244d 244d d 53b39330
+244d 244d s 	db	053h,0b3h,093h,030h
+2451 2451 d 24b4a3a6
+2451 2451 s 	db	024h,0b4h,0a3h,0a6h
+2455 2455 d bad03605
+2455 2455 s 	db	0bah,0d0h,036h,005h
+2459 2459 d cdd70693
+2459 2459 s 	db	0cdh,0d7h,006h,093h
+245d 245d d 54de5729
+245d 245d s 	db	054h,0deh,057h,029h
+2461 2461 d 23d967bf
+2461 2461 s 	db	023h,0d9h,067h,0bfh
+2465 2465 d b3667a2e
+2465 2465 s 	db	0b3h,066h,07ah,02eh
+2469 2469 d c4614ab8
+2469 2469 s 	db	0c4h,061h,04ah,0b8h
+246d 246d d 5d681b02
+246d 246d s 	db	05dh,068h,01bh,002h
+2471 2471 d 2a6f2b94
+2471 2471 s 	db	02ah,06fh,02bh,094h
+2475 2475 d b40bbe37
+2475 2475 s 	db	0b4h,00bh,0beh,037h
+2479 2479 d c30c8ea1
+2479 2479 s 	db	0c3h,00ch,08eh,0a1h
+247d 247d d 5a05df1b
+247d 247d s 	db	05ah,005h,0dfh,01bh
+2481 2481 d 2d02ef8d
+2481 2481 s 	db	02dh,002h,0efh,08dh
+2485 2485 s 
+2041 a cce
+1700 a lda
+1d35 a tlp
+1f50 a iut
+1cf0 a stt
+1e1a a ncb1
+175f a ldd1
+17be a ldd2
+076a a cpd1
+0ff3 a ld161
+181d a ldi1
+187c a ldi2
+1052 a ld162
+07c9 a cpi1
+017b a ?n0000
+018f a ?n0001
+01a3 a ?n0002
+01da a ?n0003
+01ee a ?n0004
+0202 a ?n0005
+0239 a ?n0006
+024d a ?n0007
+0261 a ?n0008
+1fd4 a msg1
+1ff3 a msg2
+0298 a ?n0009
+02ac a ?n0010
+02c0 a ?n0011
+02f7 a ?n0012
+030b a ?n0013
+031f a ?n0014
+0356 a ?n0015
+036a a ?n0016
+037e a ?n0017
+03b5 a ?n0018
+03c9 a ?n0019
+03dd a ?n0020
+0414 a ?n0021
+0428 a ?n0022
+043c a ?n0023
+0473 a ?n0024
+0487 a ?n0025
+049b a ?n0026
+04d2 a ?n0027
+04e6 a ?n0028
+04fa a ?n0029
+02f6 a adc16
+0355 a add16
+0531 a ?n0030
+0545 a ?n0031
+0559 a ?n0032
+0590 a ?n0033
+05a4 a ?n0034
+05b8 a ?n0035
+05ef a ?n0036
+0603 a ?n0037
+0617 a ?n0038
+064e a ?n0039
+0662 a ?n0040
+0676 a ?n0041
+06ad a ?n0042
+06c1 a ?n0043
+06d5 a ?n0044
+05ee a bita
+070c a ?n0045
+0720 a ?n0046
+0734 a ?n0047
+076b a ?n0048
+077f a ?n0049
+012f a done
+0d5a a incm
+1fc8 a bdos
+0793 a ?n0050
+07ca a ?n0051
+07de a ?n0052
+07f2 a ?n0053
+0829 a ?n0054
+083d a ?n0055
+0851 a ?n0056
+0888 a ?n0057
+089c a ?n0058
+0e18 a incx
+08b0 a ?n0059
+08e6 a inca
+08e7 a ?n0060
+0103 a msbt
+06ac a bitx
+08fb a ?n0061
+0111 a spbt
+0122 a loop
+090f a ?n0062
+0945 a incb
+0946 a ?n0063
+095a a ?n0064
+096e a ?n0065
+09a5 a ?n0066
+09b9 a ?n0067
+09cd a ?n0068
+0a03 a incc
+0a04 a ?n0069
+0a18 a ?n0070
+1ab6 a srz80
+0a2c a ?n0071
+0a62 a incd
+0a63 a ?n0072
+0a77 a ?n0073
+0a8b a ?n0074
+13a9 a ld8bd
+0ac2 a ?n0075
+0ad6 a ?n0076
+0aea a ?n0077
+0b20 a ince
+0b21 a ?n0078
+0b35 a ?n0079
+0b49 a ?n0080
+0b7f a inch
+1b15 a srzx
+0b80 a ?n0081
+0b94 a ?n0082
+0ba8 a ?n0083
+0bdf a ?n0084
+0bf3 a ?n0085
+0c07 a ?n0086
+0c3e a ?n0087
+0c52 a ?n0088
+0c66 a ?n0089
+0c9d a ?n0090
+0cb1 a ?n0091
+0472 a alu8i
+0cc5 a ?n0092
+0cfb a incl
+0cfc a ?n0093
+0d10 a ?n0094
+0d24 a ?n0095
+0d5b a ?n0096
+0d6f a ?n0097
+0d83 a ?n0098
+04d1 a alu8r
+1642 a ld8rr
+0dba a ?n0099
+0dce a ?n0100
+0de2 a ?n0101
+0e19 a ?n0102
+058f a alu8x
+0e2d a ?n0103
+0e41 a ?n0104
+0e78 a ?n0105
+0e8c a ?n0106
+0ea0 a ?n0107
+0ed7 a ?n0108
+0eeb a ?n0109
+0eff a ?n0110
+0f36 a ?n0111
+0f4a a ?n0112
+0f5e a ?n0113
+0f95 a ?n0114
+09a4 a incbc
+0fa9 a ?n0115
+0fbd a ?n0116
+0ff4 a ?n0117
+0ac1 a incde
+1008 a ?n0118
+0828 a daaop
+101c a ?n0119
+1053 a ?n0120
+03b4 a add16x
+0413 a add16y
+1067 a ?n0121
+01d9 a ccfop
+107b a ?n0122
+10b1 a ld163
+1c91 a stabd
+0bde a inchl
+10b2 a ?n0123
+10c6 a ?n0124
+10da a ?n0125
+064d a bithl
+1110 a ld164
+1111 a ?n0126
+1125 a ?n0127
+1139 a ?n0128
+116f a ld165
+1170 a ?n0129
+14c6 a ld8ix1
+017a a scfop
+1525 a ld8ix2
+1584 a ld8ix3
+0887 a cplop
+0c3d a incix
+0c9c a inciy
+070b a bitz80
+193a a rldop
+0db9 a incsp
+0e77 a incxh
+0ed6 a incxl
+0f35 a incyh
+0f94 a incyl
+1184 a ?n0130
+1198 a ?n0131
+11ce a ld166
+11cf a ?n0132
+11e3 a ?n0133
+0113 a start
+11f7 a ?n0134
+122d a ld167
+1b74 a st8ix1
+1bd3 a st8ix2
+0138 a tests
+1c32 a st8ix3
+122e a ?n0135
+1242 a ?n0136
+1a57 a rotz80
+1256 a ?n0137
+128c a ld168
+128d a ?n0138
+12a1 a ?n0139
+12b5 a ?n0140
+12eb a ld16im
+12ec a ?n0141
+1300 a ?n0142
+1314 a ?n0143
+134a a ld16ix
+134b a ?n0144
+135f a ?n0145
+1373 a ?n0146
+13aa a ?n0147
+19f8 a rotxy
+13be a ?n0148
+13d2 a ?n0149
+1408 a ld8im
+1409 a ?n0150
+141d a ?n0151
+1431 a ?n0152
+1468 a ?n0153
+147c a ?n0154
+1490 a ?n0155
+14c7 a ?n0156
+14db a ?n0157
+14ef a ?n0158
+1526 a ?n0159
+153a a ?n0160
+154e a ?n0161
+1467 a ld8imx
+1585 a ?n0162
+1599 a ?n0163
+15ad a ?n0164
+15e4 a ?n0165
+15f8 a ?n0166
+160c a ?n0167
+1643 a ?n0168
+1657 a ?n0169
+166b a ?n0170
+16a2 a ?n0171
+16b6 a ?n0172
+15e3 a ld8ixy
+16ca a ?n0173
+16a1 a ld8rrx
+0530 a alu8rx
+1701 a ?n0174
+1715 a ?n0175
+0238 a scfccf
+0297 a ccfscf
+1729 a ?n0176
+1760 a ?n0177
+1774 a ?n0178
+1788 a ?n0179
+17bf a ?n0180
+17d3 a ?n0181
+17e7 a ?n0182
+181e a ?n0183
+1832 a ?n0184
+1846 a ?n0185
+187d a ?n0186
+1891 a ?n0187
+18a5 a ?n0188
+18db a negop
+18dc a ?n0189
+18f0 a ?n0190
+1904 a ?n0191
+193b a ?n0192
+194f a ?n0193
+1963 a ?n0194
+1999 a rot8080
+199a a ?n0195
+19ae a ?n0196
+19c2 a ?n0197
+19f9 a ?n0198
+1a0d a ?n0199
+1a21 a ?n0200
+1a58 a ?n0201
+1a6c a ?n0202
+0001 v msbthi
+1a80 a ?n0203
+1ab7 a ?n0204
+1acb a ?n0205
+1adf a ?n0206
+1b16 a ?n0207
+1b2a a ?n0208
+1b3e a ?n0209
+1b75 a ?n0210
+1b89 a ?n0211
+0003 v msbtlo
+1b9d a ?n0212
+1bd4 a ?n0213
+1be8 a ?n0214
+1bfc a ?n0215
+1c33 a ?n0216
+1c47 a ?n0217
+1c5b a ?n0218
+1c92 a ?n0219
+1ca6 a ?n0220
+1cba a ?n0221
+1f72 a flgmsk
+1d4c a tlp2
+1d49 a tlp1
+1f38 a test
+1e97 a count
+1ebb a shift
+1d88 a tlp3
+202e a cmpcrc
+2004 a okmsg
+1d7f a tlpok
+200b a ermsg1
+1fa7 a phex8
+2026 a ermsg2
+2081 a crcval
+2001 a crlf
+1dfe a cntbit
+1e22 a shfbit
+1dff a cntbyt
+1e23 a shfbyt
+1db2 a setup
+1dbb a subyte
+1ddc a subshf
+1dcb a subclp
+1df7 a substr
+1de8 a sbshf1
+1e3e a nsb1
+1e46 a clrmem
+1e66 a imlp
+1e67 a imlp1
+1e6d a imlp2
+1e8a a imlp3
+1ea3 a cntlp
+1eb6 a cntlp1
+1eb2 a cntend
+1ec7 a shflp
+1ee3 a shflp1
+1edf a shlpe
+1edd a shflp2
+1f9b a spsav
+1f99 a spat
+1f8b a msat
+1f97 v flgsat
+1f7d a tcrc
+2045 a updcrc
+1f9d a hexstr
+1fb9 a phex2
+1fac a ph8lp
+2036 a cclp
+2085 a crctab
+205e a crclp
+2077 a icrclp
+206d a initcrc
+1f10 a shifter
+1e01 a nxtcbit
+1ee8 a counter
+1e25 a nxtsbit
+1e57 a initmask

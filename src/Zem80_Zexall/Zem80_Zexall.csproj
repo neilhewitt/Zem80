@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Zem80_Core\Zem80_Core.csproj" />
+    <ProjectReference Include="..\Zem80_SimpleVM\Zem80_SimpleVM.csproj" />
+  </ItemGroup>
+
+</Project>

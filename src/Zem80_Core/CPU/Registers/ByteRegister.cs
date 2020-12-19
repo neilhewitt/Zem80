@@ -14,6 +14,7 @@ namespace Zem80.Core
         H = 4,
         L = 5,
         A = 7,
+        F = 8,
         IXh = 14,
         IXl = 15,
         IYh = 16,

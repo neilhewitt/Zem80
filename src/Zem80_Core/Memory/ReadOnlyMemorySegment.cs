@@ -11,12 +11,12 @@ namespace Zem80.Core.Memory
 
         public override void WriteByteAt(ushort address, byte value)
         {
-            throw new MemoryNotWritableException();
+            // do nothing
         }
 
         public override void WriteBytesAt(ushort offset, byte[] bytes)
         {
-            throw new MemoryNotWritableException();
+            // do nothing
         }
 
         new public void Clear()

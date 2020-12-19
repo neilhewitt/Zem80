@@ -15,7 +15,7 @@ namespace Zem80.Core.Instructions
         public Condition Condition { get; private set; }
         public byte SizeInBytes { get; private set; }
         public Timing Timing { get; private set; }
-        public bool IsIndexed => Prefix >= InstructionPrefix.DD && Prefix <= InstructionPrefix.FDCB;
+        public bool IsIndexed => Prefix >= InstructionPrefix.DDCB && Prefix <= InstructionPrefix.FDCB;
         public bool IsConditional => Condition != Condition.None;
         public IMicrocode Microcode { get; private set; }
         public InstructionElement Target { get; private set; }
@@ -50,7 +50,8 @@ namespace Zem80.Core.Instructions
             // this is expensive, but only done once at startup; binds the Instruction directly to the method instance implementing it
             if (microcode == null)
             {
-                Type microcodeType = Assembly.GetExecutingAssembly().GetTypes().SingleOrDefault(x => x.Name == mnemonic.Split(' ')[0]);
+                Type microcodeType = Assembly.GetExecutingAssembly().GetTypes().
+                    SingleOrDefault(x => x.Name == mnemonic.Split(' ')[0].TrimEnd('0','1','2','3','4','5','6','7')); // cater for duplicate instructions (NEG2 etc)
                 Microcode = (IMicrocode)Activator.CreateInstance(microcodeType);
             }
             else

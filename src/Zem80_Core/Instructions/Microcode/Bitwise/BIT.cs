@@ -25,7 +25,7 @@ namespace Zem80.Core.Instructions
             {
                 if (instruction.IsIndexed) cpu.Cycle.InternalOperationCycle(5);
                 value = instruction.MarshalSourceByte(data, cpu, out ushort address, out ByteRegister source);
-                byte valueXY = instruction.IsIndexed ? address.HighByte() : r.HL.HighByte();
+                byte valueXY = instruction.IsIndexed ? address.HighByte() : r.WZ.HighByte();
                 flags.X = (valueXY & 0x08) > 0; // copy bit 3
                 flags.Y = (valueXY & 0x20) > 0; // copy bit 5
             }
@@ -33,6 +33,13 @@ namespace Zem80.Core.Instructions
             bool set = value.GetBit(bitIndex);
 
             flags.Sign = bitIndex == 7 && set;
+            
+            if (register == ByteRegister.None)
+            {
+                flags.Y = bitIndex == 5 && set;
+                flags.X = bitIndex == 3 && set;
+            }
+            
             flags.Zero = !set;
             flags.ParityOverflow = flags.Zero;
             flags.HalfCarry = true;

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using ZexNext.Core;
@@ -91,7 +92,7 @@ namespace Zem80.Core.Tests
         [TestCase("ld (<bc,de>),a")]
         public void Zexall(string testName)
         {
-            while (_runner == null) ;
+            while (_runner == null) Thread.Sleep(0);
 
             IEnumerable<TestResult> results = _runner.Run(testName, ExecuteTestCycle, true);
             Assert.That(results.All(x => x.Passed));

@@ -123,6 +123,21 @@ namespace Zem80.SimpleVM
             }
         }
 
+        private byte ReadByte()
+        {
+            return 0;
+        }
+
+        private void WriteByte(byte input)
+        {
+            string s = input.ToString("X2");
+            Console.Write(s);
+            if (_outputLogPath != null)
+            {
+                File.AppendAllText(_outputLogPath, s);
+            }
+        }
+
         private void SignalWrite()
         {
         }
@@ -135,6 +150,7 @@ namespace Zem80.SimpleVM
         {
             _cpu = new Processor(frequencyInMHz: speed, enableFlagPrecalculation: false);
             _cpu.Ports[0].Connect(ReadChar, WriteChar, SignalRead, SignalWrite);
+            _cpu.Ports[1].Connect(ReadByte, WriteByte, SignalRead, SignalWrite);
         }
     }
 }

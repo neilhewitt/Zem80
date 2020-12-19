@@ -30,6 +30,8 @@ namespace Zem80.Core.Instructions
             byte valueXY = (byte)(a - b - (flags.HalfCarry ? 1 : 0));
             flags.X = (valueXY & 0x08) > 0; // copy bit 3
             flags.Y = (valueXY & 0x02) > 0; // copy bit 1 (note: non-standard behaviour)
+            
+            cpu.Registers.WZ++;
 
             return new ExecutionResult(package, flags);
         }

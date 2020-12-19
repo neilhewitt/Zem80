@@ -16,6 +16,7 @@ namespace Zem80.Core.Instructions
 
             cpu.Push(WordRegister.PC);
             cpu.Registers.PC = (address);
+            cpu.Registers.WZ = cpu.Registers.PC;
 
             return new ExecutionResult(package, cpu.Registers.Flags);
         }

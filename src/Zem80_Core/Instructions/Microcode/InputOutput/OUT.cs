@@ -17,7 +17,8 @@ namespace Zem80.Core.Instructions
             void @out(byte portNumber, ByteRegister dataRegister, bool bc)
             {
                 Port port = cpu.Ports[portNumber];
-                byte output = r[dataRegister];
+                byte output = 0;
+                if (dataRegister != ByteRegister.None) output = r[dataRegister];
                 port.SignalWrite();
                 port.WriteByte(output, bc);
             }
@@ -25,12 +26,14 @@ namespace Zem80.Core.Instructions
             if (instruction.Prefix == InstructionPrefix.Unprefixed)
             {
                 // OUT (n),A
+                r.WZ = (ushort)((r.A << 8) + data.Argument1 + 1);
                 @out(data.Argument1, ByteRegister.A, false);
             }
             else
             {
                 // OUT (C),r
                 @out(r.C, instruction.Source.AsByteRegister(), true);
+                r.WZ = (ushort)(r.BC + 1);
             }
 
             return new ExecutionResult(package, flags);

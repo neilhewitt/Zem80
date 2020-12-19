@@ -23,6 +23,7 @@ namespace Zem80.Core.Instructions
                 var addition = ALUOperations.Add(left, right, flags.Carry, true, flags);
                 r.HL = addition.Result;
                 flags = addition.Flags;
+                r.WZ = (ushort)(left + 1);
             }
             else
             {
