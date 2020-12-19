@@ -8,14 +8,18 @@ Most emulators written in most languages are not very representative of those la
 
 I'm trying, as far as is possible given the domain, to write idiomatic C# code, with fairly standard OO design principles. I'm aware that I will probably not get the best performance this way. But that's a problem I'll deal with if - and only if - it proves impossible to build an emulation core that can run Z80 software (CP/M, Spectrum, whatever) at a speed comparable to the original hardware.  
 
-The first module of the project will be the Z80 core emulator itself. After this I aim to write a very simple virtual machine to host the Z80 and run a test suite. Once this is done, the Z80 emulation should be usable for building logical emulations of real Z80-based machines. 
+I have now written a complete Z80 emulation including as much of the undocumented instructions and behaviour as I could find. ** It is not guaranteed to be error-free at this point, but it does pass all Zexall tests and the other instructions have been tested manually. **
 
-Beyond this, I *may* attempt to write a ZX Spectrum VM hosting the Z80.
+I have also added a basic ZX Spectrum emulation. ** This is experimental and is not fully working - you can boot the machine and start typing BASIC commands but it soon goes wrong. I am using this project as a test to find further bugs in the emulation. **
 
 ## Project status
-18/11/20 - It looks like there are still some bugs within the emulation, despite it passing the Zexall tests, as my attempts to emulate the basic ZX Spectrum have failed. I can get the VM to boot and the ROM runs to the point where the Sinclair copyright message is displayed, but I can't get the line editor to work and this suggests that somewhere either a flag is not being set correctly or an instruction is not working properly. I am currently integrating some new tests ('Zexall2') which should give the whole instruction set a bigger workout and hopefully I'll find where things are going wrong. 
+19/12/20 - I found a pretty major bug (the EX (SP),rr instruction was just not working) which was what was stopping the BASIC editor from working in the Spectrum VM. I also found a number of other small issues and have corrected them. The editor still does not work correctly but BASIC commands can be executed in immediate mode, so we're close... I may try to run some actual Spectrum games to see how bad things are. 
 
-**Given this, I don't think the emulator is ready to be used in real projects yet despite being V1.0. Emulating the Spectrum is not trivial but it should be straightforward and if I can't get this to work, chances are your project may not work either.**
+I also added further support for the undocumented X/Y aka 3/5 flags. This includes adding the WZ aka MEMPTR internal register, and all the cases that set this register, so that the X/Y flags for the BIT instruction work as per the Zilog chip implementation.
+
+** As before, be careful about using the Z80 emulation in other projects. It is not guaranteed to be working yet.**
+
+18/11/20 - It looks like there are still some bugs within the emulation, despite it passing the Zexall tests, as my attempts to emulate the basic ZX Spectrum have failed. I can get the VM to boot and the ROM runs to the point where the Sinclair copyright message is displayed, but I can't get the line editor to work and this suggests that somewhere either a flag is not being set correctly or an instruction is not working properly. I am currently integrating some new tests ('Zexall2') which should give the whole instruction set a bigger workout and hopefully I'll find where things are going wrong. 
 
 23/10/20 - Version 1.0 official. Made a few minor refactorings and added the ZexNext test framework (currently as a simple binary dependency - NuGet packaging will come) into the test suite. Note that these tests do take several seconds to run, so you should probably not run them for every single build. A full test suite and some documentation is my next project. 
 
