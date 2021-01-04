@@ -12,7 +12,7 @@ using ZexNext.Core;
 namespace Zem80.Core.Tests
 {
     [TestFixture]
-    public class ZexNextTests
+    public class ZexallTests
     {
         private Processor _cpu;
         private TestRunner _runner;
@@ -21,6 +21,8 @@ namespace Zem80.Core.Tests
         public void Setup()
         {
             _cpu = new Processor(enableFlagPrecalculation: false);
+
+            // set up the ZexNext test runner using the zipped test file (zexall.zip)
             Task.Run(() => _runner = new TestRunner(
                 (address, data) => _cpu.Memory.WriteBytesAt(address, data, true),
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\ZexNext\\zexall.zip")
@@ -90,11 +92,15 @@ namespace Zem80.Core.Tests
         [TestCase("ld (<ix,iy>+1),<h,l>")]
         [TestCase("ld (<ix,iy>+1),a")]
         [TestCase("ld (<bc,de>),a")]
-        public void Zexall(string testName)
+        public void Zexall(string testSetName)
         {
+            // this is basically ZexNext tests running inside NUnit tests as a host
+
+            // ensure the Visual Studio UI remains responsive while the tests are running
             while (_runner == null) Thread.Sleep(0);
 
-            IEnumerable<TestResult> results = _runner.Run(testName, ExecuteTestCycle, true);
+            // run the specified test set
+            IEnumerable<TestResult> results = _runner.Run(testSetName, ExecuteTestCycle, true);
             Assert.That(results.All(x => x.Passed));
         }
 

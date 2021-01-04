@@ -11,7 +11,8 @@
             WR (out): and this is for the opposite direction, a memory-write or IO-device-output
             M1 (out): machine cycle one, this pin is active during an opcode fetch machine cycle and can be used to differentiate an opcode fetch from a normal memory read operation
             WAIT (in): this pin is set to active by the system to inject a wait state into the CPU, the CPU will only check this pin during a read or write operation
-            INT (in): this pin is set to active by the system to initiate an interrupt- request cycle
+            INT (in): this pin is set to active by the system to initiate an interrupt request cycle
+            NMI (in): this pin is set to active by the system to initiate a non-maskable interrupt request cycle
             RESET (in): this pin is set to active by the system to perform a system reset 
         */
 
