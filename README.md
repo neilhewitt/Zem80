@@ -8,7 +8,7 @@ Most emulators written in most languages are not very representative of those la
 
 I'm trying, as far as is possible given the domain, to write idiomatic C# code, with fairly standard OO design principles. I'm aware that I will probably not get the best performance this way. But that's a problem I'll deal with if - and only if - it proves impossible to build an emulation core that can run Z80 software (CP/M, Spectrum, whatever) at a speed comparable to the original hardware.  
 
-I have now written a complete Z80 emulation including as much of the undocumented instructions and behaviour as I could find. **It is not guaranteed to be error-free at this point, but it does pass all Zexall tests and the other instructions have been tested manually. **
+I have now written a complete Z80 emulation including as much of the undocumented instructions and behaviour as I could find. **It is not guaranteed to be error-free at this point, but it does pass all Zexall tests and the other instructions have been tested manually.**
 
 I have also added a basic ZX Spectrum emulation. **This is experimental and is not fully working - you can boot the machine and start typing BASIC commands but it soon goes wrong. I am using this project as a test to find further bugs in the emulation.**
 
