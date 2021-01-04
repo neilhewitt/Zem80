@@ -11,13 +11,15 @@ namespace Zem80.Core
         public InstructionData Data { get; }
         public Flags Flags { get; }
         public ushort InstructionAddress { get; }
+        public bool SkipInterruptAfterExecution { get; }
 
-        public ExecutionResult(InstructionPackage package, Flags flags)
+        public ExecutionResult(InstructionPackage package, Flags flags, bool skipInterruptsAfterExecution = false)
         {
             InstructionAddress = package.InstructionAddress;
             Instruction = package.Instruction;
             Data = package.Data;
             Flags = flags;
+            SkipInterruptAfterExecution = skipInterruptsAfterExecution;
         }
     }
 }

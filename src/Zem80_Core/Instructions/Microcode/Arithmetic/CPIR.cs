@@ -43,7 +43,7 @@ namespace Zem80.Core.Instructions
                 cpu.Registers.WZ = (ushort)(cpu.Registers.PC + 1);
             }
 
-            return new ExecutionResult(package, flags);
+            return new ExecutionResult(package, flags, conditionTrue);
         }
 
         public CPIR()

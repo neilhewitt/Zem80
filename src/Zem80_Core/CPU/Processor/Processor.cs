@@ -92,6 +92,8 @@ namespace Zem80.Core
                 EndOnHalt = endOnHalt; // if set, will summarily end execution at the first HALT instruction. This is mostly for test / debug scenarios.
                 TimingMode = timingMode;
                 _emulatedTStates = 0;
+                IFF1 = false;
+                IFF2 = false;
 
                 Registers.PC = address; // ordinarily, execution will start at 0x0000, but this can be overridden
                 _beforeStart?.Invoke(null, null);
@@ -193,11 +195,13 @@ namespace Zem80.Core
         public void DisableInterrupts()
         {
             IFF1 = false;
+            IFF2 = false;
         }
 
         public void EnableInterrupts()
         {
             IFF1 = true;
+            IFF2 = true;
         }
 
         public void AddWaitCycles(int waitCycles)
@@ -256,10 +260,6 @@ namespace Zem80.Core
                 InstructionPackage package = null;
                 ushort pc = Registers.PC;
 
-                HandleNonMaskableInterrupts();
-                HandleMaskableInterrupts();
-
-                RefreshMemory();
                 if (!_halted)
                 {
                     // decode next instruction 
@@ -297,11 +297,11 @@ namespace Zem80.Core
                 // run the decoded instruction and deal with timing / ticks
                 ExecutionResult result = Execute(package);
                 _executingInstructionPackage = null;
-            }
 
-            void RefreshMemory()
-            {
-                Registers.R = (byte)(((Registers.R + 1) & 0x7F) | (Registers.R & 0x80)); // bits 0-6 of R are incremented as part of the memory refresh - bit 7 is preserved
+                HandleNonMaskableInterrupts();
+                HandleMaskableInterrupts();
+
+                Registers.R = (byte)(((Registers.R + 1) & 0x7F) | (Registers.R & 0x80)); // bits 0-6 of R are incremented as part of the memory refresh - bit 7 is preserved            
             }
         }
 
@@ -320,10 +320,8 @@ namespace Zem80.Core
             {
                 ushort wz = package.Instruction switch
                 {
-                    var i when i.Source == InstructionElement.AddressFromIXAndOffset => Registers.IX,
-                    var i when i.Source == InstructionElement.AddressFromIYAndOffset => Registers.IY,
-                    var i when i.Target == InstructionElement.AddressFromIXAndOffset => Registers.IX,
-                    var i when i.Target == InstructionElement.AddressFromIYAndOffset => Registers.IY,
+                    var i when i.Source.IsAddressFromIndexAndOffset() => Registers[i.Source.AsWordRegister()],
+                    var i when i.Target.IsAddressFromIndexAndOffset() => Registers[i.Target.AsWordRegister()],
                     _ => 0
                 };
                 wz = (ushort)(wz + package.Data.Argument1);
@@ -550,7 +548,7 @@ namespace Zem80.Core
                     Resume();
                 }
 
-                IFF2 = IFF1; // save flip-flop state ready for RETI/RETN
+                IFF2 = IFF1; // save IFF1 state ready for RETN
                 IFF1 = false; // disable maskable interrupts until RETI/RETN
 
                 Cycle.BeginInterruptRequestAcknowledgeCycle(NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);

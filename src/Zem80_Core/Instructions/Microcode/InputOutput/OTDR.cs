@@ -27,6 +27,7 @@ namespace Zem80.Core.Instructions
             flags.X = (output & 0x08) > 0; // copy bit 3
             flags.Y = (output & 0x20) > 0; // copy bit 5
 
+            if (r.B != 0) r.PC = package.InstructionAddress;
 
             return new ExecutionResult(package, flags);
         }

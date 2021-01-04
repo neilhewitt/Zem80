@@ -153,14 +153,17 @@ namespace ZXEm.VM
         {
             IEnumerable<SpectrumKey> keysPressed = SpectrumKeyboard.KeyPressMap.Where(x => x.Value == true).Select(x => x.Key);
 
-            if (keysPressed.Count() > 0)
+            lock (keysPressed)
             {
-                foreach (SpectrumKey key in keysPressed)
+                if (keysPressed.Count() > 0)
                 {
-                    var mapping = SpectrumKeyboard.GetKeyboardMappingFor(key);
-                    if (mapping.RowPort == rowSelector)
+                    foreach (SpectrumKey key in keysPressed)
                     {
-                        value = value.SetBit(mapping.BitIndex, false);
+                        var mapping = SpectrumKeyboard.GetKeyboardMappingFor(key);
+                        if (mapping.RowPort == rowSelector)
+                        {
+                            value = value.SetBit(mapping.BitIndex, false);
+                        }
                     }
                 }
             }

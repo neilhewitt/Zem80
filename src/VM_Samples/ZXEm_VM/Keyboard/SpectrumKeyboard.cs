@@ -82,7 +82,7 @@ namespace ZXEm.VM
             }
 
             // A to Z
-            for (int i = 'A'; i < 'Z'; i++)
+            for (int i = 'A'; i <= 'Z'; i++)
             {
                 string letter = Char.ToString((char)i);
                 _map.Add(letter, new[] { Enum.Parse<SpectrumKey>(letter) });
@@ -104,13 +104,7 @@ namespace ZXEm.VM
             _map.Add("DOWN", new[] { SpectrumKey.CAPSSHIFT, SpectrumKey.SIX }); // DOWN arrow
             _map.Add("UP", new[] { SpectrumKey.CAPSSHIFT, SpectrumKey.SEVEN }); // UP arrow
             _map.Add("RIGHT", new[] { SpectrumKey.CAPSSHIFT, SpectrumKey.EIGHT }); // RIGHT arrow
-
-            /*
-            !@#$%&'()_
-               <>   ;"
-                  -+=
-            :£?/*,.
-            */
+            _map.Add("OEMCOMMA", new[] { SpectrumKey.SYMBOLSHIFT, SpectrumKey.N }); // comma key (SYMBOLSHIFT+N)
         }
     }
 }

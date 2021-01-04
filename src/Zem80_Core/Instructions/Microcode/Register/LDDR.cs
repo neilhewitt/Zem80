@@ -31,9 +31,12 @@ namespace Zem80.Core.Instructions
                 cpu.Cycle.InternalOperationCycle(5);
                 r.WZ = (ushort)(r.PC + 1);
             }
-            else r.PC = package.InstructionAddress;
+            else
+            {
+                r.PC = package.InstructionAddress;
+            }
 
-            return new ExecutionResult(package, flags);
+            return new ExecutionResult(package, flags, conditionTrue);
         }
 
         public LDDR()
