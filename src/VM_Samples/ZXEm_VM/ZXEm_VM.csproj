@@ -10,10 +10,4 @@
     <ProjectReference Include="..\..\Zem80_Core\Zem80_Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="ROM\48.bin">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>
