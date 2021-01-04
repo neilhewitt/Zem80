@@ -299,7 +299,7 @@ namespace Zem80.Core
                 _executingInstructionPackage = null;
 
                 HandleNonMaskableInterrupts();
-                HandleMaskableInterrupts();
+                if (!result.SkipInterruptAfterExecution) HandleMaskableInterrupts();
 
                 Registers.R = (byte)(((Registers.R + 1) & 0x7F) | (Registers.R & 0x80)); // bits 0-6 of R are incremented as part of the memory refresh - bit 7 is preserved            
             }
