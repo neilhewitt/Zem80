@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 namespace Zem80.Core
 {
-    public class Processor : IDebugProcessor, ICycle
+    public class Processor : IDebugProcessor, IInstructionTiming
     {
         public const int MAX_MEMORY_SIZE_IN_BYTES = 65536;
 
@@ -24,17 +24,19 @@ namespace Zem80.Core
         private bool _halted;
         private HaltReason _reasonForLastHalt;
         private bool _suspendMachineCycles;
-        private long _emulatedTStates;
         private int _pendingWaitCycles;
         private ushort _topOfStack;
 
         private ExternalClock _clock;
         private bool _clockSemaphore;
         private Stopwatch _startStopTimer;
+        private long _emulatedTStates;
 
         private Thread _instructionCycle;
         private InstructionPackage _executingInstructionPackage;
         private Func<byte> _interruptCallback;
+        private bool _iff1;
+        private bool _iff2;
 
         private EventHandler<InstructionPackage> _beforeExecute;
         private EventHandler<ExecutionResult> _afterExecute;
@@ -47,7 +49,7 @@ namespace Zem80.Core
         private IList<ushort> _breakpoints = new List<ushort>();
         
         public IDebugProcessor Debug => this;
-        public ICycle Cycle => this;
+        public IInstructionTiming InstructionTiming => this;
        
         public bool EndOnHalt { get; private set; }
 
@@ -57,15 +59,13 @@ namespace Zem80.Core
         public ProcessorIO IO { get; private set; }
 
         public InterruptMode InterruptMode { get; private set; }
-        public bool InterruptsEnabled => IFF1;
+        public bool InterruptsEnabled => _iff1;
+        public bool InterruptsPaused => _iff2;
         public double FrequencyInMHz { get; private set; }
         public TimingMode TimingMode { get; private set; }
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; 
         public long EmulatedTStates => _emulatedTStates;
         public TimeSpan Elapsed => _startStopTimer.Elapsed;
-
-        internal bool IFF1 { get; set; }
-        internal bool IFF2 { get; set; }
 
         IEnumerable<ushort> IDebugProcessor.Breakpoints => _breakpoints;
 
@@ -92,8 +92,8 @@ namespace Zem80.Core
                 EndOnHalt = endOnHalt; // if set, will summarily end execution at the first HALT instruction. This is mostly for test / debug scenarios.
                 TimingMode = timingMode;
                 _emulatedTStates = 0;
-                IFF1 = false;
-                IFF2 = false;
+
+                DisableInterrupts();
 
                 Registers.PC = address; // ordinarily, execution will start at 0x0000, but this can be overridden
                 _beforeStart?.Invoke(null, null);
@@ -140,28 +140,28 @@ namespace Zem80.Core
         {
             ushort value = Registers[register];
             Registers.SP--;
-            Cycle.BeginStackWriteCycle(true, value.HighByte());
-            Memory.WriteByteAt(Registers.SP, value.HighByte(), true);
-            Cycle.EndStackWriteCycle();
+            InstructionTiming.BeginStackWriteCycle(true, value.HighByte());
+            Memory.Untimed.WriteByteAt(Registers.SP, value.HighByte());
+            InstructionTiming.EndStackWriteCycle();
 
             Registers.SP--;
-            Cycle.BeginStackWriteCycle(false, value.LowByte());
-            Memory.WriteByteAt(Registers.SP, value.LowByte(), true);
-            Cycle.EndStackWriteCycle();
+            InstructionTiming.BeginStackWriteCycle(false, value.LowByte());
+            Memory.Untimed.WriteByteAt(Registers.SP, value.LowByte());
+            InstructionTiming.EndStackWriteCycle();
         }
 
         public void Pop(WordRegister register)
         {
             byte high, low;
 
-            Cycle.BeginStackReadCycle();
-            low = Memory.ReadByteAt(Registers.SP, true);
-            Cycle.EndStackReadCycle(false, low);
+            InstructionTiming.BeginStackReadCycle();
+            low = Memory.Untimed.ReadByteAt(Registers.SP);
+            InstructionTiming.EndStackReadCycle(false, low);
             Registers.SP++;
 
-            Cycle.BeginStackReadCycle();
-            high = Memory.ReadByteAt(Registers.SP, true);
-            Cycle.EndStackReadCycle(true, high);
+            InstructionTiming.BeginStackReadCycle();
+            high = Memory.Untimed.ReadByteAt(Registers.SP);
+            InstructionTiming.EndStackReadCycle(true, high);
             Registers.SP++;
 
             ushort value = (low, high).ToWord();
@@ -170,7 +170,7 @@ namespace Zem80.Core
 
         public ushort Peek()
         {
-            return Memory.ReadWordAt(Registers.SP, true);
+            return Memory.Untimed.ReadWordAt(Registers.SP);
         }
 
         public void SetInterruptMode(InterruptMode mode)
@@ -194,14 +194,19 @@ namespace Zem80.Core
 
         public void DisableInterrupts()
         {
-            IFF1 = false;
-            IFF2 = false;
+            _iff1 = false;
+            _iff2 = false;
         }
 
         public void EnableInterrupts()
         {
-            IFF1 = true;
-            IFF2 = true;
+            _iff1 = true;
+            _iff2 = true;
+        }
+
+        public void RestoreInterruptsFromNMI()
+        {
+            _iff1 = _iff2;
         }
 
         public void AddWaitCycles(int waitCycles)
@@ -339,7 +344,7 @@ namespace Zem80.Core
         
         ExecutionResult IDebugProcessor.ExecuteDirect(byte[] opcode)
         {
-            Memory.WriteBytesAt(Registers.PC, opcode, true);
+            Memory.Untimed.WriteBytesAt(Registers.PC, opcode);
             InstructionPackage package = DecodeInstruction();
             if (package == null)
             {
@@ -369,7 +374,7 @@ namespace Zem80.Core
 
             if (b0 == 0xCB || b0 == 0xDD || b0 == 0xED || b0 == 0xFD) // was byte 0 a prefix code?
             {
-                b1 = Memory.ReadByteAt(Registers.PC, true); // peek ahead
+                b1 = Memory.Untimed.ReadByteAt(Registers.PC); // peek ahead
                 if ((b0 == 0xDD || b0 == 0xFD || b0 == 0xED) && (b1 == 0xDD || b1 == 0xFD || b1 == 0xED))
                 {
                     // sequences of 0xDD / 0xFD / 0xED either / or count as NOP until the final 0xDD / 0xFD / 0xED which is then the prefix byte
@@ -527,15 +532,15 @@ namespace Zem80.Core
 
         private byte FetchOpcodeByte()
         {
-            byte opcode = Memory.ReadByteAt(Registers.PC, true);
-            if (!_suspendMachineCycles) Cycle.OpcodeFetchCycle(Registers.PC, opcode);
+            byte opcode = Memory.Untimed.ReadByteAt(Registers.PC);
+            if (!_suspendMachineCycles) InstructionTiming.OpcodeFetchCycle(Registers.PC, opcode);
             return opcode;
         }
 
         private byte FetchOperandByte()
         {
-            byte operand = Memory.ReadByteAt(Registers.PC, true);
-            if (!_suspendMachineCycles) Cycle.MemoryReadCycle(Registers.PC, operand);
+            byte operand = Memory.Untimed.ReadByteAt(Registers.PC);
+            if (!_suspendMachineCycles) InstructionTiming.MemoryReadCycle(Registers.PC, operand);
             return operand;
         }
 
@@ -548,16 +553,16 @@ namespace Zem80.Core
                     Resume();
                 }
 
-                IFF2 = IFF1; // save IFF1 state ready for RETN
-                IFF1 = false; // disable maskable interrupts until RETI/RETN
+                _iff2 = _iff1; // save IFF1 state ready for RETN
+                _iff1 = false; // disable maskable interrupts until RETI/RETN
 
-                Cycle.BeginInterruptRequestAcknowledgeCycle(NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                InstructionTiming.BeginInterruptRequestAcknowledgeCycle(NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
 
                 Push(WordRegister.PC);
                 Registers.PC = 0x0066;
                 Registers.WZ = Registers.PC;
 
-                Cycle.EndInterruptRequestAcknowledgeCycle();
+                InstructionTiming.EndInterruptRequestAcknowledgeCycle();
             }
 
             IO.EndNMIState();
@@ -577,12 +582,10 @@ namespace Zem80.Core
                     Resume();
                 }
 
-                DisableInterrupts(); // we don't want any interrupts to our interrupt handler... (this is only an issue for IM0)
-
                 switch (InterruptMode)
                 {
                     case InterruptMode.IM0: // read instruction data from data bus in 1-4 opcode fetch cycles and execute resulting instruction - flags are set but PC is unaffected
-                        Cycle.BeginInterruptRequestAcknowledgeCycle(IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        InstructionTiming.BeginInterruptRequestAcknowledgeCycle(IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         InstructionPackage package = DecodeIM0Interrupt();
                         ushort pc = Registers.PC;
                         Push(WordRegister.PC);
@@ -592,7 +595,7 @@ namespace Zem80.Core
                         break;
 
                     case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
-                        Cycle.BeginInterruptRequestAcknowledgeCycle(IM1_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        InstructionTiming.BeginInterruptRequestAcknowledgeCycle(IM1_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         Push(WordRegister.PC);
                         Registers.PC = 0x0038;
                         Registers.WZ = Registers.PC;
@@ -600,15 +603,15 @@ namespace Zem80.Core
 
                     case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
                         _interruptCallback(); // device must populate data bus with low byte of address
-                        Cycle.BeginInterruptRequestAcknowledgeCycle(IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        InstructionTiming.BeginInterruptRequestAcknowledgeCycle(IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         Push(WordRegister.PC);
                         ushort address = (ushort)((Registers.I * 256) + IO.DATA_BUS);
-                        Registers.PC = Memory.ReadWordAt(address, false);
+                        Registers.PC = Memory.Timed.ReadWordAt(address);
                         Registers.WZ = Registers.PC;
                         break;
                 }
 
-                Cycle.EndInterruptRequestAcknowledgeCycle();
+                InstructionTiming.EndInterruptRequestAcknowledgeCycle();
             }
         }
 
@@ -621,7 +624,7 @@ namespace Zem80.Core
             // and fix up the program counter. Sneaky, eh?
 
             ushort address = (ushort)(Memory.SizeInBytes - 5);
-            byte[] lastFour = Memory.ReadBytesAt(address, 4, true);
+            byte[] lastFour = Memory.Untimed.ReadBytesAt(address, 4);
             ushort pc = Registers.PC;
             Registers.PC = address;
 
@@ -631,13 +634,13 @@ namespace Zem80.Core
             {
                 byte value = _interruptCallback();
                 IO.SetDataBusValue(value); // set this directly as there are no machine cycles currently
-                Memory.WriteByteAt((ushort)(address + i), value, true);
+                Memory.Untimed.WriteByteAt((ushort)(address + i), value);
             }
 
             InstructionPackage package = DecodeInstruction();
 
             Registers.PC = pc;
-            Memory.WriteBytesAt(address, lastFour, true);
+            Memory.Untimed.WriteBytesAt(address, lastFour);
             
             _suspendMachineCycles = false;
 
@@ -652,7 +655,7 @@ namespace Zem80.Core
         // Calling code can get at these methods using the Processor.Cycle property (or by casting, but don't do that, it's ugly).
 
         #region ICycle
-        void ICycle.OpcodeFetchCycle(ushort address, byte data)
+        void IInstructionTiming.OpcodeFetchCycle(ushort address, byte data)
         {
             IO.SetOpcodeFetchState(address);
             WaitForNextClockTick();
@@ -668,7 +671,7 @@ namespace Zem80.Core
             WaitForNextClockTick();
         }
 
-        void ICycle.MemoryReadCycle(ushort address, byte data)
+        void IInstructionTiming.MemoryReadCycle(ushort address, byte data)
         {
             IO.SetMemoryReadState(address);
             WaitForNextClockTick();
@@ -690,7 +693,7 @@ namespace Zem80.Core
             }
         }
 
-        void ICycle.MemoryWriteCycle(ushort address, byte data)
+        void IInstructionTiming.MemoryWriteCycle(ushort address, byte data)
         {
             IO.SetMemoryWriteState(address, data);
             WaitForNextClockTick();
@@ -711,14 +714,14 @@ namespace Zem80.Core
             }
         }
 
-        void ICycle.BeginStackReadCycle()
+        void IInstructionTiming.BeginStackReadCycle()
         {
             IO.SetMemoryReadState(Registers.SP);
             WaitForNextClockTick();
         }
 
 
-        void ICycle.EndStackReadCycle(bool highByte, byte data)
+        void IInstructionTiming.EndStackReadCycle(bool highByte, byte data)
         {
             IO.AddMemoryData(data);
             WaitForNextClockTick();
@@ -728,7 +731,7 @@ namespace Zem80.Core
             WaitForNextClockTick();
         }
 
-        void ICycle.BeginStackWriteCycle(bool highByte, byte data)
+        void IInstructionTiming.BeginStackWriteCycle(bool highByte, byte data)
         {
             IO.SetMemoryWriteState(Registers.SP, data);
             WaitForNextClockTick();
@@ -736,13 +739,13 @@ namespace Zem80.Core
             InsertWaitCycles();
         }
 
-        void ICycle.EndStackWriteCycle()
+        void IInstructionTiming.EndStackWriteCycle()
         {
             IO.EndMemoryWriteState();
             WaitForNextClockTick();
         }
 
-        void ICycle.BeginPortReadCycle(byte n, bool bc)
+        void IInstructionTiming.BeginPortReadCycle(byte n, bool bc)
         {
             ushort address = bc ? (Registers.C, Registers.B).ToWord() : (n, Registers.A).ToWord();
 
@@ -750,7 +753,7 @@ namespace Zem80.Core
             WaitForNextClockTick();
         }
 
-        void ICycle.CompletePortReadCycle(byte data)
+        void IInstructionTiming.EndPortReadCycle(byte data)
         {
             IO.AddPortReadData(data);
             WaitForNextClockTick();
@@ -761,7 +764,7 @@ namespace Zem80.Core
             WaitForNextClockTick();
         }
 
-        void ICycle.BeginPortWriteCycle(byte data, byte n, bool bc)
+        void IInstructionTiming.BeginPortWriteCycle(byte data, byte n, bool bc)
         {
             ushort address = bc ? (Registers.C, Registers.B).ToWord() : (n, Registers.A).ToWord();
 
@@ -769,7 +772,7 @@ namespace Zem80.Core
             WaitForNextClockTick();
         }
 
-        void ICycle.CompletePortWriteCycle()
+        void IInstructionTiming.EndPortWriteCycle()
         {
             WaitForNextClockTick();
             InsertWaitCycles();
@@ -779,7 +782,7 @@ namespace Zem80.Core
             WaitForNextClockTick();
         }
 
-        void ICycle.BeginInterruptRequestAcknowledgeCycle(int tStates)
+        void IInstructionTiming.BeginInterruptRequestAcknowledgeCycle(int tStates)
         {
             IO.SetInterruptState();
             for (int i = 0; i < tStates; i++)
@@ -788,12 +791,12 @@ namespace Zem80.Core
             }
         }
 
-        void ICycle.EndInterruptRequestAcknowledgeCycle()
+        void IInstructionTiming.EndInterruptRequestAcknowledgeCycle()
         {
             IO.EndInterruptState();
         }
 
-        void ICycle.InternalOperationCycle(int tStates)
+        void IInstructionTiming.InternalOperationCycle(int tStates)
         {
             for (int i = 0; i < tStates; i++)
             {
@@ -812,7 +815,6 @@ namespace Zem80.Core
             Memory.Initialise(this, map ?? new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES, true));
             IO = new ProcessorIO(this);
 
-            IFF1 = true;
             TimingMode = TimingMode.FastAndFurious;
             InterruptMode = InterruptMode.IM0;
 

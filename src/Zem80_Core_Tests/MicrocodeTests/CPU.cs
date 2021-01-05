@@ -33,11 +33,11 @@ namespace Zem80.Core.Tests.MicrocodeTests
             ushort valueAtSP = 0x2080;
 
             Registers.SP = sp;
-            CPU.Memory.WriteWordAt(sp, valueAtSP, true);
+            CPU.Memory.Untimed.WriteWordAt(sp, valueAtSP);
             Registers[wordRegister] = value;
 
             ExecuteInstruction($"EX (SP),{ wordRegister.ToString() }");
-            ushort newValueAtSP = CPU.Memory.ReadWordAt(sp, true);
+            ushort newValueAtSP = CPU.Memory.Untimed.ReadWordAt(sp);
 
             Assert.That(Registers[wordRegister] == valueAtSP && newValueAtSP == value);
         }

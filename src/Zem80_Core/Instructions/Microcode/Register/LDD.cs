@@ -13,8 +13,8 @@ namespace Zem80.Core.Instructions
             Flags flags = cpu.Registers.Flags;
             Registers r = cpu.Registers;
 
-            byte value = cpu.Memory.ReadByteAt(r.HL, false);
-            cpu.Memory.WriteByteAt(r.DE, value, false);
+            byte value = cpu.Memory.Timed.ReadByteAt(r.HL);
+            cpu.Memory.Timed.WriteByteAt(r.DE, value);
             r.HL--;
             r.DE--;
             r.BC--;

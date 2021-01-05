@@ -24,7 +24,7 @@ namespace Zem80.Core.Tests
 
             // set up the ZexNext test runner using the zipped test file (zexall.zip)
             Task.Run(() => _runner = new TestRunner(
-                (address, data) => _cpu.Memory.WriteBytesAt(address, data, true),
+                (address, data) => _cpu.Memory.Untimed.WriteBytesAt(address, data),
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\ZexallTests\\zexall.zip")
                 ));
         }
@@ -114,14 +114,14 @@ namespace Zem80.Core.Tests
             _cpu.Registers.IY = input.IY;
             _cpu.Registers.SP = input.SP;
             _cpu.Registers.PC = 0x1D42;
-            _cpu.Memory.WriteBytesAt(input.DataAddress, input.Data, true);
+            _cpu.Memory.Untimed.WriteBytesAt(input.DataAddress, input.Data);
 
             ExecutionResult result = _cpu.Debug.ExecuteDirect(input.Opcode);
 
             TestState afterExecution = new TestState(
             input.Opcode,
             input.Mnemonic,
-            _cpu.Memory.ReadBytesAt(input.DataAddress, 16, true),
+            _cpu.Memory.Untimed.ReadBytesAt(input.DataAddress, 16),
             _cpu.Registers.AF,
             _cpu.Registers.BC,
             _cpu.Registers.DE,

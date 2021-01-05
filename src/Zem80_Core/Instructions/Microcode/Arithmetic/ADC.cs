@@ -16,8 +16,8 @@ namespace Zem80.Core.Instructions
             if (instruction.TargetsWordRegister)
             {
                 ushort left = r.HL;
-                cpu.Cycle.InternalOperationCycle(4);
-                cpu.Cycle.InternalOperationCycle(3);
+                cpu.InstructionTiming.InternalOperationCycle(4);
+                cpu.InstructionTiming.InternalOperationCycle(3);
                 ushort right = instruction.MarshalSourceWord(data, cpu, out ushort address);
 
                 var addition = ALUOperations.Add(left, right, flags.Carry, true, flags);
@@ -28,7 +28,7 @@ namespace Zem80.Core.Instructions
             else
             {
                 byte left = r.A;
-                if (instruction.IsIndexed) cpu.Cycle.InternalOperationCycle(5);
+                if (instruction.IsIndexed) cpu.InstructionTiming.InternalOperationCycle(5);
                 byte right = instruction.MarshalSourceByte(data, cpu, out ushort address, out ByteRegister source);
 
                 var addition = ALUOperations.Add(left, right, flags.Carry);

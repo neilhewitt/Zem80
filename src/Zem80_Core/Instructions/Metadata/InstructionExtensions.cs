@@ -43,7 +43,7 @@ namespace Zem80.Core.Instructions
                         _ => r.HL
                     };
 
-                    value = cpu.Memory.ReadByteAt(address, false);
+                    value = cpu.Memory.Timed.ReadByteAt(address);
                 }
                 else
                 {
@@ -55,7 +55,7 @@ namespace Zem80.Core.Instructions
                         _ => r.HL
                     };
 
-                    value = cpu.Memory.ReadByteAt(address, false);
+                    value = cpu.Memory.Timed.ReadByteAt(address);
                 }
             }
 
@@ -88,7 +88,7 @@ namespace Zem80.Core.Instructions
                         _ => r.HL
                     };
 
-                    value = cpu.Memory.ReadByteAt(address, false);
+                    value = cpu.Memory.Timed.ReadByteAt(address);
                 }
             }
 

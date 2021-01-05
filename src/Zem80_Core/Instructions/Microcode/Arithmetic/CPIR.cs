@@ -14,7 +14,7 @@ namespace Zem80.Core.Instructions
 
             bool carry = flags.Carry;
             byte a = cpu.Registers.A;
-            byte b = cpu.Memory.ReadByteAt(cpu.Registers.HL, false);
+            byte b = cpu.Memory.Timed.ReadByteAt(cpu.Registers.HL);
 
             var compare = ALUOperations.Subtract(a, b, false);
             flags = compare.Flags;
@@ -34,7 +34,7 @@ namespace Zem80.Core.Instructions
             bool conditionTrue = (compare.Result == 0 || cpu.Registers.BC == 0);
             if (conditionTrue)
             {
-                cpu.Cycle.InternalOperationCycle(5);
+                cpu.InstructionTiming.InternalOperationCycle(5);
                 cpu.Registers.WZ++;
             }
             else

@@ -16,7 +16,7 @@ namespace Zem80.Core.Instructions
             byte left = r.A;
             byte right = instruction.MarshalSourceByte(data, cpu, out ushort address, out ByteRegister source);
 
-            if (instruction.IsIndexed) cpu.Cycle.InternalOperationCycle(5);
+            if (instruction.IsIndexed) cpu.InstructionTiming.InternalOperationCycle(5);
             var sub = ALUOperations.Subtract(left, right, false);
             r.A = sub.Result;
             flags = sub.Flags;

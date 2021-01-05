@@ -44,7 +44,7 @@ namespace ZXEm.VM
 
         public void LoadAndRun(string path, ushort address)
         {           
-            _cpu.Memory.WriteBytesAt(address, File.ReadAllBytes(path), true);
+            _cpu.Memory.Untimed.WriteBytesAt(address, File.ReadAllBytes(path));
             _cpu.Stop();
             _cpu.Start(address, timingMode: TimingMode.FastAndFurious);
         }
@@ -88,8 +88,8 @@ namespace ZXEm.VM
             // pick up at the next available tick and from the emulated Z80's perspective, 
             // no time has elapsed at all - this should be fine for most programs)
 
-            byte[] pixelBuffer = _cpu.Memory.ReadBytesAt(0x4000, 6144, true);
-            byte[] attributeBuffer = _cpu.Memory.ReadBytesAt(0x5800, 768, true);
+            byte[] pixelBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x4000, 6144);
+            byte[] attributeBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x5800, 768);
             _screen.Fill(pixelBuffer, attributeBuffer);
 
             // every FLASH_FRAME_RATE frames, we invert any attribute block that has FLASH set

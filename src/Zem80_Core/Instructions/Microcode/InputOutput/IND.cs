@@ -17,7 +17,7 @@ namespace Zem80.Core.Instructions
             Port port = cpu.Ports[r.C];
             port.SignalRead();
             byte input = port.ReadByte(true);
-            cpu.Memory.WriteByteAt(r.HL, input, false);
+            cpu.Memory.Timed.WriteByteAt(r.HL, input);
             r.HL--;
             r.WZ = r.BC;
             r.B--;

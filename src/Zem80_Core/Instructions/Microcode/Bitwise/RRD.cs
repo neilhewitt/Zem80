@@ -12,7 +12,7 @@ namespace Zem80.Core.Instructions
             InstructionData data = package.Data;
             Flags flags = cpu.Registers.Flags;
 
-            byte xHL = cpu.Memory.ReadByteAt(cpu.Registers.HL, false);
+            byte xHL = cpu.Memory.Timed.ReadByteAt(cpu.Registers.HL);
             byte a = cpu.Registers.A;
 
             // result = (HL) = LO: high-order bits of (HL) + HI: low-order bits of A
@@ -23,8 +23,8 @@ namespace Zem80.Core.Instructions
             xHL = xHL.SetLowNybble(xHL.GetHighNybble());
             xHL = xHL.SetHighNybble(lowA);
 
-            cpu.Cycle.InternalOperationCycle(4);
-            cpu.Memory.WriteByteAt(cpu.Registers.HL, xHL, false);
+            cpu.InstructionTiming.InternalOperationCycle(4);
+            cpu.Memory.Timed.WriteByteAt(cpu.Registers.HL, xHL);
             cpu.Registers.A = a;
 
             // bitwise flag lookup doesn't work for this instruction

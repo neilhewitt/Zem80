@@ -29,11 +29,11 @@ namespace Zem80.Core.Instructions
                     InstructionPrefix.FDCB => (ushort)(r.IY + offset),
                     _ => (ushort)0xFFFF
                 };
-                if (instruction.IsIndexed) cpu.Cycle.InternalOperationCycle(5);
+                if (instruction.IsIndexed) cpu.InstructionTiming.InternalOperationCycle(5);
                 
-                byte value = cpu.Memory.ReadByteAt(address, false);
+                byte value = cpu.Memory.Timed.ReadByteAt(address);
                 value = value.SetBit(bitIndex, true);
-                cpu.Memory.WriteByteAt(address, value, false);
+                cpu.Memory.Timed.WriteByteAt(address, value);
                 if (instruction.CopyResultTo != ByteRegister.None)
                 {
                     r[instruction.CopyResultTo.Value] = value;
