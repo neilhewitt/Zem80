@@ -3,5 +3,9 @@
     public interface IDebugRegisters
     {
         ushort AF { set; }
+        ushort AF_ { get; set; }
+        ushort BC_ { get; set; }
+        ushort DE_ { get; set; }
+        ushort HL_ { get; set; }
     }
 }

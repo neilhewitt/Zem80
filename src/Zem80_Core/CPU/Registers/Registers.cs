@@ -8,7 +8,6 @@ namespace Zem80.Core
     public class Registers : IDebugRegisters
     {
         private byte[] _registers;
-        private byte _offset = 0;
 
         private byte _accumulator;
         private byte _altAccumulator;
@@ -23,23 +22,28 @@ namespace Zem80.Core
         // 8-bit registers
         public byte A { get { return _accumulator; } set { _accumulator = value; } }
         public byte F { get { return _flags.Value; } } // flags register - shouldn't set F directly
-        public byte B { get { return _registers[_offset]; } set { _registers[_offset] = value; } }
-        public byte C { get { return _registers[_offset + 1]; } set { _registers[_offset + 1] = value; } }
-        public byte D { get { return _registers[_offset + 2]; } set { _registers[_offset + 2] = value; } }
-        public byte E { get { return _registers[_offset + 3]; } set { _registers[_offset + 3] = value; } }
-        public byte H { get { return _registers[_offset + 4]; } set { _registers[_offset + 4] = value; } }
-        public byte L { get { return _registers[_offset + 5]; } set { _registers[_offset + 5] = value; } }
+        public byte B { get { return _registers[0]; } set { _registers[0] = value; } }
+        public byte C { get { return _registers[1]; } set { _registers[1] = value; } }
+        public byte D { get { return _registers[2]; } set { _registers[2] = value; } }
+        public byte E { get { return _registers[3]; } set { _registers[3] = value; } }
+        public byte H { get { return _registers[4]; } set { _registers[4] = value; } }
+        public byte L { get { return _registers[5]; } set { _registers[5] = value; } }
 
         // Registers as 16-bit pairs
+        public ushort BC { get { return Get16BitValue(0); } set { Set16BitValue(0, value); } }
+        public ushort DE { get { return Get16BitValue(2); } set { Set16BitValue(2, value); } }
+        public ushort HL { get { return Get16BitValue(4); } set { Set16BitValue(4, value); } }
         public ushort AF { get { return GetWord(_accumulator, _flags.Value); } }
         ushort IDebugRegisters.AF { set { _accumulator = value.HighByte(); _flags.Value = value.LowByte(); } }
 
-        public ushort BC { get { return Get16BitValue(_offset); } set { Set16BitValue(_offset, value); } }
-        public ushort DE { get { return Get16BitValue(_offset + 2); } set { Set16BitValue(_offset + 2, value); } }
-        public ushort HL { get { return Get16BitValue(_offset + 4); } set { Set16BitValue(_offset + 4, value); } }
-
         // There is a second 'shadow' bank of register values (AF', BC', DE', HL'). These are stored in _registers[6..13] (and in private fields for AF/AF').
-        // To access these you call ExchangeAF (to get access to values in AF') or ExchangeBCDEHL (to get access to values in BC', DE' and HL').
+        // To access these you call ExchangeAF (to get access to values in AF') or ExchangeBCDEHL (to get access to values in BC', DE' and HL'). But for debug purposes we can
+        // access them directly
+
+        public ushort BC_ { get { return Get16BitValue(8); } set { Set16BitValue(8, value); } }
+        public ushort DE_ { get { return Get16BitValue(10); } set { Set16BitValue(10, value); } }
+        public ushort HL_ { get { return Get16BitValue(12); } set { Set16BitValue(12, value); } }
+        public ushort AF_ { get { return GetWord(_altAccumulator, _altFlags.Value); } set { _altAccumulator = value.HighByte(); _altFlags.Value = value.LowByte(); } }
 
         // 16-bit special registers (index, stack pointer)
         public ushort IX { get { return Get16BitValue(14); } set { Set16BitValue(14, value); } }
@@ -88,7 +92,16 @@ namespace Zem80.Core
 
         public void ExchangeBCDEHL()
         {
-            _offset = (byte)((_offset == 0) ? 8 : 0);
+            Swap(0);
+            Swap(2);
+            Swap(4);
+
+            void Swap(int offset)
+            {
+                ushort value = Get16BitValue(offset);
+                Set16BitValue(offset, Get16BitValue(offset + 8));
+                Set16BitValue(offset + 8, value);
+            }
         }
 
         public Registers Snapshot()
@@ -114,11 +127,7 @@ namespace Zem80.Core
             {
                 return _accumulator;
             }
-            else if ((int)register < 14)
-            {
-                return _registers[_offset + (int)register];
-            }
-            else
+            else 
             {
                 return _registers[(int)register];
             }
@@ -132,11 +141,7 @@ namespace Zem80.Core
             {
                 return GetWord(_accumulator, _flags.Value);
             }
-            else if ((int)registerPair < 14)
-            {
-                return Get16BitValue(_offset + (int)registerPair);
-            }
-            else
+            else 
             {
                 return Get16BitValue((int)registerPair);
             }
@@ -149,10 +154,6 @@ namespace Zem80.Core
                 if (register == ByteRegister.A)
                 {
                     _accumulator = value;
-                }
-                else if ((int)register < 14)
-                {
-                    _registers[_offset + (int)register] = value;
                 }
                 else
                 {
@@ -169,10 +170,6 @@ namespace Zem80.Core
                 {
                     _accumulator = value.HighByte();
                     _flags.Value = value.LowByte();
-                }
-                else if ((int)registerPair < 14)
-                {
-                    Set16BitValue(_offset + (int)registerPair, value);
                 }
                 else
                 {
