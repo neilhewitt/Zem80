@@ -18,7 +18,7 @@ namespace Zem80.Core.Instructions
             cpu.Registers.PC = (address);
             cpu.Registers.WZ = cpu.Registers.PC;
 
-            return new ExecutionResult(package, cpu.Registers.Flags);
+            return new ExecutionResult(package, null);
         }
 
         public RST()

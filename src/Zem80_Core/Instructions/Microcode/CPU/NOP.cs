@@ -8,7 +8,7 @@ namespace Zem80.Core.Instructions
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
-            return new ExecutionResult(package, cpu.Registers.Flags);
+            return new ExecutionResult(package, null);
         }
 
         public NOP()

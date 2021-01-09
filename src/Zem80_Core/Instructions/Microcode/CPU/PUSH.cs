@@ -13,7 +13,7 @@ namespace Zem80.Core.Instructions
             WordRegister register = instruction.Target.AsWordRegister();
             cpu.Push(register);
 
-            return new ExecutionResult(package, cpu.Registers.Flags);
+            return new ExecutionResult(package, null);
         }
 
         public PUSH()

@@ -13,7 +13,7 @@ namespace Zem80.Core.Instructions
 
             cpu.Halt(HaltReason.HaltInstruction);
 
-            return new ExecutionResult(package, cpu.Registers.Flags);
+            return new ExecutionResult(package, null);
         }
 
         public HALT()

@@ -28,7 +28,7 @@ namespace Zem80.Core.Instructions
                     break;
             }
 
-            return new ExecutionResult(package, cpu.Registers.Flags);
+            return new ExecutionResult(package, null);
         }
 
         public IM()

@@ -20,7 +20,7 @@ namespace Zem80.Core.Instructions
 
             cpu.Registers.WZ = data.ArgumentsAsWord;
 
-            return new ExecutionResult(package, cpu.Registers.Flags);
+            return new ExecutionResult(package, flags);
         }
 
         public CALL()

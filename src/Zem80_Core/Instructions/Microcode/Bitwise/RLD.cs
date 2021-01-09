@@ -40,7 +40,7 @@ namespace Zem80.Core.Instructions
 
             cpu.Registers.WZ = (ushort)(cpu.Registers.HL + 1);
 
-            return new ExecutionResult(package, cpu.Registers.Flags);
+            return new ExecutionResult(package, flags);
         }
 
         public RLD()
