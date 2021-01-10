@@ -109,10 +109,10 @@ namespace Zem80.Core
 
         // the state space of 16 x 16 bit numbers is too large to pre-calculate the flags in a reasonable time
         // TODO: run the code to completion and store output in a file?
-        public static Flags WordArithmeticFlags(Flags flags, ushort startingValue, int addOrSubtractValue, bool carry, bool setSignZeroParityOverflow, bool subtract) 
+        public static Flags WordArithmeticFlags(Flags currentFlags, ushort startingValue, int addOrSubtractValue, bool carry, bool setSignZeroParityOverflow, bool subtract) 
         {
-            if (flags == null) flags = new Flags();
-
+            Flags flags = new Flags(currentFlags?.Value ?? 0);
+            
             int result = subtract ? startingValue - addOrSubtractValue - (carry ? 1 : 0) : 
                                     startingValue + addOrSubtractValue + (carry ? 1 : 0);
 
