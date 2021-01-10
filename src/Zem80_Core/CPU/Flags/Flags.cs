@@ -20,7 +20,7 @@ namespace Zem80.Core
         
         public virtual byte Value { get { return _flags; } }
 
-        public FlagState State => (FlagState)_flags; // GetState();
+        public FlagState State => (FlagState)_flags;
 
         public void Reset()
         {

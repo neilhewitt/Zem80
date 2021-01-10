@@ -619,9 +619,10 @@ namespace Zem80.Core
         {
             // In IM0, when an interrupt is generated, the CPU will ask the device
             // to send one to four bytes which are decoded into an instruction, which will then be executed.
-            // To emulate this without heavily re-writing the decode loop, we will temporarily copy 
-            // the last 4 bytes of RAM to an array, use those 4 bytes for the interrupt decode, then restore them
-            // and fix up the program counter. Sneaky, eh?
+            // To emulate this without heavily re-writing the decode loop which expects the instruction bytes to be 
+            // in memory at the address pointed to by the program counter, we will temporarily copy 
+            // the last 4 bytes of RAM to an array, move the program counter and use those 4 bytes for the interrupt decode, 
+            // then restore them and fix up the program counter. Sneaky, eh?
 
             ushort address = (ushort)(Memory.SizeInBytes - 5);
             byte[] lastFour = Memory.Untimed.ReadBytesAt(address, 4);
@@ -633,7 +634,7 @@ namespace Zem80.Core
             for (int i = 0; i < 4; i++)
             {
                 byte value = _interruptCallback();
-                IO.SetDataBusValue(value); // set this directly as there are no machine cycles currently
+                IO.SetDataBusValue(value); // set this directly as it would normally by set by the interrupting device
                 Memory.Untimed.WriteByteAt((ushort)(address + i), value);
             }
 
@@ -648,11 +649,11 @@ namespace Zem80.Core
         }
 
 
-        // ICycle contains methods to execute the different types of MachineCycle that the Z80 supports
+        // IInstructionTiming contains methods to execute the different types of machine cycle that the Z80 supports.
         // These will be called mostly by the instruction decoder, stack operations and interrupt handlers, but some instruction
-        // microcode uses these methods (eg IN/OUT). 
+        // microcode uses these methods to generate timing (eg IN/OUT) or 'internal operation' ticks. 
         // I segregated them onto an interface just to keep them logically partioned from the main API but without moving them out to a class.
-        // Calling code can get at these methods using the Processor.Cycle property (or by casting, but don't do that, it's ugly).
+        // Calling code can get at these methods using the Processor.Timing property (or by casting to the interface type, but don't do that, it's ugly).
 
         #region ICycle
         void IInstructionTiming.OpcodeFetchCycle(ushort address, byte data)

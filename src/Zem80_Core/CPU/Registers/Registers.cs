@@ -77,11 +77,10 @@ namespace Zem80.Core
         {
             lock (this)
             {
-                // The reason for storing A & F in fields rather than in the byte array is because we need to store the flags
-                // as a Flags instance and not as a byte value, because the constant conversion back and forth
-                // between byte and Flags is expensive and slows the emulation down significantly.
-                // Swapping these values only involves swapping references which is as quick as changing the offset
-                // for the other registers.
+                // The reason for storing A & F in fields rather than in the byte array is because we also expose the F value as
+                // a Flags object on the API here and so it makes more sense to store a Flag as a field and then use the Flags.Value 
+                // property for the value of the F register than the other way around (which would involed a lot more
+                // object creation).
 
                 byte accumulator = _accumulator;
                 _accumulator = _altAccumulator;
@@ -95,9 +94,9 @@ namespace Zem80.Core
 
         public void ExchangeBCDEHL()
         {
-            Swap(0);
-            Swap(2);
-            Swap(4);
+            Swap(0); // BC
+            Swap(2); // DE
+            Swap(4); // HL
 
             void Swap(int offset)
             {
