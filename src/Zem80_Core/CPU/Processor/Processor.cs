@@ -336,7 +336,7 @@ namespace Zem80.Core
             // run the instruction microcode implementation
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
 
-            if (result.Flags != null) Registers.Flags.Value = result.Flags.Value;
+            if (result.Flags != null) Registers.SetFlags(result.Flags.Value);
             _afterExecute?.Invoke(this, result);
             
             return result;

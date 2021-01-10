@@ -31,14 +31,13 @@ namespace Zem80.Core.Tests.MicrocodeTests
         // and the true case (condition is satisfied, program counter set to absolute address nn) for each condition
         public void JP(Condition condition)
         {
-            Registers.Flags.SetFromCondition(condition); // set flag condition according to test case value
-            Registers.Flags.Value = Registers.Flags.Value.Invert(); // explicitly reverse the flag condition (for initial fail)
+            SetCPUFlagsFromCondition(condition, true); // set flag condition according to test case value
 
             Registers.PC = 0;
             ExecuteInstruction("JP " + condition.ToString() + ",nn", 0x10, 0x30);
             Assert.That(Registers.PC == 3); // condition was not true so PC = instruction address (0) + instruction length in bytes (3) so PC should == 3
 
-            Registers.Flags.SetFromCondition(condition);
+            SetCPUFlagsFromCondition(condition, false);
             ExecuteInstruction("JP " + condition.ToString() + ",nn", 0x10, 0x30); // condition was true so PC should == 0x3010
             Assert.That(Registers.PC == 0x3010);
         }
@@ -76,8 +75,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
         // and the true case (condition is satisfied, program counter set to absolute address nn) for each condition
         public void CALL(Condition condition)
         {
-            Registers.Flags.SetFromCondition(condition); // set flag condition according to test case value
-            Registers.Flags.Value = Registers.Flags.Value.Invert(); // explicitly reverse the flag condition (for initial fail)
+            SetCPUFlagsFromCondition(condition, true); // set flag condition according to test case value
 
             // FAILING CASE
 
@@ -96,7 +94,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
             Registers.PC = 0x4000; // instruction starts here
             Registers.HL = 0x5000; // check address
 
-            Registers.Flags.SetFromCondition(condition);
+            SetCPUFlagsFromCondition(condition, false);
             CPU.Push(WordRegister.HL); // this time the condition should pass, so PC should get pushed to the stack *after* this value and so the check value should *not* be at the top
             ExecuteInstruction("CALL " + condition.ToString() + ",nn", 0x10, 0x30); // condition was true so PC should == 0x3010
             CPU.Pop(WordRegister.DE); // pop the value at the top of the stack - this time it should be the instruction address + 3 (0x4003) as PC got pushed to the stack before the CALL
@@ -128,8 +126,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
         {
             ushort origin = 0x4000;
 
-            Registers.Flags.SetFromCondition(condition); // set flag condition according to test case value
-            Registers.Flags.Value = Registers.Flags.Value.Invert(); // explicitly reverse the flag condition (for initial fail)
+            SetCPUFlagsFromCondition(condition, true); // set flag condition according to test case value
 
             Registers.PC = 0;
             Registers.HL = origin;
@@ -140,7 +137,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
             Registers.PC = 0;
             Registers.HL = origin;
             CPU.Push(WordRegister.HL);
-            Registers.Flags.SetFromCondition(condition);
+            SetCPUFlagsFromCondition(condition, false);
             ExecuteInstruction("RET " + condition.ToString()); // condition was true so PC should == 0x4000
             Assert.That(Registers.PC == origin);
         }

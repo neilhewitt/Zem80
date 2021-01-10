@@ -20,30 +20,33 @@ namespace Zem80.Core
         public IDebugRegisters Debug => this;
 
         // 8-bit registers
-        public byte A { get { return _accumulator; } set { _accumulator = value; } }
-        public byte F { get { return _flags.Value; } } // flags register - shouldn't set F directly
         public byte B { get { return _registers[0]; } set { _registers[0] = value; } }
         public byte C { get { return _registers[1]; } set { _registers[1] = value; } }
         public byte D { get { return _registers[2]; } set { _registers[2] = value; } }
         public byte E { get { return _registers[3]; } set { _registers[3] = value; } }
         public byte H { get { return _registers[4]; } set { _registers[4] = value; } }
         public byte L { get { return _registers[5]; } set { _registers[5] = value; } }
+        public byte A { get { return _accumulator; } set { _accumulator = value; } }
+        public byte F { get { return _flags.Value; } } // flags register - shouldn't set F directly (but you can via the Debug interface)
+
+        byte IDebugRegisters.F { set { _flags = new Flags(value); } }
 
         // Registers as 16-bit pairs
         public ushort BC { get { return Get16BitValue(0); } set { Set16BitValue(0, value); } }
         public ushort DE { get { return Get16BitValue(2); } set { Set16BitValue(2, value); } }
         public ushort HL { get { return Get16BitValue(4); } set { Set16BitValue(4, value); } }
         public ushort AF { get { return GetWord(_accumulator, _flags.Value); } }
-        ushort IDebugRegisters.AF { set { _accumulator = value.HighByte(); _flags.Value = value.LowByte(); } }
+       
+        ushort IDebugRegisters.AF { set { _accumulator = value.HighByte(); _flags = new Flags(value.LowByte()); } }
 
         // There is a second 'shadow' bank of register values (AF', BC', DE', HL'). These are stored in _registers[6..13] (and in private fields for AF/AF').
         // To access these you call ExchangeAF (to get access to values in AF') or ExchangeBCDEHL (to get access to values in BC', DE' and HL'). But for debug purposes we can
         // access them directly
 
-        public ushort BC_ { get { return Get16BitValue(8); } set { Set16BitValue(8, value); } }
-        public ushort DE_ { get { return Get16BitValue(10); } set { Set16BitValue(10, value); } }
-        public ushort HL_ { get { return Get16BitValue(12); } set { Set16BitValue(12, value); } }
-        public ushort AF_ { get { return GetWord(_altAccumulator, _altFlags.Value); } set { _altAccumulator = value.HighByte(); _altFlags.Value = value.LowByte(); } }
+        ushort IDebugRegisters.BC_ { get { return Get16BitValue(8); } set { Set16BitValue(8, value); } }
+        ushort IDebugRegisters.DE_ { get { return Get16BitValue(10); } set { Set16BitValue(10, value); } }
+        ushort IDebugRegisters.HL_ { get { return Get16BitValue(12); } set { Set16BitValue(12, value); } }
+        ushort IDebugRegisters.AF_ { get { return GetWord(_altAccumulator, _altFlags.Value); } set { _altAccumulator = value.HighByte(); _altFlags = new Flags(value.LowByte()); } }
 
         // 16-bit special registers (index, stack pointer)
         public ushort IX { get { return Get16BitValue(14); } set { Set16BitValue(14, value); } }
@@ -119,6 +122,11 @@ namespace Zem80.Core
             WZ = 0x00;
         }
 
+        internal void SetFlags(byte newFlagsValue)
+        {
+            _flags = new Flags(newFlagsValue);
+        }
+
         private byte GetRegister(ByteRegister register)
         {
             if (register == ByteRegister.None) return 0xFF;
@@ -169,7 +177,7 @@ namespace Zem80.Core
                 if (registerPair == WordRegister.AF)
                 {
                     _accumulator = value.HighByte();
-                    _flags.Value = value.LowByte();
+                    _flags = new Flags(value.LowByte());
                 }
                 else
                 {

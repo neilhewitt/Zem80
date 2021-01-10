@@ -17,23 +17,14 @@ namespace Zem80.Core
         public bool ParityOverflow { get { return _flags.GetBit(2); } set { _flags = _flags.SetBit(2, value); } }
         public bool Subtract { get { return _flags.GetBit(1); } set { _flags = _flags.SetBit(1, value); } }
         public bool Carry { get { return _flags.GetBit(0); } set { _flags = _flags.SetBit(0, value); } }
-        public virtual byte Value { get { return _flags; } set { _flags = value; } }
         
-        public FlagState State => GetState();
+        public virtual byte Value { get { return _flags; } }
 
-        public void SetFromCondition(Condition condition)
+        public FlagState State => (FlagState)_flags; // GetState();
+
+        public void Reset()
         {
-            switch (condition)
-            {
-                case Condition.Z: Zero = true; break;
-                case Condition.NZ: Zero = false; break;
-                case Condition.C: Carry = true; break;
-                case Condition.NC: Carry = false; break;
-                case Condition.PE: ParityOverflow = true; break;
-                case Condition.PO: ParityOverflow = false; break;
-                case Condition.M: Sign = true; break;
-                case Condition.P: Sign = false; break;
-            }
+            _flags = 0;
         }
 
         public bool SatisfyCondition(Condition condition)
@@ -67,20 +58,6 @@ namespace Zem80.Core
         public override int GetHashCode()
         {
             return base.GetHashCode();
-        }
-
-        private FlagState GetState()
-        {
-            FlagState state = FlagState.None;
-            if (Sign) state = state | FlagState.Sign;
-            if (Zero) state = state | FlagState.Zero;
-            if (HalfCarry) state = state | FlagState.HalfCarry;
-            if (ParityOverflow) state = state | FlagState.ParityOverflow;
-            if (Subtract) state = state | FlagState.Subtract;
-            if (Carry) state = state | FlagState.Carry;
-            if (X) state = state | FlagState.X;
-            if (Y) state = state | FlagState.Y;
-            return state;
         }
 
         public Flags() : this(0)
