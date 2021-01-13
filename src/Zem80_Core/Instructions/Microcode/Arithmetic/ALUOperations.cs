@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace Zem80.Core
+namespace Zem80.Core.Instructions
 {
     public static class ALUOperations
     {

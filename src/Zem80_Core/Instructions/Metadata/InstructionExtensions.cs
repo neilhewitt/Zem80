@@ -88,7 +88,7 @@ namespace Zem80.Core.Instructions
                         _ => r.HL
                     };
 
-                    value = cpu.Memory.Timed.ReadByteAt(address);
+                    value = cpu.Memory.Timed.ReadWordAt(address);
                 }
             }
 

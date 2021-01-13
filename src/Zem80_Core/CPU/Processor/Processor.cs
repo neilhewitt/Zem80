@@ -819,20 +819,22 @@ namespace Zem80.Core
             TimingMode = TimingMode.FastAndFurious;
             InterruptMode = InterruptMode.IM0;
 
-            _topOfStack = topOfStackAddress ?? (ushort)(Memory.SizeInBytes - 3);
+            _topOfStack = topOfStackAddress ?? 0;
             Registers.SP = _topOfStack;
 
-            // if precalculation is enabled, all flag combinations for all input values for 8-bit ALU / bitwise operations are pre-built now (not 16-bit ALU operations, far too big!)
-            // this is *slightly* faster than calculating them in real-time, but if you want to debug flag calculation you should
-            // disable this and attach a debugger to the flag calculation methods in FlagLookup.cs
+            // If precalculation is enabled, all flag combinations for all input values for 8-bit ALU / bitwise operations are pre-built now (not 16-bit ALU operations, far too big!).
+            // This is *slightly* faster than calculating them in real-time, but if you want to debug flag calculation you should
+            // disable this and attach a debugger to the flag calculation methods in FlagLookup.cs.
             FlagLookup.EnablePrecalculation = enableFlagPrecalculation;
             FlagLookup.BuildFlagLookupTables();
             
+            // The Z80 instruction set needs to be built (all Instruction objects are created and indexed into a hashtable - undocumented 'overloads' are built here too)
             InstructionSet.Build();
 
-            // if running in Pseudo-Real Time mode, an external clock routine is used to sync instruction execution to real time. Sort of.
-            // The timing is approximate due to unpredictability as to how long .NET will take to run the instruction code each time, so you do get clock misses, but all emulated devices run at the same
-            // speed so the effect is as if time itself is slowing and accelerating (by a tiny %) inside the emulation, and everything remains consistent.
+            // If running in Pseudo-RealTime mode, an external clock routine is used to sync instruction execution to real time. Sort of.
+            // The timing is approximate due to fundamental unpredictability as to how long .NET will take to run the instruction code each time, so you do get clock misses, but all emulated devices run at the same
+            // speed so the effect is as if time itself is slowing and accelerating (by a tiny %) inside the emulation, and everything remains consistent, though visual effects based purely on the
+            // instruction timing / CRT timing may not work 100% as intended.
             _clock = new ExternalClock(frequencyInMHz);
             _clock.OnTick += WhenTheClockTicks;
             _startStopTimer = new Stopwatch();

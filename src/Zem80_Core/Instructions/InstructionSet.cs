@@ -872,7 +872,7 @@ namespace Zem80.Core.Instructions
             foreach (Instruction instruction in instructions)
             {
                 // generate a matrix of undocumented extended instructions for the DDCB / FDCB opcodes, which copy the result of whatever the operation is to a byte register
-                // each instruction gets 6 overloads which copy to registers A,B,C,D,E,H,L (except BIT, which gets the overloads but doesn't copy to a register - crazy, eh?)
+                // each instruction gets 7 overloads which copy to registers A,B,C,D,E,H,L (except BIT, which gets the overloads but doesn't copy to a register - crazy, eh?)
 
                 // this is quicker than adding all the overloads to the main instruction set list above as there would be hundreds of them
 
