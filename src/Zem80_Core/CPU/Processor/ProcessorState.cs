@@ -8,6 +8,7 @@ namespace Zem80.Core
     {
         Running,
         Halted,
+        Suspended,
         Stopped
     }
 }

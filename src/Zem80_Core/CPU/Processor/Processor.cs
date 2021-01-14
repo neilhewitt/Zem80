@@ -22,6 +22,7 @@ namespace Zem80.Core
 
         private bool _running;
         private bool _halted;
+        private bool _suspended;
         private HaltReason _reasonForLastHalt;
         private bool _suspendMachineCycles;
         private int _pendingWaitCycles;
@@ -63,7 +64,7 @@ namespace Zem80.Core
         public bool InterruptsPaused => _iff2;
         public double FrequencyInMHz { get; private set; }
         public TimingMode TimingMode { get; private set; }
-        public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; 
+        public ProcessorState State => _running ? _suspended ? ProcessorState.Suspended : _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; 
         public long EmulatedTStates => _emulatedTStates;
         public TimeSpan Elapsed => _startStopTimer.Elapsed;
 
@@ -118,6 +119,11 @@ namespace Zem80.Core
             _instructionCycle?.Interrupt();
 
             _onStop?.Invoke(null, null);
+        }
+
+        public void Suspend()
+        {
+            _suspended = true;
         }
 
         public void RunUntilStopped()
@@ -229,6 +235,7 @@ namespace Zem80.Core
 
         public void Resume()
         {
+            _suspended = false;
             if (_halted)
             {
                 _halted = false;
@@ -262,51 +269,54 @@ namespace Zem80.Core
         {
             while (_running)
             {
-                InstructionPackage package = null;
-                ushort pc = Registers.PC;
-
-                if (!_halted)
+                if (!_suspended) // if suspended, we should do *nothing at all* until resumed
                 {
-                    // decode next instruction 
-                    // (note that the decode cycle leaves the Program Counter at the byte *after* this instruction unless it's adjusted by the instruction code itself,
-                    // this is how the program moves on to the next instruction)
-                    package = DecodeInstruction();
-                    if (package == null)
+                    InstructionPackage package = null;
+                    ushort pc = Registers.PC;
+
+                    if (!_halted)
                     {
-                        // only happens if we reach the end of memory mid-instruction, if so we bail out
-                        Stop();
-                        return;
+                        // decode next instruction 
+                        // (note that the decode cycle leaves the Program Counter at the byte *after* this instruction unless it's adjusted by the instruction code itself,
+                        // this is how the program moves on to the next instruction)
+                        package = DecodeInstruction();
+                        if (package == null)
+                        {
+                            // only happens if we reach the end of memory mid-instruction, if so we bail out
+                            Stop();
+                            return;
+                        }
                     }
-                }
-                else
-                {
-                    if (EndOnHalt)
+                    else
                     {
-                        Stop();
-                        return;
+                        if (EndOnHalt)
+                        {
+                            Stop();
+                            return;
+                        }
+
+                        // run a NOP - by not decoding anything we leave the Program Counter where it was when we HALTed
+                        // the PC will be advanced on resume from the HALT instruction when the next interrupt is handled
+
+                        // since we're not decoding the instruction (it's HALT), we need to run the opcode fetch cycle for NOP
+                        // so that the clock ticks and attached devices can generate interrupts to bring the CPU out of HALT;
+                        // the following call does that..
+                        FetchOpcodeByte();
+
+                        // now send a NOP package to be executed
+                        package = new InstructionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
+
                     }
 
-                    // run a NOP - by not decoding anything we leave the Program Counter where it was when we HALTed
-                    // the PC will be advanced on resume from the HALT instruction when the next interrupt is handled
-                    
-                    // since we're not decoding the instruction (it's HALT), we need to run the opcode fetch cycle for NOP
-                    // so that the clock ticks and attached devices can generate interrupts to bring the CPU out of HALT;
-                    // the following call does that..
-                    FetchOpcodeByte(); 
+                    // run the decoded instruction and deal with timing / ticks
+                    ExecutionResult result = Execute(package);
+                    _executingInstructionPackage = null;
 
-                    // now send a NOP package to be executed
-                    package = new InstructionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
+                    HandleNonMaskableInterrupts();
+                    if (!result.SkipInterruptAfterExecution) HandleMaskableInterrupts();
 
+                    Registers.R = (byte)(((Registers.R + 1) & 0x7F) | (Registers.R & 0x80)); // bits 0-6 of R are incremented as part of the memory refresh - bit 7 is preserved    
                 }
-
-                // run the decoded instruction and deal with timing / ticks
-                ExecutionResult result = Execute(package);
-                _executingInstructionPackage = null;
-
-                HandleNonMaskableInterrupts();
-                if (!result.SkipInterruptAfterExecution) HandleMaskableInterrupts();
-
-                Registers.R = (byte)(((Registers.R + 1) & 0x7F) | (Registers.R & 0x80)); // bits 0-6 of R are incremented as part of the memory refresh - bit 7 is preserved            
             }
         }
 

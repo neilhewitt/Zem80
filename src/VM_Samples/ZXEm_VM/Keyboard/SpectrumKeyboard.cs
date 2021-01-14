@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Zem80.Core;
 
 namespace ZXEm.VM
 {
@@ -21,16 +22,14 @@ namespace ZXEm.VM
             { 0x7F, " *MNB" }
         };
 
-        private static Dictionary<SpectrumKey, bool> _keyPressMap  = new Dictionary<SpectrumKey, bool>();
-
-        public static IReadOnlyDictionary<SpectrumKey, bool> KeyPressMap => _keyPressMap;
+        private static KeyState[] _keyStates = new KeyState[95];
         
         public static void KeyDown(string pcKeyName)
         {
             IEnumerable<SpectrumKey> keys = SpectrumKeysForPCKey(pcKeyName);
             foreach (SpectrumKey key in keys)
             {
-                _keyPressMap[key] = true;
+                _keyStates[(int)key] = KeyState.Down;
             }
         }
 
@@ -39,7 +38,7 @@ namespace ZXEm.VM
             IEnumerable<SpectrumKey> keys = SpectrumKeysForPCKey(pcKeyName);
             foreach (SpectrumKey key in keys)
             {
-                _keyPressMap[key] = false;
+                _keyStates[(int)key] = KeyState.Up;
             }
         }
 
@@ -56,21 +55,23 @@ namespace ZXEm.VM
             return spectrumKeys;
         }
 
-        public static (byte RowPort, byte BitIndex) GetKeyboardMappingFor(SpectrumKey key)
+        public static byte GetBitValuesFor(byte rowSelector, byte value)
         {
-            char keyChar = (char)key;
-            foreach(var matrixRow in _matrix)
+            if (_matrix.TryGetValue(rowSelector, out string keyRow))
             {
-                if (matrixRow.Value.Contains(keyChar))
+                for (int i = 0; i < 5; i++)
                 {
-                    return ((byte)matrixRow.Key, (byte)matrixRow.Value.IndexOf(keyChar));
+                    if (_keyStates[(int)keyRow[i]] == KeyState.Down)
+                    {
+                        value = value.SetBit(i, false);
+                    }
                 }
             }
 
-            throw new Exception("Invalid key."); // will never happen, but you've got to keep the compiler happy...
+            return value;
         }
 
-        static SpectrumKeyboard()
+        private static void Setup()
         {
             string[] enumNames = Enum.GetNames(typeof(SpectrumKey));
 
@@ -93,7 +94,7 @@ namespace ZXEm.VM
             _map.Add("RIGHTCTRL", new[] { SpectrumKey.CAPSSHIFT }); // caps shift
             _map.Add("LEFTSHIFT", new[] { SpectrumKey.SYMBOLSHIFT }); // symbol shift
             _map.Add("RIGHTSHIFT", new[] { SpectrumKey.SYMBOLSHIFT }); // symbol shift
-            
+
             // other keys
             _map.Add("RETURN", new[] { SpectrumKey.ENTER }); // enter key
             _map.Add("SPACE", new[] { SpectrumKey.SPACE }); // space key
@@ -104,7 +105,12 @@ namespace ZXEm.VM
             _map.Add("DOWN", new[] { SpectrumKey.CAPSSHIFT, SpectrumKey.SIX }); // DOWN arrow
             _map.Add("UP", new[] { SpectrumKey.CAPSSHIFT, SpectrumKey.SEVEN }); // UP arrow
             _map.Add("RIGHT", new[] { SpectrumKey.CAPSSHIFT, SpectrumKey.EIGHT }); // RIGHT arrow
-            _map.Add("OEMCOMMA", new[] { SpectrumKey.SYMBOLSHIFT, SpectrumKey.N }); // comma key (SYMBOLSHIFT+N)
+            _map.Add("OEMCOMMA", new[] { SpectrumKey.SYMBOLSHIFT, SpectrumKey.N }); // comma key (SYMBOLSHIFT+N)        
+        }
+
+        static SpectrumKeyboard()
+        {
+            Setup();
         }
     }
 }

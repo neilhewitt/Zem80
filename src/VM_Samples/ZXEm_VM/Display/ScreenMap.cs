@@ -31,7 +31,7 @@ namespace ZXEm.VM
                     byte pixelData = pixels[address + x];
                     for (int i = 0; i < 8; i++)
                     {
-                        _pixels[y, (x * 8) + i] = pixelData.GetBit(8 - i);
+                        _pixels[y, (x * 8) + i] = pixelData.GetBit(7 - i);
                     }
                 }
             }
@@ -139,11 +139,11 @@ namespace ZXEm.VM
             _border = colour;
         }
 
-        public ScreenMap(int height, int width, int border, int attributeHorizontalPixels, int attributeVerticalPixels)
+        public ScreenMap()
         {
-            _pixels = new PixelMap(height, width);
-            _attributes = new AttributeMap((height / attributeVerticalPixels), (width / attributeHorizontalPixels));
-            _rgba = new byte[(height + border + border) * (width + border + border) * 4];
+            _pixels = new PixelMap(192, 256);
+            _attributes = new AttributeMap((192 / 8), (256 / 8));
+            _rgba = new byte[(192 + 32 + 32) * (256 + 32 + 32) * 4];
 
             // screen pixel layout is not linear in memory - it's done in 'stripes' across each third of the screen
             // so the memory at 0x4000 contains the 256 bytes for screen line 0, but 0x4100 contains the bytes for 

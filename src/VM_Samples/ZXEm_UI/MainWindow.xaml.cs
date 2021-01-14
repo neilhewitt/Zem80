@@ -20,36 +20,18 @@ namespace ZXEm.UI
 
         private Spectrum48K _vm;
         private bool _isClosing = false;
-        private bool _showCode = false;
 
         public MainWindow()
         {
             InitializeComponent();
-            _vm = new Spectrum48K("rom\\48k.rom");
+            _vm = new Spectrum48K("rom\\48k_rude.rom");
             _vm.OnUpdateDisplay += UpdateDisplay;
-            _vm.Start();
-            _vm.CPU.Debug.AfterExecute += AfterInstructionExecution;
 
             KeyDown += MainWindow_KeyDown;
             KeyUp += MainWindow_KeyUp;
-        }
 
-        private void AfterInstructionExecution(object sender, ExecutionResult e)
-        {
-            if (_showCode)
-            {
-                string mnemonic = e.InstructionAddress.ToString("X4") + ": " + e.Instruction.Mnemonic;
-                if (mnemonic.Contains("nn")) mnemonic = mnemonic.Replace("nn", e.Data.ArgumentsAsWord.ToString("X4"));
-                if (mnemonic.Contains("o")) mnemonic = mnemonic.Replace("o", e.Data.Argument1.ToString("X2"));
-                if (mnemonic.Contains("n") && !mnemonic.Contains("o")) mnemonic = mnemonic.Replace("n", e.Data.Argument1.ToString("X2"));
-                if (mnemonic.Contains("n") && mnemonic.Contains("o")) mnemonic = mnemonic.Replace("n", e.Data.Argument2.ToString("X2"));
-
-                Dispatcher.Invoke(() =>
-                {
-                    if (Code.Items.Count >= 25) Code.Items.RemoveAt(0);
-                    Code.Items.Add(mnemonic);
-                });
-            }
+            _vm.Start();
+            _vm.LoadSnapshot("c:\\temp\\manic miner.sna");
         }
 
         private void MainWindow_KeyUp(object sender, KeyEventArgs e)
@@ -70,18 +52,12 @@ namespace ZXEm.UI
         {
             if (!_isClosing)
             {
-                lock (_updateLock)
+                Dispatcher.InvokeAsync(() =>
                 {
-                    if (!_isClosing)
-                    {
-                        Dispatcher.InvokeAsync(() =>
-                        {
-                            var bitmap = BitmapFactory.New(320, 256).FromByteArray(rgba);
-                            DisplaySurface.Stretch = Stretch.Fill;
-                            DisplaySurface.Source = bitmap;
-                        });
-                    }
-                }
+                    var bitmap = BitmapFactory.New(320, 256).FromByteArray(rgba);
+                    DisplaySurface.Stretch = Stretch.Fill;
+                    DisplaySurface.Source = bitmap;
+                });
             }
         }
 
@@ -91,11 +67,6 @@ namespace ZXEm.UI
             _vm.Stop();
             base.OnClosing(e);
             Application.Current.Shutdown();
-        }
-
-        private void ToggleCode(object sender, RoutedEventArgs e)
-        {
-            _showCode = !_showCode;
         }
     }
 }

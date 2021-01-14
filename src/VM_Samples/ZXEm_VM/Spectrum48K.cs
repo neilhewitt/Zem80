@@ -4,10 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Zem80.Core;
 using Zem80.Core.Instructions;
 using Zem80.Core.Memory;
+using ZXEm.VM.TAP;
 
 namespace ZXEm.VM
 {
@@ -29,12 +31,7 @@ namespace ZXEm.VM
 
         public void Start()
         {
-            _cpu.Debug.OnBreakpoint += Debug_OnBreakpoint;
             _cpu.Start(timingMode: TimingMode.PseudoRealTime);
-        }
-
-        private void Debug_OnBreakpoint(object sender, InstructionPackage e)
-        {
         }
 
         public void Stop()
@@ -42,11 +39,55 @@ namespace ZXEm.VM
             _cpu.Stop();
         }
 
-        public void LoadAndRun(string path, ushort address)
-        {           
-            _cpu.Memory.Untimed.WriteBytesAt(address, File.ReadAllBytes(path));
-            _cpu.Stop();
-            _cpu.Start(address, timingMode: TimingMode.FastAndFurious);
+        public void LoadSnapshot(string path)
+        {
+            _cpu.Suspend();
+
+            byte[] snapshot = File.ReadAllBytes(path);
+
+            Registers r = _cpu.Registers;
+            
+            r.I = snapshot[0];
+            
+            r.ExchangeBCDEHL();
+            r.HL = getWord(1);
+            r.DE = getWord(3);
+            r.BC = getWord(5);
+            r.Debug.AF = getWord(7);
+            
+            r.ExchangeBCDEHL();
+            r.HL = getWord(9);
+            r.DE = getWord(11);
+            r.BC = getWord(13);
+            r.IY = getWord(15);
+            r.IX = getWord(17);
+
+            if (snapshot[19].GetBit(2))
+            {
+                _cpu.EnableInterrupts();
+            }
+            else
+            {
+                _cpu.DisableInterrupts();
+            }
+
+            r.R = snapshot[20];
+            r.Debug.AF = getWord(21);
+            r.SP = getWord(23);
+
+            _cpu.SetInterruptMode((InterruptMode)snapshot[25]);
+            _screen.SetBorderColour(DisplayColour.FromThreeBit(snapshot[26]));
+            
+            _cpu.Memory.Untimed.WriteBytesAt(16384, snapshot[27..]);
+            _cpu.Pop(WordRegister.PC);
+            _cpu.RestoreInterruptsFromNMI();
+
+            _cpu.Resume();
+
+            ushort getWord(int index)
+            {
+                return (snapshot[index], snapshot[index + 1]).ToWord();
+            }
         }
 
         private void _cpu_OnClockTick(object sender, InstructionPackage e)
@@ -66,7 +107,7 @@ namespace ZXEm.VM
                 // we've reached the vertical blanking interval, so raise an interrupt for the keyboard processing etc.
                 // and then update the display
                 UpdateDisplay();
-                _cpu.RaiseInterrupt();
+                _cpu.RaiseInterrupt(() => 0x00);
                 _ticksSinceLastDisplayUpdate = 0;
             }
         }
@@ -111,7 +152,7 @@ namespace ZXEm.VM
 
             if (portAddress.LowByte() == 0xFE)
             {
-                result = ReadKeyboard(portAddress.HighByte(), result);
+                result = SpectrumKeyboard.GetBitValuesFor(portAddress.HighByte(), result);
             }
 
             return result;
@@ -141,34 +182,15 @@ namespace ZXEm.VM
                     {
                         if (_cpu.IO.D4)
                         {
-                            // beeper time!
-                            bool beep = true;
+                            // This switches the beeper ON until the next interrupt.
+                            // I am not going to attempt to add audio to this sample VM, as it's a complex topic
+                            // in .NET and the simplicity of the Spectrum beeper setup actually makes it much harder.
+                            // This is just a sample VM, after all...
+                            
                         }
                     }
                 }
             }
-        }
-
-        private byte ReadKeyboard(byte rowSelector, byte value)
-        {
-            IEnumerable<SpectrumKey> keysPressed = SpectrumKeyboard.KeyPressMap.Where(x => x.Value == true).Select(x => x.Key);
-
-            lock (keysPressed)
-            {
-                if (keysPressed.Count() > 0)
-                {
-                    foreach (SpectrumKey key in keysPressed)
-                    {
-                        var mapping = SpectrumKeyboard.GetKeyboardMappingFor(key);
-                        if (mapping.RowPort == rowSelector)
-                        {
-                            value = value.SetBit(mapping.BitIndex, false);
-                        }
-                    }
-                }
-            }
-
-            return value;
         }
 
         private void SignalPortRead()
@@ -194,7 +216,7 @@ namespace ZXEm.VM
 
         public Spectrum48K(string romPath)
         {
-            _screen = new ScreenMap(192, 256, 32, 8, 8);
+            _screen = new ScreenMap();
             GenerateDisplayWaits();
 
             // set up the memory map - 16K ROM + 48K RAM = 64K
@@ -202,7 +224,7 @@ namespace ZXEm.VM
             map.Map(new ReadOnlyMemorySegment(0, File.ReadAllBytes(romPath)));
             map.Map(new MemorySegment(16384, 49152));
 
-            _cpu = new Processor(map: map, frequencyInMHz: 3.5);
+            _cpu = new Processor(map: map, frequencyInMHz: 5);
 
             // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 
             // devices signal or respond based on a bit-field signature across the 16-bit port address held on the address bus at read/write time.
