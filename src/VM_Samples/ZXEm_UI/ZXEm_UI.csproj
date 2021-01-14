@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="ROM\48k_rude.rom" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="WriteableBitmapEx" Version="1.6.5" />
   </ItemGroup>
 
@@ -18,9 +22,6 @@
 
   <ItemGroup>
     <None Update="initialise.bmp">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="ROM\48k_rude.rom">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

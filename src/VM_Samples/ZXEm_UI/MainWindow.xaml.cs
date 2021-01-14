@@ -24,14 +24,14 @@ namespace ZXEm.UI
         public MainWindow()
         {
             InitializeComponent();
-            _vm = new Spectrum48K("rom\\48k_rude.rom");
+            _vm = new Spectrum48K("rom\\48k.rom");
             _vm.OnUpdateDisplay += UpdateDisplay;
 
             KeyDown += MainWindow_KeyDown;
             KeyUp += MainWindow_KeyUp;
 
             _vm.Start();
-            _vm.LoadSnapshot("c:\\temp\\manic miner.sna");
+            //_vm.LoadSnapshot("c:\\temp\\manic miner.sna");
         }
 
         private void MainWindow_KeyUp(object sender, KeyEventArgs e)
