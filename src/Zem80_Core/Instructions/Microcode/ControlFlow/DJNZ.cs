@@ -14,7 +14,7 @@ namespace Zem80.Core.Instructions
             cpu.Registers.B--;
             if (cpu.Registers.B > 0)
             {
-                cpu.InstructionTiming.InternalOperationCycle(5);
+                cpu.Timing.InternalOperationCycle(5);
                 ushort address = (ushort)(cpu.Registers.PC - 2); // wind back to the address of the DJNZ instruction as PC has already moved on
 
                 // the jump is relative to the address of the DJNZ instruction but the jump *displacement* is calculated from the start of the *next* instruction. 

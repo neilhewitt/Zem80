@@ -21,8 +21,8 @@ namespace Zem80.Core.Instructions
                 ushort left = r[destination];
                 ushort right = instruction.MarshalSourceWord(data, cpu, out ushort address);
 
-                cpu.InstructionTiming.InternalOperationCycle(4);
-                cpu.InstructionTiming.InternalOperationCycle(3);
+                cpu.Timing.InternalOperationCycle(4);
+                cpu.Timing.InternalOperationCycle(3);
                 var sum = ALUOperations.Add(left, right, false, false, flags);
                 r[destination] = sum.Result;
                 flags = sum.Flags;
@@ -32,7 +32,7 @@ namespace Zem80.Core.Instructions
             {
                 // it's an 8-bit add to A
                 byte left = r.A;
-                if (instruction.IsIndexed) cpu.InstructionTiming.InternalOperationCycle(5);
+                if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
                 byte right = instruction.MarshalSourceByte(data, cpu, out ushort address, out ByteRegister source);
 
                 var sum = ALUOperations.Add(left, right, false);

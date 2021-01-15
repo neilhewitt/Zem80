@@ -23,7 +23,7 @@ namespace Zem80.Core.Instructions
             xHL = xHL.SetLowNybble(xHL.GetHighNybble());
             xHL = xHL.SetHighNybble(lowA);
 
-            cpu.InstructionTiming.InternalOperationCycle(4);
+            cpu.Timing.InternalOperationCycle(4);
             cpu.Memory.Timed.WriteByteAt(cpu.Registers.HL, xHL);
             cpu.Registers.A = a;
 
