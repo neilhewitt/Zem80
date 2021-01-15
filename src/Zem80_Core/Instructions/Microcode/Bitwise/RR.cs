@@ -39,7 +39,7 @@ namespace Zem80.Core.Instructions
                 shifted = (byte)(original >> 1);
                 shifted = shifted.SetBit(7, previousCarry);
                 setFlags(original, shifted, original.GetBit(0));
-                if (instruction.IsIndexed) cpu.InstructionTiming.InternalOperationCycle(4);
+                if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(4);
                 cpu.Memory.Timed.WriteByteAt(address, shifted);
                 if (instruction.CopyResultTo != ByteRegister.None)
                 {

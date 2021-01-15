@@ -5,8 +5,27 @@ using System.Xml.Schema;
 
 namespace Zem80.Core.Memory
 {
-    public class MemoryBank : IUntimedMemory, ITimedMemory
+    public class MemoryBank : IMemoryBank, IUntimedMemory, ITimedMemory
     {
+        /* This class bears some explaining...
+         * 
+         * Each byte read from memory in the Z80 takes 4 clock cycles. This timing is added by the Processor class when decoding instructions, 
+         * fetching operands etc, because we need to be able to identify what kind of memory access is happening (opcode fetch, operand fetch etc) and
+         * the timing may vary in particular cases. However, when individual instructions are reading from / writing to RAM, it's up to the 
+         * instruction code to add the memory timing. To make this easier to implement, the memory API can be accessed as either *timed* 
+         * (timing will be generated here for each byte read), or *untimed* (the calling code must add the timing). 
+         * Also, in some cases we want to read/write the memory but not generate any timing (for example, when getting the screen buffer in an emulator). 
+         * 
+         * Originally this was done by having a boolean flag on each memory read/write method to say whether the operation was timed or not, but 
+         * that was ugly IMHO. So now the class implements all its operations as protected methods with the boolean flag, and then there are two identical 
+         * interfaces (IUntimedMemory and ITimedMemory) and the methods for each are implemented here explicitly and call down to the protected methods
+         * with the appropriate boolean flag, and I supply helper properties to access the class via each interface type. So this changes the access pattern to:
+         * 
+         * MemoryBank.Untimed.ReadByte / MemoryBank.Timed.ReadByte
+         * 
+         * It's a complex implementation but leads to a simple result, which is what I prefer. YMMV.
+        */
+
         protected IMemoryMap _map;
         protected Processor _cpu;
         protected bool _initialised;
@@ -16,6 +35,7 @@ namespace Zem80.Core.Memory
 
         public uint SizeInBytes => _map.SizeInBytes;
 
+        #region IUntimedMemory
         byte IUntimedMemory.ReadByteAt(ushort address)
         {
             return ReadByteAt(address, false);
@@ -45,7 +65,9 @@ namespace Zem80.Core.Memory
         {
             WriteWordAt(address, value, false);
         }
+        #endregion
 
+        #region ITimedMemory
         byte ITimedMemory.ReadByteAt(ushort address)
         {
             return ReadByteAt(address, true);
@@ -75,6 +97,7 @@ namespace Zem80.Core.Memory
         {
             WriteWordAt(address, value, true);
         }
+        #endregion
 
         public void Clear()
         {
@@ -94,7 +117,7 @@ namespace Zem80.Core.Memory
 
             IMemorySegment segment = _map.SegmentFor(address);
             byte output = (segment?.ReadByteAt(AddressOffset(address, segment)) ?? 0x00); // 0x00 if address is unallocated
-            if (timing) _cpu.InstructionTiming.MemoryReadCycle(address, output);
+            if (timing) _cpu.Timing.MemoryReadCycle(address, output);
             return output;
         }
 
@@ -143,7 +166,7 @@ namespace Zem80.Core.Memory
                 segment.WriteByteAt(AddressOffset(address, segment), value);
             }
 
-            if (timing) _cpu.InstructionTiming.MemoryWriteCycle(address, value);
+            if (timing) _cpu.Timing.MemoryWriteCycle(address, value);
         }
 
         protected void WriteBytesAt(ushort address, byte[] bytes, bool timing)

@@ -28,7 +28,7 @@ namespace Zem80.Core.Instructions
             bool conditionTrue = (r.BC == 0);
             if (conditionTrue)
             {
-                cpu.InstructionTiming.InternalOperationCycle(5);
+                cpu.Timing.InternalOperationCycle(5);
                 r.WZ = (ushort)(r.PC + 1);
             }
             else

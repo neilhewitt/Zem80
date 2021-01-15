@@ -19,6 +19,6 @@ namespace Zem80.Core
         void RemoveBreakpoint(ushort address);
 
         ExecutionResult ExecuteDirect(byte[] opcode);
-        ExecutionResult ExecuteDirect(InstructionPackage package);
+        ExecutionResult ExecuteDirect(string mnemonic, byte? arg1, byte? arg2);
     }
 }

@@ -28,7 +28,7 @@ namespace Zem80.Core.Instructions
                 if (instruction.TargetsByteInMemory)
                 {
                     // inc byte in memory
-                    if (instruction.IsIndexed) cpu.InstructionTiming.InternalOperationCycle(5);
+                    if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
                     value = instruction.MarshalSourceByte(data, cpu, out ushort address, out ByteRegister source);
                     cpu.Memory.Timed.WriteByteAt(address, (byte)(value + 1));
                 }

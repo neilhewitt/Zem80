@@ -34,7 +34,7 @@ namespace Zem80.Core.Instructions
             bool conditionTrue = (compare.Result == 0 || cpu.Registers.BC == 0);
             if (conditionTrue)
             {
-                cpu.InstructionTiming.InternalOperationCycle(5);
+                cpu.Timing.InternalOperationCycle(5);
                 cpu.Registers.WZ++;
             }
             else

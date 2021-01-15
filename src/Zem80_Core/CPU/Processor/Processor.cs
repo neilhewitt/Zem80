@@ -50,12 +50,12 @@ namespace Zem80.Core
         private IList<ushort> _breakpoints = new List<ushort>();
         
         public IDebugProcessor Debug => this;
-        public IInstructionTiming InstructionTiming => this;
+        public IInstructionTiming Timing => this;
        
         public bool EndOnHalt { get; private set; }
 
         public Registers Registers { get; private set; }
-        public MemoryBank Memory { get; private set; }
+        public IMemoryBank Memory { get; private set; }
         public Ports Ports { get; private set; }
         public ProcessorIO IO { get; private set; }
 
@@ -146,28 +146,28 @@ namespace Zem80.Core
         {
             ushort value = Registers[register];
             Registers.SP--;
-            InstructionTiming.BeginStackWriteCycle(true, value.HighByte());
+            Timing.BeginStackWriteCycle(true, value.HighByte());
             Memory.Untimed.WriteByteAt(Registers.SP, value.HighByte());
-            InstructionTiming.EndStackWriteCycle();
+            Timing.EndStackWriteCycle();
 
             Registers.SP--;
-            InstructionTiming.BeginStackWriteCycle(false, value.LowByte());
+            Timing.BeginStackWriteCycle(false, value.LowByte());
             Memory.Untimed.WriteByteAt(Registers.SP, value.LowByte());
-            InstructionTiming.EndStackWriteCycle();
+            Timing.EndStackWriteCycle();
         }
 
         public void Pop(WordRegister register)
         {
             byte high, low;
 
-            InstructionTiming.BeginStackReadCycle();
+            Timing.BeginStackReadCycle();
             low = Memory.Untimed.ReadByteAt(Registers.SP);
-            InstructionTiming.EndStackReadCycle(false, low);
+            Timing.EndStackReadCycle(false, low);
             Registers.SP++;
 
-            InstructionTiming.BeginStackReadCycle();
+            Timing.BeginStackReadCycle();
             high = Memory.Untimed.ReadByteAt(Registers.SP);
-            InstructionTiming.EndStackReadCycle(true, high);
+            Timing.EndStackReadCycle(true, high);
             Registers.SP++;
 
             ushort value = (low, high).ToWord();
@@ -350,31 +350,43 @@ namespace Zem80.Core
             _afterExecute?.Invoke(this, result);
             
             return result;
-        } 
-        
+        }
+
+        // execute an instruction directly (without the instruction cycle running)
         ExecutionResult IDebugProcessor.ExecuteDirect(byte[] opcode)
         {
             Memory.Untimed.WriteBytesAt(Registers.PC, opcode);
             InstructionPackage package = DecodeInstruction();
             if (package == null)
             {
-                // only happens if we reach the end of memory mid-instruction, if so we bail out
-                Stop();
-                return null;
+                throw new InstructionDecoderException("Supplied opcode sequence does not decode to a valid instruction.");
             }
 
             return Execute(package);
         }
 
-        ExecutionResult IDebugProcessor.ExecuteDirect(InstructionPackage package)
+        // execute an instruction directly (specified by mnemonic, so no decoding necessary)
+        ExecutionResult IDebugProcessor.ExecuteDirect(string mnemonic, byte? arg1, byte? arg2)
         {
+            if (!InstructionSet.InstructionsByMnemonic.TryGetValue(mnemonic.ToUpper(), out Instruction instruction))
+            {
+                throw new InstructionDecoderException("Supplied mnemonic does not correspond to a valid instruction");
+            }
+
+            InstructionData data = new InstructionData()
+            {
+                Argument1 = arg1 ?? 0,
+                Argument2 = arg2 ?? 0
+            };
+
+            InstructionPackage package = new InstructionPackage(instruction, data, Registers.PC);
             Registers.PC += package.Instruction.SizeInBytes; // simulate the decode cycle effect on PC
             return Execute(package);
         }
 
         private InstructionPackage DecodeInstruction()
         {
-            byte b0, b1, b3;
+            byte b0, b1, b3; // placeholders for upcoming instruction bytes
             Instruction instruction;
             InstructionData data = new InstructionData();
             ushort instructionAddress = Registers.PC;
@@ -501,19 +513,13 @@ namespace Zem80.Core
 
         private void WaitForNextClockTick()
         {
-            if (TimingMode == TimingMode.FastAndFurious)
+            if (TimingMode == TimingMode.PseudoRealTime)
             {
-                _emulatedTStates++;
-                OnClockTick?.Invoke(this, _executingInstructionPackage);
-                return;
+                while (_clockSemaphore == false) ;
             }
-            else
-            {
-                while (_clockSemaphore == false); // pause until the next clock tick
-                _clockSemaphore = false;
-                _emulatedTStates++;
-                OnClockTick?.Invoke(this, _executingInstructionPackage);
-            }
+
+            _emulatedTStates++;
+            OnClockTick?.Invoke(this, _executingInstructionPackage);
         }
 
         private void WhenTheClockTicks(object sender, EventArgs e)
@@ -543,14 +549,14 @@ namespace Zem80.Core
         private byte FetchOpcodeByte()
         {
             byte opcode = Memory.Untimed.ReadByteAt(Registers.PC);
-            if (!_suspendMachineCycles) InstructionTiming.OpcodeFetchCycle(Registers.PC, opcode);
+            if (!_suspendMachineCycles) Timing.OpcodeFetchCycle(Registers.PC, opcode);
             return opcode;
         }
 
         private byte FetchOperandByte()
         {
             byte operand = Memory.Untimed.ReadByteAt(Registers.PC);
-            if (!_suspendMachineCycles) InstructionTiming.MemoryReadCycle(Registers.PC, operand);
+            if (!_suspendMachineCycles) Timing.MemoryReadCycle(Registers.PC, operand);
             return operand;
         }
 
@@ -564,15 +570,15 @@ namespace Zem80.Core
                 }
 
                 _iff2 = _iff1; // save IFF1 state ready for RETN
-                _iff1 = false; // disable maskable interrupts until RETI/RETN
+                _iff1 = false; // disable maskable interrupts until RETN
 
-                InstructionTiming.BeginInterruptRequestAcknowledgeCycle(NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                Timing.BeginInterruptRequestAcknowledgeCycle(NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
 
                 Push(WordRegister.PC);
                 Registers.PC = 0x0066;
                 Registers.WZ = Registers.PC;
 
-                InstructionTiming.EndInterruptRequestAcknowledgeCycle();
+                Timing.EndInterruptRequestAcknowledgeCycle();
             }
 
             IO.EndNMIState();
@@ -595,7 +601,7 @@ namespace Zem80.Core
                 switch (InterruptMode)
                 {
                     case InterruptMode.IM0: // read instruction data from data bus in 1-4 opcode fetch cycles and execute resulting instruction - flags are set but PC is unaffected
-                        InstructionTiming.BeginInterruptRequestAcknowledgeCycle(IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        Timing.BeginInterruptRequestAcknowledgeCycle(IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         InstructionPackage package = DecodeIM0Interrupt();
                         ushort pc = Registers.PC;
                         Push(WordRegister.PC);
@@ -605,7 +611,7 @@ namespace Zem80.Core
                         break;
 
                     case InterruptMode.IM1: // just redirect to 0x0038 where interrupt handler must begin
-                        InstructionTiming.BeginInterruptRequestAcknowledgeCycle(IM1_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        Timing.BeginInterruptRequestAcknowledgeCycle(IM1_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         Push(WordRegister.PC);
                         Registers.PC = 0x0038;
                         Registers.WZ = Registers.PC;
@@ -613,7 +619,7 @@ namespace Zem80.Core
 
                     case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
                         _interruptCallback(); // device must populate data bus with low byte of address
-                        InstructionTiming.BeginInterruptRequestAcknowledgeCycle(IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        Timing.BeginInterruptRequestAcknowledgeCycle(IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         Push(WordRegister.PC);
                         ushort address = (ushort)((Registers.I * 256) + IO.DATA_BUS);
                         Registers.PC = Memory.Timed.ReadWordAt(address);
@@ -621,7 +627,7 @@ namespace Zem80.Core
                         break;
                 }
 
-                InstructionTiming.EndInterruptRequestAcknowledgeCycle();
+                Timing.EndInterruptRequestAcknowledgeCycle();
             }
         }
 
@@ -661,11 +667,11 @@ namespace Zem80.Core
 
         // IInstructionTiming contains methods to execute the different types of machine cycle that the Z80 supports.
         // These will be called mostly by the instruction decoder, stack operations and interrupt handlers, but some instruction
-        // microcode uses these methods to generate timing (eg IN/OUT) or 'internal operation' ticks. 
-        // I segregated them onto an interface just to keep them logically partioned from the main API but without moving them out to a class.
+        // microcode uses these methods directly to generate timing (eg IN/OUT) or add 'internal operation' ticks. 
+        // I segregated these onto an interface just to keep them logically partioned from the main API but without moving them out to a class.
         // Calling code can get at these methods using the Processor.Timing property (or by casting to the interface type, but don't do that, it's ugly).
 
-        #region ICycle
+        #region IInstructionTiming
         void IInstructionTiming.OpcodeFetchCycle(ushort address, byte data)
         {
             IO.SetOpcodeFetchState(address);
@@ -816,13 +822,16 @@ namespace Zem80.Core
         }
         #endregion  
 
-        public Processor(IMemoryMap map = null, ushort? topOfStackAddress = null, double frequencyInMHz = 4, bool enableFlagPrecalculation = true)
+        public Processor(IMemoryBank memory = null, IMemoryMap map = null, ushort? topOfStackAddress = null, double frequencyInMHz = 4, bool enableFlagPrecalculation = true)
         {
+            // You can supply your own memory implementations, for example if you need to do RAM paging for >64K implementations.
+            // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.
+
             FrequencyInMHz = frequencyInMHz;
 
             Registers = new Registers();
             Ports = new Ports(this);
-            Memory = new MemoryBank();
+            Memory = memory ?? new MemoryBank();
             Memory.Initialise(this, map ?? new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES, true));
             IO = new ProcessorIO(this);
 
@@ -832,13 +841,14 @@ namespace Zem80.Core
             _topOfStack = topOfStackAddress ?? 0;
             Registers.SP = _topOfStack;
 
-            // If precalculation is enabled, all flag combinations for all input values for 8-bit ALU / bitwise operations are pre-built now (not 16-bit ALU operations, far too big!).
-            // This is *slightly* faster than calculating them in real-time, but if you want to debug flag calculation you should
+            // If precalculation is enabled, all flag combinations for all input values for 8-bit ALU / bitwise operations are pre-built now 
+            // (but not the 16-bit ALU operations, the number space is far too big).
+            // This is *slightly* faster than calculating them in real-time, but if you need to debug flag calculation you should
             // disable this and attach a debugger to the flag calculation methods in FlagLookup.cs.
             FlagLookup.EnablePrecalculation = enableFlagPrecalculation;
             FlagLookup.BuildFlagLookupTables();
             
-            // The Z80 instruction set needs to be built (all Instruction objects are created and indexed into a hashtable - undocumented 'overloads' are built here too)
+            // The Z80 instruction set needs to be built (all Instruction objects are created, bound to the microcode instances, and indexed into a hashtable - undocumented 'overloads' are built here too)
             InstructionSet.Build();
 
             // If running in Pseudo-RealTime mode, an external clock routine is used to sync instruction execution to real time. Sort of.

@@ -36,14 +36,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
 
         public ExecutionResult ExecuteInstruction(string mnemonic, byte? arg1 = null, byte? arg2 = null)
         {
-            Instruction instruction = InstructionSet.InstructionsByMnemonic[mnemonic];
-            InstructionData data = new InstructionData()
-            {
-                Argument1 = arg1 ?? 0,
-                Argument2 = arg2 ?? 0
-            };
-
-            ExecutionResult result = CPU.Debug.ExecuteDirect(new InstructionPackage(instruction, data, Registers.PC)); // only available on Processor debug interface - sets flags but does not advance PC
+            ExecutionResult result = CPU.Debug.ExecuteDirect(mnemonic, arg1, arg2); // only available on Processor debug interface - sets flags but does not advance PC
             return result;
         }
 
