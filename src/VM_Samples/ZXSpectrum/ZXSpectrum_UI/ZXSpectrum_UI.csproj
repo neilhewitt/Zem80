@@ -8,10 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="ROM\48k_rude.rom" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="WriteableBitmapEx" Version="1.6.5" />
   </ItemGroup>
 
