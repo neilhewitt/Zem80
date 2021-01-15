@@ -13,7 +13,7 @@ I have now written a complete Z80 emulation including as much of the undocumente
 I have also added a basic ZX Spectrum emulation, but this is a sample and not intended for actual use as an emulator. 
 
 ## Project status
-15/01/21 - **Zem80 1.0 Release**. As far as I can tell, the Z80 emulation is complete and fully working. That said, I cannot warrant that there are no bugs! The ZX Spectrum demo VM works (in terms of the BASIC editor), and some games run well, while others do not (this is more likely to be due to defects in the Spectrum emulation rather than the Z80 core itself). I will not be extending the Spectrum VM any further, as it now serves its purpose as a sample. I will consider adding some further demo VMs, but I'm not sure which machine I want to tackle next!
+15/01/21 - **1.0 Release**. As far as I can tell, the Z80 emulation is complete and fully working. That said, I cannot warrant that there are no bugs! The ZX Spectrum demo VM works (in terms of the BASIC editor), and some games run well, while others do not (this is more likely to be due to defects in the Spectrum emulation rather than the Z80 core itself). I will not be extending the Spectrum VM any further, as it now serves its purpose as a sample. I will consider adding some further demo VMs, but I'm not sure which machine I want to tackle next!
 
 13/01/21 - I finally found the problem that was preventing the Spectrum editor from working (an implementation bug in DJNZ), plus a number of other bugs in the emulation which were probably not breaking anything but which still needed fixing before games are likely to run. 
 
