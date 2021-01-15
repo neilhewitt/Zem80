@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Zem80.Core;
 
-namespace ZXEm.VM
+namespace ZXSpectrum.VM
 {
     public static class SpectrumKeyboard
     {

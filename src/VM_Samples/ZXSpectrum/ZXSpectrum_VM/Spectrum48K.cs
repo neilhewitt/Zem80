@@ -9,9 +9,9 @@ using System.Windows.Input;
 using Zem80.Core;
 using Zem80.Core.Instructions;
 using Zem80.Core.Memory;
-using ZXEm.VM.TAP;
+using ZXSpectrum.VM.TAP;
 
-namespace ZXEm.VM
+namespace ZXSpectrum.VM
 {
     public class Spectrum48K
     {

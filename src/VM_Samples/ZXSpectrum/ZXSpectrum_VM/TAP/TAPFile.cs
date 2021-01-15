@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace ZXEm.VM.TAP
+namespace ZXSpectrum.VM.TAP
 {
     public class TAPFile
     {

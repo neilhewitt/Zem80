@@ -2,12 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <RootNamespace>ZXEm.VM</RootNamespace>
-    <AssemblyName>ZXEm.VM</AssemblyName>
+    <RootNamespace>ZXSpectrum.VM</RootNamespace>
+    <AssemblyName>ZXSpectrum.VM</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Zem80_Core\Zem80_Core.csproj" />
+    <ProjectReference Include="..\..\..\Zem80_Core\Zem80_Core.csproj" />
   </ItemGroup>
 
 </Project>

@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Text;
 using Zem80.Core;
 
-namespace ZXEm.VM
+namespace ZXSpectrum.VM
 {
     public class ScreenMap
     {

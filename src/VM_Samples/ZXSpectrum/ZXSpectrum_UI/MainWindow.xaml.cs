@@ -6,10 +6,9 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using ZXEm.VM;
-using Zem80.Core;
+using ZXSpectrum.VM;
 
-namespace ZXEm.UI
+namespace ZXSpectrum.UI
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

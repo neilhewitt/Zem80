@@ -1,4 +1,4 @@
-﻿namespace ZXEm.VM
+﻿namespace ZXSpectrum.VM
 {
     public class AttributeMap
     {

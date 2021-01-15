@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ZXEm.VM.TAP
+namespace ZXSpectrum.VM.TAP
 {
     public class TAPLoader
     {

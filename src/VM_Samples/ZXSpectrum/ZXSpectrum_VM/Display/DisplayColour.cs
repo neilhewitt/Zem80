@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace ZXEm.VM
+namespace ZXSpectrum.VM
 {
     public static class DisplayColour
     {

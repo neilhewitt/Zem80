@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWPF>true</UseWPF>
-    <RootNamespace>ZXEm.UI</RootNamespace>
+    <RootNamespace>ZXSpectrum.UI</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Zem80_Core\Zem80_Core.csproj" />
-    <ProjectReference Include="..\ZXEm_VM\ZXEm_VM.csproj" />
+    <ProjectReference Include="..\..\..\Zem80_Core\Zem80_Core.csproj" />
+    <ProjectReference Include="..\ZXSpectrum_VM\ZXSpectrum__VM.csproj" />
   </ItemGroup>
 
   <ItemGroup>
