@@ -10,9 +10,11 @@ I'm trying, as far as is possible given the domain, to write idiomatic C# code, 
 
 I have now written a complete Z80 emulation including as much of the undocumented instructions and behaviour as I could find. **It is not guaranteed to be error-free at this point, but it does pass all Zexall tests and the other instructions have been tested manually.**
 
-I have also added a basic ZX Spectrum emulation. **This is experimental and is not fully working - you can boot the machine and start typing BASIC commands but it soon goes wrong. I am using this project as a test to find further bugs in the emulation.**
+I have also added a basic ZX Spectrum emulation. **This is experimental and is not fully working. I am using this project as a test to find further bugs in the emulation.**
 
 ## Project status
+13/01/21 - I finally found the problem that was preventing the Spectrum editor from working (an implementation bug in DJNZ), plus a number of other bugs in the emulation which were probably not breaking anything but which still needed fixing before games are likely to run. 
+
 19/12/20 - I found a pretty major bug (the EX (SP),rr instruction was just not working) which was what was stopping the BASIC editor from working in the Spectrum VM. I also found a number of other small issues and have corrected them. The editor still does not work correctly but BASIC commands can be executed in immediate mode, so we're close... I may try to run some actual Spectrum games to see how bad things are. 
 
 I also added further support for the undocumented X/Y aka 3/5 flags. This includes adding the WZ aka MEMPTR internal register, and all the cases that set this register, so that the X/Y flags for the BIT instruction work as per the Zilog chip implementation.
