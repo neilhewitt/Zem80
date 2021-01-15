@@ -214,8 +214,10 @@ namespace ZXEm.VM
             for (int i = 14343; i < 14349; i++) _displayWaits.Add(i, wait--);
         }
 
-        public Spectrum48K(string romPath)
+        public Spectrum48K()
         {
+            string romPath = "rom\\48k.rom";
+
             _screen = new ScreenMap();
             GenerateDisplayWaits();
 
