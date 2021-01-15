@@ -29,7 +29,7 @@ namespace ZXSpectrum.UI
             KeyDown += MainWindow_KeyDown;
             KeyUp += MainWindow_KeyUp;
 
-            _vm.Start();
+            _vm.StartWithSnapshot("c:\\temp\\jetman.sna");
         }
 
         private void MainWindow_KeyUp(object sender, KeyEventArgs e)

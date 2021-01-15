@@ -34,27 +34,51 @@ namespace ZXSpectrum.VM
             _cpu.Start(timingMode: TimingMode.PseudoRealTime);
         }
 
+        public void StartWithSnapshot(string path)
+        {
+            if (_cpu.State == ProcessorState.Running)
+            {
+                throw new Exception("VM is already started!");
+            }
+
+            _cpu.Suspend();
+            _cpu.Start(timingMode: TimingMode.PseudoRealTime); // will initialise the CPU but not start processing, as it's suspended
+            LoadSnapshot(path);
+            _cpu.Resume();
+        }
+
         public void Stop()
         {
             _cpu.Stop();
         }
 
-        public void LoadSnapshot(string path)
+        private void LoadSnapshot(string path)
         {
-            _cpu.Suspend();
+            switch (Path.GetExtension(path).ToUpper())
+            {
+                case ".SNA":
+                    LoadSNA(path);
+                    break;
 
+                case ".Z80":
+                    LoadZ80(path);
+                    break;
+            }
+        }
+
+        private void LoadSNA(string path)
+        {
             byte[] snapshot = File.ReadAllBytes(path);
-
             Registers r = _cpu.Registers;
-            
+
             r.I = snapshot[0];
-            
+
             r.ExchangeBCDEHL();
             r.HL = getWord(1);
             r.DE = getWord(3);
             r.BC = getWord(5);
             r.Debug.AF = getWord(7);
-            
+
             r.ExchangeBCDEHL();
             r.HL = getWord(9);
             r.DE = getWord(11);
@@ -66,10 +90,6 @@ namespace ZXSpectrum.VM
             {
                 _cpu.EnableInterrupts();
             }
-            else
-            {
-                _cpu.DisableInterrupts();
-            }
 
             r.R = snapshot[20];
             r.Debug.AF = getWord(21);
@@ -77,18 +97,104 @@ namespace ZXSpectrum.VM
 
             _cpu.SetInterruptMode((InterruptMode)snapshot[25]);
             _screen.SetBorderColour(DisplayColour.FromThreeBit(snapshot[26]));
-            
+
             _cpu.Memory.Untimed.WriteBytesAt(16384, snapshot[27..]);
             _cpu.Pop(WordRegister.PC);
             _cpu.RestoreInterruptsFromNMI();
-
-            _cpu.Resume();
 
             ushort getWord(int index)
             {
                 return (snapshot[index], snapshot[index + 1]).ToWord();
             }
         }
+
+        private void LoadZ80(string path)
+        {
+            byte[] snapshot = File.ReadAllBytes(path);
+            Registers r = _cpu.Registers;
+
+            r.A = snapshot[0];
+            r.Debug.F = snapshot[1];
+            r.BC = getWord(2);
+            r.HL = getWord(4);
+            r.PC = getWord(6);
+            r.SP = getWord(8);
+            r.I = snapshot[10];
+            r.R = snapshot[11];
+
+            byte twelve = snapshot[12];
+            if (twelve == 255) twelve = 1;
+            byte borderColour = twelve.GetByteFromBits(1, 3);
+            _screen.SetBorderColour(DisplayColour.FromThreeBit(borderColour));
+
+            bool compressed = twelve.GetBit(5);
+
+            r.DE = getWord(13);
+
+            r.ExchangeBCDEHL();
+            r.ExchangeAF();
+            r.BC = getWord(15);
+            r.DE = getWord(17);
+            r.HL = getWord(19);
+            r.A = snapshot[21];
+            r.Debug.F = snapshot[22];
+            r.ExchangeAF();
+            r.ExchangeBCDEHL();
+
+            r.IY = getWord(23);
+            r.IX = getWord(25);
+            if (snapshot[27] == 1)
+            {
+                _cpu.EnableInterrupts();
+            }
+
+            _cpu.SetInterruptMode((InterruptMode)snapshot[29].GetByteFromBits(0, 2));
+
+            byte[] memoryImage;
+            if (compressed)
+            {
+                List<byte> expanded = new List<byte>();
+                for (int i = 30; i < snapshot.Length - 4; i++)
+                {
+                    if (snapshot[i] == 0xED && snapshot[i + 1] == 0xED)
+                    {
+                        byte repeats = snapshot[i + 2];
+                        byte value = snapshot[i + 3];
+
+                        byte[] sequence = (byte[])Array.CreateInstance(typeof(byte), repeats);
+                        if (value > 0)
+                        {
+                            for (int j = 0; j < sequence.Length; j++)
+                            {
+                                sequence[j] = value;
+                            }
+                        }
+
+                        expanded.AddRange(sequence);
+                        i += 3; // jump ahead
+                    }
+                    else
+                    {
+                        expanded.Add(snapshot[i]);
+                    }
+                }
+
+                memoryImage = expanded.ToArray();
+            }
+            else
+            {
+                memoryImage = snapshot[30..^4];
+            }
+
+            _cpu.Memory.Untimed.WriteBytesAt(16384, memoryImage);
+            _cpu.RestoreInterruptsFromNMI();
+
+            ushort getWord(int index)
+            {
+                return (snapshot[index], snapshot[index + 1]).ToWord();
+            }
+        }
+
 
         private void _cpu_OnClockTick(object sender, InstructionPackage e)
         {
@@ -107,7 +213,7 @@ namespace ZXSpectrum.VM
                 // we've reached the vertical blanking interval, so raise an interrupt for the keyboard processing etc.
                 // and then update the display
                 UpdateDisplay();
-                _cpu.RaiseInterrupt(() => 0x00);
+                _cpu.RaiseInterrupt();
                 _ticksSinceLastDisplayUpdate = 0;
             }
         }

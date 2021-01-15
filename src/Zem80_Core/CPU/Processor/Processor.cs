@@ -187,10 +187,7 @@ namespace Zem80.Core
         public void RaiseInterrupt(Func<byte> instructionReadCallback = null)
         {
             IO.SetInterruptState();
-            if (InterruptsEnabled)
-            {
-                _interruptCallback = instructionReadCallback;
-            }
+            _interruptCallback = instructionReadCallback;
         }
 
         public void RaiseNonMaskableInterrupt()
@@ -588,9 +585,9 @@ namespace Zem80.Core
         {
             if (IO.INT && InterruptsEnabled)
             {
-                if (_interruptCallback == null && InterruptMode != InterruptMode.IM1)
+                if (_interruptCallback == null && InterruptMode == InterruptMode.IM0)
                 {
-                    throw new InterruptException("Interrupt mode is " + InterruptMode.ToString() + " which requires a callback for reading data from the interrupting device. Callback was null.");
+                    throw new InterruptException("Interrupt mode is IM0 which requires a callback for reading data from the interrupting device. Callback was null.");
                 }
 
                 if (_halted)
@@ -618,7 +615,7 @@ namespace Zem80.Core
                         break;
 
                     case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
-                        _interruptCallback(); // device must populate data bus with low byte of address
+                        if (_interruptCallback != null) _interruptCallback(); // device should populate data bus with low byte of address
                         Timing.BeginInterruptRequestAcknowledgeCycle(IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         Push(WordRegister.PC);
                         ushort address = (ushort)((Registers.I * 256) + IO.DATA_BUS);
@@ -627,6 +624,7 @@ namespace Zem80.Core
                         break;
                 }
 
+                _interruptCallback = null;
                 Timing.EndInterruptRequestAcknowledgeCycle();
             }
         }
