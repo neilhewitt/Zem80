@@ -8,11 +8,13 @@ Most emulators written in most languages are not very representative of those la
 
 I'm trying, as far as is possible given the domain, to write idiomatic C# code, with fairly standard OO design principles. I'm aware that I will probably not get the best performance this way. But that's a problem I'll deal with if - and only if - it proves impossible to build an emulation core that can run Z80 software (CP/M, Spectrum, whatever) at a speed comparable to the original hardware.  
 
-I have now written a complete Z80 emulation including as much of the undocumented instructions and behaviour as I could find. **It is not guaranteed to be error-free at this point, but it does pass all Zexall tests and the other instructions have been tested manually.**
+I have now written a complete Z80 emulation including as much of the undocumented instructions and behaviour as I could find.
 
-I have also added a basic ZX Spectrum emulation. **This is experimental and is not fully working. I am using this project as a test to find further bugs in the emulation.**
+I have also added a basic ZX Spectrum emulation, but this is a sample and not intended for actual use as an emulator. 
 
 ## Project status
+15/01/21 - **Zem80 1.0 Release**. As far as I can tell, the Z80 emulation is complete and fully working. That said, I cannot warrant that there are no bugs! The ZX Spectrum demo VM works (in terms of the BASIC editor), and some games run well, while others do not (this is more likely to be due to defects in the Spectrum emulation rather than the Z80 core itself). I will not be extending the Spectrum VM any further, as it now serves its purpose as a sample. I will consider adding some further demo VMs, but I'm not sure which machine I want to tackle next!
+
 13/01/21 - I finally found the problem that was preventing the Spectrum editor from working (an implementation bug in DJNZ), plus a number of other bugs in the emulation which were probably not breaking anything but which still needed fixing before games are likely to run. 
 
 19/12/20 - I found a pretty major bug (the EX (SP),rr instruction was just not working) which was what was stopping the BASIC editor from working in the Spectrum VM. I also found a number of other small issues and have corrected them. The editor still does not work correctly but BASIC commands can be executed in immediate mode, so we're close... I may try to run some actual Spectrum games to see how bad things are. 
