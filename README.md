@@ -15,6 +15,11 @@ I have also added a basic ZX Spectrum emulation, but this is a sample and not in
 ## Project status
 15/01/21 - **1.0 Release**. As far as I can tell, the Z80 emulation is complete and fully working. That said, I cannot warrant that there are no bugs! The ZX Spectrum demo VM works (in terms of the BASIC editor), and some games run well, while others do not (this is more likely to be due to defects in the Spectrum emulation rather than the Z80 core itself). I will not be extending the Spectrum VM any further, as it now serves its purpose as a sample. I will consider adding some further demo VMs, but I'm not sure which machine I want to tackle next!
 
+### Known issues ###
+There is a bug in the timing code for this release, so that the emulator always runs in non-realtime mode, and thus the emulation
+may run faster than expected. If real-time performance per the assigned clock speed is a goal for your project, you should update to v1.0.1
+which will contain this and other bug fixes and will be available soon.
+
 * I'm looking at writing some documentation and some how-to pages. For now, the code is all there is.
 * The test suite has been gutted and is being re-built, and new tests will be added (sorry, this isn't a TDD project!).
 * All of the projects in the solution are built for .NET Core 3.1 and all the libraries (Zem80.Core etc) are built to .NET Standard 2.1
