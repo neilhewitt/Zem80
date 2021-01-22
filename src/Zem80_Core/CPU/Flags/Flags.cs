@@ -27,6 +27,11 @@ namespace Zem80.Core
             _flags = 0;
         }
 
+        public Flags Copy()
+        {
+            return new Flags(_flags);
+        }
+
         public bool SatisfyCondition(Condition condition)
         {
             return condition switch

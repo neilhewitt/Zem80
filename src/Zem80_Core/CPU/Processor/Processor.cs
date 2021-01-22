@@ -328,17 +328,14 @@ namespace Zem80.Core
                 _onBreakpoint?.Invoke(this, package);
             }
 
-            if (package.Instruction.IsIndexed)
+            ushort wz = package.Instruction switch
             {
-                ushort wz = package.Instruction switch
-                {
-                    var i when i.Source.IsAddressFromIndexAndOffset() => Registers[i.Source.AsWordRegister()],
-                    var i when i.Target.IsAddressFromIndexAndOffset() => Registers[i.Target.AsWordRegister()],
-                    _ => 0
-                };
-                wz = (ushort)(wz + package.Data.Argument1);
-                Registers.WZ = wz;
-            }
+                var i when i.Source.IsAddressFromIndexAndOffset() => Registers[i.Source.AsWordRegister()],
+                var i when i.Target.IsAddressFromIndexAndOffset() => Registers[i.Target.AsWordRegister()],
+                _ => 0
+            };
+            wz = (ushort)(wz + package.Data.Argument1);
+            Registers.WZ = wz;
 
             // run the instruction microcode implementation
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
@@ -510,13 +507,19 @@ namespace Zem80.Core
 
         private void WaitForNextClockTick()
         {
-            if (TimingMode == TimingMode.PseudoRealTime)
+            if (TimingMode == TimingMode.FastAndFurious)
             {
-                while (_clockSemaphore == false) ;
+                _emulatedTStates++;
+                OnClockTick?.Invoke(this, _executingInstructionPackage);
+                return;
             }
-
-            _emulatedTStates++;
-            OnClockTick?.Invoke(this, _executingInstructionPackage);
+            else
+            {
+                while (_clockSemaphore == false) ; // pause until the next clock tick
+                _clockSemaphore = false;
+                _emulatedTStates++;
+                OnClockTick?.Invoke(this, _executingInstructionPackage);
+            }
         }
 
         private void WhenTheClockTicks(object sender, EventArgs e)
@@ -615,7 +618,7 @@ namespace Zem80.Core
                         break;
 
                     case InterruptMode.IM2: // redirect to address pointed to by register I + data bus value - gives 128 possible addresses
-                        if (_interruptCallback != null) _interruptCallback(); // device should populate data bus with low byte of address
+                        _interruptCallback?.Invoke(); // device should populate data bus with low byte of address
                         Timing.BeginInterruptRequestAcknowledgeCycle(IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         Push(WordRegister.PC);
                         ushort address = (ushort)((Registers.I * 256) + IO.DATA_BUS);

@@ -7,11 +7,13 @@ namespace Zem80.Core.Instructions
 {
     public static class InstructionExtensions
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte GetBitIndex(this Instruction instruction)
         {
             return instruction.Opcode.GetByteFromBits(3, 3);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte MarshalSourceByte(this Instruction instruction, InstructionData data, Processor cpu, out ushort address, out ByteRegister source)
         {
             // this fetches a byte operand value for the instruction given, adjusting how it is fetched based on the addressing of the instruction
@@ -62,6 +64,7 @@ namespace Zem80.Core.Instructions
             return value;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ushort MarshalSourceWord(this Instruction instruction, InstructionData data, Processor cpu, out ushort address)
         {
             Registers r = cpu.Registers;

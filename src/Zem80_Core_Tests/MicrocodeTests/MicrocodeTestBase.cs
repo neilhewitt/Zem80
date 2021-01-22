@@ -8,8 +8,6 @@ namespace Zem80.Core.Tests.MicrocodeTests
 {
     public abstract class MicrocodeTestBase
     {
-        protected Random _random;
-
         public Processor CPU { get; private set; }
         public Registers Registers => CPU.Registers;
         public Flags Flags => CPU.Registers.Flags;
@@ -17,15 +15,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
         [OneTimeSetUp]
         public void Setup()
         {
-            try
-            {
-                CPU = new Processor();
-                _random = new Random(DateTime.Now.Millisecond);
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
+            CPU = new Processor();
         }
 
         [SetUp]
@@ -36,14 +26,16 @@ namespace Zem80.Core.Tests.MicrocodeTests
 
         public ExecutionResult ExecuteInstruction(string mnemonic, byte? arg1 = null, byte? arg2 = null)
         {
-            ExecutionResult result = CPU.Debug.ExecuteDirect(mnemonic, arg1, arg2); // only available on Processor debug interface - sets flags but does not advance PC
+            // only available on Processor debug interface - sets flags but does not advance PC 
+            // (but if PC is assigned in the instruction, that value is preserved)
+            ExecutionResult result = CPU.Debug.ExecuteDirect(mnemonic, arg1, arg2);
             return result;
         }
 
         public void SetCPUFlagsFromCondition(Condition condition, bool invert)
         {
             Flags flags = CPU.Registers.Flags;
-            flags.Reset(); // start with a blank slate
+            flags.Reset(); // start with a blank slate, this operation is not additive, it's a replacement
 
             switch (condition)
             {
