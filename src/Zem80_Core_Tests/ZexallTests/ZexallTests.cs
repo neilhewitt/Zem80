@@ -106,7 +106,7 @@ namespace Zem80.Core.Tests
 
         private TestState ExecuteTestCycle(TestState input)
         {
-            _cpu.Registers.Debug.AF = input.AF; // can only set AF directly via register debug mode
+            _cpu.Registers.Direct[WordRegister.AF] = input.AF; // can only set AF directly via register debug mode
             _cpu.Registers.BC = input.BC;
             _cpu.Registers.DE = input.DE;
             _cpu.Registers.HL = input.HL;

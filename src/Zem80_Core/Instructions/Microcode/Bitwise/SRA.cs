@@ -26,11 +26,11 @@ namespace Zem80.Core.Instructions
             byte original, shifted;
             if (register != ByteRegister.None)
             {
-                original = r[register];
+                original = r.Direct[register];
                 shifted = (byte)(original >> 1);
                 shifted = shifted.SetBit(7, original.GetBit(7));
                 setFlags(original);
-                r[register] = shifted;
+                r.Direct[register] = shifted;
             }
             else
             {
@@ -49,7 +49,7 @@ namespace Zem80.Core.Instructions
                 cpu.Memory.Timed.WriteByteAt(address, shifted);
                 if (instruction.CopyResultTo != ByteRegister.None)
                 {
-                    r[instruction.CopyResultTo.Value] = shifted;
+                    r.Direct[instruction.CopyResultTo.Value] = shifted;
                 }
             }
 

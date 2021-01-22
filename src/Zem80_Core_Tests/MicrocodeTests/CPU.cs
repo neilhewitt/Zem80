@@ -11,9 +11,9 @@ namespace Zem80.Core.Tests.MicrocodeTests
         [Test]
         public void EX_AF_AF()
         {
-            CPU.Registers.Debug.AF = 0x80;
+            CPU.Registers.Direct[WordRegister.AF] = 0x80;
             CPU.Registers.ExchangeAF();
-            CPU.Registers.Debug.AF = 0x90;
+            CPU.Registers.Direct[WordRegister.AF] = 0x90;
             CPU.Registers.ExchangeAF();
 
             ExecuteInstruction("EX AF,AF'");
@@ -34,12 +34,12 @@ namespace Zem80.Core.Tests.MicrocodeTests
 
             Registers.SP = sp;
             CPU.Memory.Untimed.WriteWordAt(sp, valueAtSP);
-            Registers[wordRegister] = value;
+            Registers.Direct[wordRegister] = value;
 
             ExecuteInstruction($"EX (SP),{ wordRegister.ToString() }");
             ushort newValueAtSP = CPU.Memory.Untimed.ReadWordAt(sp);
 
-            Assert.That(Registers[wordRegister] == valueAtSP && newValueAtSP == value);
+            Assert.That(Registers.Direct[wordRegister] == valueAtSP && newValueAtSP == value);
         }
     }
 }

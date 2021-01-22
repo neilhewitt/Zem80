@@ -18,8 +18,8 @@ namespace Zem80.Core.Instructions
             {
                 //dec 16 - bit
                 WordRegister register = instruction.Target.AsWordRegister();
-                ushort value = r[register];
-                r[register] = (ushort)(value - 1);
+                ushort value = r.Direct[register];
+                r.Direct[register] = (ushort)(value - 1);
             }
             else
             {
@@ -35,8 +35,8 @@ namespace Zem80.Core.Instructions
                 {
                     // it's an 8-bit dec
                     ByteRegister register = instruction.Target.AsByteRegister();
-                    value = r[register];
-                    r[register] = (byte)(value - 1);
+                    value = r.Direct[register];
+                    r.Direct[register] = (byte)(value - 1);
                 }
 
                 bool carry = flags.Carry;

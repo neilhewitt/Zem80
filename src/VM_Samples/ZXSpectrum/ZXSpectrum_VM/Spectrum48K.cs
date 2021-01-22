@@ -77,7 +77,7 @@ namespace ZXSpectrum.VM
             r.HL = getWord(1);
             r.DE = getWord(3);
             r.BC = getWord(5);
-            r.Debug.AF = getWord(7);
+            r.Direct[WordRegister.AF] = getWord(7);
 
             r.ExchangeBCDEHL();
             r.HL = getWord(9);
@@ -92,7 +92,7 @@ namespace ZXSpectrum.VM
             }
 
             r.R = snapshot[20];
-            r.Debug.AF = getWord(21);
+            r.Direct[WordRegister.AF] = getWord(21);
             r.SP = getWord(23);
 
             _cpu.SetInterruptMode((InterruptMode)snapshot[25]);
@@ -114,7 +114,7 @@ namespace ZXSpectrum.VM
             Registers r = _cpu.Registers;
 
             r.A = snapshot[0];
-            r.Debug.F = snapshot[1];
+            r.Direct[ByteRegister.F] = snapshot[1];
             r.BC = getWord(2);
             r.HL = getWord(4);
             r.PC = getWord(6);
@@ -137,7 +137,7 @@ namespace ZXSpectrum.VM
             r.DE = getWord(17);
             r.HL = getWord(19);
             r.A = snapshot[21];
-            r.Debug.F = snapshot[22];
+            r.Direct[ByteRegister.F] = snapshot[22];
             r.ExchangeAF();
             r.ExchangeBCDEHL();
 
