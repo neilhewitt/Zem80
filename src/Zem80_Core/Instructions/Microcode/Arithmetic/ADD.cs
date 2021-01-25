@@ -18,13 +18,13 @@ namespace Zem80.Core.Instructions
             {
                 // it's one of the 16-bit adds (HL,DE etc)
                 WordRegister destination = instruction.Target.AsWordRegister();
-                ushort left = r.Direct[destination];
+                ushort left = r[destination];
                 ushort right = instruction.MarshalSourceWord(data, cpu, out ushort address);
 
                 cpu.Timing.InternalOperationCycle(4);
                 cpu.Timing.InternalOperationCycle(3);
                 var sum = ALUOperations.Add(left, right, false, false, flags);
-                r.Direct[destination] = sum.Result;
+                r[destination] = sum.Result;
                 flags = sum.Flags;
                 r.WZ = (ushort)(left + 1);
             }

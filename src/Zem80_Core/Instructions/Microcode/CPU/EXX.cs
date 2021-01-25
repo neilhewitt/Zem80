@@ -13,7 +13,7 @@ namespace Zem80.Core.Instructions
 
             cpu.Registers.ExchangeBCDEHL();
 
-            return new ExecutionResult(package, null);;
+            return new ExecutionResult(package, null);
         }
 
         public EXX()

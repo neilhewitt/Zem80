@@ -19,7 +19,7 @@ namespace Zem80.Core.Instructions
             ByteRegister register = instruction.Source.AsByteRegister();
             if (register != ByteRegister.None)
             {
-                value = r.Direct[register]; // BIT b, r
+                value = r[register]; // BIT b, r
             }
             else
             {

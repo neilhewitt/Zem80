@@ -54,6 +54,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
             Assert.That(Registers.PC == (ushort)expectedAddress);
         }
 
+        [Test]
         public void CALL()
         {
             Registers.PC = 0x4000;

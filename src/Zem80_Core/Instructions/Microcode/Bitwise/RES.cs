@@ -17,8 +17,8 @@ namespace Zem80.Core.Instructions
 
             if (register != ByteRegister.None)
             {
-                byte value = r.Direct[register].SetBit(bitIndex, false);
-                r.Direct[register] = value;
+                byte value = r[register].SetBit(bitIndex, false);
+                r[register] = value;
             }
             else
             {
@@ -36,11 +36,11 @@ namespace Zem80.Core.Instructions
                 cpu.Memory.Timed.WriteByteAt(address, value);
                 if (instruction.CopyResultTo != ByteRegister.None)
                 {
-                    r.Direct[instruction.CopyResultTo.Value] = value;
+                    r[instruction.CopyResultTo.Value] = value;
                 }
             }
 
-            return new ExecutionResult(package, null);;
+            return new ExecutionResult(package, null);
         }
 
         public RES()

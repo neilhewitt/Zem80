@@ -49,7 +49,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
                 case Condition.P: flags.Sign = false; break;
             }
 
-            if (invert) CPU.Registers.Direct[ByteRegister.F] = flags.Value.Invert(); // excludes the condition rather than including it
+            if (invert) CPU.Registers.F = flags.Value.Invert(); // excludes the condition rather than including it
         }
     }
 }

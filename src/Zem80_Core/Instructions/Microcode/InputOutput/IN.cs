@@ -19,7 +19,7 @@ namespace Zem80.Core.Instructions
                 Port port = cpu.Ports[portNumber];
                 port.SignalRead();
                 byte input = port.ReadByte(bc);
-                if (toRegister != ByteRegister.F) r.Direct[toRegister] = input;
+                if (toRegister != ByteRegister.F) r[toRegister] = input;
                 return input;
             }
 

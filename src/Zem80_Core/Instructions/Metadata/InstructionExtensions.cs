@@ -26,7 +26,7 @@ namespace Zem80.Core.Instructions
             if (source != ByteRegister.None)
             {
                 // operand comes from another byte register directly (eg LD A,B)
-                value = r.Direct[source];
+                value = r[source];
             }
             else
             {
@@ -74,7 +74,7 @@ namespace Zem80.Core.Instructions
             WordRegister source = instruction.Source.AsWordRegister();
             if (source != WordRegister.None)
             {
-                value = r.Direct[source];
+                value = r[source];
             }
             else
             {

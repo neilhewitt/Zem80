@@ -26,10 +26,10 @@ namespace Zem80.Core.Instructions
             byte original, shifted;
             if (register != ByteRegister.None)
             {
-                original = r.Direct[register];
+                original = r[register];
                 shifted = (byte)((original << 1) + 1); // bit 0 is always set, adding 1 does this quicker than calling SetBit
                 setFlags(original);
-                r.Direct[register] = shifted;
+                r[register] = shifted;
             }
             else
             {
@@ -46,7 +46,7 @@ namespace Zem80.Core.Instructions
                 cpu.Memory.Timed.WriteByteAt(address, shifted);
                 if (instruction.CopyResultTo != ByteRegister.None)
                 {
-                    r.Direct[instruction.CopyResultTo.Value] = shifted;
+                    r[instruction.CopyResultTo.Value] = shifted;
                 }
             }
 

@@ -18,7 +18,7 @@ namespace Zem80.Core.Instructions
             {
                 Port port = cpu.Ports[portNumber];
                 byte output = 0;
-                if (dataRegister != ByteRegister.None) output = r.Direct[dataRegister];
+                if (dataRegister != ByteRegister.None) output = r[dataRegister];
                 port.SignalWrite();
                 port.WriteByte(output, bc);
             }

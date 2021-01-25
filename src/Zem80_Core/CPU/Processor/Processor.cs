@@ -144,7 +144,7 @@ namespace Zem80.Core
 
         public void Push(WordRegister register)
         {
-            ushort value = Registers.Direct[register];
+            ushort value = Registers[register];
             Registers.SP--;
             Timing.BeginStackWriteCycle(true, value.HighByte());
             Memory.Untimed.WriteByteAt(Registers.SP, value.HighByte());
@@ -171,7 +171,7 @@ namespace Zem80.Core
             Registers.SP++;
 
             ushort value = (low, high).ToWord();
-            Registers.Direct[register] = value;
+            Registers[register] = value;
         }
 
         public ushort Peek()
@@ -330,8 +330,8 @@ namespace Zem80.Core
 
             ushort wz = package.Instruction switch
             {
-                var i when i.Source.IsAddressFromIndexAndOffset() => Registers.Direct[i.Source.AsWordRegister()],
-                var i when i.Target.IsAddressFromIndexAndOffset() => Registers.Direct[i.Target.AsWordRegister()],
+                var i when i.Source.IsAddressFromIndexAndOffset() => Registers[i.Source.AsWordRegister()],
+                var i when i.Target.IsAddressFromIndexAndOffset() => Registers[i.Target.AsWordRegister()],
                 _ => 0
             };
             wz = (ushort)(wz + package.Data.Argument1);

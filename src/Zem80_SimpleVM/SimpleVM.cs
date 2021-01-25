@@ -81,8 +81,8 @@ namespace Zem80.SimpleVM
 
             void regValue(ByteRegister r)
             {
-                byte value = _cpu.Registers.Direct[r];
-                if (_lastRegisters != null && value != _lastRegisters.Direct[r]) Console.ForegroundColor = ConsoleColor.Green;
+                byte value = _cpu.Registers[r];
+                if (_lastRegisters != null && value != _lastRegisters[r]) Console.ForegroundColor = ConsoleColor.Green;
                 Write(r.ToString() + ": 0x" + value.ToString("X2"));
                 Console.ForegroundColor = ConsoleColor.White;
                 Write(" | ");
@@ -90,8 +90,8 @@ namespace Zem80.SimpleVM
 
             void wregValue(WordRegister r)
             {
-                ushort value = _cpu.Registers.Direct[r];
-                if (_lastRegisters != null && value != _lastRegisters.Direct[r]) Console.ForegroundColor = ConsoleColor.Green;
+                ushort value = _cpu.Registers[r];
+                if (_lastRegisters != null && value != _lastRegisters[r]) Console.ForegroundColor = ConsoleColor.Green;
                 Write(r.ToString() + ": 0x" + value.ToString("X4"));
                 Console.ForegroundColor = ConsoleColor.White;
                 Write(" | ");

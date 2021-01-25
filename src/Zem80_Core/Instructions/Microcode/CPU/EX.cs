@@ -28,7 +28,7 @@ namespace Zem80.Core.Instructions
                     ushort valueAtSP = cpu.Memory.Untimed.ReadWordAt(r.SP);
 
                     // get word pointed to by the stack pointer into the source register
-                    r.Direct[instruction.Source.AsWordRegister()] = valueAtSP;
+                    r[instruction.Source.AsWordRegister()] = valueAtSP;
 
                     // now store value taken originally to address in SP
                     cpu.Memory.Timed.WriteWordAt(r.SP, value);
@@ -45,7 +45,7 @@ namespace Zem80.Core.Instructions
                 }
             }
 
-            return new ExecutionResult(package, null);;
+            return new ExecutionResult(package, null);
         }
 
         public EX()
