@@ -24,8 +24,8 @@ namespace Zem80.Core.Memory
             // do nothing - we're read-only
         }
 
-        public ReadOnlyMemorySegment(ushort address, byte[] contents)
-            : base(address, (uint)contents.Length)
+        public ReadOnlyMemorySegment(byte[] contents)
+            : base((uint)contents.Length)
         {
             base.WriteBytesAt(0, contents);
         }

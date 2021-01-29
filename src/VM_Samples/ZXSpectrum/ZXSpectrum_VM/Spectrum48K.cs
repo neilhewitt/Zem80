@@ -327,8 +327,8 @@ namespace ZXSpectrum.VM
 
             // set up the memory map - 16K ROM + 48K RAM = 64K
             IMemoryMap map = new MemoryMap(65536, false);
-            map.Map(new ReadOnlyMemorySegment(0, File.ReadAllBytes(romPath)));
-            map.Map(new MemorySegment(16384, 49152));
+            map.Map(new ReadOnlyMemorySegment(File.ReadAllBytes(romPath)), 0);
+            map.Map(new MemorySegment(49152), 16384);
 
             _cpu = new Processor(map: map, frequencyInMHz: 5);
 

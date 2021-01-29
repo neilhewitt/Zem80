@@ -20,10 +20,9 @@ namespace Zem80.Core.Memory
             return _pageMap[PageFromAddress(address)];
         }
 
-        public void Map(IMemorySegment segment, bool overwriteMappedPages = false)
+        public void Map(IMemorySegment segment, ushort startAddress, bool overwriteMappedPages = false)
         {
             int size = (int)segment.SizeInBytes;
-            ushort startAddress = segment.StartAddress;
 
             if (startAddress % PAGE_SIZE_IN_BYTES > 0)
             {
@@ -46,11 +45,16 @@ namespace Zem80.Core.Memory
             if (!_segments.Contains(segment))
             {
                 _segments.Add(segment);
+                segment.MapAt(startAddress);
+            }
+            else
+            {
+                throw new MemoryMapException("This segment has already been mapped into memory and cannot be mapped twice.");
             }
 
             for (int i = startPage; i <= endPage; i++)
             {
-                _pageMap[i] = segment;
+                _pageMap[i] = segment; // map a reference to this segment into every 1K page it runs over, so we can quickly fetch the segment for any address
             }
         }
 
@@ -73,7 +77,7 @@ namespace Zem80.Core.Memory
             int pages = (int)(sizeInBytes / PAGE_SIZE_IN_BYTES);
             _pageMap = new IMemorySegment[pages];
 
-            if (autoMap) Map(new MemorySegment(0, sizeInBytes)); // maps a single block to the whole of memory space (you can map ROM in later)
+            if (autoMap) Map(new MemorySegment(sizeInBytes), 0); // maps a single block to the whole of memory space (you can map ROM in later)
         }
     }
 }

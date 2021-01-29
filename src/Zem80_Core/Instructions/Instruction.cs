@@ -24,7 +24,7 @@ namespace Zem80.Core.Instructions
         public InstructionElement Argument2 { get; private set; }
         public bool TargetsByteRegister => Target >= InstructionElement.A && Target <= InstructionElement.IYl;
         public bool TargetsWordRegister => Target >= InstructionElement.AF && Target <= InstructionElement.SP;
-        public bool TargetsByteInMemory => (Target >= InstructionElement.AddressFromHL && Target <= InstructionElement.AddressFromIYAndOffset);
+        public bool TargetsByteInMemory => Target >= InstructionElement.AddressFromHL && Target <= InstructionElement.AddressFromIYAndOffset;
         public ByteRegister? CopyResultTo { get; private set; }
 
         public Instruction(string fullOpcode, string mnemonic, Condition condition, InstructionElement target, InstructionElement source, InstructionElement arg1, InstructionElement arg2, 

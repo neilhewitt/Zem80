@@ -39,18 +39,22 @@ namespace Zem80.Core.Memory
             }
         }
 
+        public void MapAt(ushort address)
+        {
+            StartAddress = address;
+        }
+
         public void Clear()
         {
             _memory = new byte[SizeInBytes];
         }
 
-        public MemorySegment(ushort startAddress, uint sizeInBytes)
+        public MemorySegment(uint sizeInBytes)
         {
             // we have to use uint as the size type because the max permissible size is 65536 bytes which cannot be contained in a ushort - but we now need to do a size check
             if (sizeInBytes > MAX_SEGMENT_SIZE_IN_BYTES) throw new MemorySegmentException("Requested segment size exceeded maximum possible size of " + MAX_SEGMENT_SIZE_IN_BYTES + " bytes.");
 
             _memory = new byte[sizeInBytes];
-            StartAddress = startAddress;
             SizeInBytes = sizeInBytes;
         }
     }
