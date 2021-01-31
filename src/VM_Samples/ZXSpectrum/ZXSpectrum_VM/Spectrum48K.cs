@@ -31,6 +31,11 @@ namespace ZXSpectrum.VM
 
         public void Start()
         {
+            if (_cpu.State == ProcessorState.Running)
+            {
+                throw new Exception("VM is already started!");
+            }
+
             _cpu.Start(timingMode: TimingMode.PseudoRealTime);
         }
 

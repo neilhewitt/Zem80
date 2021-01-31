@@ -309,8 +309,8 @@ namespace Zem80.Core
                     ExecutionResult result = Execute(package);
                     _executingInstructionPackage = null;
 
-                    HandleNonMaskableInterrupts();
-                    if (!result.SkipInterruptAfterExecution) HandleMaskableInterrupts();
+                    HandleNonMaskableInterrupts(); // NMI has priority
+                    if (!result.SkipInterruptAfterExecution) HandleMaskableInterrupts(); // 
 
                     Registers.R = (byte)(((Registers.R + 1) & 0x7F) | (Registers.R & 0x80)); // bits 0-6 of R are incremented as part of the memory refresh - bit 7 is preserved    
                 }

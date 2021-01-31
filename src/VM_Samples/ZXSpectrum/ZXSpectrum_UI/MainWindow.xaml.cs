@@ -28,18 +28,16 @@ namespace ZXSpectrum.UI
 
             KeyDown += MainWindow_KeyDown;
             KeyUp += MainWindow_KeyUp;
-
-            _vm.Start();
         }
 
         private void MainWindow_KeyUp(object sender, KeyEventArgs e)
         {
-            SpectrumKeyboard.KeyUp(e.Key.ToString());
+            SpectrumKeyboard.KeyUp((int)e.Key);
         }
 
         private void MainWindow_KeyDown(object sender, KeyEventArgs e)
         {
-            SpectrumKeyboard.KeyDown(e.Key.ToString());
+            SpectrumKeyboard.KeyDown((int)e.Key);
         }
 
         private void RunTests(object sender, RoutedEventArgs e)

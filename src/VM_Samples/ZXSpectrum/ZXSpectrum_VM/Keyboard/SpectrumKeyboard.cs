@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Windows.Input;
 using Zem80.Core;
 
 namespace ZXSpectrum.VM
 {
     public static class SpectrumKeyboard
     {
-        private static IDictionary<string, SpectrumKey[]> _map = new Dictionary<string, SpectrumKey[]>();
+        private static IDictionary<WindowsKey, SpectrumKey[]> _map = new Dictionary<WindowsKey, SpectrumKey[]>();
 
         private static IDictionary<int, string> _matrix = new Dictionary<int, string>()
         {
@@ -23,36 +24,31 @@ namespace ZXSpectrum.VM
         };
 
         private static KeyState[] _keyStates = new KeyState[95];
+        private static IEnumerable<SpectrumKey>[] _keyMap = new IEnumerable<SpectrumKey>[Enum.GetValues(typeof(WindowsKey)).Length];
         
-        public static void KeyDown(string pcKeyName)
+        public static void KeyDown(int windowsKeyCode)
         {
-            IEnumerable<SpectrumKey> keys = SpectrumKeysForPCKey(pcKeyName);
-            foreach (SpectrumKey key in keys)
-            {
-                _keyStates[(int)key] = KeyState.Down;
-            }
+            IEnumerable<SpectrumKey> spectrumKeys = SpectrumKeysForWindowsKey((WindowsKey)windowsKeyCode);
+            SetSpectrumKeyStates(spectrumKeys, KeyState.Down);
         }
 
-        public static void KeyUp(string pcKeyName)
+        public static void KeyUp(int windowsKeyCode)
         {
-            IEnumerable<SpectrumKey> keys = SpectrumKeysForPCKey(pcKeyName);
-            foreach (SpectrumKey key in keys)
-            {
-                _keyStates[(int)key] = KeyState.Up;
-            }
+            IEnumerable<SpectrumKey> spectrumKeys = SpectrumKeysForWindowsKey((WindowsKey)windowsKeyCode);
+            SetSpectrumKeyStates(spectrumKeys, KeyState.Up);
         }
 
-        public static IEnumerable<SpectrumKey> SpectrumKeysForPCKey(string pcKeyName)
+        public static IEnumerable<SpectrumKey> SpectrumKeysForWindowsKey(WindowsKey key)
         {
-            pcKeyName = pcKeyName.ToUpper();
+            return _keyMap[(int)key];
+        }
 
-            List<SpectrumKey> spectrumKeys = new List<SpectrumKey>();
-            if (_map.ContainsKey(pcKeyName))
+        public static void SetSpectrumKeyStates(IEnumerable<SpectrumKey> keys, KeyState state)
+        {
+            foreach (SpectrumKey key in keys)
             {
-                spectrumKeys.AddRange(_map[pcKeyName]);
+                _keyStates[(int)key] = state;
             }
-
-            return spectrumKeys;
         }
 
         public static byte GetBitValuesFor(byte rowSelector, byte value)
@@ -73,39 +69,48 @@ namespace ZXSpectrum.VM
 
         private static void Setup()
         {
-            string[] enumNames = Enum.GetNames(typeof(SpectrumKey));
+            string[] windowsKeyNames = Enum.GetNames(typeof(WindowsKey));
+            string[] spectrumKeyNames = Enum.GetNames(typeof(SpectrumKey));
+            string name = String.Empty;
 
             // 0 to 9
             for (int i = 0; i < 10; i++)
             {
-
-                _map.Add($"D{i}", new[] { Enum.Parse<SpectrumKey>(enumNames[i + 3]) });
+                Map($"D{i}", new[] { Enum.Parse<SpectrumKey>(spectrumKeyNames[i + 3]) });
             }
 
             // A to Z
             for (int i = 'A'; i <= 'Z'; i++)
             {
                 string letter = Char.ToString((char)i);
-                _map.Add(letter, new[] { Enum.Parse<SpectrumKey>(letter) });
+                Map(letter, new[] { Enum.Parse<SpectrumKey>(letter) });
             }
 
             // modifier keys
-            _map.Add("LEFTCTRL", new[] { SpectrumKey.CAPSSHIFT }); // caps shift
-            _map.Add("RIGHTCTRL", new[] { SpectrumKey.CAPSSHIFT }); // caps shift
-            _map.Add("LEFTSHIFT", new[] { SpectrumKey.SYMBOLSHIFT }); // symbol shift
-            _map.Add("RIGHTSHIFT", new[] { SpectrumKey.SYMBOLSHIFT }); // symbol shift
+            Map("LEFTCTRL", new[] { SpectrumKey.CAPSSHIFT }); // caps shift
+            Map("RIGHTCTRL", new[] { SpectrumKey.CAPSSHIFT }); // caps shift
+            Map("LEFTSHIFT", new[] { SpectrumKey.SYMBOLSHIFT }); // symbol shift
+            Map("RIGHTSHIFT", new[] { SpectrumKey.SYMBOLSHIFT }); // symbol shift
 
             // other keys
-            _map.Add("RETURN", new[] { SpectrumKey.ENTER }); // enter key
-            _map.Add("SPACE", new[] { SpectrumKey.SPACE }); // space key
+            Map("RETURN", new[] { SpectrumKey.ENTER }); // enter key
+            Map("SPACE", new[] { SpectrumKey.SPACE }); // space key
 
             // overrides / shortcuts
-            _map.Add("BACK", new[] { SpectrumKey.CAPSSHIFT, SpectrumKey.ZERO }); // BACKSPACE mapped to DELETE (CAPSSHIFT+0)
-            _map.Add("LEFT", new[] { SpectrumKey.CAPSSHIFT, SpectrumKey.FIVE }); // LEFT arrow
-            _map.Add("DOWN", new[] { SpectrumKey.CAPSSHIFT, SpectrumKey.SIX }); // DOWN arrow
-            _map.Add("UP", new[] { SpectrumKey.CAPSSHIFT, SpectrumKey.SEVEN }); // UP arrow
-            _map.Add("RIGHT", new[] { SpectrumKey.CAPSSHIFT, SpectrumKey.EIGHT }); // RIGHT arrow
-            _map.Add("OEMCOMMA", new[] { SpectrumKey.SYMBOLSHIFT, SpectrumKey.N }); // comma key (SYMBOLSHIFT+N)        
+            Map("BACK", new[] { SpectrumKey.CAPSSHIFT, SpectrumKey.ZERO }); // BACKSPACE mapped to DELETE (CAPSSHIFT+0)
+            Map("LEFT", new[] { SpectrumKey.CAPSSHIFT, SpectrumKey.FIVE }); // LEFT arrow
+            Map("DOWN", new[] { SpectrumKey.CAPSSHIFT, SpectrumKey.SIX }); // DOWN arrow
+            Map("UP", new[] { SpectrumKey.CAPSSHIFT, SpectrumKey.SEVEN }); // UP arrow
+            Map("RIGHT", new[] { SpectrumKey.CAPSSHIFT, SpectrumKey.EIGHT }); // RIGHT arrow
+            Map("OEMCOMMA", new[] { SpectrumKey.SYMBOLSHIFT, SpectrumKey.N }); // comma key (SYMBOLSHIFT+N)   
+            
+            void Map(string name, IEnumerable<SpectrumKey> keys)
+            {
+                if (Enum.TryParse<WindowsKey>(name, true, out WindowsKey key))
+                {
+                    _keyMap[(int)key] = keys;
+                }
+            }
         }
 
         static SpectrumKeyboard()

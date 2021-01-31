@@ -8,11 +8,7 @@ namespace Zem80.Core.Instructions
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
-            Instruction instruction = package.Instruction;
-            InstructionData data = package.Data;
-
             cpu.Registers.ExchangeBCDEHL();
-
             return new ExecutionResult(package, null);
         }
 

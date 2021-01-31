@@ -21,9 +21,8 @@ namespace Zem80.Core.Instructions
             else if (instruction.Condition == Condition.None || flags.SatisfyCondition(instruction.Condition))
             {
                 cpu.Registers.PC = data.ArgumentsAsWord;
+                cpu.Registers.WZ = data.ArgumentsAsWord;
             }
-
-            cpu.Registers.WZ = data.ArgumentsAsWord;
 
             return new ExecutionResult(package, flags);
         }

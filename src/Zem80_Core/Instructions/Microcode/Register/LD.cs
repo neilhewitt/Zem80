@@ -17,7 +17,6 @@ namespace Zem80.Core.Instructions
             byte arg1 = data.Argument2;
             ushort argWord = data.ArgumentsAsWord;
             
-            //local functions to keep code size down
             byte readByte(ushort address)
             {
                 return cpu.Memory.Timed.ReadByteAt(address);

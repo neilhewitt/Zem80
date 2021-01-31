@@ -36,7 +36,7 @@ namespace Zem80.Core.Instructions
                 r.PC = package.InstructionAddress;
             }
 
-            return new ExecutionResult(package, flags, conditionTrue);
+            return new ExecutionResult(package, flags);
         }
 
         public LDDR()
