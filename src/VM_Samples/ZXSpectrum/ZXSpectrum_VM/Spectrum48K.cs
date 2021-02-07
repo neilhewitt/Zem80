@@ -9,6 +9,7 @@ using System.Windows.Input;
 using Zem80.Core;
 using Zem80.Core.Instructions;
 using Zem80.Core.Memory;
+using ZXSpectrum.VM.Sound;
 using ZXSpectrum.VM.TAP;
 
 namespace ZXSpectrum.VM
@@ -19,6 +20,7 @@ namespace ZXSpectrum.VM
         public const int FLASH_FRAME_RATE = 16; // PAL only
 
         private Processor _cpu;
+        private Beeper _beeper;
         private int _ticksSinceLastDisplayUpdate;
         private int _displayUpdatesSinceLastFlash;
         private bool _flashOn;
@@ -199,7 +201,7 @@ namespace ZXSpectrum.VM
         }
 
 
-        private void _cpu_OnClockTick(object sender, InstructionPackage e)
+        private void CPU_OnClockTick(object sender, InstructionPackage e)
         {
             // handle memory contention (where the ULA is reading the video memory and blocks the CPU from running)
             // we don't emulate the ULA directly and no actual memory reads are occurring here, but that's fine (see UpdateDisplay())
@@ -274,12 +276,12 @@ namespace ZXSpectrum.VM
             if (portAddress % 2 == 0)
             {
                 // ULA will respond to all even port numbers
-                
+
                 if (portAddress.LowByte() == 0xFE) // PORT OxFE
                 {
                     // TODO: handle MIC, EAR and speaker activation (bit 3 == MIC, bit 4 == EAR / speaker)
                     // bits 0,1,2 encode the border colour
-                    if (portAddress >> 8 < 8) 
+                    if (portAddress >> 8 < 8)
                     {
                         ColourValue newBorder = DisplayColour.FromThreeBit(output);
                         if (newBorder != null)
@@ -287,17 +289,8 @@ namespace ZXSpectrum.VM
                             _screen.SetBorderColour(newBorder);
                         }
                     }
-                    else
-                    {
-                        if (_cpu.IO.D4)
-                        {
-                            // This switches the beeper ON until the next interrupt.
-                            // I am not going to attempt to add audio to this sample VM, as it's a complex topic
-                            // in .NET and the simplicity of the Spectrum beeper setup actually makes it much harder.
-                            // This is just a sample VM, after all...
-                            
-                        }
-                    }
+
+                    _beeper.Beep(_cpu.IO.D4);
                 }
             }
         }
@@ -335,7 +328,8 @@ namespace ZXSpectrum.VM
             map.Map(new ReadOnlyMemorySegment(File.ReadAllBytes(romPath)), 0);
             map.Map(new MemorySegment(49152), 16384);
 
-            _cpu = new Processor(map: map, frequencyInMHz: 5);
+            _cpu = new Processor(map: map, frequencyInMHz: 3.5);
+            _beeper = new Beeper(_cpu);
 
             // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 
             // devices signal or respond based on a bit-field signature across the 16-bit port address held on the address bus at read/write time.
@@ -345,7 +339,7 @@ namespace ZXSpectrum.VM
                 _cpu.Ports[i].Connect(ReadPort, WritePort, SignalPortRead, SignalPortWrite);
             }
 
-            _cpu.OnClockTick += _cpu_OnClockTick;
+            _cpu.OnClockTick += CPU_OnClockTick;
             _ticksSinceLastDisplayUpdate = TICKS_BETWEEN_FRAMES; // trigger initial display buffer fill
         }
     }

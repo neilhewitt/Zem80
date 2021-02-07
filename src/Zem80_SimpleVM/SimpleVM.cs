@@ -28,7 +28,7 @@ namespace Zem80.SimpleVM
             _cpu.Start(address, endOnHalt, timingMode);
             if (debugOutput)
             {
-                _cpu.Debug.AfterExecute += DebugOutput_AfterExecute;
+                _cpu.AfterExecute += DebugOutput_AfterExecute;
             }
 
             if (synchronous) _cpu.RunUntilStopped();

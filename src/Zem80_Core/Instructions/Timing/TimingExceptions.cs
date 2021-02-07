@@ -9,7 +9,7 @@ namespace Zem80.Core.Instructions
         public bool HasMemoryRead4 { get; private set; }
         public bool HasMemoryWrite5 { get; private set; }
 
-        public TimingExceptions(Instruction instruction, Timing timing)
+        public TimingExceptions(Instruction instruction, InstructionTiming timing)
         {
             bool odh4 = false, mr4 = false, mw5 = false;
             if (instruction.Microcode is CALL)

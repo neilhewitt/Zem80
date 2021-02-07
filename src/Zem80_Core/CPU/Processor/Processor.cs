@@ -26,6 +26,7 @@ namespace Zem80.Core
         private HaltReason _reasonForLastHalt;
         private bool _suspendMachineCycles;
         private int _pendingWaitCycles;
+        private int _previousWaitCycles;
         private ushort _topOfStack;
 
         private ExternalClock _clock;
@@ -39,12 +40,6 @@ namespace Zem80.Core
         private bool _iff1;
         private bool _iff2;
 
-        private EventHandler<InstructionPackage> _beforeExecute;
-        private EventHandler<ExecutionResult> _afterExecute;
-        private EventHandler _beforeStart;
-        private EventHandler _onStop;
-        private EventHandler<HaltReason> _onHalt;
-        private EventHandler<int> _beforeInsertWaitCycles;
         private EventHandler<InstructionPackage> _onBreakpoint;
 
         private IList<ushort> _breakpoints = new List<ushort>();
@@ -72,18 +67,13 @@ namespace Zem80.Core
 
         // client code should use this event to synchronise activity with the CPU clock cyles
         public event EventHandler<InstructionPackage> OnClockTick;
-
-        // IDebugProcessor gives you access to these extra event handlers (and some methods) that are more... dangerous than the main API
-        // the Processor.Debug property gives access to the current instance as IDebugProcessor
-
-        // Note: why yes, you do have to do event handlers this way if you want them to be on the interface and not on the type... no idea why
-        // (basically, automatic properties don't work as events when they are explicitly on the interface, so we use a backing variable... old-school style)
-        event EventHandler<InstructionPackage> IDebugProcessor.BeforeExecute { add { _beforeExecute += value; } remove { _beforeExecute -= value; } }
-        event EventHandler<ExecutionResult> IDebugProcessor.AfterExecute { add { _afterExecute += value; } remove { _afterExecute -= value; } }
-        event EventHandler<int> IDebugProcessor.BeforeInsertWaitCycles { add { _beforeInsertWaitCycles += value; } remove { _beforeInsertWaitCycles -= value; } }
-        event EventHandler IDebugProcessor.BeforeStart { add { _beforeStart += value; } remove { _beforeStart -= value; } }
-        event EventHandler IDebugProcessor.OnStop { add { _onStop += value; } remove { _onStop -= value; } }
-        event EventHandler<HaltReason> IDebugProcessor.OnHalt { add { _onHalt += value; } remove { _onHalt -= value; } }
+        public event EventHandler<InstructionPackage> BeforeExecute;
+        public event EventHandler<ExecutionResult> AfterExecute;
+        public event EventHandler<int> BeforeInsertWaitCycles;
+        public event EventHandler BeforeStart;
+        public event EventHandler OnStop;
+        public event EventHandler<HaltReason> OnHalt;
+        
         event EventHandler<InstructionPackage> IDebugProcessor.OnBreakpoint { add { _onBreakpoint += value; } remove { _onBreakpoint -= value; } }
 
         public void Start(ushort address = 0x0000, bool endOnHalt = false, TimingMode timingMode = TimingMode.FastAndFurious)
@@ -97,7 +87,7 @@ namespace Zem80.Core
                 DisableInterrupts();
 
                 Registers.PC = address; // ordinarily, execution will start at 0x0000, but this can be overridden
-                _beforeStart?.Invoke(null, null);
+                BeforeStart?.Invoke(null, null);
                 _running = true;
 
                 _startStopTimer.Reset();
@@ -118,7 +108,7 @@ namespace Zem80.Core
             _halted = false;
             _instructionCycle?.Interrupt();
 
-            _onStop?.Invoke(null, null);
+            OnStop?.Invoke(null, null);
         }
 
         public void Suspend()
@@ -226,7 +216,7 @@ namespace Zem80.Core
             {
                 _halted = true;
                 _reasonForLastHalt = reason;
-                _onHalt?.Invoke(null, reason);
+                OnHalt?.Invoke(null, reason);
             }
         }
 
@@ -319,7 +309,7 @@ namespace Zem80.Core
 
         private ExecutionResult Execute(InstructionPackage package)
         {
-            _beforeExecute?.Invoke(this, package);
+            BeforeExecute?.Invoke(this, package);
             _executingInstructionPackage = package;
 
             // check for breakpoints
@@ -341,7 +331,8 @@ namespace Zem80.Core
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
 
             if (result.Flags != null) Registers.SetFlags(result.Flags.Value);
-            _afterExecute?.Invoke(this, result);
+            result.WaitStatesAdded = _previousWaitCycles;
+            AfterExecute?.Invoke(this, result);
             
             return result;
         }
@@ -534,7 +525,7 @@ namespace Zem80.Core
 
             if (cyclesToAdd > 0)
             {
-                _beforeInsertWaitCycles?.Invoke(this, cyclesToAdd);
+                BeforeInsertWaitCycles?.Invoke(this, cyclesToAdd);
             }
 
             while (cyclesToAdd > 0)
@@ -543,6 +534,7 @@ namespace Zem80.Core
                 cyclesToAdd--;
             }
 
+            _previousWaitCycles = _pendingWaitCycles;
             _pendingWaitCycles = 0;
         }
 

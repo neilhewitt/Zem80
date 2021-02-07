@@ -14,7 +14,7 @@ namespace Zem80.Core.Instructions
         public string Mnemonic { get; private set; }
         public Condition Condition { get; private set; }
         public byte SizeInBytes { get; private set; }
-        public Timing Timing { get; private set; }
+        public InstructionTiming Timing { get; private set; }
         public bool IsIndexed => Prefix >= InstructionPrefix.DDCB && Prefix <= InstructionPrefix.FDCB;
         public bool IsConditional => Condition != Condition.None;
         public IMicrocode Microcode { get; private set; }
@@ -60,7 +60,7 @@ namespace Zem80.Core.Instructions
             }
 
             // deal with timing + any exceptions
-            Timing = new Timing(this, machineCycles);
+            Timing = new InstructionTiming(this, machineCycles);
         }
     }
 }

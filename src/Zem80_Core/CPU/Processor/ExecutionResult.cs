@@ -12,6 +12,7 @@ namespace Zem80.Core
         public Flags Flags { get; }
         public ushort InstructionAddress { get; }
         public bool SkipInterruptAfterExecution { get; }
+        public int WaitStatesAdded { get; internal set; }
 
         public ExecutionResult(InstructionPackage package, Flags flags, bool skipInterruptsAfterExecution = false)
         {
