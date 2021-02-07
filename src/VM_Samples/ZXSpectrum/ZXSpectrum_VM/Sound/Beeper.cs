@@ -14,7 +14,7 @@ namespace ZXSpectrum.VM.Sound
     public class Beeper
     {
         private Processor _cpu;
-        private int _clockTicksPerFrame = 79;
+        private int _clockTicksPerFrame = 73;
         private int _bufferSamples = 882;
 
         private int _ticksThisFrame;
