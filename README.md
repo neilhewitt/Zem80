@@ -13,16 +13,27 @@ I have now written a complete Z80 emulation including as much of the undocumente
 I have also added a basic ZX Spectrum emulation, but this is a sample and not intended for actual use as an emulator. 
 
 ## Project status
-15/01/21 - **1.0 Release**. As far as I can tell, the Z80 emulation is complete and fully working. That said, I cannot warrant that there are no bugs! The ZX Spectrum demo VM works (in terms of the BASIC editor), and some games run well, while others do not (this is more likely to be due to defects in the Spectrum emulation rather than the Z80 core itself). I will not be extending the Spectrum VM any further, as it now serves its purpose as a sample. I will consider adding some further demo VMs, but I'm not sure which machine I want to tackle next!
+07/02/21 - **1.0.1 Release**. Fixes the timing bug. I've also made some general improvements and changes which *might* require you to make some small changes to your integration code if you integrated 1.0 (though AFAIK, no-one did!). I added basic beeper support to the Spectrum VM, this is still buggy and the audio is a little choppy because the timing is off somewhere, but at this point I'm done with the Spectrum work, it's just there to show you how to integrate Zem80 into an actual project. 
 
 ### Known issues ###
-There is a bug in the timing code for this release, so that the emulator always runs in non-realtime mode, and thus the emulation
-may run faster than expected. If real-time performance per the assigned clock speed is a goal for your project, you should update to v1.0.1
-which will contain this and other bug fixes and will be available soon.
 
-* I'm looking at writing some documentation and some how-to pages. For now, the code is all there is.
-* The test suite has been gutted and is being re-built, and new tests will be added (sorry, this isn't a TDD project!).
-* All of the projects in the solution are built for .NET Core 3.1 and all the libraries (Zem80.Core etc) are built to .NET Standard 2.1
+At this point there are no *known* issues with Zem80 itself. I'm quite certain there are still bugs and omissions, but I'm not aware of them.
+
+The other main component is the ZX Spectrum VM, which has several known issues:
+
+* ZX Spectrum audio is choppy
+* Spectrum VM occasionally crashes on keypress 
+* Game compatibility is very patchy, many games either don't run or don't run properly
+* Audio in is not supported, so you cannot use the LOAD command. The SAVE command will operate but not successfully (data will be corrupt even if recorded)
+* It's frankly just not very good and is certainly not usable as a real emulator for playing games etc. Download FUSE for that!
+
+### Next steps ###
+
+* Add new tests to cover the public API other than those Z80 instructions tested by Zexall
+* Add some documentation / HOWTO etc
+* Consider adding XML comments (but probably not)
+
+At the present time, I consider the main emulator development complete and will not be making changes other than bug fixes, at least until any version 2.0.
 
 ## LICENSE ##
 
@@ -39,6 +50,13 @@ furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
+
+*Some files included in this project (ZX Spectrum ROM, Zexall instruction tests etc)
+are made available under a different license to this one, 
+and this will be detailed in a readme.md at the appropriate point. You are required
+to follow the terms of those licenses or conditions in order to distribute those files.
+If you are not willing or able to do so, you may distribute this project with those files
+removed.*
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
