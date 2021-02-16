@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using ZexNext.Core;
 
-namespace Zem80.Core.Tests
+namespace Zem80.Core.Tests.Zexall
 {
     [TestFixture]
     public class ZexallTests

@@ -16,6 +16,14 @@ namespace Zem80.Core.IO
             }
         }
 
+        public void DisconnectAll()
+        {
+            foreach(Port port in _ports.Values)
+            {
+                port.Disconnect();
+            }
+        }
+
         public Ports(Processor cpu)
         {
             _ports = new Dictionary<byte, Port>();

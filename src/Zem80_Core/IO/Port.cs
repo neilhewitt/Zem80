@@ -53,6 +53,14 @@ namespace Zem80.Core.IO
             _signalWrite = signalWrite;
         }
 
+        public void Disconnect()
+        {
+            _read = null;
+            _write = null;
+            _signalRead = null;
+            _signalWrite = null;
+        }
+
         public Port(byte number, Processor cpu)
         {
             Number = number;

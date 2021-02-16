@@ -353,7 +353,7 @@ namespace Zem80.Core
         // execute an instruction directly (specified by mnemonic, so no decoding necessary)
         ExecutionResult IDebugProcessor.ExecuteDirect(string mnemonic, byte? arg1, byte? arg2)
         {
-            if (!InstructionSet.InstructionsByMnemonic.TryGetValue(mnemonic.ToUpper(), out Instruction instruction))
+            if (!InstructionSet.InstructionsByMnemonic.TryGetValue(mnemonic, out Instruction instruction))
             {
                 throw new InstructionDecoderException("Supplied mnemonic does not correspond to a valid instruction");
             }

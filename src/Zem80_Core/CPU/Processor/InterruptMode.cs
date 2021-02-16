@@ -6,8 +6,8 @@ namespace Zem80.Core
 {
     public enum InterruptMode
     { 
-        IM0,
-        IM1,
-        IM2
+        IM0 = 0,
+        IM1 = 1,
+        IM2 = 2
     }
 }

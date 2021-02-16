@@ -23,7 +23,6 @@ namespace Zem80.Core.Instructions
             r.WZ = r.BC;
             r.B--;
 
-            flags.Sign = false;
             flags.Zero = true;
             flags.Subtract = true;
             flags.X = (input & 0x08) > 0; // copy bit 3
