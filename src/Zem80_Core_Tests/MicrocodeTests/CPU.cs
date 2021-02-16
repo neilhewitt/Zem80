@@ -9,6 +9,52 @@ namespace Zem80.Core.Tests.MicrocodeTests
     public class CPU : MicrocodeTestBase
     {
         [Test]
+        public void SCF()
+        {
+            ExecuteInstruction("SCF");
+            Assert.That(Flags.Carry && !Flags.Subtract && !Flags.HalfCarry);
+        }
+
+        [Test]
+        public void CCF()
+        {
+            Flags.Carry = true;
+            ExecuteInstruction("CCF");
+            Assert.That(!Flags.Carry && !Flags.Subtract && Flags.HalfCarry);
+        }
+
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(2)]
+        public void IM(int mode)
+        {
+            ExecuteInstruction($"IM {mode}");
+            Assert.That(CPU.InterruptMode == (InterruptMode)mode);
+        }
+
+        [Test]
+        public void PUSH()
+        {
+            ushort valueToPush = 0xF1D0;
+            Registers.BC = valueToPush;
+            Registers.SP = 0xFFFD;
+
+            ExecuteInstruction("PUSH BC");
+            Assert.That(Registers.SP == 0xFFFB && CPU.Memory.Untimed.ReadWordAt(Registers.SP) == valueToPush);
+        }
+
+        [Test]
+        public void POP()
+        {
+            ushort valueToPop = 0x1F0D;
+            Registers.SP = 0xFFFB;
+            CPU.Memory.Untimed.WriteWordAt(Registers.SP, valueToPop);
+
+            ExecuteInstruction("POP DE");
+            Assert.That(Registers.SP == 0xFFFD && Registers.DE == valueToPop);
+        }
+
+        [Test]
         public void EX_AF_AF()
         {
             Registers.AF = 0x80;
@@ -49,7 +95,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
             Registers.HL = 0x90;
 
             ExecuteInstruction("EX DE,HL");
-            Assert.That(Registers.HL == 0x80 && Registers.DE == 0x80);
+            Assert.That(Registers.HL == 0x80 && Registers.DE == 0x90);
         }
     }
 }

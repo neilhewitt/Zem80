@@ -24,7 +24,6 @@ namespace Zem80.Core.Instructions
             r.B--;
 
             flags.Zero = true;
-            flags.Sign = false;
             flags.Subtract = true;
             flags.X = (input & 0x08) > 0; // copy bit 3
             flags.Y = (input & 0x20) > 0; // copy bit 5
