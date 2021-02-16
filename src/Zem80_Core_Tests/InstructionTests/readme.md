@@ -27,13 +27,13 @@ These tests were created using the CPM version of the program with amends by J.G
 The Zexall test set tests most of the Z80 instructions, but not all. Those not tested by Zexall are tested separately (see Microcode tests above). It also tests undocumented
 instructions (though not undocumented overloads) and the undocumented X & Y flags.
 
-I created a framework called ZexNext to run state-based tests directly from C# and hooked this into Zem80. ZexNext sets up each instruction run separately (rather than letting the state change over time like Zexall) by setting the full processor state (as well as the contents of a memory buffer) from its test data set before executing the instruction, then collecting the state after execution and comparing it to the known-good expected state for a pass/fail per instruction. 
+I created a framework called ZexNext to run state-based tests directly from C# and hooked this into Zem80. ZexNext sets up each instruction run separately (rather than letting the state change over time like Zexall) by setting the full processor state (as well as the content of a memory buffer) from its test data set before executing each instruction, then collecting the state after execution and comparing it to the known-good expected state for a pass/fail per instruction. 
 
-I then extracted the complete state space from the Zexall tests using a known-good emulator (SpectNetIDE - https://github.com/Dotneteer/spectnetide) so that it would
-be correct to the Z80 hardware, and turned this into the input for ZexNext.
+I extracted the complete state data for the Zexall tests using a known-good emulator (SpectNetIDE | https://github.com/Dotneteer/spectnetide) so that it would
+be identical to the Z80 hardware, and turned this into the input data for ZexNext.
 
-The Zexall tests in this project consist of a single test with a test parameter set consisting of the names of each Zexall test set (there are 60+) and for each of these
-it uses ZexNext to run the test set against the Zem80 emulator and compares the results with its known-good data. If every test in the set passes, the NUnit test passes.
+The Zexall tests in this project consist of a single NUnit test with a parameter set consisting of the names of each Zexall test set (there are 60+) and for each of these
+it uses ZexNext to run that test set against the Zem80 emulator, and compares the results with its known-good data. If every test in the set passes, the NUnit test passes.
 
 Because there are a very large number of instructions to execute, running the NUnit tests in this folder takes up to 30 seconds. So they should not be run on every build or
 using NCrunch etc. 
