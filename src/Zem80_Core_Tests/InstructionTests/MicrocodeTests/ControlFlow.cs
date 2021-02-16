@@ -59,8 +59,8 @@ namespace Zem80.Core.Tests.MicrocodeTests
         {
             Registers.PC = 0x4000;
             ExecuteInstruction("CALL nn", 0x24, 0x05);
-            CPU.Pop(WordRegister.HL); // instruction address + 1 byte gets pushed to the stack during CALL operation, so retrieve this value to check it
-            Assert.That(Registers.PC == 0x0524 && Registers.HL == 0x4001);
+            CPU.Pop(WordRegister.HL); // instruction address + 3 bytes (instruction length + 2 byte argument) gets pushed to the stack during CALL operation, so retrieve this value to check it
+            Assert.That(Registers.PC == 0x0524 && Registers.HL == 0x4003);
         }
 
         [TestCase(Condition.Z)]
@@ -174,12 +174,12 @@ namespace Zem80.Core.Tests.MicrocodeTests
         public void DJNZ(int address, int displacement, int expectedAddress)
         {
             Registers.PC = (ushort)address;
-            Registers.B = 0;
+            Registers.B = 0x01;
             ExecuteInstruction("DJNZ o", (byte)displacement);
             Assert.That(Registers.PC == address + 2); // condition was not true so PC = instruction address (0) + instruction length in bytes (2) so PC should == 2
 
             Registers.PC = (ushort)address;
-            Registers.B = 1;
+            Registers.B = 0x00;
             ExecuteInstruction("DJNZ o", (byte)displacement); // condition was true so PC should == 0x3010
             Assert.That(Registers.PC == expectedAddress);
         }
