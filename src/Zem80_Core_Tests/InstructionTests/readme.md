@@ -27,14 +27,14 @@ These tests were created using the CPM version of the program with amends by J.G
 The Zexall test set tests most of the Z80 instructions, but not all. Those not tested by Zexall are tested separately (see Microcode tests above). It also tests undocumented
 instructions (though not undocumented overloads) and the undocumented X & Y flags.
 
-I created a framework called Zexnext to run state-based tests and hooked this into Zem80. Zexnext sets up each instruction by setting the whole processor state
-(as well as a memory buffer) before executing an instruction, then collecting the state after execution and comparing it to the known-good state.
+I created a framework called ZexNext to run state-based tests directly from C# and hooked this into Zem80. ZexNext sets up each instruction by setting the processor state
+(as well as the contents of a memory buffer) before executing an instruction, then collecting the state after execution and comparing it to the known-good expected state.
 
 I then extracted the complete state space from the Zexall tests using a known-good emulator (SpectNetIDE - https://github.com/Dotneteer/spectnetide) so that it would
-be correct to the Z80 hardware, and turned this into the input for Zexnext.
+be correct to the Z80 hardware, and turned this into the input for ZexNext.
 
 The Zexall tests in this project consist of a single test with a test parameter set consisting of the names of each Zexall test set (there are 60+) and for each of these
-it uses Zexnext to run the test set against the Zem80 emulator and compares the results with its known-good data. If every test in the set passes, the NUnit test passes.
+it uses ZexNext to run the test set against the Zem80 emulator and compares the results with its known-good data. If every test in the set passes, the NUnit test passes.
 
 Because there are a very large number of instructions to execute, running the NUnit tests in this folder takes up to 30 seconds. So they should not be run on every build or
 using NCrunch etc. 
@@ -43,7 +43,6 @@ Bear in mind that each NUnit test covers a large number of test executions acros
 you can set a breakpoint in the NUnit test and dig into the Zexnext results which contain a pass/fail for each individual instruction execution including the input state,
 expected output state, contents of the memory buffer (the Zexall tests use a small area of memory to write persistent data).
 
-Zexnext is included here as a binary dependency (a DLL), but the Zexnext project will be available on Github later in 2021. 
+ZexNext is included here as a binary dependency (a DLL), but the ZexNext project will be available on Github later in 2021 and will be able to be interfaced with other emulators written in .NET (and potentially other languages via COM interop on Windows). 
 
-The Zexnext test data is included as a Zip file which is unzipped on execution of the tests into a file called 'Zexall.zxl' (which I cannot check into Github as it's too big).
-The format of this text file will be documented as part of the Zexnext Github project. **Please note that if you edit this file you could very easily cause false negatives.**
+The ZexNext test data is included as a Zip file which is unzipped on execution of the tests into a file called 'Zexall.zxl' (which I cannot check directly into Github as it's too big). The format of this text file will be documented as part of the Zexnext Github project. **Please note that if you edit this file you could very easily cause false negatives.**
