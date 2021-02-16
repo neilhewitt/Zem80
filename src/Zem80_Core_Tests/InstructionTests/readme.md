@@ -40,7 +40,7 @@ using NCrunch etc.
 
 Bear in mind that each NUnit test covers a large number of test executions across potentially several instructions. However, if you need to find the specific failing test/s,
 you can set a breakpoint in the NUnit test and dig into the Zexnext results which contain a pass/fail for each individual instruction execution including the input state,
-expected output state, contents of the memory buffer (the Zexall tests use a small area of memory to write persistent data).
+output state, expected output state, and the input, output and expected contents of the memory buffer (the Zexall tests use a small area of memory to write persistent data). This will allow you to diagnose instruction faults in great detail. 
 
 ZexNext is included here as a binary dependency (a DLL), but the ZexNext project will be available on Github later in 2021 and will be able to be interfaced with other emulators written in .NET (and potentially other languages via COM interop on Windows). 
 
