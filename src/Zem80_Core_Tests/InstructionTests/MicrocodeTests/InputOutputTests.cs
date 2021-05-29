@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace Zem80.Core.Tests.MicrocodeTests
 {
     [TestFixture]
-    public class InputOutput : MicrocodeTestBase
+    public class InputOutputTests : MicrocodeTestBase
     {
         [Test]
         public void IND()

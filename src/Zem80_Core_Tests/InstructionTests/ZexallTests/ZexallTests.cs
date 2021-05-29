@@ -96,7 +96,7 @@ namespace Zem80.Core.Tests.Zexall
         {
             // this is basically ZexNext tests running inside NUnit tests as a host
 
-            // ensure the Visual Studio UI remains responsive while the tests are running
+            // ensure the Visual Studio UI remains responsive while the tests are loading and compiling
             while (_runner == null) Thread.Sleep(0);
 
             // run the specified test set

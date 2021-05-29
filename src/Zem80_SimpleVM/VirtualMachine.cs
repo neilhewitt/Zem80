@@ -146,7 +146,7 @@ namespace Zem80.SimpleVM
         {
         }
 
-        public VirtualMachine(double speed = 4)
+        public VirtualMachine(float speed = 4)
         {
             _cpu = new Processor(frequencyInMHz: speed, enableFlagPrecalculation: false);
             _cpu.Ports[0].Connect(ReadChar, WriteChar, SignalRead, SignalWrite);

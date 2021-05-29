@@ -31,7 +31,6 @@ namespace ZXSpectrum.VM.Sound
         public Beeper(Processor cpu)
         {
             _cpu = cpu;
-            _cpu.OnClockTick += CPU_OnClockTick;
 
             _buffer = new byte[_bufferSamples];
 
@@ -39,12 +38,14 @@ namespace ZXSpectrum.VM.Sound
             _mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(44100, 1));
             _mixer.ReadFully = true;
             _provider = new BufferedWaveProvider(WaveFormat.CreateIeeeFloatWaveFormat(44100, 1));
-            _provider.BufferDuration = TimeSpan.FromSeconds(5);
+            _provider.BufferDuration = TimeSpan.FromSeconds(60);
             _provider.DiscardOnBufferOverflow = true;
-            _mixer.AddMixerInput(new Pcm8BitToSampleProvider(_provider));
+            _mixer.AddMixerInput(new Pcm24BitToSampleProvider(_provider));
             _player.Init(_mixer);
-            _player.Volume = 1f;
+            _player.Volume = 0.5f;
             _player.Play();
+
+            _cpu.OnClockTick += CPU_OnClockTick;
         }
 
         public void Beep(bool on)
@@ -54,17 +55,18 @@ namespace ZXSpectrum.VM.Sound
 
         private void CPU_OnClockTick(object sender, Zem80.Core.Instructions.InstructionPackage e)
         {
-            if (_ticksThisFrame < _clockTicksPerFrame - 1)
+            if (_ticksThisFrame < _clockTicksPerFrame)
             {
                 if (_beeperOn) _frameTStatesOn++;
                 _ticksThisFrame++;
             }
-            else if (_bufferIndex < _bufferSamples)
+            else if (_bufferIndex < _bufferSamples - 1)
             {
                 if (_beeperOn) _frameTStatesOn++;
                 float fraction = ((float)_frameTStatesOn / (float)_clockTicksPerFrame);
-                _buffer[_bufferIndex] = (byte)(fraction * 255);
-                _bufferIndex++;
+                ushort sample = (ushort)(fraction * 65535);
+                _buffer[_bufferIndex++] = (byte)(sample / 256);
+                _buffer[_bufferIndex++] = (byte)(sample % 256);
                 _frameTStatesOn = 0;
                 _ticksThisFrame = 0;
             }

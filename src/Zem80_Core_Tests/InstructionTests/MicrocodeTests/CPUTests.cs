@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace Zem80.Core.Tests.MicrocodeTests
 {
     [TestFixture]
-    public class CPU : MicrocodeTestBase
+    public class CPUTests : MicrocodeTestBase
     {
         [Test]
         public void SCF()

@@ -11,11 +11,11 @@ namespace Zem80.Core
     {
         private Stopwatch _stopwatch;
         private bool _running;
-        private double _windowsTickPerClockTick;
+        private float _windowsTickPerClockTick;
 
         private Thread _clockThread;
         
-        public double FrequencyInMhz { get; private set; }
+        public float FrequencyInMhz { get; private set; }
         public long TicksSinceStart { get; private set; }
         public bool Started => _running;
 
@@ -48,9 +48,9 @@ namespace Zem80.Core
             }
         }
 
-        public ExternalClock(double frequencyInMhz)
+        public ExternalClock(float frequencyInMhz)
         {
-            _windowsTickPerClockTick = ((double)(10 / frequencyInMhz));
+            _windowsTickPerClockTick = (10 / frequencyInMhz);
             _stopwatch = new Stopwatch();
 
             FrequencyInMhz = frequencyInMhz;

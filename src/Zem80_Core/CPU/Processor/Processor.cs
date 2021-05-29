@@ -57,7 +57,7 @@ namespace Zem80.Core
         public InterruptMode InterruptMode { get; private set; }
         public bool InterruptsEnabled => _iff1;
         public bool InterruptsPaused => _iff2;
-        public double FrequencyInMHz { get; private set; }
+        public float FrequencyInMHz { get; private set; }
         public TimingMode TimingMode { get; private set; }
         public ProcessorState State => _running ? _suspended ? ProcessorState.Suspended : _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; 
         public long EmulatedTStates => _emulatedTStates;
@@ -300,7 +300,7 @@ namespace Zem80.Core
                     _executingInstructionPackage = null;
 
                     HandleNonMaskableInterrupts(); // NMI has priority
-                    if (!result.SkipInterruptAfterExecution) HandleMaskableInterrupts(); // 
+                    if (!result.SkipInterruptAfterExecution) HandleMaskableInterrupts(); // if we came back from an NMI then we don't handle other interrupts until the next cycle
 
                     Registers.R = (byte)(((Registers.R + 1) & 0x7F) | (Registers.R & 0x80)); // bits 0-6 of R are incremented as part of the memory refresh - bit 7 is preserved    
                 }
@@ -318,6 +318,9 @@ namespace Zem80.Core
                 _onBreakpoint?.Invoke(this, package);
             }
 
+            // set the internal WZ register to an initial value based on whether this is an indexed instruction or not;
+            // the instruction that runs may alter set WZ itself.
+            // (the value in WZ [sometimes known as MEMPTR in Z80 enthusiast circles] is only ever used to control the behavior of the BIT instruction)
             ushort wz = package.Instruction switch
             {
                 var i when i.Source.IsAddressFromIndexAndOffset() => Registers[i.Source.AsWordRegister()],
@@ -337,7 +340,7 @@ namespace Zem80.Core
             return result;
         }
 
-        // execute an instruction directly (without the instruction cycle running)
+        // execute an instruction directly (without the processor loop running), for example for directly testing instructions
         ExecutionResult IDebugProcessor.ExecuteDirect(byte[] opcode)
         {
             Memory.Untimed.WriteBytesAt(Registers.PC, opcode);
@@ -635,7 +638,7 @@ namespace Zem80.Core
 
                         // When emulating a hardware device that uses IM2 to jump into its service routine/s, you must trigger the interrupt
                         // by calling RaiseInterrupt and supplying a Func<byte> that returns the data bus value to use when called.
-                        // If the callback in null then the data bus value is assumed to be 0. 
+                        // If the callback is null then the data bus value is assumed to be 0. 
                         
                         // It's actually quite common on some platforms (eg ZX Spectrum) to use IM2 this way to call a routine that needs to be synchronised 
                         // with the hardware (on the Spectrum, an interrupt is raised by the system after each display refresh, and setting IM2 allows 
@@ -850,7 +853,7 @@ namespace Zem80.Core
         }
         #endregion  
 
-        public Processor(IMemoryBank memory = null, IMemoryMap map = null, ushort? topOfStackAddress = null, double frequencyInMHz = 4, bool enableFlagPrecalculation = true)
+        public Processor(IMemoryBank memory = null, IMemoryMap map = null, ushort? topOfStackAddress = null, float frequencyInMHz = 4, bool enableFlagPrecalculation = true)
         {
             // You can supply your own memory implementations, for example if you need to do RAM paging for >64K implementations.
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.

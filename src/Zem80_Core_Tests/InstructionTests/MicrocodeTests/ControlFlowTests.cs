@@ -8,7 +8,7 @@ using Zem80.Core.Instructions;
 namespace Zem80.Core.Tests.MicrocodeTests
 {
     [TestFixture]
-    public class ControlFlow : MicrocodeTestBase
+    public class ControlFlowTests : MicrocodeTestBase
     {
         [Test]
         // JP nn - jump to absolute address nn
