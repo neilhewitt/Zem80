@@ -37,7 +37,7 @@ namespace Zem80.Core
        
         // There is a second 'shadow' bank of register values (AF', BC', DE', HL'). These are stored in _registers[6..13] (and in private fields for AF/AF').
         // To access these you call ExchangeAF (to get access to values in AF') or ExchangeBCDEHL (to get access to values in BC', DE' and HL'). But for debug purposes we can
-        // access them directly
+        // access them directly by casting to the IShadowRegisters interface (or by using the Shadow property, preferably)
 
         ushort IShadowRegisters.BC { get { return Get16BitValue(8); } set { Set16BitValue(8, value); } }
         ushort IShadowRegisters.DE { get { return Get16BitValue(10); } set { Set16BitValue(10, value); } }
@@ -75,7 +75,7 @@ namespace Zem80.Core
             {
                 // The reason for storing A & F in fields rather than in the byte array is because we also expose the F value as
                 // a Flags object on the API here and so it makes more sense to store a Flag as a field and then use the Flags.Value 
-                // property for the value of the F register than the other way around (which would involed a lot more
+                // property for the value of the F register than the other way around (which would involve a lot more
                 // object creation).
 
                 byte accumulator = _accumulator;

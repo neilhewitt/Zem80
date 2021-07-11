@@ -95,7 +95,7 @@ namespace Zem80.Core
                 if (timingMode == TimingMode.PseudoRealTime) _clock.Start(); // only use the clock thread if we need it
 
                 IO.Clear();
-                _instructionCycle = new Thread(new ThreadStart(InstructionCycle));
+                _instructionCycle = new Thread(InstructionCycle);
                 _instructionCycle.Start();
             }
         }
@@ -266,7 +266,7 @@ namespace Zem80.Core
                         // decode next instruction 
                         // (note that the decode cycle leaves the Program Counter at the byte *after* this instruction unless it's adjusted by the instruction code itself,
                         // this is how the program moves on to the next instruction)
-                        package = DecodeInstruction();
+                        package = DecodeInstructionAtProgramCounter();
                         if (package == null)
                         {
                             // only happens if we reach the end of memory mid-instruction, if so we bail out
@@ -287,7 +287,7 @@ namespace Zem80.Core
 
                         // since we're not decoding the instruction (it's HALT), we need to run the opcode fetch cycle for NOP
                         // so that the clock ticks and attached devices can generate interrupts to bring the CPU out of HALT;
-                        // the following call does that..
+                        // the following call does that...
                         FetchOpcodeByte();
 
                         // now send a NOP package to be executed
@@ -344,7 +344,7 @@ namespace Zem80.Core
         ExecutionResult IDebugProcessor.ExecuteDirect(byte[] opcode)
         {
             Memory.Untimed.WriteBytesAt(Registers.PC, opcode);
-            InstructionPackage package = DecodeInstruction();
+            InstructionPackage package = DecodeInstructionAtProgramCounter();
             if (package == null)
             {
                 throw new InstructionDecoderException("Supplied opcode sequence does not decode to a valid instruction.");
@@ -372,7 +372,7 @@ namespace Zem80.Core
             return Execute(package);
         }
 
-        private InstructionPackage DecodeInstruction()
+        private InstructionPackage DecodeInstructionAtProgramCounter()
         {
             byte b0, b1, b3; // placeholders for upcoming instruction bytes
             Instruction instruction;
@@ -685,7 +685,7 @@ namespace Zem80.Core
                 Memory.Untimed.WriteByteAt((ushort)(address + i), value);
             }
 
-            InstructionPackage package = DecodeInstruction();
+            InstructionPackage package = DecodeInstructionAtProgramCounter();
 
             Registers.PC = pc;
             Memory.Untimed.WriteBytesAt(address, lastFour);

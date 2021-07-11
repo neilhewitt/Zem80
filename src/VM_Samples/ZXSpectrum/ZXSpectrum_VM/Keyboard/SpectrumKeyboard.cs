@@ -9,8 +9,6 @@ namespace ZXSpectrum.VM
 {
     public static class SpectrumKeyboard
     {
-        private static IDictionary<WindowsKey, SpectrumKey[]> _map = new Dictionary<WindowsKey, SpectrumKey[]>();
-
         private static IDictionary<int, string> _matrix = new Dictionary<int, string>()
         {
             { 0xF7, "12345" },
@@ -69,9 +67,7 @@ namespace ZXSpectrum.VM
 
         private static void Setup()
         {
-            string[] windowsKeyNames = Enum.GetNames(typeof(WindowsKey));
             string[] spectrumKeyNames = Enum.GetNames(typeof(SpectrumKey));
-            string name = String.Empty;
 
             // 0 to 9
             for (int i = 0; i < 10; i++)

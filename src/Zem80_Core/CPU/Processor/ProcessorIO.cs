@@ -2,8 +2,14 @@
 {
     public class ProcessorIO
     {
-        /*  
-         *  A0..A15 (out): this is the 16 bit address-bus, used for addressing up to 64 KBytes of memory or as port number for communicating with other chips and hardware devices
+        /*
+            This class represents the IO pin state of the Z80. The pin values are read-only, but there are internal methods to set various states
+            as required by the processor. You cannot set or change the state of the IO pins directly. Please see the Processor class for details of how to 
+            integrate emulated hardware devices via interrupts etc.
+
+            --------------------------------------------
+            
+            A0..A15 (out): this is the 16 bit address-bus, used for addressing up to 64 KBytes of memory or as port number for communicating with other chips and hardware devices
             D0..D7 (in/out): the 8-bit data bus, the address bus says where to read or write something, and the data bus says what
             MREQ (out): the memory request pin is active when the CPU wants to perform a memory access
             IORQ (out): likewise the I/O request pin is active when the CPU wants to perform an I/O device access (via the special IN/OUT instructions of the Z80)
