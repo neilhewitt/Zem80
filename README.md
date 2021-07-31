@@ -35,33 +35,12 @@ The other main component is the ZX Spectrum VM, which has several known issues:
 
 At the present time, I consider the main emulator development complete and will not be making changes other than bug fixes, at least until any version 2.0.
 
-## LICENSE ##
+## Acknowledgements ##
 
-MIT License
+This project contains materials derived from **ZEXALL** which is copyright **Frank Cringle**, with amendments copyright **J.G. Harston**, and is distributed under the terms of the ZEXALL license. 
 
-Copyright (c) 2020 Neil Hewitt
+This project contains the binary code of the **ZX Spectrum 48K ROM** which is copyright **Amstrad plc** and distributed under general permission given to the community to redistribute the code for emulation purposes provided that the code is unchanged. 
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Portions of this project were created using an amended version of **SpectNetIDE** (https://github.com/Dotneteer/spectnetide) which is copyright **Istvan Novak** and other contributors, but this project does not reproduce any code or assets from SpectNetIDE.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-*Some files included in this project (ZX Spectrum ROM, Zexall instruction tests etc)
-are made available under a different license to this one, 
-and this will be detailed in a readme.md at the appropriate point. You are required
-to follow the terms of those licenses or conditions in order to distribute those files.
-If you are not willing or able to do so, you may distribute this project with those files
-removed.*
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Thanks to the wide community of enthusiasts who have documented much of the process of emulating a Z80 and other CPUs in various languages. Without your hard work and contributions, this project would not have been possible. 
