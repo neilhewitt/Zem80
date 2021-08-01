@@ -12,13 +12,6 @@ furnished to do so, subject to the following conditions:
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-**Some files included in this project (including but not limited to the
-ZX Spectrum ROM, Zexall instruction tests etc) are made available under a
-different license to this one, and this will be detailed in a LICENSE or README
-distributed with these files. You are required to follow the terms of those
-licenses in order to distribute those files. If you are not willing or able to
-do so, you may distribute this project with those files removed.**
-
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
