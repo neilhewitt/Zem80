@@ -102,7 +102,7 @@ namespace Zem80.Core
             return (input & (1 << bitIndex)) != 0;
         }
 
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool GetBit(this ushort input, int bitIndex)
         {
             return (input & (1 << bitIndex)) != 0;

@@ -204,8 +204,7 @@ namespace Zem80.Core
 
         public void AddWaitCycles(int waitCycles)
         {
-            // Note that it's fine for client software to add wait cycles
-            // and then reset and add again *before* the wait has happened.
+            // Will add *waitCycles* wait states at the next insertion point.
             // Waits are only actually inserted at certain points in the instruction cycle. 
             _pendingWaitCycles = waitCycles;
         }
@@ -226,9 +225,9 @@ namespace Zem80.Core
             if (_halted)
             {
                 _halted = false;
-                if (_reasonForLastHalt == HaltReason.HaltInstruction) Registers.PC++;
                 // if coming back from a HALT instruction (at next interrupt or by API override here), move the Program Counter on to step over the HALT instruction
                 // otherwise we'll HALT forever in a loop
+                if (_reasonForLastHalt == HaltReason.HaltInstruction) Registers.PC++;
             }
         }
 
@@ -236,12 +235,11 @@ namespace Zem80.Core
         {
             // Note that the breakpoint functionality is *very* simple and not checked
             // so if you add a breakpoint for an address which is not the start
-            // of an instruction in the code, it will never be triggered
+            // of an instruction in the code, it will never be triggered as PC will never get there
             if (!_breakpoints.Contains(address))
             {
                 _breakpoints.Add(address);
             }    
-
         }
 
         void IDebugProcessor.RemoveBreakpoint(ushort address)
@@ -282,15 +280,12 @@ namespace Zem80.Core
                             return;
                         }
 
-                        // run a NOP - by not decoding anything we leave the Program Counter where it was when we HALTed
+                        // run a NOP - by not decoding anything we leave the Program Counter where it was when we HALTed and
                         // the PC will be advanced on resume from the HALT instruction when the next interrupt is handled
 
-                        // since we're not decoding the instruction (it's HALT), we need to run the opcode fetch cycle for NOP
-                        // so that the clock ticks and attached devices can generate interrupts to bring the CPU out of HALT;
-                        // the following call does that...
+                        // we need to run the opcode fetch cycle for NOP anyway, so that the clock ticks and attached devices
+                        // can generate interrupts to bring the CPU out of HALT; the following call does this...
                         FetchOpcodeByte();
-
-                        // now send a NOP package to be executed
                         package = new InstructionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
 
                     }
@@ -330,7 +325,6 @@ namespace Zem80.Core
             wz = (ushort)(wz + package.Data.Argument1);
             Registers.WZ = wz;
 
-            // run the instruction microcode implementation
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
 
             if (result.Flags != null) Registers.SetFlags(result.Flags.Value);
@@ -456,8 +450,8 @@ namespace Zem80.Core
                     Registers.PC++;
                     if (instruction.Argument2 != InstructionElement.None)
                     {
-                        // some instructions (OK, just CALL) have a prolonged high byte operand read 
-                        // but ONLY if a) it's CALL nn or b) if the condition (CALL NZ, for example) is satisfied (ie Flags.NZ is true)
+                        // some instructions (OK, just CALL) have a prolonged high byte operand read with an additional cycle
+                        // but ONLY if a) it's CALL nn OR b) if the condition (CALL NZ, for example) is satisfied (ie Flags.NZ is true)
                         // otherwise it's the standard size. Timing oddities like this are noted in the TimingExceptions structure,
                         // but this is the only one that affects the instruction decode cycle (the others affect Memory Read cycles)
                         if (instruction.Timing.Exceptions.HasConditionalOperandDataReadHigh4)
@@ -509,7 +503,7 @@ namespace Zem80.Core
             }
             else
             {
-                while (_clockSemaphore == false) ; // pause until the next clock tick
+                while (_running && _clockSemaphore == false) ; // pause until the next clock tick
                 _clockSemaphore = false;
                 _emulatedTStates++;
                 OnClockTick?.Invoke(this, _executingInstructionPackage);
@@ -518,7 +512,7 @@ namespace Zem80.Core
 
         private void WhenTheClockTicks(object sender, EventArgs e)
         {
-            // this is called by the external clock thread, but it's not synchronised (no need)
+            // this is called by the external clock thread as an event handler, but it's not synchronised (no need)
             _clockSemaphore = true;
         }
 
