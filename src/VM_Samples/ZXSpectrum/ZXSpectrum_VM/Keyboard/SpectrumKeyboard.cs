@@ -43,6 +43,8 @@ namespace ZXSpectrum.VM
 
         public static void SetSpectrumKeyStates(IEnumerable<SpectrumKey> keys, KeyState state)
         {
+            if (keys == null) return;
+
             foreach (SpectrumKey key in keys)
             {
                 _keyStates[(int)key] = state;

@@ -7,6 +7,7 @@ using Zem80.Core.Memory;
 using Zem80.Core.IO;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Zem80.Core
 {
@@ -27,11 +28,12 @@ namespace Zem80.Core
         private bool _suspendMachineCycles;
         private int _pendingWaitCycles;
         private int _previousWaitCycles;
+        private double _windowsTicksPerZ80Tick;
         private ushort _topOfStack;
 
-        private ExternalClock _clock;
-        private bool _clockSemaphore;
         private Stopwatch _startStopTimer;
+        private Stopwatch _cycleTimer;
+        private long _windowsTicksAtLastZ80Tick;
         private long _emulatedTStates;
 
         private Thread _instructionCycle;
@@ -73,7 +75,7 @@ namespace Zem80.Core
         public event EventHandler BeforeStart;
         public event EventHandler OnStop;
         public event EventHandler<HaltReason> OnHalt;
-        
+
         event EventHandler<InstructionPackage> IDebugProcessor.OnBreakpoint { add { _onBreakpoint += value; } remove { _onBreakpoint -= value; } }
 
         public void Start(ushort address = 0x0000, bool endOnHalt = false, TimingMode timingMode = TimingMode.FastAndFurious)
@@ -92,7 +94,9 @@ namespace Zem80.Core
 
                 _startStopTimer.Reset();
                 _startStopTimer.Start();
-                if (timingMode == TimingMode.PseudoRealTime) _clock.Start(); // only use the clock thread if we need it
+                _cycleTimer.Reset();
+                _cycleTimer.Start();
+                //if (timingMode == TimingMode.PseudoRealTime) _clock.Start(); // only use the clock thread if we need it
 
                 IO.Clear();
                 _instructionCycle = new Thread(InstructionCycle);
@@ -104,7 +108,6 @@ namespace Zem80.Core
         {
             _running = false;
             _startStopTimer.Stop();
-            if (_clock.Started) _clock.Stop();
             _halted = false;
             _instructionCycle?.Interrupt();
 
@@ -495,25 +498,15 @@ namespace Zem80.Core
 
         private void WaitForNextClockTick()
         {
-            if (TimingMode == TimingMode.FastAndFurious)
+            if (TimingMode == TimingMode.PseudoRealTime)
             {
-                _emulatedTStates++;
-                OnClockTick?.Invoke(this, _executingInstructionPackage);
-                return;
+                long tickThreshold = (long)Math.Ceiling(_windowsTicksAtLastZ80Tick + _windowsTicksPerZ80Tick);
+                while (_cycleTimer.ElapsedTicks <= tickThreshold) ;
+                _windowsTicksAtLastZ80Tick = _cycleTimer.ElapsedTicks;
             }
-            else
-            {
-                while (_running && _clockSemaphore == false) ; // pause until the next clock tick
-                _clockSemaphore = false;
-                _emulatedTStates++;
-                OnClockTick?.Invoke(this, _executingInstructionPackage);
-            }
-        }
 
-        private void WhenTheClockTicks(object sender, EventArgs e)
-        {
-            // this is called by the external clock thread as an event handler, but it's not synchronised (no need)
-            _clockSemaphore = true;
+            _emulatedTStates++;
+            OnClockTick?.Invoke(this, _executingInstructionPackage);
         }
 
         private void InsertWaitCycles()
@@ -853,6 +846,7 @@ namespace Zem80.Core
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.
 
             FrequencyInMHz = frequencyInMHz;
+            _windowsTicksPerZ80Tick = 10 / frequencyInMHz;
 
             Registers = new Registers();
             Ports = new Ports(this);
@@ -876,13 +870,8 @@ namespace Zem80.Core
             // The Z80 instruction set needs to be built (all Instruction objects are created, bound to the microcode instances, and indexed into a hashtable - undocumented 'overloads' are built here too)
             InstructionSet.Build();
 
-            // If running in Pseudo-RealTime mode, an external clock routine is used to sync instruction execution to real time. Sort of.
-            // The timing is approximate due to fundamental unpredictability as to how long .NET will take to run the instruction code each time, so you do get clock misses, but all emulated devices run at the same
-            // speed so the effect is as if time itself is slowing and accelerating (by a tiny %) inside the emulation, and everything remains consistent, though visual effects based purely on the
-            // instruction timing / CRT timing may not work 100% as intended.
-            _clock = new ExternalClock(frequencyInMHz);
-            _clock.OnTick += WhenTheClockTicks;
             _startStopTimer = new Stopwatch();
+            _cycleTimer = new Stopwatch();
         }
     }
 }

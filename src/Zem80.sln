@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28922.388
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_Core", "Zem80_Core\Zem80_Core.csproj", "{F1912952-2484-4C19-8137-D0F2BB18BEDA}"
 EndProject
@@ -20,6 +20,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrum__VM", "VM_Samples\ZXSpectrum\ZXSpectrum_VM\ZXSpectrum__VM.csproj", "{97BE4495-51D7-4A97-9448-8A183D2F8C1E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrum_UI", "VM_Samples\ZXSpectrum\ZXSpectrum_UI\ZXSpectrum_UI.csproj", "{0C72E483-D13D-4FD5-8A2C-AD8D2696F5BC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpeedTest", "SpeedTest\SpeedTest.csproj", "{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -77,6 +79,14 @@ Global
 		{0C72E483-D13D-4FD5-8A2C-AD8D2696F5BC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0C72E483-D13D-4FD5-8A2C-AD8D2696F5BC}.Release|x64.ActiveCfg = Release|Any CPU
 		{0C72E483-D13D-4FD5-8A2C-AD8D2696F5BC}.Release|x64.Build.0 = Release|Any CPU
+		{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}.Debug|x64.Build.0 = Debug|Any CPU
+		{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}.Release|x64.ActiveCfg = Release|Any CPU
+		{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

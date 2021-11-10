@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Input;
 using Zem80.Core;
 using Zem80.Core.Instructions;
 using Zem80.Core.Memory;
 using ZXSpectrum.VM.Sound;
-using ZXSpectrum.VM.TAP;
 
 namespace ZXSpectrum.VM
 {
@@ -26,6 +22,9 @@ namespace ZXSpectrum.VM
         private bool _flashOn;
         private ScreenMap _screen;
         private IDictionary<int, int> _displayWaits = new Dictionary<int, int>();
+        private Thread _displayUpdateThread;
+        private bool _killDisplayUpdateThread;
+        private bool _refreshDisplay;
 
         public event EventHandler<byte[]> OnUpdateDisplay;
 
@@ -56,7 +55,9 @@ namespace ZXSpectrum.VM
 
         public void Stop()
         {
+            _killDisplayUpdateThread = true;
             _cpu.Stop();
+            _beeper.Dispose();
         }
 
         private void LoadSnapshot(string path)
@@ -69,6 +70,10 @@ namespace ZXSpectrum.VM
 
                 case ".Z80":
                     LoadZ80(path);
+                    break;
+
+                case ".TAP":
+                    LoadTAP(path);
                     break;
             }
         }
@@ -200,6 +205,12 @@ namespace ZXSpectrum.VM
             }
         }
 
+        private void LoadTAP(string path)
+        {
+            byte[] tapData = TAPLoader.LoadToBytes(path);
+            _cpu.Memory.Untimed.WriteBytesAt(0x4000, tapData);
+        }
+
 
         private void CPU_OnClockTick(object sender, InstructionPackage e)
         {
@@ -217,7 +228,7 @@ namespace ZXSpectrum.VM
             {
                 // we've reached the vertical blanking interval, so raise an interrupt for the keyboard processing etc.
                 // and then update the display
-                UpdateDisplay();
+                _refreshDisplay = true;
                 _cpu.RaiseInterrupt();
                 _ticksSinceLastDisplayUpdate = 0;
             }
@@ -225,35 +236,42 @@ namespace ZXSpectrum.VM
 
         private void UpdateDisplay()
         {
-            // this does a screen update after every TICKS_BETWEEN_FRAMES t-states
-
-            // we're faking the screen update process here:
-            // up to this point, we've been adding wait cycles to the processor
-            // to simulate the contention of video memory (the ULA would be reading
-            // the video RAM at this point, but in our emulation nothing happpens);
-            // then, when we have counted enough ticks since the last screen update 
-            // to be at the vertical blanking interval (that's crazy CRT talk, but Google it 
-            // if you want to understand how TVs used to work!), we 'instantaneously' 
-            // update the display (and since this happens during the OnClockTick event, 
-            // the processor is effectively in suspended animation while this occurs, 
-            // which of course skews the clock thread, however the clock will simply 
-            // pick up at the next available tick and from the emulated Z80's perspective, 
-            // no time has elapsed at all - this should be fine for most programs)
-
-            byte[] pixelBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x4000, 6144);
-            byte[] attributeBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x5800, 768);
-            _screen.Fill(pixelBuffer, attributeBuffer);
-
-            // every FLASH_FRAME_RATE frames, we invert any attribute block that has FLASH set
-            if (_displayUpdatesSinceLastFlash++ >= FLASH_FRAME_RATE)
+            while (!_killDisplayUpdateThread)
             {
-                _flashOn = !_flashOn;
+                if (_refreshDisplay)
+                {
+                    _refreshDisplay = false;
+                    // this does a screen update after every TICKS_BETWEEN_FRAMES t-states
+
+                    // we're faking the screen update process here:
+                    // up to this point, we've been adding wait cycles to the processor
+                    // to simulate the contention of video memory (the ULA would be reading
+                    // the video RAM at this point, but in our emulation nothing happpens);
+                    // then, when we have counted enough ticks since the last screen update 
+                    // to be at the vertical blanking interval (that's crazy CRT talk, but Google it 
+                    // if you want to understand how TVs used to work!), we 'instantaneously' 
+                    // update the display (and since this happens during the OnClockTick event, 
+                    // the processor is effectively in suspended animation while this occurs, 
+                    // which of course skews the clock thread, however the clock will simply 
+                    // pick up at the next available tick and from the emulated Z80's perspective, 
+                    // no time has elapsed at all - this should be fine for most programs)
+
+                    byte[] pixelBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x4000, 6144);
+                    byte[] attributeBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x5800, 768);
+                    _screen.Fill(pixelBuffer, attributeBuffer);
+
+                    // every FLASH_FRAME_RATE frames, we invert any attribute block that has FLASH set
+                    if (_displayUpdatesSinceLastFlash++ >= FLASH_FRAME_RATE)
+                    {
+                        _flashOn = !_flashOn;
+                    }
+
+                    byte[] screenBitmap = _screen.ToRGBA(_flashOn);
+                    OnUpdateDisplay?.Invoke(this, screenBitmap);
+
+                    if (_displayUpdatesSinceLastFlash > FLASH_FRAME_RATE) _displayUpdatesSinceLastFlash = 0;
+                }
             }
-
-            byte[] screenBitmap = _screen.ToRGBA(_flashOn);
-            OnUpdateDisplay?.Invoke(this, screenBitmap);
-
-            if (_displayUpdatesSinceLastFlash > FLASH_FRAME_RATE) _displayUpdatesSinceLastFlash = 0;
         }
 
         private byte ReadPort()
@@ -279,6 +297,8 @@ namespace ZXSpectrum.VM
 
                 if (portAddress.LowByte() == 0xFE) // PORT OxFE
                 {
+                    _beeper.SetBeeperState(_cpu.IO.D4);
+
                     // TODO: handle MIC, EAR and speaker activation (bit 3 == MIC, bit 4 == EAR / speaker)
                     // bits 0,1,2 encode the border colour
                     if (portAddress >> 8 < 8)
@@ -289,8 +309,6 @@ namespace ZXSpectrum.VM
                             _screen.SetBorderColour(newBorder);
                         }
                     }
-
-                    _beeper.Beep(_cpu.IO.D4);
                 }
             }
         }
@@ -341,6 +359,9 @@ namespace ZXSpectrum.VM
 
             _cpu.OnClockTick += CPU_OnClockTick;
             _ticksSinceLastDisplayUpdate = TICKS_BETWEEN_FRAMES; // trigger initial display buffer fill
+
+            _displayUpdateThread = new Thread(UpdateDisplay);
+            _displayUpdateThread.Start();
         }
     }
 }

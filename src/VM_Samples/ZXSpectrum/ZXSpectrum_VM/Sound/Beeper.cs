@@ -11,18 +11,22 @@ using System.Threading.Tasks;
 
 namespace ZXSpectrum.VM.Sound
 {
-    public class Beeper
+    public class Beeper : IDisposable
     {
         private Processor _cpu;
+        private Thread _addSamplesThread;
+        private bool _killThread;
         private int _clockTicksPerFrame = 73;
-        private int _bufferSamples = 882;
+        private int _bufferEmptyThreshold = 960;
 
         private int _ticksThisFrame;
         private int _frameTStatesOn;
-        private byte[] _buffer;
+        private byte[] _inBuffer;
+        private byte[] _outBuffer;
         private int _bufferIndex;
 
         private bool _beeperOn;
+        private bool _addSamples;
 
         private IWavePlayer _player;
         private MixingSampleProvider _mixer;
@@ -32,47 +36,68 @@ namespace ZXSpectrum.VM.Sound
         {
             _cpu = cpu;
 
-            _buffer = new byte[_bufferSamples];
+            _inBuffer = new byte[_bufferEmptyThreshold];
 
             _player = new WaveOutEvent();
-            _mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(44100, 1));
+            _mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(48000, 1));
             _mixer.ReadFully = true;
-            _provider = new BufferedWaveProvider(WaveFormat.CreateIeeeFloatWaveFormat(44100, 1));
-            _provider.BufferDuration = TimeSpan.FromSeconds(60);
+            _provider = new BufferedWaveProvider(WaveFormat.CreateIeeeFloatWaveFormat(48000, 1));
+            _provider.ReadFully = true;
+            _provider.BufferDuration = TimeSpan.FromSeconds(30);
             _provider.DiscardOnBufferOverflow = true;
-            _mixer.AddMixerInput(new Pcm24BitToSampleProvider(_provider));
+            _mixer.AddMixerInput(new Pcm16BitToSampleProvider(_provider));
             _player.Init(_mixer);
-            _player.Volume = 0.5f;
+            _player.Volume = 0.33f;
             _player.Play();
 
             _cpu.OnClockTick += CPU_OnClockTick;
+            _addSamplesThread = new Thread(AddSamples);
+            _addSamplesThread.Start();
         }
 
-        public void Beep(bool on)
+        public void SetBeeperState(bool on)
         {
             _beeperOn = on;
         }
 
+        public void Dispose()
+        {
+            _killThread = true;
+            _player.Dispose();
+        }
+
+        private void AddSamples()
+        {
+            while (!_killThread)
+            {
+                if (_addSamples)
+                {
+                    _addSamples = false;
+                    _provider.AddSamples(_outBuffer, 0, _bufferEmptyThreshold);
+                }
+            }
+        }
+
         private void CPU_OnClockTick(object sender, Zem80.Core.Instructions.InstructionPackage e)
         {
-            if (_ticksThisFrame < _clockTicksPerFrame)
+            if (_ticksThisFrame <= _clockTicksPerFrame)
             {
                 if (_beeperOn) _frameTStatesOn++;
                 _ticksThisFrame++;
             }
-            else if (_bufferIndex < _bufferSamples - 1)
+            else if (_bufferIndex < _bufferEmptyThreshold)
             {
-                if (_beeperOn) _frameTStatesOn++;
                 float fraction = ((float)_frameTStatesOn / (float)_clockTicksPerFrame);
                 ushort sample = (ushort)(fraction * 65535);
-                _buffer[_bufferIndex++] = (byte)(sample / 256);
-                _buffer[_bufferIndex++] = (byte)(sample % 256);
+                _inBuffer[_bufferIndex++] = (byte)(sample / 256);
+                _inBuffer[_bufferIndex++] = (byte)(sample % 256);
                 _frameTStatesOn = 0;
                 _ticksThisFrame = 0;
             }
             else
             {
-                _provider.AddSamples(_buffer, 0, _buffer.Length);
+                _outBuffer = (byte[])_inBuffer.Clone();
+                _addSamples = true;
                 _bufferIndex = 0;
                 _frameTStatesOn = 0;
                 _ticksThisFrame = 0;

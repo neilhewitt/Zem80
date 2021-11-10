@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>Zem80.Core</AssemblyName>
     <RootNamespace>Zem80.Core</RootNamespace>
     <Platforms>AnyCPU;x64</Platforms>

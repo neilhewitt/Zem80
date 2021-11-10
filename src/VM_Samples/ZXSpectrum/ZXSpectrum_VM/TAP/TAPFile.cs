@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
-namespace ZXSpectrum.VM.TAP
+namespace ZXSpectrum.VM
 {
     public class TAPFile
     {
@@ -14,23 +15,26 @@ namespace ZXSpectrum.VM.TAP
 
         public IReadOnlyList<TAPBlock> Blocks => _blocks;
 
+        public byte[] Data => _blocks.SelectMany(x => x.Data).ToArray();
+
         private void ParseData(byte[] fileData)
         {
-            Header = new TAPHeader(fileData[0..19]);
-            ExtractBlocks(fileData[19..]);
-        }
-
-        private void ExtractBlocks(byte[] allBlockData)
-        {
-            int index = 2;
-            while (true)
+            int index = 0;
+            while(true)
             {
-                ushort blockSize = (ushort)((byte)allBlockData[index] + ((byte)allBlockData[++index] * 256));
-                TAPBlock block = new TAPBlock((ushort)(blockSize - 2), allBlockData[new Range(++index, index + blockSize)]);
-                index = index + blockSize;
-                _blocks.Add(block);
-
-                if (index >= allBlockData.Length) break;
+                ushort blockSize = (ushort)(fileData[index] + (fileData[index + 1] * 256));
+                byte flag = fileData[index + 2];
+                byte[] blockData = fileData[index..(index + blockSize)];
+                if (flag == 0)
+                {
+                    Header = new TAPHeader(fileData[index..(index + 19)]);
+                }
+                else
+                {
+                    TAPBlock block = new TAPBlock(blockSize, blockData);
+                    _blocks.Add(block);
+                }
+                index = index + blockSize - 1;
             }
         }
 
@@ -63,11 +67,12 @@ namespace ZXSpectrum.VM.TAP
 
         private void ParseHeader()
         {
-            Type = (TAPType)(int)((byte)_headerData[2]);
+            if (_headerData[2] != 0x00) throw new InvalidDataException("Specified data is not a TAP header.");
+            Type = (TAPType)(int)((byte)_headerData[3]);
             Filename = System.Text.ASCIIEncoding.Default.GetString(_headerData[4..13]).TrimEnd();
-            LengthInBytes = doubleByteValue(14);
-            Parameter1 = doubleByteValue(16);
-            Parameter2 = doubleByteValue(18);
+            LengthInBytes = doubleByteValue(13);
+            Parameter1 = doubleByteValue(15);
+            Parameter2 = doubleByteValue(16);
 
             ushort doubleByteValue(int index)
             {
@@ -78,14 +83,8 @@ namespace ZXSpectrum.VM.TAP
 
         public TAPHeader(byte[] headerData)
         {
-            try
-            {
-                _headerData = headerData;
-                ParseHeader();
-            }
-            catch
-            {
-            }
+            _headerData = headerData;
+            ParseHeader();
         }
     }
 
@@ -97,8 +96,7 @@ namespace ZXSpectrum.VM.TAP
         public TAPBlock(ushort sizeInBytes, byte[] data)
         {
             SizeInBytes = sizeInBytes;
-            Data = data[1..^1];
-            // we're going to ignore the flag and checksum bytes for now
+            Data = data[2..^1];
         }
     }
 
