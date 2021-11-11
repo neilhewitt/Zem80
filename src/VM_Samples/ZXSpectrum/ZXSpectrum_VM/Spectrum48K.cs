@@ -211,7 +211,6 @@ namespace ZXSpectrum.VM
             _cpu.Memory.Untimed.WriteBytesAt(0x4000, tapData);
         }
 
-
         private void CPU_OnClockTick(object sender, InstructionPackage e)
         {
             // handle memory contention (where the ULA is reading the video memory and blocks the CPU from running)
@@ -230,6 +229,7 @@ namespace ZXSpectrum.VM
                 // and then update the display
                 _refreshDisplay = true;
                 _cpu.RaiseInterrupt();
+
                 _ticksSinceLastDisplayUpdate = 0;
             }
         }
@@ -361,6 +361,7 @@ namespace ZXSpectrum.VM
             _ticksSinceLastDisplayUpdate = TICKS_BETWEEN_FRAMES; // trigger initial display buffer fill
 
             _displayUpdateThread = new Thread(UpdateDisplay);
+            _displayUpdateThread.IsBackground = true;
             _displayUpdateThread.Start();
         }
     }

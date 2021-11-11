@@ -16,8 +16,8 @@ namespace ZXSpectrum.VM.Sound
         private Processor _cpu;
         private Thread _addSamplesThread;
         private bool _killThread;
-        private int _clockTicksPerFrame = 73;
-        private int _bufferEmptyThreshold = 960;
+        private int _clockTicksPerFrame = 70;
+        private int _bufferEmptyThreshold = 4;
 
         private int _ticksThisFrame;
         private int _frameTStatesOn;
@@ -28,30 +28,15 @@ namespace ZXSpectrum.VM.Sound
         private bool _beeperOn;
         private bool _addSamples;
 
-        private IWavePlayer _player;
-        private MixingSampleProvider _mixer;
-        private BufferedWaveProvider _provider;
-
         public Beeper(Processor cpu)
         {
             _cpu = cpu;
 
             _inBuffer = new byte[_bufferEmptyThreshold];
 
-            _player = new WaveOutEvent();
-            _mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(48000, 1));
-            _mixer.ReadFully = true;
-            _provider = new BufferedWaveProvider(WaveFormat.CreateIeeeFloatWaveFormat(48000, 1));
-            _provider.ReadFully = true;
-            _provider.BufferDuration = TimeSpan.FromSeconds(30);
-            _provider.DiscardOnBufferOverflow = true;
-            _mixer.AddMixerInput(new Pcm16BitToSampleProvider(_provider));
-            _player.Init(_mixer);
-            _player.Volume = 0.33f;
-            _player.Play();
-
             _cpu.OnClockTick += CPU_OnClockTick;
             _addSamplesThread = new Thread(AddSamples);
+            _addSamplesThread.IsBackground = true;
             _addSamplesThread.Start();
         }
 
@@ -63,19 +48,31 @@ namespace ZXSpectrum.VM.Sound
         public void Dispose()
         {
             _killThread = true;
-            _player.Dispose();
         }
 
         private void AddSamples()
         {
+            WaveOutEvent player = new WaveOutEvent();
+            WaveFormat format = new WaveFormat(48000, 16, 1);
+            
+            BufferedWaveProvider provider = new BufferedWaveProvider(format);
+            provider.BufferDuration = TimeSpan.FromSeconds(30);
+            provider.DiscardOnBufferOverflow = true;
+            
+            player.Init(provider);
+            player.Volume = 0.33f;
+            player.Play();
+
             while (!_killThread)
             {
                 if (_addSamples)
                 {
                     _addSamples = false;
-                    _provider.AddSamples(_outBuffer, 0, _bufferEmptyThreshold);
+                    provider.AddSamples(_outBuffer, 0, _bufferEmptyThreshold);
                 }
             }
+
+            player.Dispose();
         }
 
         private void CPU_OnClockTick(object sender, Zem80.Core.Instructions.InstructionPackage e)
