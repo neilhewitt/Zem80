@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Zem80.Core
 {
-    public class Processor : IDebugProcessor, IInstructionTiming
+    public class Processor : IDebugProcessor, IInstructionTiming, IDisposable
     {
         public const int MAX_MEMORY_SIZE_IN_BYTES = 65536;
 
@@ -24,18 +24,16 @@ namespace Zem80.Core
         private bool _running;
         private bool _halted;
         private bool _suspended;
-        private bool _executeInstruction;
-        private bool _waitingForClockTick;
+        private bool _debugging;
         private HaltReason _reasonForLastHalt;
         private bool _suspendMachineCycles;
         private int _pendingWaitCycles;
         private int _previousWaitCycles;
-        private double _windowsTicksPerZ80Tick;
+        private int _windowsTicksPerZ80Tick;
         private ushort _topOfStack;
-
-        private ProcessorClock _clock;
         private long _emulatedTStates;
 
+        private Stopwatch _clock;
         private Thread _instructionCycle;
         private InstructionPackage _executingInstructionPackage;
         private Func<byte> _interruptCallback;
@@ -77,6 +75,12 @@ namespace Zem80.Core
 
         event EventHandler<InstructionPackage> IDebugProcessor.OnBreakpoint { add { _onBreakpoint += value; } remove { _onBreakpoint -= value; } }
 
+        public void Dispose()
+        {
+            _running = false;
+            _instructionCycle?.Interrupt(); // just in case
+        }
+
         public void Start(ushort address = 0x0000, bool endOnHalt = false, TimingMode timingMode = TimingMode.FastAndFurious)
         {
             if (!_running)
@@ -91,11 +95,6 @@ namespace Zem80.Core
                 BeforeStart?.Invoke(null, null);
                 _running = true;
 
-                if (timingMode == TimingMode.PseudoRealTime)
-                {
-                    _clock.Start();
-                }
-
                 IO.Clear();
                 _instructionCycle = new Thread(InstructionCycle);
                 _instructionCycle.IsBackground = true;
@@ -106,8 +105,6 @@ namespace Zem80.Core
         public void Stop()
         {
             _running = false;
-            _clock.Stop();
-            _clock.Dispose();
             _halted = false;
 
             OnStop?.Invoke(null, null);
@@ -116,7 +113,6 @@ namespace Zem80.Core
         public void Suspend()
         {
             _suspended = true;
-            _clock.Stop();
         }
 
         public void Resume()
@@ -129,7 +125,6 @@ namespace Zem80.Core
                 // otherwise we'll HALT forever in a loop
                 if (_reasonForLastHalt == HaltReason.HaltInstruction) Registers.PC++;
             }
-            _clock.Start();
         }
 
         public void RunUntilStopped()
@@ -254,76 +249,60 @@ namespace Zem80.Core
             }
         }
 
-        private void OnProcessorClockTick(object sender, EventArgs e)
-        {
-            // clock tick starts each execution cycle, but cycle will take several ticks so we have
-            // a semaphore here to tell the instruction cycle thread to begin running at the next 
-            // available opportunity
-            if (!_executeInstruction)
-            {
-                _executeInstruction = true;
-            }
-            else
-            {
-                // if we're in the cycle, we may be waiting for the next clock tick in order to process part of an instruction machine cycle,
-                // so we have a further semaphore for this which tells the waiting loop to exit
-                _waitingForClockTick = false;
-            }
-        }
-
         private void InstructionCycle()
         {
+            _clock = new Stopwatch();
+            _clock.Start();
+
             while (_running)
             {
                 if (!_suspended) // if suspended, we should do *nothing at all* until resumed
                 {
-                    if (TimingMode == TimingMode.FastAndFurious || _executeInstruction)
+                    // clock tick is the signal for instruction decoding to start
+                    WaitForNextClockTick(false);
+
+                    InstructionPackage package = null;
+                    ushort pc = Registers.PC;
+
+                    if (!_halted)
                     {
-                        InstructionPackage package = null;
-                        ushort pc = Registers.PC;
-
-                        if (!_halted)
+                        // decode next instruction 
+                        // (note that the decode cycle leaves the Program Counter at the byte *after* this instruction unless it's adjusted by the instruction code itself,
+                        // this is how the program moves on to the next instruction)
+                        package = DecodeInstructionAtProgramCounter();
+                        if (package == null)
                         {
-                            // decode next instruction 
-                            // (note that the decode cycle leaves the Program Counter at the byte *after* this instruction unless it's adjusted by the instruction code itself,
-                            // this is how the program moves on to the next instruction)
-                            package = DecodeInstructionAtProgramCounter();
-                            if (package == null)
-                            {
-                                // only happens if we reach the end of memory mid-instruction, if so we bail out
-                                Stop();
-                                return;
-                            }
+                            // only happens if we reach the end of memory mid-instruction, if so we bail out
+                            Stop();
+                            return;
                         }
-                        else
-                        {
-                            if (EndOnHalt)
-                            {
-                                Stop();
-                                return;
-                            }
-
-                            // run a NOP - by not decoding anything we leave the Program Counter where it was when we HALTed and
-                            // the PC will be advanced on resume from the HALT instruction when the next interrupt is handled
-
-                            // we need to run the opcode fetch cycle for NOP anyway, so that the clock ticks and attached devices
-                            // can generate interrupts to bring the CPU out of HALT; the following call does this...
-                            FetchOpcodeByte();
-                            package = new InstructionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
-
-                        }
-
-                        // run the decoded instruction and deal with timing / ticks
-                        ExecutionResult result = Execute(package);
-                        _executingInstructionPackage = null;
-
-                        HandleNonMaskableInterrupts(); // NMI has priority
-                        if (!result.SkipInterruptAfterExecution) HandleMaskableInterrupts(); // if we came back from an NMI then we don't handle other interrupts until the next cycle
-
-                        Registers.R = (byte)(((Registers.R + 1) & 0x7F) | (Registers.R & 0x80)); // bits 0-6 of R are incremented as part of the memory refresh - bit 7 is preserved    
-
-                        _executeInstruction = false;
                     }
+                    else
+                    {
+                        if (EndOnHalt)
+                        {
+                            Stop();
+                            return;
+                        }
+
+                        // run a NOP - by not decoding anything we leave the Program Counter where it was when we HALTed and
+                        // the PC will be advanced on resume from the HALT instruction when the next interrupt is handled
+
+                        // we need to run the opcode fetch cycle for NOP anyway, so that the clock ticks and attached devices
+                        // can generate interrupts to bring the CPU out of HALT; the following call does this...
+                        FetchOpcodeByte();
+                        package = new InstructionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
+
+                    }
+
+                    // run the decoded instruction and deal with timing / ticks
+                    ExecutionResult result = Execute(package);
+                    _executingInstructionPackage = null;
+
+                    HandleNonMaskableInterrupts(); // NMI has priority
+                    HandleMaskableInterrupts(result); // if we came back from an NMI then we don't handle other interrupts until the next cycle
+
+                    Registers.R = (byte)(((Registers.R + 1) & 0x7F) | (Registers.R & 0x80)); // bits 0-6 of R are incremented as part of the memory refresh - bit 7 is preserved    
                 }
                 else
                 {
@@ -445,6 +424,7 @@ namespace Zem80.Core
                     {
                         b1 = FetchOpcodeByte(); // need to call this even though we have the value, to generate correct timing
                         Registers.PC++;
+
                         addTicksIfNeededForOpcodeFetch(); // (some specific opcodes have longer opcode fetch cycles than normal)
 
                         // fetch the operand bytes (as required)
@@ -523,16 +503,19 @@ namespace Zem80.Core
             }
         }
 
-        private void WaitForNextClockTick()
+        private void WaitForNextClockTick(bool incrementTStateCounter = true)
         {
-            if (TimingMode == TimingMode.PseudoRealTime)
+            OnClockTick?.Invoke(this, _executingInstructionPackage);
+
+            // only wait if the debugger is not attached, otherwise we'll get deadlocks
+            if (TimingMode == TimingMode.PseudoRealTime && !_debugging)
             {
-                _waitingForClockTick = true;
-                while (_waitingForClockTick) ;
+                long currentTicks = _clock.ElapsedTicks;
+                long targetTicks = currentTicks + _windowsTicksPerZ80Tick;
+                while (_clock.ElapsedTicks < targetTicks) ;
             }
 
-            _emulatedTStates++;
-            OnClockTick?.Invoke(this, _executingInstructionPackage);
+            if (incrementTStateCounter) _emulatedTStates++;
         }
 
         private void InsertWaitCycles()
@@ -592,9 +575,9 @@ namespace Zem80.Core
             IO.EndNMIState();
         }
 
-        private void HandleMaskableInterrupts()
+        private void HandleMaskableInterrupts(ExecutionResult result)
         {
-            if (IO.INT && InterruptsEnabled)
+            if (!result.SkipInterruptAfterExecution && IO.INT && InterruptsEnabled)
             {
                 if (_interruptCallback == null && InterruptMode == InterruptMode.IM0)
                 {
@@ -872,7 +855,7 @@ namespace Zem80.Core
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.
 
             FrequencyInMHz = frequencyInMHz;
-            _windowsTicksPerZ80Tick = 10 / frequencyInMHz;
+            _windowsTicksPerZ80Tick = (int)Math.Ceiling(10 / frequencyInMHz);
 
             Registers = new Registers();
             Ports = new Ports(this);
@@ -896,8 +879,7 @@ namespace Zem80.Core
             // The Z80 instruction set needs to be built (all Instruction objects are created, bound to the microcode instances, and indexed into a hashtable - undocumented 'overloads' are built here too)
             InstructionSet.Build();
 
-            _clock = new ProcessorClock(this);
-            _clock.OnProcessorClockTick += OnProcessorClockTick;
+            _debugging = Debugger.IsAttached;
         }
     }
 }

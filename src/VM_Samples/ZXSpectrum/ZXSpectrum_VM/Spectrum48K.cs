@@ -20,11 +20,12 @@ namespace ZXSpectrum.VM
         private int _ticksSinceLastDisplayUpdate;
         private int _displayUpdatesSinceLastFlash;
         private bool _flashOn;
+        private bool _updateDisplayNow;
         private ScreenMap _screen;
         private IDictionary<int, int> _displayWaits = new Dictionary<int, int>();
-        private Thread _displayUpdateThread;
-        private bool _killDisplayUpdateThread;
-        private bool _refreshDisplay;
+
+        private Thread _updateThread;
+        private bool _killUpdateThread;
 
         public event EventHandler<byte[]> OnUpdateDisplay;
 
@@ -55,7 +56,7 @@ namespace ZXSpectrum.VM
 
         public void Stop()
         {
-            _killDisplayUpdateThread = true;
+            _killUpdateThread = true;
             _cpu.Stop();
             _beeper.Dispose();
         }
@@ -211,8 +212,10 @@ namespace ZXSpectrum.VM
             _cpu.Memory.Untimed.WriteBytesAt(0x4000, tapData);
         }
 
-        private void CPU_OnClockTick(object sender, InstructionPackage e)
+        private void ClockTick(object sender, InstructionPackage package)
         {
+            _beeper.Tick();
+
             // handle memory contention (where the ULA is reading the video memory and blocks the CPU from running)
             // we don't emulate the ULA directly and no actual memory reads are occurring here, but that's fine (see UpdateDisplay())
 
@@ -223,24 +226,25 @@ namespace ZXSpectrum.VM
 
             _ticksSinceLastDisplayUpdate++;
             
-            if (_ticksSinceLastDisplayUpdate > TICKS_BETWEEN_FRAMES)
+            if (_ticksSinceLastDisplayUpdate >= TICKS_BETWEEN_FRAMES)
             {
                 // we've reached the vertical blanking interval, so raise an interrupt for the keyboard processing etc.
                 // and then update the display
-                _refreshDisplay = true;
-                _cpu.RaiseInterrupt();
 
+                _cpu.RaiseInterrupt();
+                _updateDisplayNow = true;
                 _ticksSinceLastDisplayUpdate = 0;
             }
         }
 
         private void UpdateDisplay()
         {
-            while (!_killDisplayUpdateThread)
+            while (!_killUpdateThread)
             {
-                if (_refreshDisplay)
+                if (_updateDisplayNow)
                 {
-                    _refreshDisplay = false;
+                    _updateDisplayNow = false;
+
                     // this does a screen update after every TICKS_BETWEEN_FRAMES t-states
 
                     // we're faking the screen update process here:
@@ -270,6 +274,10 @@ namespace ZXSpectrum.VM
                     OnUpdateDisplay?.Invoke(this, screenBitmap);
 
                     if (_displayUpdatesSinceLastFlash > FLASH_FRAME_RATE) _displayUpdatesSinceLastFlash = 0;
+                }
+                else
+                {
+                    Thread.Yield();
                 }
             }
         }
@@ -357,12 +365,11 @@ namespace ZXSpectrum.VM
                 _cpu.Ports[i].Connect(ReadPort, WritePort, SignalPortRead, SignalPortWrite);
             }
 
-            _cpu.OnClockTick += CPU_OnClockTick;
+            _cpu.OnClockTick += ClockTick;
             _ticksSinceLastDisplayUpdate = TICKS_BETWEEN_FRAMES; // trigger initial display buffer fill
 
-            _displayUpdateThread = new Thread(UpdateDisplay);
-            _displayUpdateThread.IsBackground = true;
-            _displayUpdateThread.Start();
+            _updateThread = new Thread(UpdateDisplay);
+            _updateThread.Start();
         }
     }
 }
