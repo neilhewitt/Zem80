@@ -1,6 +1,6 @@
 # Zem80
 
-A simple emulation of the Z80 CPU written in C# and running on .NET Core 3.1 or above. 
+A simple emulation of the Z80 CPU written in C# and running on .NET 6. 
 
 ## Project goals
 
@@ -10,9 +10,21 @@ I'm trying, as far as is possible given the domain, to write idiomatic C# code, 
 
 I have now written a complete Z80 emulation including as much of the undocumented instructions and behaviour as I could find.
 
-I have also added a basic ZX Spectrum emulation, but this is a sample and not intended for actual use as an emulator. 
+I have also added a basic ZX Spectrum emulation, but this is a sample and not intended for actual use as an emulator.
+
+## Performance - some thoughts
+The amount of CPU required to run the Z80 emulation is significant compared to implementations in C and even some of the other C# implementations, and this is down to the design (as stated in the project goals) being bog-standard OO and not built specifically for optimum speed. Add the Spectrum emulation on top and you're using 35% of a 7th Gen Intel Core i7... which is a lot. 
+
+Can I improve this? Yes, probably, but only by changing the design in the same way as others have; writing C# code like it was C. I set out deliberately to not do that. So I think this is the end of the road for the Z80 emulator in terms of its evolution, unless I find some big wins that suit the current design, and I don't think I will. I will fix bugs if any come up, but I wouldn't expect anyone to take this code and make a successful emulator out of it without a *lot* of optimisation work. As a simple dependency? Not going to happen.
+
+## The future for this project
+Where I think this project can be useful is in perhaps explaining how to do CPU emulation in principle. It's a pretty complex subject that requires a lot of learning to approach and do, and learning from the existing code is difficult because it's often quite... opaque. This emulator is actually quite straightforward - not that you would understand it at first glance, or without knowledge of how the Z80 itself works in quite a lot of detail - and hopefully might give people a useful starting point to build their own emulators. If it does, then my work is done!
+
+I built this thing just to prove to myself that I could. I have a fully-functioning emulator built in a platform that's not generally thought of as one you could build something so low-level in, and I'm very glad it did it.
 
 ## Project status
+10/11/21 - I'm doing a little update work, trying to make the Spectrum beeper work properly. Long story short - it works without chopping (but not without noise) *if* you run the Z80 at 5MHz. Investigating this proved that my existing clock algorithm for pseudo-real-time did not work properly and was running far slower than expected, so I have replaced the clock completely with a new approach and that works much closer to real-time, but I still can't get the beeper working properly at the standard ZX Spectrum speed of 3.5MHz. So choppy, noisy audio is still a problem. 
+
 07/02/21 - **1.0.1 Release**. Fixes the timing bug. I've also made some general improvements and changes which *might* require you to make some small changes to your integration code if you integrated 1.0 (though AFAIK, no-one did!). I added basic beeper support to the Spectrum VM, this is still buggy and the audio is a little choppy because the timing is off somewhere, but at this point I'm done with the Spectrum work, it's just there to show you how to integrate Zem80 into an actual project. 
 
 ### Known issues ###
