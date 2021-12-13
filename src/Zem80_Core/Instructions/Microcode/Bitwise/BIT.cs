@@ -12,7 +12,6 @@ namespace Zem80.Core.Instructions
             InstructionData data = package.Data;
             Registers r = cpu.Registers;
             Flags flags = cpu.Registers.Flags;
-            InstructionPrefix prefix = instruction.Prefix;
 
             byte bitIndex = instruction.GetBitIndex();
             byte value;

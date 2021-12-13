@@ -883,7 +883,7 @@ namespace Zem80.Core.Instructions
 
                 // this is quicker than statically adding all the overloads to the main instruction set list above as there would be hundreds of them
 
-                if (instruction.Prefix == InstructionPrefix.DDCB || instruction.Prefix == InstructionPrefix.FDCB)
+                if (instruction.Prefix == 0xDDCB || instruction.Prefix == 0xFDCB)
                 {
                     for (int i = 0; i <= 7; i++)
                     {

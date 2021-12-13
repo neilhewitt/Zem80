@@ -6,7 +6,7 @@ namespace Zem80.Core.Instructions
 {
     public class InstructionTiming
     {
-        public IEnumerable<MachineCycle> MachineCycles { get; private set; }
+        public MachineCycle[] MachineCycles { get; private set; }
         public TimingExceptions Exceptions { get; private set; }
 
         public byte TStates => (byte)MachineCycles.Sum(x => x.TStates);
@@ -18,7 +18,7 @@ namespace Zem80.Core.Instructions
 
         public InstructionTiming(Instruction instruction, IEnumerable<MachineCycle> machineCycles)
         {
-            MachineCycles = machineCycles;
+            MachineCycles = machineCycles.ToArray();
             Exceptions = new TimingExceptions(instruction, this);
         }
     }

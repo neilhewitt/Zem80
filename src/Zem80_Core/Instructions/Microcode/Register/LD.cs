@@ -61,7 +61,7 @@ namespace Zem80.Core.Instructions
 
             switch (instruction.Prefix)
             {
-                case InstructionPrefix.Unprefixed:
+                case 0x00:
                     switch (instruction.Opcode)
                     {
                         case 0x01: // LD BC,nn
@@ -325,7 +325,7 @@ namespace Zem80.Core.Instructions
                     }
                     break;
 
-                case InstructionPrefix.ED:
+                case 0xED:
                     switch (instruction.Opcode)
                     {
                         case 0x43: // LD (nn),BC
@@ -373,7 +373,7 @@ namespace Zem80.Core.Instructions
                     }
                     break;
 
-                case InstructionPrefix.DD:
+                case 0xDD:
                     switch (instruction.Opcode)
                     {
                         case 0x21: // LD IX,nn
@@ -532,7 +532,7 @@ namespace Zem80.Core.Instructions
                     }
                     break;
 
-                case InstructionPrefix.FD:
+                case 0xFD:
                     switch (instruction.Opcode)
                     {
                         case 0x21: // LD IY,nn

@@ -8,14 +8,14 @@ namespace Zem80.Core.Instructions
 {
     public class Instruction
     {
-        public InstructionPrefix Prefix { get; private set; }
+        public int Prefix { get; private set; }
         public byte Opcode { get; private set; }
         public string FullOpcode { get; private set; }
         public string Mnemonic { get; private set; }
         public Condition Condition { get; private set; }
         public byte SizeInBytes { get; private set; }
         public InstructionTiming Timing { get; private set; }
-        public bool IsIndexed => Prefix >= InstructionPrefix.DDCB && Prefix <= InstructionPrefix.FDCB;
+        public bool IsIndexed => Prefix == 0xDDCB || Prefix == 0xFDCB;
         public bool IsConditional => Condition != Condition.None;
         public IMicrocode Microcode { get; private set; }
         public InstructionElement Target { get; private set; }
@@ -33,10 +33,10 @@ namespace Zem80.Core.Instructions
             FullOpcode = fullOpcode;
             CopyResultTo = copyResultTo;
 
-            Prefix = (fullOpcode.Length == 2) ? 
-                InstructionPrefix.Unprefixed : 
-                ((InstructionPrefix)Enum.Parse(typeof(InstructionPrefix), fullOpcode[..^2], true));
-           
+            if (int.TryParse(fullOpcode[..^2], NumberStyles.HexNumber, null, out int prefix))
+            {
+                Prefix = prefix;
+            }
             Opcode = byte.Parse(fullOpcode[^2..], NumberStyles.HexNumber);
             
             Mnemonic = mnemonic;

@@ -23,7 +23,7 @@ namespace Zem80.Core.Instructions
                 return input;
             }
 
-            if (instruction.Prefix == InstructionPrefix.Unprefixed)
+            if (instruction.Prefix == 0x00)
             {
                 // IN A,(n)
                 r.WZ = (ushort)((r.A << 8) + data.Argument1 + 1);

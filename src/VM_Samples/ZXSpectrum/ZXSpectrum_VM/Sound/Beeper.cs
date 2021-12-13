@@ -27,7 +27,7 @@ namespace ZXSpectrum.VM.Sound
             _buffer = new byte[_bytesPerFrame];
 
             _provider = new BufferedWaveProvider(WaveFormat.CreateIeeeFloatWaveFormat(48000, 1));
-            _provider.BufferDuration = TimeSpan.FromMilliseconds(1000);
+            _provider.DiscardOnBufferOverflow = true;
             _provider.ReadFully = true;
 
             _mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(48000, 1));

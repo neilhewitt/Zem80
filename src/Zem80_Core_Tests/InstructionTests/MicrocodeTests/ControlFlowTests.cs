@@ -127,11 +127,10 @@ namespace Zem80.Core.Tests.MicrocodeTests
         {
             ushort origin = 0x4000;
 
-            SetCPUFlagsFromCondition(condition, true); // set flag condition according to test case value
-
             Registers.PC = 0;
             Registers.HL = origin;
             CPU.Push(WordRegister.HL);
+            SetCPUFlagsFromCondition(condition, true); // set flag condition according to test case value
             ExecuteInstruction("RET " + condition.ToString());
             Assert.That(Registers.PC == 1); // condition was not true so PC = instruction address (0) + instruction length in bytes (1) so PC should == 1
 

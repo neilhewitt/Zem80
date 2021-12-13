@@ -89,7 +89,9 @@ namespace ZXSpectrum.VM
                 {
                     x = x - 32; // offset for border
                     y = y - 32;
-                    ScreenPixel pixel = new ScreenPixel(_pixels[y, x], _attributes[(y / 8), (x / 8)]);
+                    int x8 = (int)(x / 8);
+                    int y8 = (int)(y / 8);
+                    ScreenPixel pixel = new ScreenPixel(_pixels[y, x], _attributes[y8, x8]);
                     Color ink = pixel.Attribute.Bright ? pixel.Attribute.Ink.Bright : pixel.Attribute.Ink.Normal;
                     Color paper = pixel.Attribute.Bright ? pixel.Attribute.Paper.Bright : pixel.Attribute.Paper.Normal;
                     if (flashOn && pixel.Attribute.Flash)

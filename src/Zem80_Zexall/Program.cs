@@ -11,10 +11,10 @@ namespace Zem80_Zexall
             Console.WriteLine("Zem80 Zexall Instruction Set Test Runner\n");
             Console.ForegroundColor = ConsoleColor.Green;
 
-            VirtualMachine vm = new VirtualMachine(10);
+            VirtualMachine vm = new VirtualMachine(enforceTiming: true);
             vm.Load(0x0005, "..\\..\\..\\zexall\\cpm_patch.bin");
             vm.Load(0x0100, "..\\..\\..\\zexall\\zexall.bin");
-            vm.Start(address: 0x100, synchronous: true, outputLogPath: "zexall.log");
+            vm.Start(address: 0x100, synchronous: true);//, outputLogPath: "zexall.log");
 
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("\nProgram finished. Press any key to close.");

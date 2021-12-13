@@ -17,11 +17,18 @@ namespace Zem80.Core.Instructions
                 _ => argument
             };
 
-            string name = argument.ToString();
-            if (!Enum.TryParse<WordRegister>(name, out WordRegister register))
+            // this looks clunky but it's *much* faster than using Enum.ToString()
+            WordRegister register = argument switch
             {
-                register = WordRegister.None;
-            }
+                InstructionElement.AF => WordRegister.AF,
+                InstructionElement.BC => WordRegister.BC,
+                InstructionElement.DE => WordRegister.DE,
+                InstructionElement.HL => WordRegister.HL,
+                InstructionElement.IX => WordRegister.IX,
+                InstructionElement.IY => WordRegister.IY,
+                InstructionElement.SP => WordRegister.SP,
+                _ => WordRegister.None
+            };
 
             return register;
         }
@@ -29,10 +36,24 @@ namespace Zem80.Core.Instructions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ByteRegister AsByteRegister(this InstructionElement argument)
         {
-            if (!Enum.TryParse<ByteRegister>(argument.ToString(), out ByteRegister register))
+            ByteRegister register = argument switch
             {
-                register = ByteRegister.None;
-            }
+                InstructionElement.A => ByteRegister.A,
+                InstructionElement.B => ByteRegister.B,
+                InstructionElement.C => ByteRegister.C,
+                InstructionElement.D => ByteRegister.D,
+                InstructionElement.E => ByteRegister.E,
+                InstructionElement.F => ByteRegister.F,
+                InstructionElement.H => ByteRegister.H,
+                InstructionElement.L => ByteRegister.L,
+                InstructionElement.IXh => ByteRegister.IXh,
+                InstructionElement.IYh => ByteRegister.IYh,
+                InstructionElement.IXl => ByteRegister.IXl,
+                InstructionElement.IYl => ByteRegister.IYl,
+                InstructionElement.I => ByteRegister.I,
+                InstructionElement.R => ByteRegister.R,
+                _ => ByteRegister.None
+            };
 
             return register;
         }

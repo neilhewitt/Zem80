@@ -4,32 +4,28 @@ using Zem80.Core.Instructions;
 
 namespace Zem80.Core
 {
-
     public class Flags
     {
-        private byte _flags;
-
-        public bool Sign { get { return _flags.GetBit(7); } set { _flags = _flags.SetBit(7, value); } }
-        public bool Zero { get { return _flags.GetBit(6); } set { _flags = _flags.SetBit(6, value); } }
-        public bool Y { get { return _flags.GetBit(5); } set { _flags = _flags.SetBit(5, value); } }
-        public bool HalfCarry { get { return _flags.GetBit(4); } set { _flags = _flags.SetBit(4, value); } }
-        public bool X { get { return _flags.GetBit(3); } set { _flags = _flags.SetBit(3, value); } }
-        public bool ParityOverflow { get { return _flags.GetBit(2); } set { _flags = _flags.SetBit(2, value); } }
-        public bool Subtract { get { return _flags.GetBit(1); } set { _flags = _flags.SetBit(1, value); } }
-        public bool Carry { get { return _flags.GetBit(0); } set { _flags = _flags.SetBit(0, value); } }
+        private byte _flagByte;
         
-        public virtual byte Value { get { return _flags; } }
+        protected virtual byte FlagByte { get { return _flagByte; } set { _flagByte = value; } }
+        
+        public bool Sign { get { return FlagByte.GetBit(7); } set { FlagByte = FlagByte.SetBit(7, value); } }
+        public bool Zero { get { return FlagByte.GetBit(6); } set { FlagByte = FlagByte.SetBit(6, value); } }
+        public bool Y { get { return FlagByte.GetBit(5); } set { FlagByte = FlagByte.SetBit(5, value); } }
+        public bool HalfCarry { get { return FlagByte.GetBit(4); } set { FlagByte = FlagByte.SetBit(4, value); } }
+        public bool X { get { return FlagByte.GetBit(3); } set { FlagByte = FlagByte.SetBit(3, value); } }
+        public bool ParityOverflow { get { return FlagByte.GetBit(2); } set { FlagByte = FlagByte.SetBit(2, value); } }
+        public bool Subtract { get { return FlagByte.GetBit(1); } set { FlagByte = FlagByte.SetBit(1, value); } }
+        public bool Carry { get { return FlagByte.GetBit(0); } set { FlagByte = FlagByte.SetBit(0, value); } }
+        
+        public byte Value { get { return FlagByte; } }
 
-        public FlagState State => (FlagState)_flags;
+        public FlagState State => (FlagState)FlagByte;
 
         public void Reset()
         {
-            _flags = 0;
-        }
-
-        public Flags Copy()
-        {
-            return new Flags(_flags);
+            FlagByte = 0;
         }
 
         public bool SatisfyCondition(Condition condition)
@@ -65,13 +61,13 @@ namespace Zem80.Core
             return base.GetHashCode();
         }
 
-        public Flags() : this(0)
+        public Flags()
         {
         }
 
         public Flags(byte flags)
         {
-            _flags = flags;
+            FlagByte = flags;
         }
     }
 }

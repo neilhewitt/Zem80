@@ -6,20 +6,20 @@ namespace Zem80.Core
 {
     public enum ByteRegister
     {
-        None = 6,
-        B = 0,
-        C = 1,
-        D = 2,
-        E = 3,
-        H = 4,
-        L = 5,
-        A = 7,
-        F = 8,
-        IXh = 14,
-        IXl = 15,
-        IYh = 16,
-        IYl = 17,
-        I = 20,
-        R = 21
+        None = 26,
+        A = 0,
+        F = 1,
+        B = 2,
+        C = 3,
+        D = 4,
+        E = 5,
+        H = 6,
+        L = 7,
+        IXh = 16,
+        IXl = 17,
+        IYh = 18,
+        IYl = 19,
+        I = 22,
+        R = 23
     }
 }

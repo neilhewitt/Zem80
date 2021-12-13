@@ -23,7 +23,7 @@ namespace Zem80.Core.Instructions
                 port.WriteByte(output, bc);
             }
 
-            if (instruction.Prefix == InstructionPrefix.Unprefixed)
+            if (instruction.Prefix == 0x00)
             {
                 // OUT (n),A
                 r.WZ = (ushort)((r.A << 8) + data.Argument1 + 1);

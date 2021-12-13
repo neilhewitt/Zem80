@@ -8,6 +8,7 @@ using Zem80.Core.IO;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace Zem80.Core
 {
@@ -25,6 +26,7 @@ namespace Zem80.Core
         private bool _halted;
         private bool _suspended;
         private bool _debugging;
+        private bool _realTime;
         private HaltReason _reasonForLastHalt;
         private bool _suspendMachineCycles;
         private int _pendingWaitCycles;
@@ -87,6 +89,7 @@ namespace Zem80.Core
             {
                 EndOnHalt = endOnHalt; // if set, will summarily end execution at the first HALT instruction. This is mostly for test / debug scenarios.
                 TimingMode = timingMode;
+                _realTime = (timingMode == TimingMode.PseudoRealTime && !_debugging);
                 _emulatedTStates = 0;
 
                 DisableInterrupts();
@@ -129,7 +132,7 @@ namespace Zem80.Core
 
         public void RunUntilStopped()
         {
-            while (_running) Thread.Sleep(0);
+            while (_running) Thread.Sleep(1); // main thread can sleep while instruction thread does its thing
         }
 
         public void ResetAndClearMemory(bool restartAfterReset = true)
@@ -336,7 +339,7 @@ namespace Zem80.Core
 
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
 
-            if (result.Flags != null) Registers.SetFlags(result.Flags.Value);
+            if (result.Flags != null) Registers.SetFlags(result.Flags);
             result.WaitStatesAdded = _previousWaitCycles;
             AfterExecute?.Invoke(this, result);
             
@@ -485,36 +488,34 @@ namespace Zem80.Core
                 // normal opcode fetch cycle is 4 clock cycles, BUT some instructions have longer opcode fetch cycles - 
                 // this is either a long *first* opcode fetch (followed by a normal *second* opcode fetch, if any)
                 // OR a normal first opcode fetch and a long *second* opcode fetch, never both
-                int extraTStates = extraTStatesFor(instruction.Timing.ByType(MachineCycleType.OpcodeFetch).First());
-                if (extraTStates == 0) extraTStates = extraTStatesFor(instruction.Timing.ByType(MachineCycleType.OpcodeFetch).Last());
 
-                if (extraTStates > 0)
+                // opcode fetch is always first, and sometimes also second machine cycle
+                int cycles = instruction.Timing.MachineCycles.Length;
+                for(int i = 0; i < cycles; i++)
                 {
-                    for (int i = 0; i < extraTStates; i++)
+                    MachineCycle machineCycle = instruction.Timing.MachineCycles[i];
+                    if (machineCycle.Type == MachineCycleType.OpcodeFetch)
                     {
-                        WaitForNextClockTick();
+                        int extraTStates = (machineCycle.TStates - OPCODE_FETCH_TSTATES);
+                        while (extraTStates-- > 0)
+                        {
+                            WaitForNextClockTick();
+                        }
                     }
                 }
-            }
-
-            int extraTStatesFor(MachineCycle machineCycle)
-            {
-                return (machineCycle.TStates - OPCODE_FETCH_TSTATES);
             }
         }
 
         private void WaitForNextClockTick(bool incrementTStateCounter = true)
         {
-            OnClockTick?.Invoke(this, _executingInstructionPackage);
-
-            // only wait if the debugger is not attached, otherwise we'll get deadlocks
-            if (TimingMode == TimingMode.PseudoRealTime && !_debugging)
+            if (_realTime)
             {
                 long currentTicks = _clock.ElapsedTicks;
                 long targetTicks = currentTicks + _windowsTicksPerZ80Tick;
-                while (_clock.ElapsedTicks < targetTicks) ;
+                while (_clock.ElapsedTicks < targetTicks);
             }
 
+            OnClockTick?.Invoke(this, _executingInstructionPackage);
             if (incrementTStateCounter) _emulatedTStates++;
         }
 

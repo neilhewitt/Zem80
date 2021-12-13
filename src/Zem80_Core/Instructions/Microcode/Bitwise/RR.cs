@@ -30,9 +30,9 @@ namespace Zem80.Core.Instructions
             {
                 ushort address = instruction.Prefix switch
                 {
-                    InstructionPrefix.CB => r.HL,
-                    InstructionPrefix.DDCB => (ushort)(r.IX + offset),
-                    InstructionPrefix.FDCB => (ushort)(r.IY + offset),
+                    0xCB => r.HL,
+                    0xDDCB => (ushort)(r.IX + offset),
+                    0xFDCB => (ushort)(r.IY + offset),
                     _ => (ushort)0xFFFF
                 };
                 original = cpu.Memory.Timed.ReadByteAt(address);

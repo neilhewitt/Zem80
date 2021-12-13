@@ -341,3 +341,4 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 /Z80.v3.ncrunchsolution
+/src/AudioTest
