@@ -5,9 +5,10 @@ namespace Zem80.Core.Instructions
 {
     public class TimingExceptions
     {
-        public bool HasConditionalOperandDataReadHigh4 { get; private set; }
-        public bool HasMemoryRead4 { get; private set; }
-        public bool HasMemoryWrite5 { get; private set; }
+        public bool HasProlongedConditionalOperandDataReadHigh { get; private set; }
+        public bool HasProlongedMemoryRead { get; private set; }
+        public bool HasProlongedMemoryWrite { get; private set; }
+        public int ExtraOpcodeFetchTStates { get; private set; }
 
         public TimingExceptions(Instruction instruction, InstructionTiming timing)
         {
@@ -20,9 +21,11 @@ namespace Zem80.Core.Instructions
             if (timing.MachineCycles.Any(x => x.TStates == 4)) mr4 = true;
             if (timing.MachineCycles.Any(x => x.TStates == 5)) mw5 = true;
 
-            HasConditionalOperandDataReadHigh4 = odh4;
-            HasMemoryRead4 = mr4;
-            HasMemoryWrite5 = mw5;
+            HasProlongedConditionalOperandDataReadHigh = odh4;
+            HasProlongedMemoryRead = mr4;
+            HasProlongedMemoryWrite = mw5;
+
+            ExtraOpcodeFetchTStates = (timing.MachineCycles.Where(x => x.Type == MachineCycleType.OpcodeFetch).Sum(x => x.TStates)) - InstructionTiming.OPCODE_FETCH_TSTATES;
         }
     }
 }

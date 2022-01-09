@@ -8,7 +8,7 @@ namespace Zem80.Core
     public class Registers : IShadowRegisters
     {
         private byte[] _registers;
-        private RegisterFlags _flags;
+        private Processor _cpu;
 
         public byte this[ByteRegister register] { get { return GetRegister(register); } set { SetRegister(register, value); } }
         public ushort this[WordRegister registerPair] { get { return GetRegisterPair(registerPair); } set { SetRegisterPair(registerPair, value); } }
@@ -62,8 +62,6 @@ namespace Zem80.Core
 
         internal ushort WZ { get; set; } // internal register, never exposed to the outside world and not saved / restored with snapshot
 
-        public Flags Flags => _flags;
-
         public void ExchangeAF()
         {
             lock (this)
@@ -82,18 +80,13 @@ namespace Zem80.Core
 
         public Registers Snapshot()
         {
-            return new Registers((byte[])_registers.Clone());
+            return new Registers(null, (byte[])_registers.Clone());
         }
 
         public void Clear()
         {
             _registers = new byte[26];
             WZ = 0x00;
-        }
-
-        internal void SetFlags(Flags newFlags)
-        {
-            _registers[1] = newFlags.Value;
         }
 
         private void Swap(int offset)
@@ -142,13 +135,13 @@ namespace Zem80.Core
             _registers[offset + 1] = (byte)(value % 256);
         }
 
-        public Registers()
+        public Registers(Processor cpu)
         {
             _registers = new byte[26];
-            _flags = new RegisterFlags(this);
+            _cpu = cpu;
         }
 
-        private Registers(byte[] registerValues) : this()
+        private Registers(Processor cpu, byte[] registerValues) : this(cpu)
         {
             if (registerValues.Length != 26)
             {

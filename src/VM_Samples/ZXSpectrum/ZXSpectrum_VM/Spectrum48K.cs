@@ -214,8 +214,6 @@ namespace ZXSpectrum.VM
 
         private void ClockTick(object sender, InstructionPackage package)
         {
-            _beeper.Tick();
-
             // handle memory contention (where the ULA is reading the video memory and blocks the CPU from running)
             // we don't emulate the ULA directly and no actual memory reads are occurring here, but that's fine (see UpdateDisplay())
 

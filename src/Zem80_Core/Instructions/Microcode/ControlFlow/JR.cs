@@ -11,7 +11,7 @@ namespace Zem80.Core.Instructions
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
 
-            if (instruction.Condition == Condition.None || cpu.Registers.Flags.SatisfyCondition(instruction.Condition))
+            if (instruction.Condition == Condition.None || cpu.Flags.SatisfyCondition(instruction.Condition))
             {
                 cpu.Timing.InternalOperationCycle(5);
                 ushort address = (ushort)(cpu.Registers.PC - 2); // wind back to the address of the JR instruction as PC has already moved on
@@ -23,13 +23,13 @@ namespace Zem80.Core.Instructions
                 address = (ushort)(address + (sbyte)data.Argument1 + 2);
 
                 cpu.Registers.PC = address;
-                cpu.Registers.Flags.X = (address & 0x08) > 0; // copy bit 3
-                cpu.Registers.Flags.Y = (address & 0x20) > 0; // copy bit 5
+                cpu.Flags.X = (address & 0x08) > 0; // copy bit 3
+                cpu.Flags.Y = (address & 0x20) > 0; // copy bit 5
 
                 cpu.Registers.WZ = address;
             }
 
-            return new ExecutionResult(package, cpu.Registers.Flags);
+            return new ExecutionResult(package, cpu.Flags);
         }
 
         public JR()

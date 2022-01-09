@@ -16,12 +16,6 @@ namespace Zem80.Core
     {
         public const int MAX_MEMORY_SIZE_IN_BYTES = 65536;
 
-        public const int OPCODE_FETCH_TSTATES = 4;
-        public const int NMI_INTERRUPT_ACKNOWLEDGE_TSTATES = 5;
-        public const int IM0_INTERRUPT_ACKNOWLEDGE_TSTATES = 6;
-        public const int IM1_INTERRUPT_ACKNOWLEDGE_TSTATES = 7;
-        public const int IM2_INTERRUPT_ACKNOWLEDGE_TSTATES = 7;
-
         private bool _running;
         private bool _halted;
         private bool _suspended;
@@ -56,6 +50,8 @@ namespace Zem80.Core
         public Ports Ports { get; private set; }
         public ProcessorIO IO { get; private set; }
 
+        public Flags Flags => new Flags(Registers.F);
+
         public InterruptMode InterruptMode { get; private set; }
         public bool InterruptsEnabled => _iff1;
         public bool InterruptsPaused => _iff2;
@@ -89,7 +85,7 @@ namespace Zem80.Core
             {
                 EndOnHalt = endOnHalt; // if set, will summarily end execution at the first HALT instruction. This is mostly for test / debug scenarios.
                 TimingMode = timingMode;
-                _realTime = (timingMode == TimingMode.PseudoRealTime && !_debugging);
+                _realTime = (timingMode == TimingMode.PseudoRealTime);
                 _emulatedTStates = 0;
 
                 DisableInterrupts();
@@ -261,9 +257,6 @@ namespace Zem80.Core
             {
                 if (!_suspended) // if suspended, we should do *nothing at all* until resumed
                 {
-                    // clock tick is the signal for instruction decoding to start
-                    WaitForNextClockTick(false);
-
                     InstructionPackage package = null;
                     ushort pc = Registers.PC;
 
@@ -302,6 +295,8 @@ namespace Zem80.Core
                     ExecutionResult result = Execute(package);
                     _executingInstructionPackage = null;
 
+                    WaitForNextClockTick();
+
                     HandleNonMaskableInterrupts(); // NMI has priority
                     HandleMaskableInterrupts(result); // if we came back from an NMI then we don't handle other interrupts until the next cycle
 
@@ -339,7 +334,10 @@ namespace Zem80.Core
 
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
 
-            if (result.Flags != null) Registers.SetFlags(result.Flags);
+            if (result.Flags != null)
+            {
+                Registers.F = result.Flags.Value;
+            }
             result.WaitStatesAdded = _previousWaitCycles;
             AfterExecute?.Invoke(this, result);
             
@@ -465,11 +463,11 @@ namespace Zem80.Core
                     {
                         // some instructions (OK, just CALL) have a prolonged high byte operand read with an additional cycle
                         // but ONLY if a) it's CALL nn OR b) if the condition (CALL NZ, for example) is satisfied (ie Flags.NZ is true)
-                        // otherwise it's the standard size. Timing oddities like this are noted in the TimingExceptions structure,
+                        // otherwise it's the standard size. Timing oddities like this are noted in the TimingExceptions,
                         // but this is the only one that affects the instruction decode cycle (the others affect Memory Read cycles)
-                        if (instruction.Timing.Exceptions.HasConditionalOperandDataReadHigh4)
+                        if (instruction.Timing.Exceptions.HasProlongedConditionalOperandDataReadHigh)
                         {
-                            if (instruction.Condition == Condition.None || Registers.Flags.SatisfyCondition(instruction.Condition))
+                            if (instruction.Condition == Condition.None || Flags.SatisfyCondition(instruction.Condition))
                             {
                                 WaitForNextClockTick();
                             }
@@ -489,24 +487,14 @@ namespace Zem80.Core
                 // this is either a long *first* opcode fetch (followed by a normal *second* opcode fetch, if any)
                 // OR a normal first opcode fetch and a long *second* opcode fetch, never both
 
-                // opcode fetch is always first, and sometimes also second machine cycle
-                int cycles = instruction.Timing.MachineCycles.Length;
-                for(int i = 0; i < cycles; i++)
+                for (int i = 0; i < instruction.Timing.Exceptions.ExtraOpcodeFetchTStates; i++)
                 {
-                    MachineCycle machineCycle = instruction.Timing.MachineCycles[i];
-                    if (machineCycle.Type == MachineCycleType.OpcodeFetch)
-                    {
-                        int extraTStates = (machineCycle.TStates - OPCODE_FETCH_TSTATES);
-                        while (extraTStates-- > 0)
-                        {
-                            WaitForNextClockTick();
-                        }
-                    }
+                    WaitForNextClockTick();
                 }
             }
         }
 
-        private void WaitForNextClockTick(bool incrementTStateCounter = true)
+        private void WaitForNextClockTick()
         {
             if (_realTime)
             {
@@ -516,7 +504,7 @@ namespace Zem80.Core
             }
 
             OnClockTick?.Invoke(this, _executingInstructionPackage);
-            if (incrementTStateCounter) _emulatedTStates++;
+            _emulatedTStates++;
         }
 
         private void InsertWaitCycles()
@@ -564,7 +552,7 @@ namespace Zem80.Core
                 _iff2 = _iff1; // save IFF1 state ready for RETN
                 _iff1 = false; // disable maskable interrupts until RETN
 
-                Timing.BeginInterruptRequestAcknowledgeCycle(NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
 
                 Push(WordRegister.PC);
                 Registers.PC = 0x0066;
@@ -607,7 +595,7 @@ namespace Zem80.Core
                         // NOTE: I have not been able to test this mode extensively based on real-world examples. It may well be buggy compared to the real Z80. 
                         // TODO: verify the behaviour of the real Z80 and fix the code!
 
-                        Timing.BeginInterruptRequestAcknowledgeCycle(IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         InstructionPackage package = DecodeIM0Interrupt();
                         ushort pc = Registers.PC;
                         Push(WordRegister.PC);
@@ -621,7 +609,7 @@ namespace Zem80.Core
                         // This mode is simple. When IM1 is set (this is the default mode) then a jump to 0x0038 is performed when 
                         // the interrupt occurs. 
 
-                        Timing.BeginInterruptRequestAcknowledgeCycle(IM1_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.IM1_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         Push(WordRegister.PC);
                         Registers.PC = 0x0038;
                         Registers.WZ = Registers.PC;
@@ -643,7 +631,7 @@ namespace Zem80.Core
                         // keyboard, sound etc] afterwards).
 
                         IO.SetDataBusValue(_interruptCallback?.Invoke() ?? 0); 
-                        Timing.BeginInterruptRequestAcknowledgeCycle(IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         Push(WordRegister.PC);
                         ushort address = (IO.DATA_BUS, Registers.I).ToWord();
                         Registers.PC = Memory.Timed.ReadWordAt(address);
@@ -731,7 +719,7 @@ namespace Zem80.Core
             Instruction instruction = _executingInstructionPackage?.Instruction;
             if (instruction != null)
             {
-                if (instruction.Timing.Exceptions.HasMemoryRead4)
+                if (instruction.Timing.Exceptions.HasProlongedMemoryRead)
                 {
                     WaitForNextClockTick();
                 }
@@ -751,7 +739,7 @@ namespace Zem80.Core
             Instruction instruction = _executingInstructionPackage?.Instruction;
             if (instruction != null)
             {
-                if (instruction.Timing.Exceptions.HasMemoryWrite5)
+                if (instruction.Timing.Exceptions.HasProlongedMemoryWrite)
                 {
                     WaitForNextClockTick();
                     WaitForNextClockTick();
@@ -858,7 +846,7 @@ namespace Zem80.Core
             FrequencyInMHz = frequencyInMHz;
             _windowsTicksPerZ80Tick = (int)Math.Ceiling(10 / frequencyInMHz);
 
-            Registers = new Registers();
+            Registers = new Registers(this);
             Ports = new Ports(this);
             Memory = memory ?? new MemoryBank();
             Memory.Initialise(this, map ?? new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES, true));

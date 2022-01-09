@@ -10,7 +10,7 @@ namespace Zem80.Core.Instructions
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Flags flags = cpu.Registers.Flags;
+            Flags flags = cpu.Flags;
 
             Registers r = cpu.Registers;
             byte arg0 = data.Argument1;

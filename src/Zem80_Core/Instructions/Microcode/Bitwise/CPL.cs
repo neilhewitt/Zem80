@@ -8,7 +8,7 @@ namespace Zem80.Core.Instructions
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
-            Flags flags = cpu.Registers.Flags;
+            Flags flags = cpu.Flags;
             flags.HalfCarry = true;
             flags.Subtract = true;
             cpu.Registers.A = (byte)(~cpu.Registers.A);

@@ -9,7 +9,7 @@ namespace Zem80.Core.Instructions
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             cpu.EnableInterrupts();
-            return new ExecutionResult(package, cpu.Registers.Flags, true); // interrupts aren't enabled until the *next* instruction
+            return new ExecutionResult(package, cpu.Flags, true); // interrupts aren't enabled until the *next* instruction
         }
 
         public EI()

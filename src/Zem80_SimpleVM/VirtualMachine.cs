@@ -74,7 +74,7 @@ namespace Zem80.SimpleVM
             if (mnemonic.Contains("o")) mnemonic = mnemonic.Replace("o", "0x" + e.Data.Argument1.ToString("X2"));
             Write(e.InstructionAddress.ToString("X4") + ": " + mnemonic.PadRight(20));
             regValue(ByteRegister.A); wregValue(WordRegister.BC); wregValue(WordRegister.DE); wregValue(WordRegister.HL); wregValue(WordRegister.SP); wregValue(WordRegister.PC);
-            Write(_cpu.Registers.Flags.State.ToString());
+            Write(_cpu.Flags.State.ToString());
 
             _lastRegisters = _cpu.Registers.Snapshot();
 

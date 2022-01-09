@@ -11,7 +11,7 @@ namespace Zem80.Core.Instructions
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             Registers r = cpu.Registers;
-            Flags flags = cpu.Registers.Flags;
+            Flags flags = cpu.Flags;
 
             byte left = r.A;
             if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);

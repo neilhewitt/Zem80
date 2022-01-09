@@ -10,7 +10,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
     {
         public Processor CPU { get; private set; }
         public Registers Registers => CPU.Registers;
-        public Flags Flags => CPU.Registers.Flags;
+        public Flags Flags => CPU.Flags;
 
         [OneTimeSetUp]
         public void Setup()
@@ -34,7 +34,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
 
         public void SetCPUFlagsFromCondition(Condition condition, bool invert)
         {
-            Flags flags = CPU.Registers.Flags;
+            Flags flags = CPU.Flags;
             flags.Reset(); // start with a blank slate, this operation is not additive, it's a replacement
 
             switch (condition)
