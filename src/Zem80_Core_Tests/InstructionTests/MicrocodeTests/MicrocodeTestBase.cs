@@ -32,10 +32,9 @@ namespace Zem80.Core.Tests.MicrocodeTests
             return result;
         }
 
-        public void SetCPUFlagsFromCondition(Condition condition, bool invert)
+        public void SetCPUFlagsFromCondition(Condition condition, bool conditionIsTrue)
         {
-            Flags flags = CPU.Flags;
-            flags.Reset(); // start with a blank slate, this operation is not additive, it's a replacement
+            Flags flags = new Flags();
 
             switch (condition)
             {
@@ -49,7 +48,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
                 case Condition.P: flags.Sign = false; break;
             }
 
-            if (invert) CPU.Registers.F = flags.Value.Invert(); // excludes the condition rather than including it
+            CPU.Registers.F = conditionIsTrue ? flags.Value : flags.Value.Invert();
         }
     }
 }

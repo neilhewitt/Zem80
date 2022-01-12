@@ -16,17 +16,23 @@ program[20000] = 0x76; // JP back to 0000
 
 cpu.Memory.Untimed.WriteBytesAt(0, program);
 
-while (true)
+bool quit = false;
+while (!quit)
 {
     for (int i = 1; i <= 10; i++)
     {
-        cpu.Suspend();
-        cpu.Start(endOnHalt: true, timingMode: TimingMode.PseudoRealTime); // CPU doesn't run yet, as suspended - gives time to set up etc.
-        Console.WriteLine("\nPress any key to start next run.");
-        Console.ReadKey();
+        cpu.Init(endOnHalt: true, timingMode: TimingMode.PseudoRealTime);
+        Console.WriteLine("\nPress Q to stop, any key to start next run.");
+        ConsoleKeyInfo key = Console.ReadKey();
+        if (key.KeyChar == 'q' || key.KeyChar == 'Q')
+        {
+            quit = true;
+            break;
+        }
+
         Console.WriteLine("Run #" + i);
         long tStatesIn = cpu.EmulatedTStates;
-        cpu.Resume();
+        cpu.Start();
         cpu.RunUntilStopped();
         long tStatesOut = cpu.EmulatedTStates;
         Console.WriteLine($"Was { tStatesOut - tStatesIn } ticks.");

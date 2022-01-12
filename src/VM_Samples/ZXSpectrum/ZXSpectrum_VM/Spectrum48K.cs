@@ -38,7 +38,8 @@ namespace ZXSpectrum.VM
                 throw new Exception("VM is already started!");
             }
 
-            _cpu.Start(timingMode: TimingMode.PseudoRealTime);
+            _cpu.Init(timingMode: TimingMode.PseudoRealTime);
+            _cpu.Start();
         }
 
         public void StartWithSnapshot(string path)
@@ -48,10 +49,9 @@ namespace ZXSpectrum.VM
                 throw new Exception("VM is already started!");
             }
 
-            _cpu.Suspend();
-            _cpu.Start(timingMode: TimingMode.PseudoRealTime); // will initialise the CPU but not start processing, as it's suspended
+            _cpu.Init(timingMode: TimingMode.PseudoRealTime);
             LoadSnapshot(path);
-            _cpu.Resume();
+            _cpu.Start(); // will initialise the CPU but not start processing, as it's suspended
         }
 
         public void Stop()
@@ -112,7 +112,8 @@ namespace ZXSpectrum.VM
             _screen.SetBorderColour(DisplayColour.FromThreeBit(snapshot[26]));
 
             _cpu.Memory.Untimed.WriteBytesAt(16384, snapshot[27..]);
-            _cpu.Pop(WordRegister.PC);
+            ushort pc = _cpu.Debug.PopStackDirect(); // pops the top value from the stack and moves the stack pointer, but doesn't run any internal cycles
+            _cpu.Registers.PC = pc;
             _cpu.RestoreInterruptsFromNMI();
 
             ushort getWord(int index)

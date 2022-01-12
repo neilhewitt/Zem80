@@ -64,10 +64,7 @@ namespace Zem80.Core
 
         public void ExchangeAF()
         {
-            lock (this)
-            {
-                Swap(0);
-            }
+            Swap(0);
         }
 
         public void ExchangeBCDEHL()
@@ -75,7 +72,6 @@ namespace Zem80.Core
             Swap(2); // BC
             Swap(4); // DE
             Swap(6); // HL
-
         }
 
         public Registers Snapshot()

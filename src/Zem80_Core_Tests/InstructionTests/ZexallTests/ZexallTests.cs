@@ -25,7 +25,7 @@ namespace Zem80.Core.Tests.Zexall
             // set up the ZexNext test runner using the zipped test file (zexall.zip)
             Task.Run(() => _runner = new TestRunner(
                 (address, data) => _cpu.Memory.Untimed.WriteBytesAt(address, data),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\ZexallTests\\zexall.zip")
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\InstructionTests\\ZexallTests\\zexall.zip")
                 ));
         }
 

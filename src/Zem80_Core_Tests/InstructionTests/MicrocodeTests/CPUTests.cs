@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
+using Zem80.Core.Instructions;
 
 namespace Zem80.Core.Tests.MicrocodeTests
 {
@@ -18,7 +19,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
         [Test]
         public void CCF()
         {
-            Flags.Carry = true;
+            SetCPUFlagsFromCondition(Condition.C, true);
             ExecuteInstruction("CCF");
             Assert.That(!Flags.Carry && !Flags.Subtract && Flags.HalfCarry);
         }

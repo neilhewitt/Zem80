@@ -31,13 +31,12 @@ namespace Zem80.Core.Tests.MicrocodeTests
         // and the true case (condition is satisfied, program counter set to absolute address nn) for each condition
         public void JP(Condition condition)
         {
-            SetCPUFlagsFromCondition(condition, true); // set flag condition according to test case value
-
+            SetCPUFlagsFromCondition(condition, false); // set flag condition according to test case value
             Registers.PC = 0;
             ExecuteInstruction("JP " + condition.ToString() + ",nn", 0x10, 0x30);
             Assert.That(Registers.PC == 3); // condition was not true so PC = instruction address (0) + instruction length in bytes (3) so PC should == 3
 
-            SetCPUFlagsFromCondition(condition, false);
+            SetCPUFlagsFromCondition(condition, true);
             ExecuteInstruction("JP " + condition.ToString() + ",nn", 0x10, 0x30); // condition was true so PC should == 0x3010
             Assert.That(Registers.PC == 0x3010);
         }
@@ -59,8 +58,8 @@ namespace Zem80.Core.Tests.MicrocodeTests
         {
             Registers.PC = 0x4000;
             ExecuteInstruction("CALL nn", 0x24, 0x05);
-            CPU.Pop(WordRegister.HL); // instruction address + 3 bytes (instruction length + 2 byte argument) gets pushed to the stack during CALL operation, so retrieve this value to check it
-            Assert.That(Registers.PC == 0x0524 && Registers.HL == 0x4003);
+            ushort address = CPU.Debug.PopStackDirect(); // instruction address + 3 bytes (instruction length + 2 byte argument) gets pushed to the stack during CALL operation, so retrieve this value to check it
+            Assert.That(Registers.PC == 0x0524 && address == 0x4003);
         }
 
         [TestCase(Condition.Z)]
@@ -76,30 +75,29 @@ namespace Zem80.Core.Tests.MicrocodeTests
         // and the true case (condition is satisfied, program counter set to absolute address nn) for each condition
         public void CALL(Condition condition)
         {
-            SetCPUFlagsFromCondition(condition, true); // set flag condition according to test case value
-
             // FAILING CASE
 
             // initialise addresses
             Registers.PC = 0x4000; // instruction starts here
             Registers.HL = 0x5000; // check address
-            
-            CPU.Push(WordRegister.HL); // push the check address to the stack: since the following instruction will fail, PC should *not* get pushed to the stack so this value should still be at the top
+
+            SetCPUFlagsFromCondition(condition, false);
+            CPU.Debug.PushStackDirect(Registers.HL); // push the check address to the stack: since the following instruction will fail, PC should *not* get pushed to the stack so this value should still be at the top
             ExecuteInstruction("CALL " + condition.ToString() + ",nn", 0x10, 0x30);
-            CPU.Pop(WordRegister.DE); // pop the stack value into DE so we can check it is the check address (0x5000)
-            
-            Assert.That(Registers.PC == 0x4003 && Registers.DE == 0x5000); // condition was not true so PC = instruction address (0x4000) + instruction length in bytes (3) so PC should == 0x4003
+            ushort address = CPU.Debug.PopStackDirect(); // pop the stack value into DE so we can check it is the check address (0x5000)
+
+            Assert.That(Registers.PC == 0x4003 && address == 0x5000); // condition was not true so PC = instruction address (0x4000) + instruction length in bytes (3) so PC should == 0x4003
 
             // PASSING CASE
 
             Registers.PC = 0x4000; // instruction starts here
             Registers.HL = 0x5000; // check address
 
-            SetCPUFlagsFromCondition(condition, false);
-            CPU.Push(WordRegister.HL); // this time the condition should pass, so PC should get pushed to the stack *after* this value and so the check value should *not* be at the top
+            SetCPUFlagsFromCondition(condition, true);
+            CPU.Debug.PushStackDirect(Registers.HL); // this time the condition should pass, so PC should get pushed to the stack *after* this value and so the check value should *not* be at the top
             ExecuteInstruction("CALL " + condition.ToString() + ",nn", 0x10, 0x30); // condition was true so PC should == 0x3010
-            CPU.Pop(WordRegister.DE); // pop the value at the top of the stack - this time it should be the instruction address + 3 (0x4003) as PC got pushed to the stack before the CALL
-            Assert.That(Registers.PC == 0x3010 && Registers.DE == 0x4003);
+            address = CPU.Debug.PopStackDirect(); // pop the value at the top of the stack - this time it should be the instruction address + 3 (0x4003) as PC got pushed to the stack before the CALL
+            Assert.That(Registers.PC == 0x3010 && address == 0x4003);
         }
 
         [Test]
@@ -107,7 +105,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
         {
             ushort origin = 0x4000;
             Registers.HL = origin;
-            CPU.Push(WordRegister.HL);
+            CPU.Debug.PushStackDirect(origin);
 
             Registers.PC = 0;
             ExecuteInstruction("RET");
@@ -129,15 +127,15 @@ namespace Zem80.Core.Tests.MicrocodeTests
 
             Registers.PC = 0;
             Registers.HL = origin;
-            CPU.Push(WordRegister.HL);
-            SetCPUFlagsFromCondition(condition, true); // set flag condition according to test case value
+            CPU.Debug.PushStackDirect(origin);
+            SetCPUFlagsFromCondition(condition, false);// set flag condition according to test case value
             ExecuteInstruction("RET " + condition.ToString());
             Assert.That(Registers.PC == 1); // condition was not true so PC = instruction address (0) + instruction length in bytes (1) so PC should == 1
 
             Registers.PC = 0;
             Registers.HL = origin;
-            CPU.Push(WordRegister.HL);
-            SetCPUFlagsFromCondition(condition, false);
+            CPU.Debug.PushStackDirect(origin);
+            SetCPUFlagsFromCondition(condition, true);
             ExecuteInstruction("RET " + condition.ToString()); // condition was true so PC should == 0x4000
             Assert.That(Registers.PC == origin);
         }
@@ -147,7 +145,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
         {
             ushort origin = 0x4000;
             Registers.HL = origin;
-            CPU.Push(WordRegister.HL);
+            CPU.Debug.PushStackDirect(origin);
 
             Registers.PC = 0;
             ExecuteInstruction("RETN");
@@ -160,7 +158,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
         {
             ushort origin = 0x4000;
             Registers.HL = origin;
-            CPU.Push(WordRegister.HL);
+            CPU.Debug.PushStackDirect(origin);
 
             Registers.PC = 0;
             ExecuteInstruction("RETI");
@@ -195,8 +193,8 @@ namespace Zem80.Core.Tests.MicrocodeTests
         {
             Registers.PC = 0x4000;
             ExecuteInstruction($"RST { target.ToString("X2") }H");
-            CPU.Pop(WordRegister.HL);
-            Assert.That(Registers.PC == (ushort)target && Registers.HL == 0x4001); // PC will have moved +1 before being PUSHed, so it's *0x4001*
+            ushort address = CPU.Debug.PopStackDirect();
+            Assert.That(Registers.PC == (ushort)target && address == 0x4001); // PC will have moved +1 before being PUSHed, so it's *0x4001*
         }
     }
 }
