@@ -12,7 +12,7 @@ namespace Zem80.Core.Instructions
             InstructionData data = package.Data;
             Registers r = cpu.Registers;
             byte offset = data.Argument1;
-            Flags flags = cpu.Flags;
+            Flags flags = cpu.Flags.Clone();
 
             if (instruction.TargetsWordRegister)
             {

@@ -18,7 +18,6 @@ namespace Zem80.Core
 
         private bool _running;
         private bool _halted;
-        private bool _debugging;
         private bool _realTime;
         private HaltReason _reasonForLastHalt;
         private bool _suspendMachineCycles;
@@ -31,7 +30,6 @@ namespace Zem80.Core
         private Stopwatch _clock;
         private Thread _instructionCycle;
         private InstructionPackage _executingInstructionPackage;
-        private Action _afterCycleCallback;
         private Func<byte> _interruptCallback;
         private bool _iff1;
         private bool _iff2;
@@ -50,7 +48,7 @@ namespace Zem80.Core
         public Ports Ports { get; private set; }
         public ProcessorIO IO { get; private set; }
 
-        public Flags Flags => new Flags(Registers.F);
+        public IReadOnlyFlags Flags => new Flags(Registers.F, true);
 
         public InterruptMode InterruptMode { get; private set; }
         public bool InterruptsEnabled => _iff1;
@@ -211,11 +209,6 @@ namespace Zem80.Core
             {
                 _breakpoints.Remove(address);
             }
-        }
-
-        public void Wait(Action callback)
-        {
-            _afterCycleCallback = callback;
         }
 
         internal void Push(WordRegister register)
@@ -892,8 +885,6 @@ namespace Zem80.Core
             
             // The Z80 instruction set needs to be built (all Instruction objects are created, bound to the microcode instances, and indexed into a hashtable - undocumented 'overloads' are built here too)
             InstructionSet.Build();
-
-            _debugging = Debugger.IsAttached;
         }
     }
 }

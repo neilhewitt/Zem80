@@ -10,6 +10,7 @@ namespace Zem80.Core.Instructions
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
+            Flags flags = cpu.Flags.Clone();
 
             if (instruction.Condition == Condition.None || cpu.Flags.SatisfyCondition(instruction.Condition))
             {
@@ -23,13 +24,13 @@ namespace Zem80.Core.Instructions
                 address = (ushort)(address + (sbyte)data.Argument1 + 2);
 
                 cpu.Registers.PC = address;
-                cpu.Flags.X = (address & 0x08) > 0; // copy bit 3
-                cpu.Flags.Y = (address & 0x20) > 0; // copy bit 5
+                flags.X = (address & 0x08) > 0; // copy bit 3
+                flags.Y = (address & 0x20) > 0; // copy bit 5
 
                 cpu.Registers.WZ = address;
             }
 
-            return new ExecutionResult(package, cpu.Flags);
+            return new ExecutionResult(package, flags);
         }
 
         public JR()

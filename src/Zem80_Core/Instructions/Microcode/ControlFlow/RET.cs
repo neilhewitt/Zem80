@@ -10,7 +10,7 @@ namespace Zem80.Core.Instructions
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Flags flags = cpu.Flags;
+            Flags flags = cpu.Flags.Clone();
 
             if (instruction.Condition == Condition.None || flags.SatisfyCondition(instruction.Condition))
             {
