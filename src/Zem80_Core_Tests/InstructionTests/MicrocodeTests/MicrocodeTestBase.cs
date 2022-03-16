@@ -10,7 +10,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
     {
         public Processor CPU { get; private set; }
         public Registers Registers => CPU.Registers;
-        public Flags Flags => CPU.Flags;
+        public IReadOnlyFlags Flags => CPU.Flags;
 
         [OneTimeSetUp]
         public void Setup()

@@ -8,23 +8,23 @@ namespace Zem80.Core.IO
         private Action<byte> _write;
         private Action _signalRead;
         private Action _signalWrite;
-        private Processor _cpu;
+        private IInstructionTiming _timing;
 
         public byte Number { get; private set; }
 
         public byte ReadByte(bool bc)
         {
-            _cpu.Timing.BeginPortReadCycle(Number, bc);
+            _timing.BeginPortReadCycle(Number, bc);
             byte input = (byte)((_read != null) ? _read() : 0);
-            _cpu.Timing.EndPortReadCycle(input);
+            _timing.EndPortReadCycle(input);
             return input;
         }
 
         public void WriteByte(byte output, bool bc)
         {
-            _cpu.Timing.BeginPortWriteCycle(output, Number, bc);
+            _timing.BeginPortWriteCycle(output, Number, bc);
             if (_write != null) _write(output);
-            _cpu.Timing.EndPortWriteCycle();
+            _timing.EndPortWriteCycle();
         }
 
         public void SignalRead()
@@ -61,10 +61,10 @@ namespace Zem80.Core.IO
             _signalWrite = null;
         }
 
-        public Port(byte number, Processor cpu)
+        public Port(byte number, IInstructionTiming timing)
         {
             Number = number;
-            _cpu = cpu;
+            _timing = timing;
         }
     }
 }

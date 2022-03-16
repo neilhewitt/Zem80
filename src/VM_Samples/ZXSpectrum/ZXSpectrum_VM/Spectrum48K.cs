@@ -38,7 +38,7 @@ namespace ZXSpectrum.VM
                 throw new Exception("VM is already started!");
             }
 
-            _cpu.Init(timingMode: TimingMode.PseudoRealTime);
+            _cpu.Initialise(timingMode: TimingMode.PseudoRealTime);
             _cpu.Start();
         }
 
@@ -49,7 +49,7 @@ namespace ZXSpectrum.VM
                 throw new Exception("VM is already started!");
             }
 
-            _cpu.Init(timingMode: TimingMode.PseudoRealTime);
+            _cpu.Initialise(timingMode: TimingMode.PseudoRealTime);
             LoadSnapshot(path);
             _cpu.Start(); // will initialise the CPU but not start processing, as it's suspended
         }

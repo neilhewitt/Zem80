@@ -1,18 +1,21 @@
 ﻿using Zem80.Core;
 using Zem80.Core.Instructions;
 
+// test how near the actual execution speed of the emulated CPU
+// is to the theoretical speed
+
 Console.WriteLine("Zem80 Speed Test\n");
 
 Processor cpu = new Processor(frequencyInMHz: 3.5f);
 Instruction lde = InstructionSet.Instructions[0x1E];
 int ticks = ((lde.Timing.TStates * 10000) + 2); // +2 is for the final HALT instruction
 
-byte[] program = new byte[20001];
+byte[] program = new byte[20001]; // 20000 x LD E,A
 for (int i = 0; i < 20000; i++)
 {
-    program[i] = 0x1E;
+    program[i] = lde.Opcode;
 }
-program[20000] = 0x76; // JP back to 0000
+program[20000] = 0x76; // HALT
 
 cpu.Memory.Untimed.WriteBytesAt(0, program);
 
@@ -21,7 +24,7 @@ while (!quit)
 {
     for (int i = 1; i <= 10; i++)
     {
-        cpu.Init(endOnHalt: true, timingMode: TimingMode.PseudoRealTime);
+        cpu.Initialise(endOnHalt: true, timingMode: TimingMode.PseudoRealTime);
         Console.WriteLine("\nPress Q to stop, any key to start next run.");
         ConsoleKeyInfo key = Console.ReadKey();
         if (key.KeyChar == 'q' || key.KeyChar == 'Q')

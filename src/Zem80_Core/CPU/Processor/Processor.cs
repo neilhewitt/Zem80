@@ -15,6 +15,7 @@ namespace Zem80.Core
     public class Processor : IDebugProcessor, IInstructionTiming, IDisposable
     {
         public const int MAX_MEMORY_SIZE_IN_BYTES = 65536;
+        public const int DEFAULT_PROCESSOR_FREQUENCY = 4;
 
         private bool _running;
         private bool _halted;
@@ -77,13 +78,15 @@ namespace Zem80.Core
             _instructionCycle?.Interrupt(); // just in case
         }
 
-        public void Init(ushort address = 0x0000, bool endOnHalt = false, TimingMode timingMode = TimingMode.FastAndFurious)
+        public void Initialise(ushort address = 0x0000, bool endOnHalt = false, TimingMode timingMode = TimingMode.FastAndFurious, InterruptMode interruptMode = InterruptMode.IM0)
         {
             if (!_running)
             {
                 EndOnHalt = endOnHalt; // if set, will summarily end execution at the first HALT instruction. This is mostly for test / debug scenarios.
                 TimingMode = timingMode;
-                _realTime = (timingMode == TimingMode.PseudoRealTime);
+                InterruptMode = interruptMode;
+                
+                _realTime = (timingMode == TimingMode.PseudoRealTime); // we use a bool field to hold this flag because comparing against an enum value is, curiously, expensive, and we do this EVERY cycle
                 _emulatedTStates = 0;
 
                 DisableInterrupts();
@@ -137,7 +140,7 @@ namespace Zem80.Core
             Registers.SP = _topOfStack;
             if (restartAfterReset)
             {
-                Init(0, this.EndOnHalt, this.TimingMode);
+                Initialise(0, this.EndOnHalt, this.TimingMode);
                 Start();
             }
         }
@@ -856,7 +859,7 @@ namespace Zem80.Core
         }
         #endregion  
 
-        public Processor(IMemoryBank memory = null, IMemoryMap map = null, ushort? topOfStackAddress = null, float frequencyInMHz = 4, bool enableFlagPrecalculation = true)
+        public Processor(IMemoryBank memory = null, IMemoryMap map = null, ushort? topOfStackAddress = null, float frequencyInMHz = DEFAULT_PROCESSOR_FREQUENCY, bool enableFlagPrecalculation = true)
         {
             // You can supply your own memory implementations, for example if you need to do RAM paging for >64K implementations.
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.
@@ -864,14 +867,11 @@ namespace Zem80.Core
             FrequencyInMHz = frequencyInMHz;
             _windowsTicksPerZ80Tick = (int)Math.Ceiling(10 / frequencyInMHz);
 
-            Registers = new Registers(this);
+            Registers = new Registers();
             Ports = new Ports(this);
             Memory = memory ?? new MemoryBank();
             Memory.Initialise(this, map ?? new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES, true));
             IO = new ProcessorIO(this);
-
-            TimingMode = TimingMode.FastAndFurious;
-            InterruptMode = InterruptMode.IM0;
 
             _topOfStack = topOfStackAddress ?? 0;
             Registers.SP = _topOfStack;

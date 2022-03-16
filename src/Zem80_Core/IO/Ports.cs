@@ -24,12 +24,12 @@ namespace Zem80.Core.IO
             }
         }
 
-        public Ports(Processor cpu)
+        public Ports(IInstructionTiming timing)
         {
             _ports = new Dictionary<byte, Port>();
             for (int i = 0; i <= 255; i++)
             {
-                Port port = new Port((byte)i, cpu);
+                Port port = new Port((byte)i, timing);
                 _ports.Add((byte)i, port);
             }
         }

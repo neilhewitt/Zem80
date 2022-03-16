@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Zem80.Core
 {
     public class Registers : IShadowRegisters
     {
         private byte[] _registers;
-        private Processor _cpu;
 
         public byte this[ByteRegister register] { get { return GetRegister(register); } set { SetRegister(register, value); } }
         public ushort this[WordRegister registerPair] { get { return GetRegisterPair(registerPair); } set { SetRegisterPair(registerPair, value); } }
@@ -76,7 +76,7 @@ namespace Zem80.Core
 
         public Registers Snapshot()
         {
-            return new Registers(null, (byte[])_registers.Clone());
+            return new Registers((byte[])_registers.Clone());
         }
 
         public void Clear()
@@ -92,18 +92,21 @@ namespace Zem80.Core
             Set16BitValue(offset + 8, value);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private byte GetRegister(ByteRegister register)
         {
             if (register == ByteRegister.None) return 0xFF;
             return _registers[(int)register];
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ushort GetRegisterPair(WordRegister registerPair)
         {
             if (registerPair == WordRegister.None) return 0xFF;
             return Get16BitValue((int)registerPair);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetRegister(ByteRegister register, byte value)
         {
             if (register != ByteRegister.None)
@@ -112,6 +115,7 @@ namespace Zem80.Core
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetRegisterPair(WordRegister registerPair, ushort value)
         {
             if (registerPair != WordRegister.None)
@@ -120,24 +124,25 @@ namespace Zem80.Core
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ushort Get16BitValue(int offset)
         {
             return (ushort)((_registers[offset] * 256) + _registers[offset + 1]);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Set16BitValue(int offset, ushort value)
         {
             _registers[offset] = (byte)(value / 256);
             _registers[offset + 1] = (byte)(value % 256);
         }
 
-        public Registers(Processor cpu)
+        public Registers()
         {
             _registers = new byte[26];
-            _cpu = cpu;
         }
 
-        private Registers(Processor cpu, byte[] registerValues) : this(cpu)
+        private Registers(byte[] registerValues) : this()
         {
             if (registerValues.Length != 26)
             {

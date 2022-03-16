@@ -24,7 +24,7 @@ namespace Zem80.SimpleVM
             _synchronous = synchronous;
             _outputLogPath = outputLogPath;
 
-            _cpu.Init(address, endOnHalt, _timingMode);
+            _cpu.Initialise(address, endOnHalt, _timingMode);
             if (debugOutput)
             {
                 _cpu.AfterExecute += DebugOutput_AfterExecute;
@@ -43,7 +43,7 @@ namespace Zem80.SimpleVM
         {
             _cpu.Stop();
             _cpu.ResetAndClearMemory();
-            _cpu.Init(_address, _endOnHalt, _timingMode);
+            _cpu.Initialise(_address, _endOnHalt, _timingMode);
             _cpu.Start();
             if (_synchronous) _cpu.RunUntilStopped();
         }
