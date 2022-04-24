@@ -161,7 +161,7 @@ namespace Zem80.Core.Memory
             if (!_initialised) throw new MemoryNotInitialisedException();
 
             IMemorySegment segment = _map.SegmentFor(address);
-            if (segment != null || !segment.ReadOnly)
+            if (segment != null && !segment.ReadOnly)
             {
                 segment.WriteByteAt(AddressOffset(address, segment), value);
             }
@@ -175,7 +175,7 @@ namespace Zem80.Core.Memory
             if (!_initialised) throw new MemoryNotInitialisedException();
 
             IMemorySegment segment = _map.SegmentFor(address);
-            if (segment != null || !segment.ReadOnly)
+            if (segment != null && !segment.ReadOnly)
             {
                 if (!timing && segment.SizeInBytes - AddressOffset(address, segment) >= bytes.Length)
                 {
