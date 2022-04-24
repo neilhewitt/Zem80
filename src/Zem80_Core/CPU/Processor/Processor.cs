@@ -34,6 +34,7 @@ namespace Zem80.Core
         private Func<byte> _interruptCallback;
         private bool _iff1;
         private bool _iff2;
+        private bool _interruptEnabledLatch;
 
         private EventHandler<InstructionPackage> _onBreakpoint;
 
@@ -165,17 +166,20 @@ namespace Zem80.Core
         {
             _iff1 = false;
             _iff2 = false;
+            _interruptEnabledLatch = false;
         }
 
         public void EnableInterrupts()
         {
             _iff1 = true;
             _iff2 = true;
+            _interruptEnabledLatch = true;
         }
 
         public void RestoreInterruptsFromNMI()
         {
             _iff1 = _iff2;
+            _interruptEnabledLatch = _iff1;
         }
 
         public void AddWaitCycles(int waitCycles)
@@ -285,16 +289,7 @@ namespace Zem80.Core
 
                 if (!_halted)
                 {
-                    // decode next instruction 
-                    // (note that the decode cycle leaves the Program Counter at the byte *after* this instruction unless it's adjusted by the instruction code itself,
-                    // this is how the program moves on to the next instruction)
                     package = DecodeInstructionAtProgramCounter();
-                    if (package == null)
-                    {
-                        // only happens if we reach the end of memory mid-instruction, if so we bail out
-                        Stop();
-                        return;
-                    }
                 }
                 else
                 {
@@ -304,27 +299,34 @@ namespace Zem80.Core
                         return;
                     }
 
-                    // run a NOP - by not decoding anything we leave the Program Counter where it was when we HALTed and
-                    // the PC will be advanced on resume from the HALT instruction when the next interrupt is handled
-
-                    // we need to run the opcode fetch cycle for NOP anyway, so that the clock ticks and attached devices
-                    // can generate interrupts to bring the CPU out of HALT; the following call does this...
-                    FetchOpcodeByte();
-                    package = new InstructionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
-
+                    package = DecodeNOP();
                 }
 
-                // run the decoded instruction and deal with timing / ticks
-                ExecutionResult result = Execute(package);
-                _executingInstructionPackage = null;
-
+                Execute(package);
                 WaitForNextClockTick();
-
-                HandleNonMaskableInterrupts(); // NMI has priority
-                HandleMaskableInterrupts(result); // if we came back from an NMI then we don't handle other interrupts until the next cycle
-
-                Registers.R = (byte)(((Registers.R + 1) & 0x7F) | (Registers.R & 0x80)); // bits 0-6 of R are incremented as part of the memory refresh - bit 7 is preserved 
+                HandleInterrupts();
+                RefreshMemory();
             }
+        }
+
+        private void HandleInterrupts()
+        {
+            bool handledNMI = HandleNMI();
+
+            // when interrupts are enabled during an instruction cycle, handling should not resume until the *next* cycle, hence the latch here
+            if (!_interruptEnabledLatch && !handledNMI)
+            {
+                HandleMaskableInterrupts();
+            }
+            else
+            {
+                _interruptEnabledLatch = false;
+            }
+        }
+
+        private void RefreshMemory()
+        {
+            Registers.R = (byte)(((Registers.R + 1) & 0x7F) | (Registers.R & 0x80)); // bits 0-6 of R are incremented as part of the memory refresh - bit 7 is preserved 
         }
 
         private ExecutionResult Execute(InstructionPackage package)
@@ -358,7 +360,9 @@ namespace Zem80.Core
             }
             result.WaitStatesAdded = _previousWaitCycles;
             AfterExecute?.Invoke(this, result);
-            
+
+            _executingInstructionPackage = null;
+
             return result;
         }
 
@@ -392,6 +396,12 @@ namespace Zem80.Core
             InstructionPackage package = new InstructionPackage(instruction, data, Registers.PC);
             Registers.PC += package.Instruction.SizeInBytes; // simulate the decode cycle effect on PC
             return Execute(package);
+        }
+
+        private InstructionPackage DecodeNOP()
+        {
+            FetchOpcodeByte(); // enable devices to run, interrupts etc
+            return new InstructionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
         }
 
         private InstructionPackage DecodeInstructionAtProgramCounter()
@@ -561,8 +571,10 @@ namespace Zem80.Core
             return operand;
         }
 
-        private void HandleNonMaskableInterrupts()
+        private bool HandleNMI()
         {
+            bool _handledNMI = false;
+
             if (IO.NMI)
             {
                 if (_halted)
@@ -580,14 +592,18 @@ namespace Zem80.Core
                 Registers.WZ = Registers.PC;
 
                 Timing.EndInterruptRequestAcknowledgeCycle();
+
+                _handledNMI = true;
             }
 
             IO.EndNMIState();
+
+            return _handledNMI;
         }
 
-        private void HandleMaskableInterrupts(ExecutionResult result)
+        private void HandleMaskableInterrupts()
         {
-            if (!result.SkipInterruptAfterExecution && IO.INT && InterruptsEnabled)
+            if (IO.INT && InterruptsEnabled)
             {
                 if (_interruptCallback == null && InterruptMode == InterruptMode.IM0)
                 {
