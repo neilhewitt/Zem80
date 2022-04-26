@@ -16,7 +16,7 @@ namespace ZXSpectrum.VM
         public const int FLASH_FRAME_RATE = 16; // PAL only
 
         private Processor _cpu;
-        private Beeper _beeper;
+        private BeeperDevice _beeper;
         private int _ticksSinceLastDisplayUpdate;
         private int _displayUpdatesSinceLastFlash;
         private bool _flashOn;
@@ -354,7 +354,7 @@ namespace ZXSpectrum.VM
             map.Map(new MemorySegment(49152), 16384);
 
             _cpu = new Processor(map: map, frequencyInMHz: 3.5f);
-            _beeper = new Beeper(_cpu);
+            _beeper = new BeeperDevice(_cpu);
 
             // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 
             // devices signal or respond based on a bit-field signature across the 16-bit port address held on the address bus at read/write time.
