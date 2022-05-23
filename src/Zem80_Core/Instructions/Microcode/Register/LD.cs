@@ -351,7 +351,7 @@ namespace Zem80.Core.Instructions
                         case 0x57: // LD A,I
                             r.A = r.I;
                             handleIRFlags(r.A);
-                            flags.ParityOverflow = cpu.InterruptsPaused;
+                            flags.ParityOverflow = cpu.InterruptsEnabledAfterNMI;
                             break;
                         case 0x5B: // LD DE,(nn)
                             r.DE = readWord(argWord);
@@ -360,7 +360,7 @@ namespace Zem80.Core.Instructions
                         case 0x5F: // LD A,R
                             r.A = r.R;
                             handleIRFlags(r.A);
-                            flags.ParityOverflow = cpu.InterruptsPaused;
+                            flags.ParityOverflow = cpu.InterruptsEnabledAfterNMI;
                             break;
                         case 0x73: // LD (nn),SP
                             writeWord(argWord, r.SP);

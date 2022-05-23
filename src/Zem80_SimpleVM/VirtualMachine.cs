@@ -27,7 +27,7 @@ namespace Zem80.SimpleVM
             _cpu.Initialise(address, endOnHalt, _timingMode);
             if (debugOutput)
             {
-                _cpu.AfterExecute += DebugOutput_AfterExecute;
+                _cpu.AfterExecuteInstruction += DebugOutput_AfterExecute;
             }
 
             _cpu.Start();

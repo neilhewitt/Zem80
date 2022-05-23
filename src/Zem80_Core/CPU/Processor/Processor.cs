@@ -23,7 +23,7 @@ namespace Zem80.Core
         private HaltReason _reasonForLastHalt;
         private bool _suspendMachineCycles;
         private int _pendingWaitCycles;
-        private int _previousWaitCycles;
+        private int _waitCyclesAdded;
         private int _windowsTicksPerZ80Tick;
         private ushort _topOfStack;
         private long _emulatedTStates;
@@ -31,14 +31,13 @@ namespace Zem80.Core
         private Stopwatch _clock;
         private Thread _instructionCycle;
         private InstructionPackage _executingInstructionPackage;
+        
         private Func<byte> _interruptCallback;
-        private bool _iff1;
-        private bool _iff2;
-        private bool _interruptEnabledLatch;
+        private bool _interruptLatch;
 
         private EventHandler<InstructionPackage> _onBreakpoint;
 
-        private IList<ushort> _breakpoints = new List<ushort>();
+        private IList<ushort> _breakpoints;
         
         public IDebugProcessor Debug => this;
         public IInstructionTiming Timing => this;
@@ -53,8 +52,8 @@ namespace Zem80.Core
         public IReadOnlyFlags Flags => new Flags(Registers.F, true);
 
         public InterruptMode InterruptMode { get; private set; }
-        public bool InterruptsEnabled => _iff1;
-        public bool InterruptsPaused => _iff2;
+        public bool InterruptsEnabled { get; private set; }
+        public bool InterruptsEnabledAfterNMI { get; private set; }
         public float FrequencyInMHz { get; private set; }
         public TimingMode TimingMode { get; private set; }
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; 
@@ -62,10 +61,9 @@ namespace Zem80.Core
 
         IEnumerable<ushort> IDebugProcessor.Breakpoints => _breakpoints;
 
-        // client code should use this event to synchronise activity with the CPU clock cyles
         public event EventHandler<InstructionPackage> OnClockTick;
-        public event EventHandler<InstructionPackage> BeforeExecute;
-        public event EventHandler<ExecutionResult> AfterExecute;
+        public event EventHandler<InstructionPackage> BeforeExecuteInstruction;
+        public event EventHandler<ExecutionResult> AfterExecuteInstruction;
         public event EventHandler<int> BeforeInsertWaitCycles;
         public event EventHandler BeforeStart;
         public event EventHandler OnStop;
@@ -151,10 +149,10 @@ namespace Zem80.Core
             InterruptMode = mode;
         }
 
-        public void RaiseInterrupt(Func<byte> instructionReadCallback = null)
+        public void RaiseInterrupt(Func<byte> callback = null)
         {
             IO.SetInterruptState();
-            _interruptCallback = instructionReadCallback;
+            _interruptCallback = callback;
         }
 
         public void RaiseNonMaskableInterrupt()
@@ -164,22 +162,22 @@ namespace Zem80.Core
 
         public void DisableInterrupts()
         {
-            _iff1 = false;
-            _iff2 = false;
-            _interruptEnabledLatch = false;
+            InterruptsEnabled = false;
+            InterruptsEnabledAfterNMI = false;
+            _interruptLatch = false;
         }
 
         public void EnableInterrupts()
         {
-            _iff1 = true;
-            _iff2 = true;
-            _interruptEnabledLatch = true;
+            InterruptsEnabled = true;
+            InterruptsEnabledAfterNMI = true;
+            _interruptLatch = true;
         }
 
-        public void RestoreInterruptsFromNMI()
+        public void RestoreInterruptsAfterNMI()
         {
-            _iff1 = _iff2;
-            _interruptEnabledLatch = _iff1;
+            InterruptsEnabled = InterruptsEnabledAfterNMI;
+            _interruptLatch = InterruptsEnabled;
         }
 
         public void AddWaitCycles(int waitCycles)
@@ -196,11 +194,18 @@ namespace Zem80.Core
                 _halted = true;
                 _reasonForLastHalt = reason;
                 OnHalt?.Invoke(null, reason);
+
+                if (EndOnHalt)
+                {
+                    Stop();
+                }
             }
         }
 
         void IDebugProcessor.AddBreakpoint(ushort address)
         {
+            if (_breakpoints == null) _breakpoints = new List<ushort>();
+
             // Note that the breakpoint functionality is *very* simple and not checked
             // so if you add a breakpoint for an address which is not the start
             // of an instruction in the code, it will never be triggered as PC will never get there
@@ -212,7 +217,7 @@ namespace Zem80.Core
 
         void IDebugProcessor.RemoveBreakpoint(ushort address)
         {
-            if (_breakpoints.Contains(address))
+            if (_breakpoints != null && _breakpoints.Contains(address))
             {
                 _breakpoints.Remove(address);
             }
@@ -287,19 +292,18 @@ namespace Zem80.Core
                 InstructionPackage package = null;
                 ushort pc = Registers.PC;
 
-                if (!_halted)
+                if (_halted)
                 {
-                    package = DecodeInstructionAtProgramCounter();
+                    package = DecodeNOP();
                 }
                 else
                 {
-                    if (EndOnHalt)
+                    package = DecodeInstructionAtProgramCounter();
+                    if (package == null)
                     {
                         Stop();
                         return;
                     }
-
-                    package = DecodeNOP();
                 }
 
                 Execute(package);
@@ -314,13 +318,13 @@ namespace Zem80.Core
             bool handledNMI = HandleNMI();
 
             // when interrupts are enabled during an instruction cycle, handling should not resume until the *next* cycle, hence the latch here
-            if (!_interruptEnabledLatch && !handledNMI)
+            if (!_interruptLatch && !handledNMI)
             {
                 HandleMaskableInterrupts();
             }
             else
             {
-                _interruptEnabledLatch = false;
+                _interruptLatch = false;
             }
         }
 
@@ -331,11 +335,11 @@ namespace Zem80.Core
 
         private ExecutionResult Execute(InstructionPackage package)
         {
-            BeforeExecute?.Invoke(this, package);
+            BeforeExecuteInstruction?.Invoke(this, package);
             _executingInstructionPackage = package;
 
             // check for breakpoints
-            if (_breakpoints.Contains(package.InstructionAddress))
+            if (_breakpoints != null && _breakpoints.Contains(package.InstructionAddress))
             {
                 _onBreakpoint?.Invoke(this, package);
             }
@@ -354,12 +358,9 @@ namespace Zem80.Core
 
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
 
-            if (result.Flags != null)
-            {
-                Registers.F = result.Flags.Value;
-            }
-            result.WaitStatesAdded = _previousWaitCycles;
-            AfterExecute?.Invoke(this, result);
+            if (result.Flags != null) Registers.F = result.Flags.Value;
+            result.WaitCyclesAdded = _waitCyclesAdded;
+            AfterExecuteInstruction?.Invoke(this, result);
 
             _executingInstructionPackage = null;
 
@@ -436,7 +437,7 @@ namespace Zem80.Core
                     if (!InstructionSet.Instructions.TryGetValue(b3 | b1 << 8 | b0 << 16, out instruction))
                     {
                         // not a valid instruction - the Z80 spec says we should run a NOP instead
-                        return new InstructionPackage(InstructionSet.NOP, data, (ushort)(instructionAddress));
+                        return new InstructionPackage(InstructionSet.NOP, data, instructionAddress);
                     }                    
 
                     return new InstructionPackage(instruction, data, instructionAddress);
@@ -553,7 +554,7 @@ namespace Zem80.Core
                 cyclesToAdd--;
             }
 
-            _previousWaitCycles = _pendingWaitCycles;
+            _waitCyclesAdded = _pendingWaitCycles;
             _pendingWaitCycles = 0;
         }
 
@@ -573,7 +574,7 @@ namespace Zem80.Core
 
         private bool HandleNMI()
         {
-            bool _handledNMI = false;
+            bool handledNMI = false;
 
             if (IO.NMI)
             {
@@ -582,8 +583,8 @@ namespace Zem80.Core
                     Resume();
                 }
 
-                _iff2 = _iff1; // save IFF1 state ready for RETN
-                _iff1 = false; // disable maskable interrupts until RETN
+                InterruptsEnabledAfterNMI = InterruptsEnabled; // save IFF1 state ready for RETN
+                InterruptsEnabled = false; // disable maskable interrupts until RETN
 
                 Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
 
@@ -593,12 +594,12 @@ namespace Zem80.Core
 
                 Timing.EndInterruptRequestAcknowledgeCycle();
 
-                _handledNMI = true;
+                handledNMI = true;
             }
 
             IO.EndNMIState();
 
-            return _handledNMI;
+            return handledNMI;
         }
 
         private void HandleMaskableInterrupts()

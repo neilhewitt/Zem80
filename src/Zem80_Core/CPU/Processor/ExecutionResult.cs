@@ -11,7 +11,7 @@ namespace Zem80.Core
         public InstructionData Data { get; }
         public Flags Flags { get; }
         public ushort InstructionAddress { get; }
-        public int WaitStatesAdded { get; internal set; }
+        public int WaitCyclesAdded { get; internal set; }
 
         public ExecutionResult(InstructionPackage package, Flags flags)
         {

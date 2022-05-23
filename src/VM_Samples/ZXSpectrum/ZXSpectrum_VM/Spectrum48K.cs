@@ -16,7 +16,7 @@ namespace ZXSpectrum.VM
         public const int FLASH_FRAME_RATE = 16; // PAL only
 
         private Processor _cpu;
-        private BeeperDevice _beeper;
+        private Speaker _speaker;
         private int _ticksSinceLastDisplayUpdate;
         private int _displayUpdatesSinceLastFlash;
         private bool _flashOn;
@@ -57,8 +57,8 @@ namespace ZXSpectrum.VM
         public void Stop()
         {
             _killUpdateThread = true;
+            _speaker.Dispose();
             _cpu.Stop();
-            _beeper.Dispose();
         }
 
         private void LoadSnapshot(string path)
@@ -114,7 +114,7 @@ namespace ZXSpectrum.VM
             _cpu.Memory.Untimed.WriteBytesAt(16384, snapshot[27..]);
             ushort pc = _cpu.Debug.PopStackDirect(); // pops the top value from the stack and moves the stack pointer, but doesn't run any internal cycles
             _cpu.Registers.PC = pc;
-            _cpu.RestoreInterruptsFromNMI();
+            _cpu.RestoreInterruptsAfterNMI();
 
             ushort getWord(int index)
             {
@@ -127,7 +127,7 @@ namespace ZXSpectrum.VM
             byte[] snapshot = File.ReadAllBytes(path);
             Registers r = _cpu.Registers;
 
-            r.AF = getWord(0); 
+            r.AF = getWord(0);
             r.BC = getWord(2);
             r.HL = getWord(4);
             r.PC = getWord(6);
@@ -199,7 +199,7 @@ namespace ZXSpectrum.VM
             }
 
             _cpu.Memory.Untimed.WriteBytesAt(16384, memoryImage);
-            _cpu.RestoreInterruptsFromNMI();
+            _cpu.RestoreInterruptsAfterNMI();
 
             ushort getWord(int index)
             {
@@ -224,7 +224,7 @@ namespace ZXSpectrum.VM
             }
 
             _ticksSinceLastDisplayUpdate++;
-            
+
             if (_ticksSinceLastDisplayUpdate >= TICKS_BETWEEN_FRAMES)
             {
                 // we've reached the vertical blanking interval, so raise an interrupt for the keyboard processing etc.
@@ -297,14 +297,14 @@ namespace ZXSpectrum.VM
         private void WritePort(byte output)
         {
             ushort portAddress = _cpu.IO.ADDRESS_BUS;
-            
+
             if (portAddress % 2 == 0)
             {
                 // ULA will respond to all even port numbers
 
                 if (portAddress.LowByte() == 0xFE) // PORT OxFE
                 {
-                    _beeper.SetBeeperState(_cpu.IO.D4);
+                    _speaker.On = _cpu.IO.D4;
 
                     // TODO: handle MIC, EAR and speaker activation (bit 3 == MIC, bit 4 == EAR / speaker)
                     // bits 0,1,2 encode the border colour
@@ -354,7 +354,7 @@ namespace ZXSpectrum.VM
             map.Map(new MemorySegment(49152), 16384);
 
             _cpu = new Processor(map: map, frequencyInMHz: 3.5f);
-            _beeper = new BeeperDevice(_cpu);
+            _speaker = new Speaker(_cpu);
 
             // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 
             // devices signal or respond based on a bit-field signature across the 16-bit port address held on the address bus at read/write time.
