@@ -20,7 +20,7 @@ Can I improve this? Yes, probably, but only by changing the design in the same w
 ## The future for this project
 Where I think this project can be useful is in perhaps explaining how to do CPU emulation in principle. It's a pretty complex subject that requires a lot of learning to approach and do, and learning from the existing code is difficult because it's often quite... opaque. This emulator is actually quite straightforward - not that you would understand it at first glance, or without knowledge of how the Z80 itself works in quite a lot of detail - and hopefully might give people a useful starting point to build their own emulators. If it does, then my work is done!
 
-I built this thing just to prove to myself that I could. I have a fully-functioning emulator built in a platform that's not generally thought of as one you could build something so low-level in, and I'm very glad it did it.
+I built this thing just to prove to myself that I could. I have a fully-functioning emulator built in a platform that's not generally thought of as one you could build something so low-level in, and I'm very glad I did it.
 
 ## Project status
 24/04/2022 - 1.1 release. This contains fixes and optimisations. Spectrum audio is broken and does not work at all. I may just remove audio support as I can't get it working properly.
