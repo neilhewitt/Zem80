@@ -15,16 +15,16 @@ namespace Zem80.Core.Instructions
         public Condition Condition { get; private set; }
         public byte SizeInBytes { get; private set; }
         public InstructionTiming Timing { get; private set; }
-        public bool IsIndexed => Prefix == 0xDDCB || Prefix == 0xFDCB;
-        public bool IsConditional => Condition != Condition.None;
+        public bool IsIndexed { get; private set; }
+        public bool IsConditional { get; private set; }
         public IMicrocode Microcode { get; private set; }
         public InstructionElement Target { get; private set; }
         public InstructionElement Source { get; private set; }
         public InstructionElement Argument1 { get; private set; }
         public InstructionElement Argument2 { get; private set; }
-        public bool TargetsByteRegister => Target >= InstructionElement.A && Target <= InstructionElement.IYl;
-        public bool TargetsWordRegister => Target >= InstructionElement.AF && Target <= InstructionElement.SP;
-        public bool TargetsByteInMemory => Target >= InstructionElement.AddressFromHL && Target <= InstructionElement.AddressFromIYAndOffset;
+        public bool TargetsByteRegister { get; private set; }
+        public bool TargetsWordRegister { get; private set; }
+        public bool TargetsByteInMemory { get; private set; }
         public ByteRegister? CopyResultTo { get; private set; }
 
         public Instruction(string fullOpcode, string mnemonic, Condition condition, InstructionElement target, InstructionElement source, InstructionElement arg1, InstructionElement arg2, 
@@ -46,6 +46,12 @@ namespace Zem80.Core.Instructions
             Argument1 = arg1;
             Argument2 = arg2;
             Condition = condition;
+
+            TargetsByteRegister = Target >= InstructionElement.A && Target <= InstructionElement.IYl;
+            TargetsWordRegister = Target >= InstructionElement.AF && Target <= InstructionElement.SP;
+            TargetsByteInMemory = Target >= InstructionElement.AddressFromHL && Target <= InstructionElement.AddressFromIYAndOffset;
+            IsIndexed = Prefix == 0xDDCB || Prefix == 0xFDCB;
+            IsConditional = Condition != Condition.None;
 
             // this is expensive, but only done once at startup; binds the Instruction directly to the method instance implementing it
             if (microcode == null)
