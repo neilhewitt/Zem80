@@ -7,7 +7,7 @@ Console.WriteLine("Zem80 Speed Test\n");
 
 Processor cpu = new Processor(frequencyInMHz: 3.5f);
 Instruction lde = InstructionSet.Instructions[0x1E];
-int ticks = ((lde.Timing.TStates * 10000) + 2); // +2 is for the final HALT instruction
+int ticks = ((lde.Timing.TStates * 10000) + 4); // +4 is for the final HALT instruction
 
 byte[] program = new byte[20001]; // 20000 x LD E,A
 for (int i = 0; i < 20000; i++)

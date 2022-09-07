@@ -307,7 +307,6 @@ namespace Zem80.Core
                 }
 
                 Execute(package);
-                WaitForNextClockTick();
                 HandleInterrupts();
                 RefreshMemory();
             }
