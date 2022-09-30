@@ -8,7 +8,7 @@ namespace Zem80.Core.Instructions
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
-            cpu.Pop(WordRegister.PC);
+            cpu.Stack.Pop(WordRegister.PC);
             cpu.Registers.WZ = cpu.Registers.PC;
             return new ExecutionResult(package, null);
         }

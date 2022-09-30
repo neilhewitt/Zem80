@@ -14,7 +14,7 @@ namespace Zem80.Core.Instructions
 
             if (instruction.Condition == Condition.None || flags.SatisfyCondition(instruction.Condition))
             {
-                cpu.Pop(WordRegister.PC);
+                cpu.Stack.Pop(WordRegister.PC);
                 cpu.Registers.WZ = cpu.Registers.PC;
             }
             return new ExecutionResult(package, flags);

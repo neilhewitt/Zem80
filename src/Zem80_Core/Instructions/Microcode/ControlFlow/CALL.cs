@@ -14,7 +14,7 @@ namespace Zem80.Core.Instructions
 
             if (instruction.Condition == Condition.None || flags.SatisfyCondition(instruction.Condition))
             {
-                cpu.Push(WordRegister.PC);
+                cpu.Stack.Push(WordRegister.PC);
                 cpu.Registers.PC = data.ArgumentsAsWord;
             }
 

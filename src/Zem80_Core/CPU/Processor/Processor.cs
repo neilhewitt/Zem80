@@ -9,6 +9,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
+using Stack = Zem80.Core.Memory.Stack;
 
 namespace Zem80.Core
 {
@@ -25,7 +26,6 @@ namespace Zem80.Core
         private int _pendingWaitCycles;
         private int _waitCyclesAdded;
         private int _windowsTicksPerZ80Tick;
-        private ushort _topOfStack;
         private long _emulatedTStates;
 
         private Stopwatch _clock;
@@ -36,7 +36,6 @@ namespace Zem80.Core
         private bool _interruptLatch;
 
         private EventHandler<InstructionPackage> _onBreakpoint;
-
         private IList<ushort> _breakpoints;
         
         public IDebugProcessor Debug => this;
@@ -46,6 +45,7 @@ namespace Zem80.Core
 
         public Registers Registers { get; private set; }
         public IMemoryBank Memory { get; private set; }
+        public Stack Stack { get; private set; }
         public Ports Ports { get; private set; }
         public ProcessorIO IO { get; private set; }
 
@@ -136,7 +136,7 @@ namespace Zem80.Core
             Memory.Clear();
             Registers.Clear();
             IO.Clear();
-            Registers.SP = _topOfStack;
+            Registers.SP = Stack.Top;
             if (restartAfterReset)
             {
                 Initialise(0, this.EndOnHalt, this.TimingMode);
@@ -183,8 +183,9 @@ namespace Zem80.Core
         public void AddWaitCycles(int waitCycles)
         {
             // Will add *waitCycles* wait states at the next insertion point.
-            // Waits are only actually inserted at certain points in the instruction cycle. 
-            _pendingWaitCycles = waitCycles;
+            // Waits are only actually inserted at certain points in the instruction cycle.
+            // If some waits are already pending, the new waits will be added to that total.
+            _pendingWaitCycles += waitCycles;
         }
 
         public void Halt(HaltReason reason = HaltReason.HaltCalledDirectly)
@@ -221,65 +222,6 @@ namespace Zem80.Core
             {
                 _breakpoints.Remove(address);
             }
-        }
-
-        internal void Push(WordRegister register)
-        {
-            ushort value = Registers[register];
-            Registers.SP--;
-            Timing.BeginStackWriteCycle(true, value.HighByte());
-            Memory.Untimed.WriteByteAt(Registers.SP, value.HighByte());
-            Timing.EndStackWriteCycle();
-
-            Registers.SP--;
-            Timing.BeginStackWriteCycle(false, value.LowByte());
-            Memory.Untimed.WriteByteAt(Registers.SP, value.LowByte());
-            Timing.EndStackWriteCycle();
-        }
-
-        internal void Pop(WordRegister register)
-        {
-            byte high, low;
-
-            Timing.BeginStackReadCycle();
-            low = Memory.Untimed.ReadByteAt(Registers.SP);
-            Timing.EndStackReadCycle(false, low);
-            Registers.SP++;
-
-            Timing.BeginStackReadCycle();
-            high = Memory.Untimed.ReadByteAt(Registers.SP);
-            Timing.EndStackReadCycle(true, high);
-            Registers.SP++;
-
-            ushort value = (low, high).ToWord();
-            Registers[register] = value;
-        }
-
-        void IDebugProcessor.PushStackDirect(ushort value)
-        {
-            Registers.SP--;
-            Memory.Untimed.WriteByteAt(Registers.SP, value.HighByte());
-
-            Registers.SP--;
-            Memory.Untimed.WriteByteAt(Registers.SP, value.LowByte());
-        }
-
-        ushort IDebugProcessor.PopStackDirect()
-        {
-            byte high, low;
-
-            low = Memory.Untimed.ReadByteAt(Registers.SP);
-            Registers.SP++;
-
-            high = Memory.Untimed.ReadByteAt(Registers.SP);
-            Registers.SP++;
-
-            return (low, high).ToWord();
-        }
-
-        ushort IDebugProcessor.PeekStack()
-        {
-            return Memory.Untimed.ReadWordAt(Registers.SP);
         }
 
         private void InstructionCycle()
@@ -587,7 +529,7 @@ namespace Zem80.Core
 
                 Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
 
-                Push(WordRegister.PC);
+                Stack.Push(WordRegister.PC);
                 Registers.PC = 0x0066;
                 Registers.WZ = Registers.PC;
 
@@ -635,7 +577,7 @@ namespace Zem80.Core
                         Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         InstructionPackage package = DecodeIM0Interrupt();
                         ushort pc = Registers.PC;
-                        Push(WordRegister.PC);
+                        Stack.Push(WordRegister.PC);
                         Execute(package);
                         Registers.PC = pc;
                         Registers.WZ = Registers.PC;
@@ -647,7 +589,7 @@ namespace Zem80.Core
                         // the interrupt occurs. 
 
                         Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.IM1_INTERRUPT_ACKNOWLEDGE_TSTATES);
-                        Push(WordRegister.PC);
+                        Stack.Push(WordRegister.PC);
                         Registers.PC = 0x0038;
                         Registers.WZ = Registers.PC;
                         break;
@@ -669,7 +611,7 @@ namespace Zem80.Core
 
                         IO.SetDataBusValue(_interruptCallback?.Invoke() ?? 0); 
                         Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
-                        Push(WordRegister.PC);
+                        Stack.Push(WordRegister.PC);
                         ushort address = (IO.DATA_BUS, Registers.I).ToWord();
                         Registers.PC = Memory.Timed.ReadWordAt(address);
                         Registers.WZ = Registers.PC;
@@ -875,7 +817,7 @@ namespace Zem80.Core
         }
         #endregion  
 
-        public Processor(IMemoryBank memory = null, IMemoryMap map = null, ushort? topOfStackAddress = null, float frequencyInMHz = DEFAULT_PROCESSOR_FREQUENCY, bool enableFlagPrecalculation = true)
+        public Processor(IMemoryBank memory = null, IMemoryMap map = null, ushort topOfStackAddress = 0, float frequencyInMHz = DEFAULT_PROCESSOR_FREQUENCY, bool enableFlagPrecalculation = true)
         {
             // You can supply your own memory implementations, for example if you need to do RAM paging for >64K implementations.
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.
@@ -887,10 +829,10 @@ namespace Zem80.Core
             Ports = new Ports(this);
             Memory = memory ?? new MemoryBank();
             Memory.Initialise(this, map ?? new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES, true));
+            Stack = new Stack(topOfStackAddress, this);
             IO = new ProcessorIO(this);
 
-            _topOfStack = topOfStackAddress ?? 0;
-            Registers.SP = _topOfStack;
+            Registers.SP = Stack.Top;
 
             // If precalculation is enabled, all flag combinations for all input values for 8-bit ALU / bitwise operations are pre-built now 
             // (but not the 16-bit ALU operations, the number space is far too big).

@@ -14,7 +14,7 @@ namespace Zem80.Core.Instructions
             byte t_index = instruction.Opcode.GetByteFromBits(3, 3);
             ushort address = (ushort)(t_index * 8);
 
-            cpu.Push(WordRegister.PC);
+            cpu.Stack.Push(WordRegister.PC);
             cpu.Registers.PC = (address);
             cpu.Registers.WZ = cpu.Registers.PC;
 

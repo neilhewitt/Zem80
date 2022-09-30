@@ -11,7 +11,7 @@ namespace Zem80.Core.Instructions
             Instruction instruction = package.Instruction;
 
             WordRegister register = instruction.Target.AsWordRegister();
-            cpu.Push(register);
+            cpu.Stack.Push(register);
 
             return new ExecutionResult(package, null);
         }
