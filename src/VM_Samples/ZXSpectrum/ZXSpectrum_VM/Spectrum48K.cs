@@ -7,6 +7,7 @@ using Zem80.Core;
 using Zem80.Core.Instructions;
 using Zem80.Core.Memory;
 using ZXSpectrum.VM.Sound;
+using MultimediaTimer;
 
 namespace ZXSpectrum.VM
 {
@@ -16,7 +17,7 @@ namespace ZXSpectrum.VM
         public const int FLASH_FRAME_RATE = 16; // PAL only
 
         private Processor _cpu;
-        private Speaker _speaker;
+        private Beeper _beeper;
         private int _ticksSinceLastDisplayUpdate;
         private int _displayUpdatesSinceLastFlash;
         private bool _flashOn;
@@ -33,31 +34,18 @@ namespace ZXSpectrum.VM
 
         public void Start()
         {
-            if (_cpu.State == ProcessorState.Running)
-            {
-                throw new Exception("VM is already started!");
-            }
-
-            _cpu.Initialise(timingMode: TimingMode.PseudoRealTime);
-            _cpu.Start();
+            StartInternal();
         }
 
         public void StartWithSnapshot(string path)
         {
-            if (_cpu.State == ProcessorState.Running)
-            {
-                throw new Exception("VM is already started!");
-            }
-
-            _cpu.Initialise(timingMode: TimingMode.PseudoRealTime);
-            LoadSnapshot(path);
-            _cpu.Start(); // will initialise the CPU but not start processing, as it's suspended
+            StartInternal(path);
         }
 
         public void Stop()
         {
             _killUpdateThread = true;
-            _speaker.Dispose();
+            _beeper.Dispose();
             _cpu.Stop();
         }
 
@@ -236,6 +224,13 @@ namespace ZXSpectrum.VM
             }
         }
 
+        private void StartInternal(string snapshotPath = null)
+        {
+            _cpu.Initialise(timingMode: TimingMode.PseudoRealTime);
+            if (snapshotPath != null) LoadSnapshot(snapshotPath);
+            _cpu.Start();
+        }
+
         private void UpdateDisplay()
         {
             while (!_killUpdateThread)
@@ -253,11 +248,7 @@ namespace ZXSpectrum.VM
                     // then, when we have counted enough ticks since the last screen update 
                     // to be at the vertical blanking interval (that's crazy CRT talk, but Google it 
                     // if you want to understand how TVs used to work!), we 'instantaneously' 
-                    // update the display (and since this happens during the OnClockTick event, 
-                    // the processor is effectively in suspended animation while this occurs, 
-                    // which of course skews the clock thread, however the clock will simply 
-                    // pick up at the next available tick and from the emulated Z80's perspective, 
-                    // no time has elapsed at all - this should be fine for most programs)
+                    // update the display
 
                     byte[] pixelBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x4000, 6144);
                     byte[] attributeBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x5800, 768);
@@ -304,8 +295,6 @@ namespace ZXSpectrum.VM
 
                 if (portAddress.LowByte() == 0xFE) // PORT OxFE
                 {
-                    _speaker.On = _cpu.IO.D4;
-
                     // TODO: handle MIC, EAR and speaker activation (bit 3 == MIC, bit 4 == EAR / speaker)
                     // bits 0,1,2 encode the border colour
                     if (portAddress >> 8 < 8)
@@ -317,6 +306,8 @@ namespace ZXSpectrum.VM
                         }
                     }
                 }
+
+                _beeper.Update(output, _screen.BorderColour.Bits);
             }
         }
 
@@ -354,7 +345,7 @@ namespace ZXSpectrum.VM
             map.Map(new MemorySegment(49152), 16384);
 
             _cpu = new Processor(map: map, frequencyInMHz: 3.5f);
-            _speaker = new Speaker(_cpu);
+            _beeper = new Beeper(_cpu);
 
             // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 
             // devices signal or respond based on a bit-field signature across the 16-bit port address held on the address bus at read/write time.
