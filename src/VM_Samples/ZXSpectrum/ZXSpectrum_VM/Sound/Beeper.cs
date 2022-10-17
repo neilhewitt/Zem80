@@ -11,6 +11,15 @@ using Zem80.Core.Instructions;
 
 namespace ZXSpectrum.VM.Sound
 {
+    /*
+     * This class is based on a design from SoftSpectrum48 by Magnus Crook. Since the source code for SoftSpectrum 48
+     * is freely distributed by Magnus on his Web site, but no license file or information is included or provided
+     * anywhere that I could find, I have written this code entirely from scratch but have based it on the design of the 
+     * relevant class in SoftSpectrum 48. 
+     * 
+     * Sadly, despite my efforts, the audio is still noisy (but no longer choppy - using WasapiOut fixes that!)
+     */
+    
     public class Beeper : IDisposable
     {
         private Processor _cpu;
@@ -19,7 +28,7 @@ namespace ZXSpectrum.VM.Sound
         private const int TICKS_PER_SAMPLE = 8;
         private const int TICKS_PER_FRAME = 69888; 
         private const int FRAMES_PER_SECOND = 50;
-        private const int SAMPLE_SIZE = 60000;
+        private const int SAMPLE_SIZE = 120000;
 
         private byte[][] _sampleData; // divided into three sets: empty, low frequency, high frequency
 
@@ -109,7 +118,7 @@ namespace ZXSpectrum.VM.Sound
 
             SetupSamples();
 
-            _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, true, 10); // can do lower latency than WaveOut
+            _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, true, 40); // can do lower latency than WaveOut
             
             int sampleRate = ((TICKS_PER_FRAME * FRAMES_PER_SECOND) / TICKS_PER_SAMPLE);
             WaveFormat format = new WaveFormat(sampleRate, 8, 1);
