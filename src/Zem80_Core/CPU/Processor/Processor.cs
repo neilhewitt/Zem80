@@ -26,7 +26,6 @@ namespace Zem80.Core
         private int _pendingWaitCycles;
         private int _waitCyclesAdded;
         private int _windowsTicksPerZ80Tick;
-        private bool _tickLatch;
         private long _emulatedTStates;
 
         private Stopwatch _clock;
@@ -814,7 +813,7 @@ namespace Zem80.Core
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.
 
             FrequencyInMHz = frequencyInMHz;
-            _windowsTicksPerZ80Tick = (int)Math.Floor(10 / frequencyInMHz);
+            _windowsTicksPerZ80Tick = (int)Math.Ceiling(10 / frequencyInMHz);
 
             Registers = new Registers();
             Ports = new Ports(this);
