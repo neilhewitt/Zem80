@@ -16,8 +16,6 @@ namespace ZXSpectrum.VM.Sound
      * is freely distributed by Magnus on his Web site, but no license file or information is included or provided
      * anywhere that I could find, I have written this code entirely from scratch but have based it on the design of the 
      * relevant class in SoftSpectrum 48. 
-     * 
-     * Sadly, despite my efforts, the audio is still noisy (but no longer choppy - using WasapiOut fixes that!)
      */
     
     public class Beeper : IDisposable
@@ -81,7 +79,7 @@ namespace ZXSpectrum.VM.Sound
                 long currentTStates = _cpu.EmulatedTStates;
                 long ticks = currentTStates - _lastTStates;
 
-                long samplesRequired =  ticks / TICKS_PER_SAMPLE;
+                long samplesRequired = ticks / TICKS_PER_SAMPLE;
                 if (samplesRequired <= SAMPLE_SIZE && samplesRequired > 0)
                 {
                     _currentFrequencyRange = _currentFrequencyRange == 0 ? frequencyRange : 0;
@@ -107,7 +105,7 @@ namespace ZXSpectrum.VM.Sound
                 {
                     // 0 = no sound, 10 = low frequency sound, 20 = high frequency sound
                     // basically, oscillating between low/high at different rates creates the tones
-                    _sampleData[0][j] = i switch { 1 => 10, 2 => 20, _ => 0};
+                    _sampleData[i][j] = i switch { 1 => 10, 2 => 20, _ => 0};
                 }
             }
         }

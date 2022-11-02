@@ -22,6 +22,7 @@ namespace Zem80.Core.Instructions
         public InstructionElement Source { get; private set; }
         public InstructionElement Argument1 { get; private set; }
         public InstructionElement Argument2 { get; private set; }
+        public WordRegister IndexedRegister { get; private set; }
         public bool TargetsByteRegister { get; private set; }
         public bool TargetsWordRegister { get; private set; }
         public bool TargetsByteInMemory { get; private set; }
@@ -50,8 +51,14 @@ namespace Zem80.Core.Instructions
             TargetsByteRegister = Target >= InstructionElement.A && Target <= InstructionElement.IYl;
             TargetsWordRegister = Target >= InstructionElement.AF && Target <= InstructionElement.SP;
             TargetsByteInMemory = Target >= InstructionElement.AddressFromHL && Target <= InstructionElement.AddressFromIYAndOffset;
+            IndexedRegister = WordRegister.None;
             IsIndexed = Prefix == 0xDDCB || Prefix == 0xFDCB;
             IsConditional = Condition != Condition.None;
+
+            if (IsIndexed)
+            {
+                IndexedRegister = Source.IsAddressFromIndexAndOffset() ? Source.AsWordRegister() : Target.AsWordRegister();
+            }
 
             // this is expensive, but only done once at startup; binds the Instruction directly to the method instance implementing it
             if (microcode == null)

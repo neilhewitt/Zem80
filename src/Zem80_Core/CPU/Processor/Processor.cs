@@ -16,7 +16,7 @@ namespace Zem80.Core
     public class Processor : IDebugProcessor, IInstructionTiming, IDisposable
     {
         public const int MAX_MEMORY_SIZE_IN_BYTES = 65536;
-        public const int DEFAULT_PROCESSOR_FREQUENCY = 4;
+        public const float DEFAULT_PROCESSOR_FREQUENCY = 4;
 
         private bool _running;
         private bool _halted;
@@ -26,6 +26,7 @@ namespace Zem80.Core
         private int _pendingWaitCycles;
         private int _waitCyclesAdded;
         private int _windowsTicksPerZ80Tick;
+        private bool _tickLatch;
         private long _emulatedTStates;
 
         private Stopwatch _clock;
@@ -85,7 +86,7 @@ namespace Zem80.Core
                 TimingMode = timingMode;
                 InterruptMode = interruptMode;
                 
-                _realTime = (timingMode == TimingMode.PseudoRealTime); // we use a bool field to hold this flag because comparing against an enum value is, curiously, expensive, and we do this EVERY cycle
+                _realTime = (timingMode == TimingMode.PseudoRealTime);
                 _emulatedTStates = 0;
 
                 DisableInterrupts();
@@ -285,26 +286,16 @@ namespace Zem80.Core
                 _onBreakpoint?.Invoke(this, package);
             }
 
-            // set the internal WZ register to an initial value based on whether this is an indexed instruction or not;
-            // the instruction that runs may alter/set WZ itself.
-            // (the value in WZ [sometimes known as MEMPTR in Z80 enthusiast circles] is only ever used to control the behavior of the BIT instruction)
-            ushort wz = package.Instruction switch
-            {
-                var i when i.Source.IsAddressFromIndexAndOffset() => Registers[i.Source.AsWordRegister()],
-                var i when i.Target.IsAddressFromIndexAndOffset() => Registers[i.Target.AsWordRegister()],
-                _ => 0
-            };
-            wz = (ushort)(wz + package.Data.Argument1);
-            Registers.WZ = wz;
+            // set the internal WZ register to an initial value based on whether this is an indexed instruction or not; the instruction that runs may alter/set WZ itself
+            // the value in WZ (sometimes known as MEMPTR in Z80 enthusiast circles) is only ever used to control the behavior of the BIT instruction
+            Registers.WZ = (ushort)(Registers[package.Instruction.IndexedRegister] + package.Data.Argument1);
 
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
-
             if (result.Flags != null) Registers.F = result.Flags.Value;
             result.WaitCyclesAdded = _waitCyclesAdded;
             AfterExecuteInstruction?.Invoke(this, result);
 
             _executingInstructionPackage = null;
-
             return result;
         }
 
@@ -823,7 +814,7 @@ namespace Zem80.Core
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.
 
             FrequencyInMHz = frequencyInMHz;
-            _windowsTicksPerZ80Tick = (int)Math.Ceiling(10 / frequencyInMHz);
+            _windowsTicksPerZ80Tick = (int)Math.Floor(10 / frequencyInMHz);
 
             Registers = new Registers();
             Ports = new Ports(this);
