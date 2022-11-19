@@ -17,10 +17,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_SimpleVM", "Zem80_Sim
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_Zexall", "Zem80_Zexall\Zem80_Zexall.csproj", "{6BF4132D-20D2-44A2-A2A6-9EB64D7DF6B3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrum__VM", "VM_Samples\ZXSpectrum\ZXSpectrum_VM\ZXSpectrum__VM.csproj", "{97BE4495-51D7-4A97-9448-8A183D2F8C1E}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrum_UI", "VM_Samples\ZXSpectrum\ZXSpectrum_UI\ZXSpectrum_UI.csproj", "{0C72E483-D13D-4FD5-8A2C-AD8D2696F5BC}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +73,14 @@ Global
 		{0C72E483-D13D-4FD5-8A2C-AD8D2696F5BC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0C72E483-D13D-4FD5-8A2C-AD8D2696F5BC}.Release|x64.ActiveCfg = Release|Any CPU
 		{0C72E483-D13D-4FD5-8A2C-AD8D2696F5BC}.Release|x64.Build.0 = Release|Any CPU
+		{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}.Debug|x64.Build.0 = Debug|Any CPU
+		{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}.Release|x64.ActiveCfg = Release|Any CPU
+		{5E8A3D57-A52E-4BEF-AA91-0FAA3204EFF5}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
