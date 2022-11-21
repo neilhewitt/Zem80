@@ -21,6 +21,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrum__VM", "VM_Sample
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrum_UI", "VM_Samples\ZXSpectrum\ZXSpectrum_UI\ZXSpectrum_UI.csproj", "{0C72E483-D13D-4FD5-8A2C-AD8D2696F5BC}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpeedTest", "SpeedTest\SpeedTest.csproj", "{37555431-8A6B-444A-9870-5FA56429AC61}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +79,14 @@ Global
 		{0C72E483-D13D-4FD5-8A2C-AD8D2696F5BC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0C72E483-D13D-4FD5-8A2C-AD8D2696F5BC}.Release|x64.ActiveCfg = Release|Any CPU
 		{0C72E483-D13D-4FD5-8A2C-AD8D2696F5BC}.Release|x64.Build.0 = Release|Any CPU
+		{37555431-8A6B-444A-9870-5FA56429AC61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37555431-8A6B-444A-9870-5FA56429AC61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37555431-8A6B-444A-9870-5FA56429AC61}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{37555431-8A6B-444A-9870-5FA56429AC61}.Debug|x64.Build.0 = Debug|Any CPU
+		{37555431-8A6B-444A-9870-5FA56429AC61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37555431-8A6B-444A-9870-5FA56429AC61}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37555431-8A6B-444A-9870-5FA56429AC61}.Release|x64.ActiveCfg = Release|Any CPU
+		{37555431-8A6B-444A-9870-5FA56429AC61}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

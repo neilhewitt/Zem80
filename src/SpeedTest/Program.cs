@@ -9,12 +9,12 @@ Processor cpu = new Processor(frequencyInMHz: 3.5f);
 Instruction lde = InstructionSet.Instructions[0x1E];
 int ticks = ((lde.Timing.TStates * 10000) + 4); // +4 is for the final HALT instruction
 
-byte[] program = new byte[20001]; // 20000 x LD E,A
-for (int i = 0; i < 20000; i++)
+byte[] program = new byte[40001]; // 20000 x LD E,A
+for (int i = 0; i < 40000; i++)
 {
     program[i] = lde.Opcode;
 }
-program[20000] = 0x76; // HALT
+program[40000] = 0x76; // HALT
 
 cpu.Memory.Untimed.WriteBytesAt(0, program);
 
@@ -37,8 +37,9 @@ while (!quit)
         cpu.Start();
         cpu.RunUntilStopped();
         long tStatesOut = cpu.EmulatedTStates;
-        Console.WriteLine($"Was {tStatesOut - tStatesIn} ticks.");
-        Console.WriteLine("Should be: " + ticks + " ticks.");
+        Console.WriteLine($"Was {tStatesOut - tStatesIn} ticks, should be { ticks} ticks.");
+        // should be 40ms
+        Console.WriteLine($"Elapsed was {cpu.LastRunTimeInMilliseconds}ms, should be 40ms");
     }
 }
 

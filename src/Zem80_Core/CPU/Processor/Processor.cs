@@ -17,6 +17,11 @@ namespace Zem80.Core
     {
         public const int MAX_MEMORY_SIZE_IN_BYTES = 65536;
         public const float DEFAULT_PROCESSOR_FREQUENCY = 4;
+#if RELEASE
+        public const int WAIT_COUNT = 4;
+#else
+        public const int WAIT_COUNT = 3;
+#endif
 
         private bool _running;
         private bool _halted;
@@ -27,6 +32,8 @@ namespace Zem80.Core
         private int _waitCyclesAdded;
         private int _windowsTicksPerZ80Tick;
         private long _emulatedTStates;
+        private int _waitCount;
+        private long _lastElapsedTicks;
 
         private Stopwatch _clock;
         private Thread _instructionCycle;
@@ -58,6 +65,7 @@ namespace Zem80.Core
         public TimingMode TimingMode { get; private set; }
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; 
         public long EmulatedTStates => _emulatedTStates;
+        public long? LastRunTimeInMilliseconds { get; private set; }
 
         IEnumerable<ushort> IDebugProcessor.Breakpoints => _breakpoints;
 
@@ -107,6 +115,9 @@ namespace Zem80.Core
 
         public void Stop()
         {
+            _clock.Stop();
+            LastRunTimeInMilliseconds = _clock.ElapsedMilliseconds;
+
             _running = false;
             _halted = false;
 
@@ -460,9 +471,15 @@ namespace Zem80.Core
             {
                 if (_realTime)
                 {
-                    long currentTicks = _clock.ElapsedTicks;
-                    long targetTicks = currentTicks + _windowsTicksPerZ80Tick;
+                    _waitCount++;
+                    long targetTicks = _lastElapsedTicks + _windowsTicksPerZ80Tick;
+                    if (_waitCount == WAIT_COUNT)
+                    {
+                        targetTicks--;
+                        _waitCount = 0;
+                    }
                     while (_clock.ElapsedTicks < targetTicks) ;
+                    _lastElapsedTicks = _clock.ElapsedTicks;
                 }
 
                 OnClockTick?.Invoke(this, _executingInstructionPackage);
@@ -656,7 +673,7 @@ namespace Zem80.Core
         // I segregated these onto an interface just to keep them logically partioned from the main API but without moving them out to a class.
         // Calling code can get at these methods using the Processor.Timing property (or by casting to the interface type, but don't do that, it's ugly).
 
-        #region IInstructionTiming
+#region IInstructionTiming
         void IInstructionTiming.OpcodeFetchCycle(ushort address, byte data)
         {
             IO.SetOpcodeFetchState(address);
@@ -805,7 +822,7 @@ namespace Zem80.Core
                 WaitForNextClockTick();
             }
         }
-        #endregion  
+#endregion
 
         public Processor(IMemoryBank memory = null, IMemoryMap map = null, ushort topOfStackAddress = 0, float frequencyInMHz = DEFAULT_PROCESSOR_FREQUENCY, bool enableFlagPrecalculation = true)
         {
@@ -813,7 +830,7 @@ namespace Zem80.Core
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.
 
             FrequencyInMHz = frequencyInMHz;
-            _windowsTicksPerZ80Tick = (int)Math.Ceiling(10 / frequencyInMHz);
+            _windowsTicksPerZ80Tick = (int)Math.Ceiling(Stopwatch.Frequency / (frequencyInMHz * 1000000));
 
             Registers = new Registers();
             Ports = new Ports(this);

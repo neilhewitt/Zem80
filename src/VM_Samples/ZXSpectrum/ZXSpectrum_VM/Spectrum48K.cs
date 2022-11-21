@@ -8,25 +8,20 @@ using Zem80.Core.Instructions;
 using Zem80.Core.Memory;
 using ZXSpectrum.VM.Sound;
 using MultimediaTimer;
+using Timer = MultimediaTimer.Timer;
 
 namespace ZXSpectrum.VM
 {
     public class Spectrum48K
     {
-        public const int TICKS_BETWEEN_FRAMES = 69887; // PAL only
         public const int FLASH_FRAME_RATE = 16; // PAL only
 
         private Processor _cpu;
         private Beeper _beeper;
-        private int _ticksSinceLastDisplayUpdate;
+        private Timer _timer;
         private int _displayUpdatesSinceLastFlash;
         private bool _flashOn;
-        private bool _updateDisplayNow;
         private ScreenMap _screen;
-        private IDictionary<int, int> _displayWaits = new Dictionary<int, int>();
-
-        private Thread _updateThread;
-        private bool _killUpdateThread;
 
         public event EventHandler<byte[]> OnUpdateDisplay;
 
@@ -44,7 +39,7 @@ namespace ZXSpectrum.VM
 
         public void Stop()
         {
-            _killUpdateThread = true;
+            _timer.Stop();
             _beeper.Dispose();
             _cpu.Stop();
         }
@@ -201,75 +196,44 @@ namespace ZXSpectrum.VM
             _cpu.Memory.Untimed.WriteBytesAt(0x4000, tapData);
         }
 
-        private void ClockTick(object sender, InstructionPackage package)
-        {
-            // handle memory contention (where the ULA is reading the video memory and blocks the CPU from running)
-            // we don't emulate the ULA directly and no actual memory reads are occurring here, but that's fine (see UpdateDisplay())
-
-            if (_displayWaits.ContainsKey(_ticksSinceLastDisplayUpdate))
-            {
-                _cpu.AddWaitCycles(_displayWaits[_ticksSinceLastDisplayUpdate]);
-            }
-
-            _ticksSinceLastDisplayUpdate++;
-
-            if (_ticksSinceLastDisplayUpdate >= TICKS_BETWEEN_FRAMES)
-            {
-                // we've reached the vertical blanking interval, so raise an interrupt for the keyboard processing etc.
-                // and then update the display
-
-                _cpu.RaiseInterrupt();
-                _updateDisplayNow = true;
-                _ticksSinceLastDisplayUpdate = 0;
-            }
-        }
-
         private void StartInternal(string snapshotPath = null)
         {
             _cpu.Initialise(timingMode: TimingMode.PseudoRealTime);
             if (snapshotPath != null) LoadSnapshot(snapshotPath);
+            _timer = new Timer();
+            _timer.Interval = TimeSpan.FromMilliseconds(20);
+            _timer.Elapsed += UpdateDisplay;
             _cpu.Start();
+            _timer.Start();
         }
 
-        private void UpdateDisplay()
+        private void UpdateDisplay(object sender, EventArgs e)
         {
-            while (!_killUpdateThread)
+            // we're faking the screen update process here:
+            // up to this point, we've been adding wait cycles to the processor
+            // to simulate the contention of video memory (the ULA would be reading
+            // the video RAM at this point, but in our emulation nothing happpens);
+            // then, when we have counted enough ticks since the last screen update 
+            // to be at the vertical blanking interval (that's crazy CRT talk, but Google it 
+            // if you want to understand how TVs used to work!), we 'instantaneously' 
+            // update the display
+
+            byte[] pixelBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x4000, 6144);
+            byte[] attributeBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x5800, 768);
+            _screen.Fill(pixelBuffer, attributeBuffer);
+
+            // every FLASH_FRAME_RATE frames, we invert any attribute block that has FLASH set
+            if (_displayUpdatesSinceLastFlash++ >= FLASH_FRAME_RATE)
             {
-                if (_updateDisplayNow)
-                {
-                    _updateDisplayNow = false;
-
-                    // this does a screen update after every TICKS_BETWEEN_FRAMES t-states
-
-                    // we're faking the screen update process here:
-                    // up to this point, we've been adding wait cycles to the processor
-                    // to simulate the contention of video memory (the ULA would be reading
-                    // the video RAM at this point, but in our emulation nothing happpens);
-                    // then, when we have counted enough ticks since the last screen update 
-                    // to be at the vertical blanking interval (that's crazy CRT talk, but Google it 
-                    // if you want to understand how TVs used to work!), we 'instantaneously' 
-                    // update the display
-
-                    byte[] pixelBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x4000, 6144);
-                    byte[] attributeBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x5800, 768);
-                    _screen.Fill(pixelBuffer, attributeBuffer);
-
-                    // every FLASH_FRAME_RATE frames, we invert any attribute block that has FLASH set
-                    if (_displayUpdatesSinceLastFlash++ >= FLASH_FRAME_RATE)
-                    {
-                        _flashOn = !_flashOn;
-                    }
-
-                    byte[] screenBitmap = _screen.ToRGBA(_flashOn);
-                    OnUpdateDisplay?.Invoke(this, screenBitmap);
-
-                    if (_displayUpdatesSinceLastFlash > FLASH_FRAME_RATE) _displayUpdatesSinceLastFlash = 0;
-                }
-                else
-                {
-                    Thread.Yield();
-                }
+                _flashOn = !_flashOn;
             }
+
+            byte[] screenBitmap = _screen.ToRGBA(_flashOn);
+            OnUpdateDisplay?.Invoke(this, screenBitmap);
+
+            if (_displayUpdatesSinceLastFlash > FLASH_FRAME_RATE) _displayUpdatesSinceLastFlash = 0;
+
+            _cpu.RaiseInterrupt();
         }
 
         private byte ReadPort()
@@ -319,25 +283,11 @@ namespace ZXSpectrum.VM
         {
         }
 
-        private void GenerateDisplayWaits()
-        {
-            // Since two devices cannot read RAM at the same time, when the ULA would be reading the screen RAM directly
-            // during the display update, the CPU needs to be turned off so no memory reads can occur. This is called 'memory contention'.
-            // To do this, the ULA holds the CPU's WAIT pin low to cause the CPU to suspend for a certain number of cycles while it reads
-            // the screen RAM. This function generates the correct number of wait cycles at the right points in the screen update cycle, which 
-            // will be used when we update the display.
-            int wait = 6;
-            for (int i = 14335; i < 14341; i++) _displayWaits.Add(i, wait--);
-            wait = 6;
-            for (int i = 14343; i < 14349; i++) _displayWaits.Add(i, wait--);
-        }
-
         public Spectrum48K()
         {
             string romPath = "rom\\48k.rom";
 
             _screen = new ScreenMap();
-            GenerateDisplayWaits();
 
             // set up the memory map - 16K ROM + 48K RAM = 64K
             IMemoryMap map = new MemoryMap(65536, false);
@@ -354,12 +304,6 @@ namespace ZXSpectrum.VM
             {
                 _cpu.Ports[i].Connect(ReadPort, WritePort, SignalPortRead, SignalPortWrite);
             }
-
-            _cpu.OnClockTick += ClockTick;
-            _ticksSinceLastDisplayUpdate = TICKS_BETWEEN_FRAMES; // trigger initial display buffer fill
-
-            _updateThread = new Thread(UpdateDisplay);
-            _updateThread.Start();
         }
     }
 }

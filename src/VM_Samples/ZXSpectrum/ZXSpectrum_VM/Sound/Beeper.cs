@@ -116,7 +116,7 @@ namespace ZXSpectrum.VM.Sound
 
             SetupSamples();
 
-            _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, true, 40); // can do lower latency than WaveOut
+            _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, true, 0); // can do lower latency than WaveOut
             
             int sampleRate = ((TICKS_PER_FRAME * FRAMES_PER_SECOND) / TICKS_PER_SAMPLE);
             WaveFormat format = new WaveFormat(sampleRate, 8, 1);
