@@ -294,7 +294,15 @@ namespace ZXSpectrum.VM
             map.Map(new ReadOnlyMemorySegment(File.ReadAllBytes(romPath)), 0);
             map.Map(new MemorySegment(49152), 16384);
 
-            _cpu = new Processor(map: map, frequencyInMHz: 3.5f);
+            int[] cpuWaitPattern = new int[] {
+#if RELEASE
+                3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 3
+#else
+                3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 3, 2
+#endif
+            };
+
+            _cpu = new Processor(map: map, frequencyInMHz: 3.5f, waitPattern: cpuWaitPattern);
             _beeper = new Beeper(_cpu);
 
             // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 

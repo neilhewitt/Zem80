@@ -29,9 +29,8 @@ namespace Zem80.Core
         private long _lastElapsedTicks;
 
         private int _windowsTicksPerZ80TickCeiling;
-        private int _windowsTicksFloorRate;
-        private int _floorWaitCount;
-        private int _floorCount;
+        private int[] _waitPattern;
+        private int _waitCount;
 
         private Stopwatch _clock;
         private Thread _instructionCycle;
@@ -469,19 +468,16 @@ namespace Zem80.Core
             {
                 if (_realTime)
                 {
-                    long targetTicks = _lastElapsedTicks + _windowsTicksPerZ80TickCeiling;
-                    if (_windowsTicksFloorRate > 0 && _floorWaitCount == _windowsTicksFloorRate && _floorCount < _windowsTicksFloorRate)
+                    int ticksToWait = _windowsTicksPerZ80TickCeiling;
+
+                    if (_waitPattern != null)
                     {
-                        targetTicks--;
-                        _floorWaitCount = 0;
-                        _floorCount++;
-                    }
-                    else
-                    {
-                        if (_floorCount == _windowsTicksFloorRate) _floorCount = 0;
-                        _floorWaitCount++;
+                        if (_waitCount == _waitPattern.Length) _waitCount = 0;
+                        ticksToWait = _waitPattern[_waitCount++];
                     }
 
+                    long targetTicks = _lastElapsedTicks + ticksToWait;
+                    
                     while (_clock.ElapsedTicks < targetTicks) ;
                     _lastElapsedTicks = _clock.ElapsedTicks;
                 }
@@ -826,9 +822,9 @@ namespace Zem80.Core
                 WaitForNextClockTick();
             }
         }
-#endregion
+        #endregion
 
-        public Processor(IMemoryBank memory = null, IMemoryMap map = null, ushort topOfStackAddress = 0, float frequencyInMHz = DEFAULT_PROCESSOR_FREQUENCY, bool enableFlagPrecalculation = true)
+        public Processor(IMemoryBank memory = null, IMemoryMap map = null, ushort topOfStackAddress = 0, float frequencyInMHz = DEFAULT_PROCESSOR_FREQUENCY, bool enableFlagPrecalculation = true, int[] waitPattern = null)
         {
             // You can supply your own memory implementations, for example if you need to do RAM paging for >64K implementations.
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.
@@ -862,14 +858,7 @@ namespace Zem80.Core
 
             float frequency = Stopwatch.Frequency / (frequencyInMHz * 1000000);
             _windowsTicksPerZ80TickCeiling = (int)Math.Ceiling(frequency);
-            if (frequency - _windowsTicksPerZ80TickCeiling != 0)
-            {
-#if RELEASE
-                _windowsTicksFloorRate = _windowsTicksPerZ80TickCeiling + 1;
-#else
-                _windowsTicksFloorRate = _windowsTicksPerZ80TickCeiling;
-#endif
-            }
+            _waitPattern = waitPattern;
 
             Registers = new Registers();
             Ports = new Ports(this);
