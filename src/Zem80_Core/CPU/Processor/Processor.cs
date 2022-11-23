@@ -17,11 +17,6 @@ namespace Zem80.Core
     {
         public const int MAX_MEMORY_SIZE_IN_BYTES = 65536;
         public const float DEFAULT_PROCESSOR_FREQUENCY = 4;
-#if RELEASE
-        public const int WAIT_COUNT = 4;
-#else
-        public const int WAIT_COUNT = 3;
-#endif
 
         private bool _running;
         private bool _halted;
@@ -30,10 +25,13 @@ namespace Zem80.Core
         private bool _suspendMachineCycles;
         private int _pendingWaitCycles;
         private int _waitCyclesAdded;
-        private int _windowsTicksPerZ80Tick;
         private long _emulatedTStates;
-        private int _waitCount;
         private long _lastElapsedTicks;
+
+        private int _windowsTicksPerZ80TickCeiling;
+        private int _windowsTicksFloorRate;
+        private int _floorWaitCount;
+        private int _floorCount;
 
         private Stopwatch _clock;
         private Thread _instructionCycle;
@@ -93,7 +91,7 @@ namespace Zem80.Core
                 TimingMode = timingMode;
                 InterruptMode = interruptMode;
                 
-                _realTime = (timingMode == TimingMode.PseudoRealTime);
+                _realTime = (timingMode == TimingMode.PseudoRealTime && Stopwatch.IsHighResolution);
                 _emulatedTStates = 0;
 
                 DisableInterrupts();
@@ -471,13 +469,19 @@ namespace Zem80.Core
             {
                 if (_realTime)
                 {
-                    _waitCount++;
-                    long targetTicks = _lastElapsedTicks + _windowsTicksPerZ80Tick;
-                    if (_waitCount == WAIT_COUNT)
+                    long targetTicks = _lastElapsedTicks + _windowsTicksPerZ80TickCeiling;
+                    if (_windowsTicksFloorRate > 0 && _floorWaitCount == _windowsTicksFloorRate && _floorCount < _windowsTicksFloorRate)
                     {
                         targetTicks--;
-                        _waitCount = 0;
+                        _floorWaitCount = 0;
+                        _floorCount++;
                     }
+                    else
+                    {
+                        if (_floorCount == _windowsTicksFloorRate) _floorCount = 0;
+                        _floorWaitCount++;
+                    }
+
                     while (_clock.ElapsedTicks < targetTicks) ;
                     _lastElapsedTicks = _clock.ElapsedTicks;
                 }
@@ -830,7 +834,42 @@ namespace Zem80.Core
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.
 
             FrequencyInMHz = frequencyInMHz;
-            _windowsTicksPerZ80Tick = (int)Math.Ceiling(Stopwatch.Frequency / (frequencyInMHz * 1000000));
+
+            // HACK ALERT!!!
+            // To simulate real-time operation, we need to work out how many Windows ticks of the Stopwatch class there are
+            // per emulated Z80 tick, so we can wait for the right amount of time for each clock cycle... easy, right?
+            // Well, no. Because it isn't always a whole number, and we can't wait for a fractional number of Stopwatch ticks.
+            // So, we need to create a pattern of waiting for one fewer ticks every x ticks to even out the wait time, otherwise
+            // timing-critical stuff in your emulated hardware may not work properly (example: Spectrum beeper sound)
+            //
+            // To do this, we work out the whole number of Windows ticks per Z80 tick, rounding up, and then if it's not already
+            // a whole number (which it would be at 5MHz, for example, but not at 3.5MHz), then after we've done a number of waits
+            // equal to that rounded-up number, we wait for one fewer tick next time (see WaitForNextClockTick for the implementation)
+            //
+            // But oh fun, when we're in DEBUG there is an overhead which throws out this calculation. So for the sake of
+            // your debug experience, if we're compiling in DEBUG then we deduct the tick one tick earlier to account for the longer instruction
+            // execution time. This more or less balances things out, but you may still encounter some timing problems.
+            // For example, Spectrum audio still tears in DEBUG sometimes. 
+            //
+            // To try to even things out further, then, every x times through this process, where x is equal to the whole number of ticks per Z80 tick,
+            // we skip removing a wait tick. This ensures that we're always basically 'rounding up' our waits towards the nearest whole number. This
+            // seems to give the closest to real-time performance I can get, but it depends on the Stopwatch class being high-resolution. If you're
+            // building on a platform where Stopwatch is not high-resolution then you basically can't run in PseudoRealTime mode.
+            //
+            // There must be an algorithm for working out a pattern that gets as close as possible to the right timing in both RELEASE and DEBUG
+            // builds, but I can't work out what it is, and this works reasonably well for my use cases. If you don't like it, fix it and send
+            // me a PR!
+
+            float frequency = Stopwatch.Frequency / (frequencyInMHz * 1000000);
+            _windowsTicksPerZ80TickCeiling = (int)Math.Ceiling(frequency);
+            if (frequency - _windowsTicksPerZ80TickCeiling != 0)
+            {
+#if RELEASE
+                _windowsTicksFloorRate = _windowsTicksPerZ80TickCeiling + 1;
+#else
+                _windowsTicksFloorRate = _windowsTicksPerZ80TickCeiling;
+#endif
+            }
 
             Registers = new Registers();
             Ports = new Ports(this);
