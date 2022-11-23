@@ -294,6 +294,10 @@ namespace ZXSpectrum.VM
             map.Map(new ReadOnlyMemorySegment(File.ReadAllBytes(romPath)), 0);
             map.Map(new MemorySegment(49152), 16384);
 
+            // need to even out the CPU timing so that audio works smoothly
+            // the issue is that at 3.5MHz, each Windows Stopwatch tick == 2.85 Z80 ticks, so it drifts out of sync
+            // the following pattern corrects that, but when in DEBUG, the software slows down enough to throw this
+            // timing out, so we use a different pattern
             int[] cpuWaitPattern = new int[] {
 #if RELEASE
                 3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 3

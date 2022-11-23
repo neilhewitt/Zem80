@@ -102,6 +102,8 @@ namespace Zem80.Core
         public void Start()
         {
             BeforeStart?.Invoke(null, null);
+            _lastElapsedTicks = 0;
+            _waitCount = 0;
             _running = true;
 
             IO.Clear();
@@ -112,11 +114,11 @@ namespace Zem80.Core
 
         public void Stop()
         {
-            _clock.Stop();
-            LastRunTimeInMilliseconds = _clock.ElapsedMilliseconds;
-
             _running = false;
             _halted = false;
+
+            _clock.Stop();
+            LastRunTimeInMilliseconds = _clock.ElapsedMilliseconds;
 
             OnStop?.Invoke(null, null);
         }

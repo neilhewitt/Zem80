@@ -5,16 +5,24 @@ using Zem80.Core.Instructions;
 
 Console.WriteLine("Zem80 Speed Test\n");
 
-Processor cpu = new Processor(frequencyInMHz: 3.5f);
+int[] cpuWaitPattern = new int[] {
+#if RELEASE
+            3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 3
+#else
+            3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 3, 2
+#endif
+            };
+
+Processor cpu = new Processor(frequencyInMHz: 3.5f, waitPattern: cpuWaitPattern);
 Instruction lde = InstructionSet.Instructions[0x1E];
 int ticks = ((lde.Timing.TStates * 10000) + 4); // +4 is for the final HALT instruction
 
-byte[] program = new byte[40001]; // 20000 x LD E,A
-for (int i = 0; i < 40000; i++)
+byte[] program = new byte[20001]; // 20000 x LD E,A
+for (int i = 0; i < 20000; i++)
 {
     program[i] = lde.Opcode;
 }
-program[40000] = 0x76; // HALT
+program[20000] = 0x76; // HALT
 
 cpu.Memory.Untimed.WriteBytesAt(0, program);
 
@@ -39,7 +47,7 @@ while (!quit)
         long tStatesOut = cpu.EmulatedTStates;
         Console.WriteLine($"Was {tStatesOut - tStatesIn} ticks, should be { ticks} ticks.");
         // should be 40ms
-        Console.WriteLine($"Elapsed was {cpu.LastRunTimeInMilliseconds}ms, should be 40ms");
+        Console.WriteLine($"Elapsed was {cpu.LastRunTimeInMilliseconds}ms, should be 20ms");
     }
 }
 
