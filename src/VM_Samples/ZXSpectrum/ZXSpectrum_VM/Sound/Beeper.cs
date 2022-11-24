@@ -79,7 +79,7 @@ namespace ZXSpectrum.VM.Sound
                 long currentTStates = _cpu.EmulatedTStates;
                 long ticks = currentTStates - _lastTStates;
 
-                long samplesRequired = ticks / TICKS_PER_SAMPLE;
+                long samplesRequired = (ticks / TICKS_PER_SAMPLE);
                 if (samplesRequired <= SAMPLE_SIZE && samplesRequired > 0)
                 {
                     _currentFrequencyRange = _currentFrequencyRange == 0 ? frequencyRange : 0;
@@ -105,7 +105,7 @@ namespace ZXSpectrum.VM.Sound
                 {
                     // 0 = no sound, 10 = low frequency sound, 20 = high frequency sound
                     // basically, oscillating between low/high at different rates creates the tones
-                    _sampleData[i][j] = i switch { 1 => 10, 2 => 20, _ => 0};
+                    _sampleData[i][j] = i switch { 1 => 10, 2 => 20, _ => 0 };
                 }
             }
         }

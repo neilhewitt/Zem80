@@ -14,5 +14,7 @@ namespace Zem80.Core
 
         ExecutionResult ExecuteDirect(byte[] opcode);
         ExecutionResult ExecuteDirect(string mnemonic, byte? arg1, byte? arg2);
+
+        long? LastRunTimeInMilliseconds { get; }
     }
 }

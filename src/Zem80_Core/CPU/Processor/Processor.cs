@@ -1,22 +1,18 @@
 ﻿using System;
-using System.Threading;
-using System.Linq;
-using System.Diagnostics;
-using Zem80.Core.Instructions;
-using Zem80.Core.Memory;
-using Zem80.Core.IO;
-using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Runtime.CompilerServices;
+using System.Diagnostics;
+using System.Threading;
+using Zem80.Core.Instructions;
+using Zem80.Core.IO;
+using Zem80.Core.Memory;
 using Stack = Zem80.Core.Memory.Stack;
 
 namespace Zem80.Core
 {
-    public class Processor : IDebugProcessor, IInstructionTiming, IDisposable
+    public partial class Processor : IDisposable
     {
         public const int MAX_MEMORY_SIZE_IN_BYTES = 65536;
-        public const float DEFAULT_PROCESSOR_FREQUENCY = 4;
+        public const float DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ = 4;
 
         private bool _running;
         private bool _halted;
@@ -28,7 +24,7 @@ namespace Zem80.Core
         private long _emulatedTStates;
         private long _lastElapsedTicks;
 
-        private int _windowsTicksPerZ80TickCeiling;
+        private int _windowsTicksPerZ80Tick;
         private int[] _waitPattern;
         private int _waitCount;
 
@@ -38,12 +34,6 @@ namespace Zem80.Core
         
         private Func<byte> _interruptCallback;
         private bool _interruptLatch;
-
-        private EventHandler<InstructionPackage> _onBreakpoint;
-        private IList<ushort> _breakpoints;
-        
-        public IDebugProcessor Debug => this;
-        public IInstructionTiming Timing => this;
        
         public bool EndOnHalt { get; private set; }
 
@@ -62,9 +52,6 @@ namespace Zem80.Core
         public TimingMode TimingMode { get; private set; }
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; 
         public long EmulatedTStates => _emulatedTStates;
-        public long? LastRunTimeInMilliseconds { get; private set; }
-
-        IEnumerable<ushort> IDebugProcessor.Breakpoints => _breakpoints;
 
         public event EventHandler<InstructionPackage> OnClockTick;
         public event EventHandler<InstructionPackage> BeforeExecuteInstruction;
@@ -73,8 +60,6 @@ namespace Zem80.Core
         public event EventHandler BeforeStart;
         public event EventHandler OnStop;
         public event EventHandler<HaltReason> OnHalt;
-
-        event EventHandler<InstructionPackage> IDebugProcessor.OnBreakpoint { add { _onBreakpoint += value; } remove { _onBreakpoint -= value; } }
 
         public void Dispose()
         {
@@ -118,7 +103,7 @@ namespace Zem80.Core
             _halted = false;
 
             _clock.Stop();
-            LastRunTimeInMilliseconds = _clock.ElapsedMilliseconds;
+            _lastRunTimeInMilliseconds = _clock.ElapsedMilliseconds;
 
             OnStop?.Invoke(null, null);
         }
@@ -470,7 +455,7 @@ namespace Zem80.Core
             {
                 if (_realTime)
                 {
-                    int ticksToWait = _windowsTicksPerZ80TickCeiling;
+                    int ticksToWait = _windowsTicksPerZ80Tick;
 
                     if (_waitPattern != null)
                     {
@@ -675,158 +660,14 @@ namespace Zem80.Core
         // I segregated these onto an interface just to keep them logically partioned from the main API but without moving them out to a class.
         // Calling code can get at these methods using the Processor.Timing property (or by casting to the interface type, but don't do that, it's ugly).
 
-#region IInstructionTiming
-        void IInstructionTiming.OpcodeFetchCycle(ushort address, byte data)
-        {
-            IO.SetOpcodeFetchState(address);
-            WaitForNextClockTick();
-            IO.AddOpcodeFetchData(data);
-            WaitForNextClockTick();
-            InsertWaitCycles();
-
-            IO.EndOpcodeFetchState();
-            IO.SetAddressBusValue(Registers.IR);
-            IO.SetDataBusValue(0x00);
-
-            WaitForNextClockTick();
-            WaitForNextClockTick();
-        }
-
-        void IInstructionTiming.MemoryReadCycle(ushort address, byte data)
-        {
-            IO.SetMemoryReadState(address);
-            WaitForNextClockTick();
-
-            IO.AddMemoryData(data);
-            WaitForNextClockTick();
-            InsertWaitCycles();
-
-            IO.EndMemoryReadState();
-            WaitForNextClockTick();
-
-            Instruction instruction = _executingInstructionPackage?.Instruction;
-            if (instruction != null)
-            {
-                if (instruction.Timing.Exceptions.HasProlongedMemoryRead)
-                {
-                    WaitForNextClockTick();
-                }
-            }
-        }
-
-        void IInstructionTiming.MemoryWriteCycle(ushort address, byte data)
-        {
-            IO.SetMemoryWriteState(address, data);
-            WaitForNextClockTick();
-            WaitForNextClockTick();
-            InsertWaitCycles();
-
-            IO.EndMemoryWriteState();
-            WaitForNextClockTick();
-
-            Instruction instruction = _executingInstructionPackage?.Instruction;
-            if (instruction != null)
-            {
-                if (instruction.Timing.Exceptions.HasProlongedMemoryWrite)
-                {
-                    WaitForNextClockTick();
-                    WaitForNextClockTick();
-                }
-            }
-        }
-
-        void IInstructionTiming.BeginStackReadCycle()
-        {
-            IO.SetMemoryReadState(Registers.SP);
-            WaitForNextClockTick();
-        }
-
-
-        void IInstructionTiming.EndStackReadCycle(bool highByte, byte data)
-        {
-            IO.AddMemoryData(data);
-            WaitForNextClockTick();
-            InsertWaitCycles();
-
-            IO.EndMemoryReadState();
-            WaitForNextClockTick();
-        }
-
-        void IInstructionTiming.BeginStackWriteCycle(bool highByte, byte data)
-        {
-            IO.SetMemoryWriteState(Registers.SP, data);
-            WaitForNextClockTick();
-            WaitForNextClockTick();
-            InsertWaitCycles();
-        }
-
-        void IInstructionTiming.EndStackWriteCycle()
-        {
-            IO.EndMemoryWriteState();
-            WaitForNextClockTick();
-        }
-
-        void IInstructionTiming.BeginPortReadCycle(byte n, bool bc)
-        {
-            ushort address = bc ? (Registers.C, Registers.B).ToWord() : (n, Registers.A).ToWord();
-
-            IO.SetPortReadState(address);
-            WaitForNextClockTick();
-        }
-
-        void IInstructionTiming.EndPortReadCycle(byte data)
-        {
-            IO.AddPortReadData(data);
-            WaitForNextClockTick();
-            InsertWaitCycles();
-
-            WaitForNextClockTick();
-            IO.EndPortReadState();
-            WaitForNextClockTick();
-        }
-
-        void IInstructionTiming.BeginPortWriteCycle(byte data, byte n, bool bc)
-        {
-            ushort address = bc ? (Registers.C, Registers.B).ToWord() : (n, Registers.A).ToWord();
-
-            IO.SetPortWriteState(address, data);
-            WaitForNextClockTick();
-        }
-
-        void IInstructionTiming.EndPortWriteCycle()
-        {
-            WaitForNextClockTick();
-            InsertWaitCycles();
-
-            WaitForNextClockTick();
-            IO.EndPortWriteState();
-            WaitForNextClockTick();
-        }
-
-        void IInstructionTiming.BeginInterruptRequestAcknowledgeCycle(int tStates)
-        {
-            IO.SetInterruptState();
-            for (int i = 0; i < tStates; i++)
-            {
-                WaitForNextClockTick();
-            }
-        }
-
-        void IInstructionTiming.EndInterruptRequestAcknowledgeCycle()
-        {
-            IO.EndInterruptState();
-        }
-
-        void IInstructionTiming.InternalOperationCycle(int tStates)
-        {
-            for (int i = 0; i < tStates; i++)
-            {
-                WaitForNextClockTick();
-            }
-        }
-        #endregion
-
-        public Processor(IMemoryBank memory = null, IMemoryMap map = null, ushort topOfStackAddress = 0, float frequencyInMHz = DEFAULT_PROCESSOR_FREQUENCY, bool enableFlagPrecalculation = true, int[] waitPattern = null)
+        public Processor(
+            IMemoryBank memory = null, 
+            IMemoryMap map = null, 
+            ushort topOfStackAddress = 0, 
+            float frequencyInMHz = DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ, 
+            bool enableFlagPrecalculation = true, 
+            int[] waitPattern = null
+            )
         {
             // You can supply your own memory implementations, for example if you need to do RAM paging for >64K implementations.
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.
@@ -840,26 +681,12 @@ namespace Zem80.Core
             // So, we need to create a pattern of waiting for one fewer ticks every x ticks to even out the wait time, otherwise
             // timing-critical stuff in your emulated hardware may not work properly (example: Spectrum beeper sound)
             //
-            // To do this, we work out the whole number of Windows ticks per Z80 tick, rounding up, and then if it's not already
-            // a whole number (which it would be at 5MHz, for example, but not at 3.5MHz), then after we've done a number of waits
-            // equal to that rounded-up number, we wait for one fewer tick next time (see WaitForNextClockTick for the implementation)
-            //
-            // But oh fun, when we're in DEBUG there is an overhead which throws out this calculation. So for the sake of
-            // your debug experience, if we're compiling in DEBUG then we deduct the tick one tick earlier to account for the longer instruction
-            // execution time. This more or less balances things out, but you may still encounter some timing problems.
-            // For example, Spectrum audio still tears in DEBUG sometimes. 
-            //
-            // To try to even things out further, then, every x times through this process, where x is equal to the whole number of ticks per Z80 tick,
-            // we skip removing a wait tick. This ensures that we're always basically 'rounding up' our waits towards the nearest whole number. This
-            // seems to give the closest to real-time performance I can get, but it depends on the Stopwatch class being high-resolution. If you're
-            // building on a platform where Stopwatch is not high-resolution then you basically can't run in PseudoRealTime mode.
-            //
-            // There must be an algorithm for working out a pattern that gets as close as possible to the right timing in both RELEASE and DEBUG
-            // builds, but I can't work out what it is, and this works reasonably well for my use cases. If you don't like it, fix it and send
-            // me a PR!
-
-            float frequency = Stopwatch.Frequency / (frequencyInMHz * 1000000);
-            _windowsTicksPerZ80TickCeiling = (int)Math.Ceiling(frequency);
+            // Client code can supply a WaitPattern at constructor time. This is an array of Int32 which will be used as a source
+            // for the number of Windows ticks to wait, one after the other each Z80 tick, until the pattern ends, when it will
+            // repeat. This avoids the need to try to solve the problem generally in the Z80 emulation itself, but puts the onus
+            // on understanding the specific performance of the emulated hardware onto the developer. Sorry!
+            float windowsFrequency = Stopwatch.Frequency / (frequencyInMHz * 1000000);
+            _windowsTicksPerZ80Tick = (int)Math.Ceiling(windowsFrequency);
             _waitPattern = waitPattern;
 
             Registers = new Registers();

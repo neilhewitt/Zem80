@@ -300,9 +300,9 @@ namespace ZXSpectrum.VM
             // timing out, so we use a different pattern
             int[] cpuWaitPattern = new int[] {
 #if RELEASE
-                3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 3
+                3, 3, 3, 2
 #else
-                3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 3, 2
+                3, 3, 2, 2
 #endif
             };
 

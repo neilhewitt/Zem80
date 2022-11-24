@@ -13,7 +13,7 @@ int[] cpuWaitPattern = new int[] {
 #endif
             };
 
-Processor cpu = new Processor(frequencyInMHz: 3.5f, waitPattern: cpuWaitPattern);
+Processor cpu = new Processor(frequencyInMHz: 3.5f);//, waitPattern: cpuWaitPattern);
 Instruction lde = InstructionSet.Instructions[0x1E];
 int ticks = ((lde.Timing.TStates * 10000) + 4); // +4 is for the final HALT instruction
 
@@ -47,7 +47,7 @@ while (!quit)
         long tStatesOut = cpu.EmulatedTStates;
         Console.WriteLine($"Was {tStatesOut - tStatesIn} ticks, should be { ticks} ticks.");
         // should be 40ms
-        Console.WriteLine($"Elapsed was {cpu.LastRunTimeInMilliseconds}ms, should be 20ms");
+        Console.WriteLine($"Elapsed was {cpu.Debug.LastRunTimeInMilliseconds}ms, should be 20ms");
     }
 }
 
