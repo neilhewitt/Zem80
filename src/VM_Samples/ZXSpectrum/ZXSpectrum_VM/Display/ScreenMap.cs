@@ -141,6 +141,12 @@ namespace ZXSpectrum.VM
             _border = colour;
         }
 
+        public void SetBorderColour(byte threeBit)
+        {
+            threeBit = threeBit.GetByteFromBits(0, 3);
+            _border = DisplayColour.FromThreeBit(threeBit);
+        }
+
         public ScreenMap()
         {
             _pixels = new PixelMap(192, 256);

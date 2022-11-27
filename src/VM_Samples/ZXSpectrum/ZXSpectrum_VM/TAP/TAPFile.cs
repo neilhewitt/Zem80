@@ -25,16 +25,17 @@ namespace ZXSpectrum.VM
                 ushort blockSize = (ushort)(fileData[index] + (fileData[index + 1] * 256));
                 byte flag = fileData[index + 2];
                 byte[] blockData = fileData[index..(index + blockSize)];
+                
                 if (flag == 0)
                 {
-                    Header = new TAPHeader(fileData[index..(index + 19)]);
+                    Header = new TAPHeader(blockData);
                 }
                 else
                 {
                     TAPBlock block = new TAPBlock(blockSize, blockData);
                     _blocks.Add(block);
                 }
-                index = index + blockSize - 1;
+                index = index + blockSize;
             }
         }
 

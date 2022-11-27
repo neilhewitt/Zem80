@@ -28,7 +28,7 @@ namespace ZXSpectrum.UI
             KeyUp += MainWindow_KeyUp;
 
             //_vm.Start();
-            _vm.StartWithSnapshot("c:\\temp\\atic.sna");
+            _vm.StartWithSnapshot("c:\\temp\\manic miner.sna");
         }
 
         private void MainWindow_KeyUp(object sender, KeyEventArgs e)

@@ -46,6 +46,11 @@ namespace ZXSpectrum.VM
 
         private void LoadSnapshot(string path)
         {
+            if (!File.Exists(path))
+            {
+                throw new FileNotFoundException($"Snapshot file {path} does not exist.");
+            }
+            
             switch (Path.GetExtension(path).ToUpper())
             {
                 case ".SNA":
@@ -261,19 +266,9 @@ namespace ZXSpectrum.VM
 
                 if (portAddress.LowByte() == 0xFE) // PORT OxFE
                 {
-                    // TODO: handle MIC, EAR and speaker activation (bit 3 == MIC, bit 4 == EAR / speaker)
-                    // bits 0,1,2 encode the border colour
-                    if (portAddress >> 8 < 8)
-                    {
-                        ColourValue newBorder = DisplayColour.FromThreeBit(output);
-                        if (newBorder != null)
-                        {
-                            _screen.SetBorderColour(newBorder);
-                        }
-                    }
+                    _screen.SetBorderColour(output);
+                    _beeper.Update(output);
                 }
-
-                _beeper.Update(output, _screen.BorderColour.Bits);
             }
         }
 

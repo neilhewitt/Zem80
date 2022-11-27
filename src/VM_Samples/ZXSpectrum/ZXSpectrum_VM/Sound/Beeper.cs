@@ -45,9 +45,10 @@ namespace ZXSpectrum.VM.Sound
             _player.Dispose();
         }
 
-        public void Update(byte outValue, byte borderColour)
+        public void Update(byte outValue)
         {
             int frequencyRange = 0;
+            byte borderColour = outValue.GetByteFromBits(0, 3);
 
             bool changedState = false;
             bool bit3 = ((outValue >> 3) & 1) != 0;
