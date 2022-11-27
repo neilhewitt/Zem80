@@ -160,6 +160,7 @@
 
         internal void EndPortWriteState()
         {
+            DATA_BUS = 0;
             IORQ = false;
             WR = false;
         }
