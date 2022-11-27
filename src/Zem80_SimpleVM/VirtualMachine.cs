@@ -77,6 +77,7 @@ namespace Zem80.SimpleVM
             Write(e.InstructionAddress.ToString("X4") + ": " + mnemonic.PadRight(20));
             regValue(ByteRegister.A); wregValue(WordRegister.BC); wregValue(WordRegister.DE); wregValue(WordRegister.HL); wregValue(WordRegister.SP); wregValue(WordRegister.PC);
             Write(_cpu.Flags.State.ToString());
+            Write("\n");
 
             _lastRegisters = _cpu.Registers.Snapshot();
 
