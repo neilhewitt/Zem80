@@ -13,6 +13,7 @@ namespace Zem80.Core
     {
         public const int MAX_MEMORY_SIZE_IN_BYTES = 65536;
         public const float DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ = 4;
+        public readonly int[] DEFAULT_WAIT_PATTERN = { 3, 2 };
 
         private bool _running;
         private bool _halted;
@@ -25,8 +26,8 @@ namespace Zem80.Core
         private long _lastElapsedTicks;
 
         private int _windowsTicksPerZ80Tick;
-        private int[] _waitPattern;
-        private int _waitCount;
+        private int[] _cycleWaitPattern;
+        private int _cycleWaitCount;
 
         private Stopwatch _clock;
         private Thread _instructionCycle;
@@ -88,7 +89,7 @@ namespace Zem80.Core
         {
             BeforeStart?.Invoke(null, null);
             _lastElapsedTicks = 0;
-            _waitCount = 0;
+            _cycleWaitCount = 0;
             _running = true;
 
             IO.Clear();
@@ -327,7 +328,7 @@ namespace Zem80.Core
 
         private InstructionPackage DecodeNOP()
         {
-            FetchOpcodeByte(); // enable devices to run, interrupts etc
+            FetchNextOpcodeByte(); // enable devices to run, interrupts etc
             return new InstructionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
         }
 
@@ -338,64 +339,82 @@ namespace Zem80.Core
             InstructionData data = new InstructionData();
             ushort instructionAddress = Registers.PC;
 
-            b0 = FetchOpcodeByte(); // always at least one opcode byte
+            b0 = FetchNextOpcodeByte(); // always at least one opcode byte
             Registers.PC++;
 
-            if (b0 == 0xCB || b0 == 0xDD || b0 == 0xED || b0 == 0xFD) // was byte 0 a prefix code?
+            // was byte 0 a prefix code?
+            if (b0 == 0xCB || b0 == 0xDD || b0 == 0xED || b0 == 0xFD) 
             {
-                b1 = Memory.Untimed.ReadByteAt(Registers.PC); // peek ahead
+                b1 = Memory.Untimed.ReadByteAt(Registers.PC); // peek ahead, we need this value but don't want to advance PC yet
+                
                 if ((b0 == 0xDD || b0 == 0xFD || b0 == 0xED) && (b1 == 0xDD || b1 == 0xFD || b1 == 0xED))
                 {
-                    // sequences of 0xDD / 0xFD / 0xED either / or count as NOP until the final 0xDD / 0xFD / 0xED which is then the prefix byte
-                    b1 = FetchOpcodeByte(); // need to call this even though we have the value, to generate correct timing
+                    // sequences of 0xDD / 0xFD / 0xED count as NOP until the final 0xDD / 0xFD / 0xED which is then the prefix byte
+                    b1 = FetchNextOpcodeByte();
                     Registers.PC++;
+                    
                     return new InstructionPackage(InstructionSet.NOP, data, instructionAddress);
                 }
                 else if ((b0 == 0xDD || b0 == 0xFD) && b1 == 0xCB)
                 {
-                    // DDCB / FDCB: four-byte opcode = two prefix bytes + one displacement byte + one opcode byte - no four-byte instruction has any actual operand values
-                    b1 = FetchOpcodeByte();
+                    // DDCB / FDCB: four-byte opcode = two prefix bytes + one displacement byte + one opcode byte (no four-byte instruction has any actual operand values)
+                    b1 = FetchNextOpcodeByte();
                     Registers.PC++;
-                    data.Argument1 = FetchOperandByte(); // displacement byte is the only 'operand'
+                    
+                    data.Argument1 = FetchNextOperandByte(); // displacement byte is the only 'operand'
                     Registers.PC++;
-                    b3 = FetchOpcodeByte();
+                    
+                    b3 = FetchNextOpcodeByte();
                     Registers.PC++;
+                    
                     if (!InstructionSet.Instructions.TryGetValue(b3 | b1 << 8 | b0 << 16, out instruction))
                     {
-                        // not a valid instruction - the Z80 spec says we should run a NOP instead
-                        return new InstructionPackage(InstructionSet.NOP, data, instructionAddress);
+                        // not a valid instruction - the Z80 spec says we should run a single NOP instead
+                        instruction = InstructionSet.NOP;
                     }                    
-
-                    return new InstructionPackage(instruction, data, instructionAddress);
                 }
                 else 
                 {
-                    // all other prefixed instructions: a two-byte opcode + up to 2 operand bytes
+                    // all other prefixed instructions (CB, ED, DD, FD): a two-byte opcode + up to 2 operand bytes
                     if (!InstructionSet.Instructions.TryGetValue(b1 | b0 << 8, out instruction))
                     {
-                        // not a valid instruction - the Z80 spec says we should run a NOP instead
-                        return new InstructionPackage(InstructionSet.NOP, data, instructionAddress);
+                        // if prefix was 0xED and the instruction is invalid, the spec says run *two* NOPs
+                        // so we need to fix up the code to simulate this
+                        if (b0 == 0xED)
+                        {
+                            instructionAddress--;
+                            Memory.Untimed.WriteBytesAt(instructionAddress, new byte[] { 0x00, 0x00 }); // two NOPs
+                            Registers.PC = instructionAddress;
+                        }
+                        // if the prefix was DD or FD and the instruction is invalid, the spec says we should run a NOP now but then run the equivalent
+                        // unprefixed instruction next
+                        else if (b0 == 0xDD || b0 == 0xFD)
+                        {
+                            instructionAddress--;
+                            Registers.PC = instructionAddress;
+                        }
+
+                        // not a valid instruction - the Z80 spec says we should run a NOP instead (if prefix was CB, just run a single NOP)
+                        instruction = InstructionSet.NOP;
                     }
                     else
                     {
-                        b1 = FetchOpcodeByte(); // need to call this even though we have the value, to generate correct timing
+                        b1 = FetchNextOpcodeByte();
                         Registers.PC++;
 
-                        addTicksIfNeededForOpcodeFetch(); // (some specific opcodes have longer opcode fetch cycles than normal)
+                        WaitForClockTicks(instruction.Timing.Exceptions.ExtraOpcodeFetchTStates);
 
                         // fetch the operand bytes (as required)
                         if (instruction.Argument1 != InstructionElement.None)
                         {
-                            data.Argument1 = FetchOperandByte();
+                            data.Argument1 = FetchNextOperandByte();
                             Registers.PC++;
                             if (instruction.Argument2 != InstructionElement.None)
                             {
-                                data.Argument2 = FetchOperandByte();
+                                data.Argument2 = FetchNextOperandByte();
                                 Registers.PC++;
                             }
                         }
-
-                        return new InstructionPackage(instruction, data, instructionAddress);
                     }
                 }
             }
@@ -404,48 +423,42 @@ namespace Zem80.Core
                 // unprefixed instruction - 1 byte opcode + up to 2 operand bytes
                 if (!InstructionSet.Instructions.TryGetValue(b0, out instruction))
                 {
-                    return new InstructionPackage(InstructionSet.NOP, data, instructionAddress);
+                    instruction = InstructionSet.NOP;
                 }
-                    
-                addTicksIfNeededForOpcodeFetch();
+
+                WaitForClockTicks(instruction.Timing.Exceptions.ExtraOpcodeFetchTStates);
 
                 // fetch the operand bytes (as required)
                 if (instruction.Argument1 != InstructionElement.None)
                 {
-                    data.Argument1 = FetchOperandByte();
+                    data.Argument1 = FetchNextOperandByte();
                     Registers.PC++;
                     if (instruction.Argument2 != InstructionElement.None)
                     {
-                        // some instructions (OK, just CALL) have a prolonged high byte operand read with an additional cycle
+                        // Special case: CALL has a prolonged high byte operand read with an additional cycle
                         // but ONLY if a) it's CALL nn OR b) if the condition (CALL NZ, for example) is satisfied (ie Flags.NZ is true)
-                        // otherwise it's the standard size. Timing oddities like this are noted in the TimingExceptions,
-                        // but this is the only one that affects the instruction decode cycle (the others affect Memory Read cycles)
                         if (instruction.Timing.Exceptions.HasProlongedConditionalOperandDataReadHigh)
                         {
                             if (instruction.Condition == Condition.None || Flags.SatisfyCondition(instruction.Condition))
                             {
-                                WaitForNextClockTick();
+                                WaitForClockTicks(1);
                             }
                         }
 
-                        data.Argument2 = FetchOperandByte();
+                        data.Argument2 = FetchNextOperandByte();
                         Registers.PC++;
                     }
                 }
-
-                return new InstructionPackage(instruction, data, instructionAddress);
             }
 
-            void addTicksIfNeededForOpcodeFetch()
-            {
-                // normal opcode fetch cycle is 4 clock cycles, BUT some instructions have longer opcode fetch cycles - 
-                // this is either a long *first* opcode fetch (followed by a normal *second* opcode fetch, if any)
-                // OR a normal first opcode fetch and a long *second* opcode fetch, never both
+            return new InstructionPackage(instruction, data, instructionAddress);
+        }
 
-                for (int i = 0; i < instruction.Timing.Exceptions.ExtraOpcodeFetchTStates; i++)
-                {
-                    WaitForNextClockTick();
-                }
+        private void WaitForClockTicks(int ticks)
+        {
+            for (int i = 0; i < ticks; i++)
+            {
+                WaitForNextClockTick();
             }
         }
 
@@ -455,17 +468,12 @@ namespace Zem80.Core
             {
                 if (_realTime)
                 {
-                    int ticksToWait = _windowsTicksPerZ80Tick;
-
-                    if (_waitPattern != null)
-                    {
-                        if (_waitCount == _waitPattern.Length) _waitCount = 0;
-                        ticksToWait = _waitPattern[_waitCount++];
-                    }
-
+                    if (_cycleWaitCount == _cycleWaitPattern.Length) _cycleWaitCount = 0;
+                    int ticksToWait = _cycleWaitPattern[_cycleWaitCount++];
                     long targetTicks = _lastElapsedTicks + ticksToWait;
+
+                    while (_clock.ElapsedTicks < targetTicks) ; // wait until enough Windows ticks have elapsed
                     
-                    while (_clock.ElapsedTicks < targetTicks) ;
                     _lastElapsedTicks = _clock.ElapsedTicks;
                 }
 
@@ -493,14 +501,14 @@ namespace Zem80.Core
             _pendingWaitCycles = 0;
         }
 
-        private byte FetchOpcodeByte()
+        private byte FetchNextOpcodeByte()
         {
             byte opcode = Memory.Untimed.ReadByteAt(Registers.PC);
             if (!_suspendMachineCycles) Timing.OpcodeFetchCycle(Registers.PC, opcode);
             return opcode;
         }
 
-        private byte FetchOperandByte()
+        private byte FetchNextOperandByte()
         {
             byte operand = Memory.Untimed.ReadByteAt(Registers.PC);
             if (!_suspendMachineCycles) Timing.MemoryReadCycle(Registers.PC, operand);
@@ -566,7 +574,7 @@ namespace Zem80.Core
                         // The program counter is pushed on the stack before executing the instruction and restored afterwards (but *not* popped), so instructions like JR, JP and CALL will have no effect. 
                         
                         // NOTE: I have not been able to test this mode extensively based on real-world examples. It may well be buggy compared to the real Z80. 
-                        // TODO: verify the behaviour of the real Z80 and fix the code!
+                        // TODO: verify the behaviour of the real Z80 and fix the code if necessary
 
                         Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         InstructionPackage package = DecodeIM0Interrupt();
@@ -666,11 +674,13 @@ namespace Zem80.Core
             ushort topOfStackAddress = 0, 
             float frequencyInMHz = DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ, 
             bool enableFlagPrecalculation = true, 
-            int[] waitPattern = null
+            int[] cycleWaitPattern = null
             )
         {
-            // You can supply your own memory implementations, for example if you need to do RAM paging for >64K implementations.
-            // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.
+            if (frequencyInMHz != DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ && cycleWaitPattern is null)
+            {
+                throw new ArgumentNullException("If a non-default processor frequency is specified, a cycle wait pattern must be supplied, but was null.");
+            }
 
             FrequencyInMHz = frequencyInMHz;
 
@@ -687,13 +697,17 @@ namespace Zem80.Core
             // on understanding the specific performance of the emulated hardware onto the developer. Sorry!
             float windowsFrequency = Stopwatch.Frequency / (frequencyInMHz * 1000000);
             _windowsTicksPerZ80Tick = (int)Math.Ceiling(windowsFrequency);
-            _waitPattern = waitPattern;
+            _cycleWaitPattern = cycleWaitPattern ?? DEFAULT_WAIT_PATTERN;
 
             Registers = new Registers();
             Ports = new Ports(this);
+
+            // You can supply your own memory implementations, for example if you need to do RAM paging for >64K implementations.
+            // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.
             Memory = memory ?? new MemoryBank();
             Memory.Initialise(this, map ?? new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES, true));
             Stack = new Stack(topOfStackAddress, this);
+            
             IO = new ProcessorIO(this);
 
             Registers.SP = Stack.Top;

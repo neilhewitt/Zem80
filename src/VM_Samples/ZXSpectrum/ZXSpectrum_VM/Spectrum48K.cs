@@ -143,7 +143,9 @@ namespace ZXSpectrum.VM
                 _cpu.EnableInterrupts();
             }
 
-            _cpu.SetInterruptMode((InterruptMode)snapshot[29].GetByteFromBits(0, 2));
+            InterruptMode interruptMode = (InterruptMode)snapshot[29].GetByteFromBits(0, 2);
+            if (interruptMode == InterruptMode.IM0) interruptMode = InterruptMode.IM1; // IM0 not used on Spectrum
+            _cpu.SetInterruptMode(interruptMode);
 
             byte[] memoryImage;
             if (compressed)
@@ -209,6 +211,8 @@ namespace ZXSpectrum.VM
 
         private void UpdateDisplay(object sender, EventArgs e)
         {
+            _cpu.RaiseInterrupt();
+
             // we're faking the screen update process here:
             // up to this point, we've been adding wait cycles to the processor
             // to simulate the contention of video memory (the ULA would be reading
@@ -232,8 +236,6 @@ namespace ZXSpectrum.VM
             OnUpdateDisplay?.Invoke(this, screenBitmap);
 
             if (_displayUpdatesSinceLastFlash > FLASH_FRAME_RATE) _displayUpdatesSinceLastFlash = 0;
-
-            _cpu.RaiseInterrupt();
         }
 
         private byte ReadPort()
@@ -302,11 +304,11 @@ namespace ZXSpectrum.VM
 #if RELEASE
                 3, 3, 3, 2
 #else
-                3, 3, 2, 2
+                3, 3, 2, 2, 3, 3, 3, 2
 #endif
             };
 
-            _cpu = new Processor(map: map, frequencyInMHz: 3.5f, waitPattern: cpuWaitPattern);
+            _cpu = new Processor(map: map, frequencyInMHz: 3.5f, cycleWaitPattern: cpuWaitPattern);
             _beeper = new Beeper(_cpu);
 
             // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 

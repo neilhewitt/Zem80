@@ -111,6 +111,7 @@
 
         internal void EndMemoryReadState()
         {
+            DATA_BUS = 0;
             MREQ = false;
             RD = false;
         }
@@ -125,6 +126,7 @@
 
         internal void EndMemoryWriteState()
         {
+            DATA_BUS = 0;
             MREQ = false;
             WR = false;
         }
@@ -143,6 +145,7 @@
 
         internal void EndPortReadState()
         {
+            DATA_BUS = 0;
             IORQ = false;
             RD = false;
         }
