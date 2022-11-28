@@ -1,6 +1,6 @@
 # Zem80
 
-A simple emulation of the Z80 CPU written in C# and running on .NET 6. 
+A simple emulation of the Z80 CPU written in C# and running on .NET 7. 
 
 ## Project goals
 
@@ -23,7 +23,9 @@ Where I think this project can be useful is in perhaps explaining how to do CPU 
 I built this thing just to prove to myself that I could. I have a fully-functioning emulator built in a platform that's not generally thought of as one you could build something so low-level in, and I'm very glad I did it.
 
 ## Project status
-27/11/2022 - 1.2 release. I did a bunch of refactoring and I fixed a couple of fairly obscure bugs. I also improved the timing mechanism so that pseudo-real-time mode gets as close as possible to real time. I also replaced the Spectrum audio implementation and this plus the timing work finally fixed the audio. It still tears slightly in debug mode but on the release build it's solid. 
+27/11/2022 - 1.2 release. I did a bunch of refactoring and I fixed a couple of fairly obscure bugs. I also improved the timing mechanism so that pseudo-real-time mode gets as close as possible to real time. I also replaced the Spectrum audio implementation and this plus the timing work finally fixed the audio. It still tears slightly in debug mode but on the release build it's solid.
+
+I moved the whole project to .NET 7, so this is the lowest version you can run the Zem80 library on with this build. I am looking at multi-targeting for the next release since there's no reason in principle why I can't ship a .NET Standard 2.0 version alongside a .NET 7 build. 
 
 ### Known issues ###
 
