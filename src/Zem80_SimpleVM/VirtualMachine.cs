@@ -34,6 +34,11 @@ namespace Zem80.SimpleVM
             if (synchronous) _cpu.RunUntilStopped();
         }
 
+        public void Resume()
+        {
+            _cpu.Resume();
+        }
+
         public void Stop()
         {
             _cpu.Stop();

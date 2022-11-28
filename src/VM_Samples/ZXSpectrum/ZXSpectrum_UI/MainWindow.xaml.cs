@@ -61,7 +61,7 @@ namespace ZXSpectrum.UI
         protected override void OnClosing(CancelEventArgs e)
         {
             _isClosing = true;
-            _vm.Stop();
+            _vm?.Stop();
             base.OnClosing(e);
             Application.Current.Shutdown();
         }

@@ -205,7 +205,8 @@ namespace ZXSpectrum.VM
 
         private void StartInternal(string snapshotPath = null)
         {
-            _cpu.Initialise(timingMode: TimingMode.PseudoRealTime);
+            _cpu.Initialise(timingMode: TimingMode.FastAndFurious, ticksPerTimeSlice: 70000);
+            _cpu.OnTimeSliceEnded += OnTimeSliceEnded;
             if (snapshotPath != null) LoadSnapshot(snapshotPath);
             _timer = new Timer();
             _timer.Interval = TimeSpan.FromMilliseconds(20);
@@ -214,8 +215,14 @@ namespace ZXSpectrum.VM
             _timer.Start();
         }
 
+        private void OnTimeSliceEnded(object sender, long e)
+        {
+            _cpu.Suspend();
+        }
+
         private void UpdateDisplay(object sender, EventArgs e)
         {
+            _cpu.Resume();
             _cpu.RaiseInterrupt();
 
             // we're faking the screen update process here:
@@ -250,6 +257,7 @@ namespace ZXSpectrum.VM
 
             if (portAddress.LowByte() == 0xFE)
             {
+                
                 result = SpectrumKeyboard.GetBitValuesFor(portAddress.HighByte(), result);
             }
 

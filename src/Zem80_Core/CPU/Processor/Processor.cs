@@ -17,6 +17,7 @@ namespace Zem80.Core
 
         private bool _running;
         private bool _halted;
+        private bool _suspended;
         private bool _realTime;
         private HaltReason _reasonForLastHalt;
         private bool _suspendMachineCycles;
@@ -28,6 +29,8 @@ namespace Zem80.Core
         private int _windowsTicksPerZ80Tick;
         private int[] _cycleWaitPattern;
         private int _cycleWaitCount;
+        private long _ticksPerTimeSlice;
+        private long _ticksThisTimeSlice;
 
         private Stopwatch _clock;
         private Thread _instructionCycle;
@@ -61,6 +64,7 @@ namespace Zem80.Core
         public event EventHandler BeforeStart;
         public event EventHandler OnStop;
         public event EventHandler<HaltReason> OnHalt;
+        public event EventHandler<long> OnTimeSliceEnded;
 
         public void Dispose()
         {
@@ -68,12 +72,13 @@ namespace Zem80.Core
             _instructionCycle?.Interrupt(); // just in case
         }
 
-        public void Initialise(ushort address = 0x0000, bool endOnHalt = false, TimingMode timingMode = TimingMode.FastAndFurious, InterruptMode interruptMode = InterruptMode.IM0)
+        public void Initialise(ushort address = 0x0000, bool endOnHalt = false, TimingMode timingMode = TimingMode.FastAndFurious, long ticksPerTimeSlice = 0, InterruptMode interruptMode = InterruptMode.IM0)
         {
             if (!_running)
             {
                 EndOnHalt = endOnHalt; // if set, will summarily end execution at the first HALT instruction. This is mostly for test / debug scenarios.
                 TimingMode = timingMode;
+                _ticksPerTimeSlice = ticksPerTimeSlice;
                 InterruptMode = interruptMode;
                 
                 _realTime = (timingMode == TimingMode.PseudoRealTime && Stopwatch.IsHighResolution);
@@ -109,6 +114,11 @@ namespace Zem80.Core
             OnStop?.Invoke(null, null);
         }
 
+        public void Suspend()
+        {
+            _suspended = true;
+        }
+
         public void Resume()
         {
             if (_halted)
@@ -118,6 +128,8 @@ namespace Zem80.Core
                 // otherwise we'll HALT forever in a loop
                 if (_reasonForLastHalt == HaltReason.HaltInstruction) Registers.PC++;
             }
+
+            _suspended = false;
         }
 
         public void RunUntilStopped()
@@ -227,26 +239,43 @@ namespace Zem80.Core
 
             while (_running)
             {
-                InstructionPackage package = null;
-                ushort pc = Registers.PC;
-
-                if (_halted)
+                if (_suspended)
                 {
-                    package = DecodeNOP();
+                    Thread.Sleep(1);
                 }
                 else
                 {
-                    package = DecodeInstructionAtProgramCounter();
-                    if (package == null)
+                    InstructionPackage package = null;
+                    ushort pc = Registers.PC;
+
+                    if (_halted)
                     {
-                        Stop();
-                        return;
+                        package = DecodeNOP();
+                    }
+                    else
+                    {
+                        package = DecodeInstructionAtProgramCounter();
+                        if (package == null)
+                        {
+                            Stop();
+                            return;
+                        }
+                    }
+
+                    Execute(package);
+                    HandleInterrupts();
+                    RefreshMemory();
+
+                    if (_ticksPerTimeSlice > 0)
+                    {
+                        _ticksThisTimeSlice += package.Instruction.Timing.TStates;
+                        if (_ticksThisTimeSlice > _ticksPerTimeSlice)
+                        {
+                            _ticksThisTimeSlice = 0;
+                            OnTimeSliceEnded?.Invoke(this, _ticksThisTimeSlice);
+                        }
                     }
                 }
-
-                Execute(package);
-                HandleInterrupts();
-                RefreshMemory();
             }
         }
 

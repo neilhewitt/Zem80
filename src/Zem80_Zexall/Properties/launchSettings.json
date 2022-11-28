@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Zem80_Zexall": {
+      "commandName": "Project"
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    }
+  }
+}
