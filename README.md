@@ -1,6 +1,6 @@
 # Zem80
 
-A simple emulation of the Z80 CPU written in C# and running on .NET 6. 
+A simple emulation of the Z80 CPU written in C# and running on .NET 7. 
 
 ## Project goals
 
@@ -15,7 +15,7 @@ I have also added a basic ZX Spectrum emulation, but this is a sample and not in
 ## Performance - some thoughts
 The amount of CPU required to run the Z80 emulation is significant compared to implementations in C and even some of the other C# implementations, and this is down to the design (as stated in the project goals) being bog-standard OO and not built specifically for optimum speed. Add the Spectrum emulation on top and you're using 35% of a 7th Gen Intel Core i7... which is a lot. 
 
-Can I improve this? Yes, probably, but only by changing the design in the same way as others have; writing C# code like it was C. I set out deliberately to not do that. So I think this is the end of the road for the Z80 emulator in terms of its evolution, unless I find some big wins that suit the current design, and I don't think I will. I will fix bugs if any come up, but I wouldn't expect anyone to take this code and make a successful emulator out of it without a *lot* of optimisation work. As a simple dependency? Not going to happen.
+Can I improve this? Yes, probably, but only by changing the design in the same way as others have; writing C# code like it was C. I set out deliberately to not do that. So I think this is the end of the road for the Z80 emulator in terms of its evolution, unless I find some big wins that suit the current design, and I don't think I will.
 
 ## The future for this project
 Where I think this project can be useful is in perhaps explaining how to do CPU emulation in principle. It's a pretty complex subject that requires a lot of learning to approach and do, and learning from the existing code is difficult because it's often quite... opaque. This emulator is actually quite straightforward - not that you would understand it at first glance, or without knowledge of how the Z80 itself works in quite a lot of detail - and hopefully might give people a useful starting point to build their own emulators. If it does, then my work is done!
@@ -23,16 +23,17 @@ Where I think this project can be useful is in perhaps explaining how to do CPU 
 I built this thing just to prove to myself that I could. I have a fully-functioning emulator built in a platform that's not generally thought of as one you could build something so low-level in, and I'm very glad I did it.
 
 ## Project status
-24/04/2022 - 1.1 release. This contains fixes and optimisations. Spectrum audio is broken and does not work at all. I may just remove audio support as I can't get it working properly.
+27/11/2022 - 1.2 release. I did a bunch of refactoring and I fixed a couple of fairly obscure bugs. I also improved the timing mechanism so that pseudo-real-time mode gets as close as possible to real time. I also replaced the Spectrum audio implementation and this plus the timing work finally fixed the audio. It still tears slightly in debug mode but on the release build it's solid.
+
+I moved the whole project to .NET 7, so this is the lowest version you can run the Zem80 library on with this build. I am looking at multi-targeting for the next release since there's no reason in principle why I can't ship a .NET Standard 2.0 version alongside a .NET 7 build. 
 
 ### Known issues ###
 
-At this point there are no *known* issues with Zem80 itself. I'm quite certain there are still bugs and omissions, but I'm not aware of them.
+*Interrupt Mode 0 remains essentially untested and may not work properly. I plan to create a virtual machine to test this out. 
+*Interrupt Mode 2 appears to be slightly bugged but I'm not 100$% sure how or why. I am looking for Spectrum games which are known to use IM2 to test. 
 
 The other main component is the ZX Spectrum VM, which has several known issues:
 
-* ZX Spectrum audio is choppy
-* Spectrum VM occasionally crashes on keypress 
 * Game compatibility is very patchy, many games either don't run or don't run properly
 * Audio in is not supported, so you cannot use the LOAD command. The SAVE command will operate but not successfully (data will be corrupt even if recorded)
 * It's frankly just not very good and is certainly not usable as a real emulator for playing games etc. Download FUSE for that!
@@ -42,8 +43,6 @@ The other main component is the ZX Spectrum VM, which has several known issues:
 * Add new tests to cover the public API other than those Z80 instructions tested by Zexall
 * Add some documentation / HOWTO etc
 * Consider adding XML comments (but probably not)
-
-At the present time, I consider the main emulator development complete and will not be making changes other than bug fixes, at least until any version 2.0.
 
 ## Acknowledgements ##
 
