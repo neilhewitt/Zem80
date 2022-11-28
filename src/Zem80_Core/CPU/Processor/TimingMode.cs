@@ -7,6 +7,7 @@ namespace Zem80.Core
     public enum TimingMode
     {
         FastAndFurious,
-        PseudoRealTime
+        PseudoRealTime,
+        TimeSliced
     }
 }

@@ -207,17 +207,19 @@ namespace ZXSpectrum.VM
         {
             // We're moving the CPU timing into this class by setting the CPU to run FastAndFurious but then
             // specifying a time slice in ticks (at 3.5MHz, 70000 = 20ms). The CPU will pause after executing
-            // those 70000 ticks, which in non-real-time will happen in <1ms, and then begin thread.sleeping to
-            // free up PC CPU time; then when the next timer tick occurs after the *real* 20ms, the CPU is
-            // resumed and quickly does the interrupt, sound update, screen update etc.
+            // those 70000 ticks, which in non-real-time will happen in <1ms, and then begin thread.sleeping;
+            // then when the next timer tick occurs after the *real* 20ms, the CPU is resumed and quickly
+            // does the interrupt, sound update, screen update etc.
 
             // We do lose some real-time aspects such as synchronised calls to OnClockTick etc, but for the Spectrum
-            // emulation we don't need these. 
+            // emulation we don't need these. It also makes the keyboard *slightly* less responsive but for human
+            // beings this is unlikely to be a problem.
             
             // Kudos due to SoftSpectrum48 which uses this technique to get real-time Spectrum performance without
-            // having to spin the PC CPU. This reduces our CPU use considerably (but not as much as theirs does... not sure why).
+            // having to spin the PC CPU all the time. This reduces our CPU use considerably
+            // (but not as much as theirs does... not sure why).
 
-            _cpu.Initialise(timingMode: TimingMode.FastAndFurious, ticksPerTimeSlice: 70000);
+            _cpu.Initialise(timingMode: TimingMode.TimeSliced, ticksPerTimeSlice: 70000);
             _cpu.OnTimeSliceEnded += OnTimeSliceEnded;
             if (snapshotPath != null) LoadSnapshot(snapshotPath);
             _timer = new Timer();

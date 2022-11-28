@@ -19,6 +19,7 @@ namespace Zem80.Core
         private bool _halted;
         private bool _suspended;
         private bool _realTime;
+        private bool _timeSliced;
         private HaltReason _reasonForLastHalt;
         private bool _suspendMachineCycles;
         private int _pendingWaitCycles;
@@ -82,6 +83,7 @@ namespace Zem80.Core
                 InterruptMode = interruptMode;
                 
                 _realTime = (timingMode == TimingMode.PseudoRealTime && Stopwatch.IsHighResolution);
+                _timeSliced = (timingMode == TimingMode.TimeSliced);
                 _emulatedTStates = 0;
 
                 DisableInterrupts();
@@ -266,7 +268,7 @@ namespace Zem80.Core
                     HandleInterrupts();
                     RefreshMemory();
 
-                    if (_ticksPerTimeSlice > 0)
+                    if (_timeSliced && _ticksPerTimeSlice > 0)
                     {
                         _ticksThisTimeSlice += package.Instruction.Timing.TStates;
                         if (_ticksThisTimeSlice > _ticksPerTimeSlice)
