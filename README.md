@@ -29,8 +29,8 @@ I moved the whole project to .NET 7, so this is the lowest version you can run t
 
 ### Known issues ###
 
-*Interrupt Mode 0 remains essentially untested and may not work properly. I plan to create a virtual machine to test this out. 
-*Interrupt Mode 2 appears to be slightly bugged but I'm not 100$% sure how or why. I am looking for Spectrum games which are known to use IM2 to test. 
+* Interrupt Mode 0 remains essentially untested and may not work properly. I plan to create a virtual machine to test this out. 
+* Interrupt Mode 2 appears to be slightly bugged but I'm not 100% sure how or why. I am looking for Spectrum games which are known to use IM2 to test. 
 
 The other main component is the ZX Spectrum VM, which has several known issues:
 
