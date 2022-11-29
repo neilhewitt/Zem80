@@ -23,6 +23,7 @@
         */
 
         private Processor _cpu;
+        private byte _defaultDataBusValue = 0;
 
         public ushort ADDRESS_BUS { get; private set; }
         public bool A0 { get { return ADDRESS_BUS.GetBit(0); } }
@@ -65,7 +66,7 @@
         internal void Clear()
         {
             ADDRESS_BUS = 0;
-            DATA_BUS = 0;
+            DATA_BUS = _defaultDataBusValue;
             MREQ = false;
             IORQ = false;
             RD = false;
@@ -111,7 +112,7 @@
 
         internal void EndMemoryReadState()
         {
-            DATA_BUS = 0;
+            DATA_BUS = _defaultDataBusValue;
             MREQ = false;
             RD = false;
         }
@@ -126,7 +127,7 @@
 
         internal void EndMemoryWriteState()
         {
-            DATA_BUS = 0;
+            DATA_BUS = _defaultDataBusValue;
             MREQ = false;
             WR = false;
         }
@@ -145,7 +146,7 @@
 
         internal void EndPortReadState()
         {
-            DATA_BUS = 0;
+            DATA_BUS = _defaultDataBusValue;
             IORQ = false;
             RD = false;
         }
@@ -160,7 +161,7 @@
 
         internal void EndPortWriteState()
         {
-            DATA_BUS = 0;
+            DATA_BUS = _defaultDataBusValue;
             IORQ = false;
             WR = false;
         }
@@ -216,6 +217,11 @@
         internal void SetDataBusValue(byte value)
         {
             DATA_BUS = value;
+        }
+
+        internal void SetDataBusDefault(byte defaultValue)
+        {
+            _defaultDataBusValue = defaultValue;
         }
 
         internal ProcessorIO(Processor cpu)

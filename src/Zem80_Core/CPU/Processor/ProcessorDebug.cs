@@ -20,5 +20,9 @@ namespace Zem80.Core
 
         public IDebugProcessor Debug => this;
 
+        public void SetDataBusDefaultValue(byte defaultValue)
+        {
+            IO.SetDataBusDefault(defaultValue);
+        }
     }
 }

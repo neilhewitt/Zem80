@@ -221,6 +221,7 @@ namespace ZXSpectrum.VM
 
             _cpu.Initialise(timingMode: TimingMode.TimeSliced, ticksPerTimeSlice: 70000);
             _cpu.OnTimeSliceEnded += OnTimeSliceEnded;
+            _cpu.Debug.SetDataBusDefaultValue(0xFF); // Spectrum has pull-up resistors on data bus lines, so will always read 0xFF if not otherwise set by the ULA
             if (snapshotPath != null) LoadSnapshot(snapshotPath);
             _timer = new Timer();
             _timer.Interval = TimeSpan.FromMilliseconds(20);
