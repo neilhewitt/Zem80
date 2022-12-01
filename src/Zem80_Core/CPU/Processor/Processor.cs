@@ -692,13 +692,6 @@ namespace Zem80.Core
             return package;
         }
 
-
-        // IInstructionTiming contains methods to execute the different types of machine cycle that the Z80 supports.
-        // These will be called mostly by the instruction decoder, stack operations and interrupt handlers, but some instruction
-        // microcode uses these methods directly to generate timing (eg IN/OUT) or add 'internal operation' ticks. 
-        // I segregated these onto an interface just to keep them logically partioned from the main API but without moving them out to a class.
-        // Calling code can get at these methods using the Processor.Timing property (or by casting to the interface type, but don't do that, it's ugly).
-
         public Processor(
             IMemoryBank memory = null, 
             IMemoryMap map = null, 

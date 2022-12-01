@@ -240,14 +240,9 @@ namespace ZXSpectrum.VM
             _cpu.Resume();
             _cpu.RaiseInterrupt();
 
-            // we're faking the screen update process here:
-            // up to this point, we've been adding wait cycles to the processor
-            // to simulate the contention of video memory (the ULA would be reading
-            // the video RAM at this point, but in our emulation nothing happpens);
-            // then, when we have counted enough ticks since the last screen update 
-            // to be at the vertical blanking interval (that's crazy CRT talk, but Google it 
-            // if you want to understand how TVs used to work!), we 'instantaneously' 
-            // update the display
+            // we're faking the screen update process here - in reality there are lots
+            // of timing issues around 'contended' memory access by the ULA, and tstate counting etc
+            // but for our purposes here we don't need any of that - remember, this is just a demo VM!
 
             byte[] pixelBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x4000, 6144);
             byte[] attributeBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x5800, 768);
@@ -272,7 +267,6 @@ namespace ZXSpectrum.VM
 
             if (portAddress.LowByte() == 0xFE)
             {
-                
                 result = SpectrumKeyboard.GetBitValuesFor(portAddress.HighByte(), result);
             }
 
