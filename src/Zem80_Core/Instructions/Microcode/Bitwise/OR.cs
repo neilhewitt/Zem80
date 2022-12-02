@@ -13,7 +13,7 @@ namespace Zem80.Core.Instructions
             Registers r = cpu.Registers;
 
             if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-            byte operand = instruction.MarshalSourceByte(data, cpu, out ushort address, out ByteRegister source);
+            byte operand = instruction.MarshalSourceByte(data, cpu);
             int result = (r.A | operand);
             Flags flags = FlagLookup.LogicalFlags(r.A, operand, LogicalOperation.Or);
             r.A = (byte)result;

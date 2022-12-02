@@ -14,7 +14,13 @@ namespace Zem80.Core.Instructions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte MarshalSourceByte(this Instruction instruction, InstructionData data, Processor cpu, out ushort address, out ByteRegister source)
+        public static byte MarshalSourceByte(this Instruction instruction, InstructionData data, Processor cpu)
+        {
+            return MarshalSourceByte(instruction, data, cpu, out ushort address);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static byte MarshalSourceByte(this Instruction instruction, InstructionData data, Processor cpu, out ushort address)
         {
             // this fetches a byte operand value for the instruction given, adjusting how it is fetched based on the addressing of the instruction
 
@@ -22,7 +28,7 @@ namespace Zem80.Core.Instructions
             address = 0x0000;
 
             byte value;
-            source = instruction.Source.AsByteRegister();
+            ByteRegister source = instruction.Source.AsByteRegister();
             if (source != ByteRegister.None)
             {
                 // operand comes from another byte register directly (eg LD A,B)
@@ -65,10 +71,10 @@ namespace Zem80.Core.Instructions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ushort MarshalSourceWord(this Instruction instruction, InstructionData data, Processor cpu, out ushort address)
+        public static ushort MarshalSourceWord(this Instruction instruction, InstructionData data, Processor cpu)
         {
             Registers r = cpu.Registers;
-            address = 0x0000;
+            ushort address = 0x0000;
 
             ushort value;
             WordRegister source = instruction.Source.AsWordRegister();
