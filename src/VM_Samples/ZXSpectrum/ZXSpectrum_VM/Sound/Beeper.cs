@@ -24,7 +24,7 @@ namespace ZXSpectrum.VM.Sound
 
         // NOTE - varies by Spectrum model / region - TODO make configurable
         private const int TICKS_PER_SAMPLE = 8;
-        private const int TICKS_PER_FRAME = 69888; 
+        private const int TICKS_PER_FRAME = 70000; 
         private const int FRAMES_PER_SECOND = 50;
         private const int SAMPLE_SIZE = 120000;
 
