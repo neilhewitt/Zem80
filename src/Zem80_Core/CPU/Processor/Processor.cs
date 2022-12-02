@@ -697,7 +697,6 @@ namespace Zem80.Core
             IMemoryMap map = null, 
             ushort topOfStackAddress = 0, 
             float frequencyInMHz = DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ, 
-            bool enableFlagPrecalculation = true, 
             int[] cycleWaitPattern = null
             )
         {
@@ -735,13 +734,6 @@ namespace Zem80.Core
             IO = new ProcessorIO(this);
 
             Registers.SP = Stack.Top;
-
-            // If precalculation is enabled, all flag combinations for all input values for 8-bit ALU / bitwise operations are pre-built now 
-            // (but not the 16-bit ALU operations, the number space is far too big).
-            // This is *slightly* faster than calculating them in real-time, but if you need to debug flag calculation you should
-            // disable this and attach a debugger to the flag calculation methods in FlagLookup.cs.
-            FlagLookup.EnablePrecalculation = enableFlagPrecalculation;
-            FlagLookup.BuildFlagLookupTables();
             
             // The Z80 instruction set needs to be built (all Instruction objects are created, bound to the microcode instances, and indexed into a hashtable - undocumented 'overloads' are built here too)
             InstructionSet.Build();

@@ -155,7 +155,7 @@ namespace Zem80.SimpleVM
 
         public VirtualMachine(float speed = 4, bool enforceTiming = true)
         {
-            _cpu = new Processor(frequencyInMHz: speed, enableFlagPrecalculation: false);
+            _cpu = new Processor(frequencyInMHz: speed);
             _cpu.Ports[0].Connect(ReadChar, WriteChar, SignalRead, SignalWrite);
             _cpu.Ports[1].Connect(ReadByte, WriteByte, SignalRead, SignalWrite);
             _timingMode = enforceTiming ? TimingMode.PseudoRealTime : TimingMode.FastAndFurious;
