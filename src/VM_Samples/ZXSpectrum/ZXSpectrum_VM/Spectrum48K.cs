@@ -60,10 +60,6 @@ namespace ZXSpectrum.VM
                 case ".Z80":
                     LoadZ80(path);
                     break;
-
-                case ".TAP":
-                    LoadTAP(path);
-                    break;
             }
         }
 
@@ -195,12 +191,6 @@ namespace ZXSpectrum.VM
             {
                 return (snapshot[index], snapshot[index + 1]).ToWord();
             }
-        }
-
-        private void LoadTAP(string path)
-        {
-            byte[] tapData = TAPLoader.LoadToBytes(path);
-            _cpu.Memory.Untimed.WriteBytesAt(0x4000, tapData);
         }
 
         private void StartInternal(string snapshotPath = null)
