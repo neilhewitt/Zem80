@@ -9,7 +9,6 @@ namespace Zem80.Core.Instructions
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Instruction instruction = package.Instruction;
-            InstructionData data = package.Data;
 
             byte t_index = instruction.Opcode.GetByteFromBits(3, 3);
             ushort address = (ushort)(t_index * 8);

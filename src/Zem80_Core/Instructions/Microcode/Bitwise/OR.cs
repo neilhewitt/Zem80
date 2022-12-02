@@ -10,13 +10,12 @@ namespace Zem80.Core.Instructions
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Flags flags = cpu.Flags.Clone();
             Registers r = cpu.Registers;
 
             if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
             byte operand = instruction.MarshalSourceByte(data, cpu, out ushort address, out ByteRegister source);
             int result = (r.A | operand);
-            flags = FlagLookup.LogicalFlags(r.A, operand, LogicalOperation.Or);
+            Flags flags = FlagLookup.LogicalFlags(r.A, operand, LogicalOperation.Or);
             r.A = (byte)result;
 
             return new ExecutionResult(package, flags);

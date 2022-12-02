@@ -10,7 +10,6 @@ namespace Zem80.Core.Instructions
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Flags flags = cpu.Flags.Clone();
             Registers r = cpu.Registers;
 
             byte left = r.A;
@@ -19,9 +18,8 @@ namespace Zem80.Core.Instructions
             if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
             var sub = ALUOperations.Subtract(left, right, false);
             r.A = sub.Result;
-            flags = sub.Flags;
 
-            return new ExecutionResult(package, flags);
+            return new ExecutionResult(package, sub.Flags);
         }
 
         public SUB()
