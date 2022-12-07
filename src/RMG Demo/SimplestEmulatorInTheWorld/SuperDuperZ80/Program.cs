@@ -5,11 +5,13 @@
         static void Main(string[] args)
         {
             Console.WriteLine("Creating Z80...");
+            
             Z80 z80 = new Z80();
             z80.OnAfterInstruction += Z80_OnAfterInstruction;
 
-            z80.Poke(0, 0x3C);
-            z80.Poke(1, 0xC3);
+            // load the program
+            z80.Poke(0, 0x3C); // INC A
+            z80.Poke(1, 0xC3); // JP 0x0000
 
             Console.WriteLine($"Ready: \t A: {z80.A} \t PC: {z80.PC}");
             Console.ReadKey(false);
