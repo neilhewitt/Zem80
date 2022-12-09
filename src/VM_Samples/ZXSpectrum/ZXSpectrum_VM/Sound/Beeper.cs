@@ -24,7 +24,7 @@ namespace ZXSpectrum.VM.Sound
 
         // NOTE - varies by Spectrum model / region - TODO make configurable
         private const int TICKS_PER_SAMPLE = 8;
-        private const int TICKS_PER_FRAME = 69888; 
+        private const int TICKS_PER_FRAME = 70000; 
         private const int FRAMES_PER_SECOND = 50;
         private const int SAMPLE_SIZE = 120000;
 
@@ -40,8 +40,14 @@ namespace ZXSpectrum.VM.Sound
         private IWavePlayer _player;
         private BufferedWaveProvider _provider;
 
+        public void Start()
+        {
+            _player.Play();
+        }
+
         public void Dispose()
         {
+            _player.Stop();
             _player.Dispose();
         }
 
@@ -117,17 +123,17 @@ namespace ZXSpectrum.VM.Sound
 
             SetupSamples();
 
-            _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, false, 20); // can do lower latency than WaveOut
+            _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, true, 20); // can do lower latency than WaveOut
             
             int sampleRate = ((TICKS_PER_FRAME * FRAMES_PER_SECOND) / TICKS_PER_SAMPLE);
             WaveFormat format = new WaveFormat(sampleRate, 8, 1);
 
             _provider = new BufferedWaveProvider(format);
+            _provider.BufferLength = SAMPLE_SIZE;
             _provider.DiscardOnBufferOverflow = true;
 
             _player.Init(_provider);
             _player.Volume = 0.33f;
-            _player.Play();
         }
     }
 }

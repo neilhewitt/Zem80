@@ -896,10 +896,22 @@ namespace Zem80.Core.Instructions
                             string opcodeAsString = instruction.FullOpcode.Substring(0, 4);
                             opcodeAsString += opcode.ToString("X2");
 
+                            // ordinal is different than our default
+                            ByteRegister destination = i switch
+                            {
+                                0 => ByteRegister.B,
+                                1 => ByteRegister.C,
+                                2 => ByteRegister.D,
+                                3 => ByteRegister.E,
+                                4 => ByteRegister.H,
+                                5 => ByteRegister.L,
+                                _ => ByteRegister.A
+                            };
+
                             Instruction undocumentedInstruction = new Instruction(
                                 opcodeAsString,
                                 // unofficial mnemonic form is eg RES 0,(IX+o),C - resets bit 0 of memory location (IX+o) and copies that byte to C
-                                instruction.Mnemonic + "," + ((ByteRegister)i).ToString(), 
+                                instruction.Mnemonic + "," + destination.ToString(), 
                                 Condition.None,
                                 instruction.Target,
                                 instruction.Source,

@@ -10,103 +10,6 @@ namespace Zem80.Core
 {
     public static class FlagLookup
     {
-        public static bool EnablePrecalculation { get; set; } = false;
-
-        private static bool _initialised;
-        private static byte[,,] _addFlags8;
-        private static byte[,,] _subFlags8;
-        private static byte[,,] _logicalFlags;
-        private static byte[,,] _bitwiseFlags;
-
-        public static void BuildFlagLookupTables()
-        {
-            if (!_initialised && EnablePrecalculation)
-            {
-                _addFlags8 = new byte[256, 256, 2];
-                for (int i = 0; i < 256; i++)
-                {
-                    for (int j = 0; j < 256; j++)
-                    {
-                        _addFlags8[i, j, 0] = GetByteArithmeticFlags((byte)i, (byte)j, false, false).Value;
-                        _addFlags8[i, j, 1] = GetByteArithmeticFlags((byte)i, (byte)j, true, false).Value;
-                    }
-                }
-
-                _subFlags8 = new byte[256, 256, 2];
-                for (int i = 0; i < 256; i++)
-                {
-                    for (int j = 0; j < 256; j++)
-                    {
-                        _subFlags8[i, j, 0] = GetByteArithmeticFlags((byte)i, (byte)j, false, true).Value;
-                        _subFlags8[i, j, 1] = GetByteArithmeticFlags((byte)i, (byte)j, true, true).Value;
-                    }
-                }
-
-                _logicalFlags = new byte[256, 256, 3];
-                for (int i = 0; i < 256; i++)
-                {
-                    for (int j = 0; j < 256; j++)
-                    {
-                        _logicalFlags[i, j, 0] = GetLogicalFlags((byte)i, (byte)j, LogicalOperation.Or).Value;
-                        _logicalFlags[i, j, 1] = GetLogicalFlags((byte)i, (byte)j, LogicalOperation.And).Value;
-                        _logicalFlags[i, j, 2] = GetLogicalFlags((byte)i, (byte)j, LogicalOperation.Xor).Value;
-                    }
-                }
-
-                _bitwiseFlags = new byte[256, 8, 2];
-                for (int i = 0; i < 256; i++)
-                {
-                    Flags flags = new Flags();
-                    for (int j = 0; j < 8; j++)
-                    {
-                        _bitwiseFlags[i, j, 0] = GetBitwiseFlags((byte)i, (BitwiseOperation)j, false).Value;
-                        _bitwiseFlags[i, j, 1] = GetBitwiseFlags((byte)i, (BitwiseOperation)j, true).Value;
-                    }
-                }
-
-                _initialised = true;
-            }            
-        }
-
-        public static Flags ByteArithmeticFlags(byte startingValue, int addOrSubtractValue, bool carry, bool subtract)
-        {
-            if (EnablePrecalculation && _initialised)
-            {
-                return new Flags((subtract ?
-                                    _subFlags8[startingValue, addOrSubtractValue, carry ? 1 : 0] :
-                                    _addFlags8[startingValue, addOrSubtractValue, carry ? 1 : 0]
-                                    ));
-            }
-            else
-            {
-                return GetByteArithmeticFlags(startingValue, (byte)addOrSubtractValue, carry, subtract);
-            }
-        }
-
-        public static Flags LogicalFlags(byte first, byte second, LogicalOperation operation)
-        {
-            if (EnablePrecalculation && _initialised)
-            {
-                return new Flags(_logicalFlags[first, second, (int)operation]);
-            }
-            else
-            {
-                return GetLogicalFlags(first, second, operation);
-            }
-        }
-
-        public static Flags BitwiseFlags(byte value, BitwiseOperation operation, bool previousCarry)
-        {
-            if (EnablePrecalculation && _initialised)
-            {
-                return new Flags(_bitwiseFlags[value, (int)operation, previousCarry ? 1 : 0]);
-            }
-            else
-            {
-                return GetBitwiseFlags(value, operation, previousCarry);
-            }
-        }
-
         // the state space of 16 x 16 bit numbers is too large to pre-calculate the flags in a reasonable time
         // TODO: run the code to completion and store output in a file?
         public static Flags WordArithmeticFlags(Flags currentFlags, ushort startingValue, int addOrSubtractValue, bool carry, bool setSignZeroParityOverflow, bool subtract) 
@@ -136,7 +39,7 @@ namespace Zem80.Core
             return flags;
         }
 
-        private static Flags GetByteArithmeticFlags(byte startingValue, byte addOrSubtractValue, bool carry, bool subtract)
+        public static Flags ByteArithmeticFlags(byte startingValue, byte addOrSubtractValue, bool carry, bool subtract)
         {
             Flags flags = new Flags();
 
@@ -154,7 +57,7 @@ namespace Zem80.Core
             return flags;
         }
 
-        private static Flags GetLogicalFlags(byte first, byte second, LogicalOperation operation)
+        public static Flags LogicalFlags(byte first, byte second, LogicalOperation operation)
         {
             Flags flags = new Flags();
 
@@ -177,7 +80,7 @@ namespace Zem80.Core
             return flags;
         }
 
-        private static Flags GetBitwiseFlags(byte value, BitwiseOperation operation, bool previousCarry)
+        public static Flags BitwiseFlags(byte value, BitwiseOperation operation, bool previousCarry)
         {
             Flags flags = new Flags();
 

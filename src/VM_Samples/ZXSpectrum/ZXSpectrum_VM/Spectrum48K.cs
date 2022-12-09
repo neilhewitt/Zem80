@@ -60,10 +60,6 @@ namespace ZXSpectrum.VM
                 case ".Z80":
                     LoadZ80(path);
                     break;
-
-                case ".TAP":
-                    LoadTAP(path);
-                    break;
             }
         }
 
@@ -197,15 +193,9 @@ namespace ZXSpectrum.VM
             }
         }
 
-        private void LoadTAP(string path)
-        {
-            byte[] tapData = TAPLoader.LoadToBytes(path);
-            _cpu.Memory.Untimed.WriteBytesAt(0x4000, tapData);
-        }
-
         private void StartInternal(string snapshotPath = null)
         {
-            // We're moving the CPU timing into this class by setting the CPU to run FastAndFurious but then
+            // We're moving the CPU timing into this class by setting the CPU to run SliceTimed and
             // specifying a time slice in ticks (at 3.5MHz, 70000 = 20ms). The CPU will pause after executing
             // those 70000 ticks, which in non-real-time will happen in <1ms, and then begin thread.sleeping;
             // then when the next timer tick occurs after the *real* 20ms, the CPU is resumed and quickly
@@ -214,19 +204,27 @@ namespace ZXSpectrum.VM
             // We do lose some real-time aspects such as synchronised calls to OnClockTick etc, but for the Spectrum
             // emulation we don't need these. It also makes the keyboard *slightly* less responsive but for human
             // beings this is unlikely to be a problem.
-            
+
             // Kudos due to SoftSpectrum48 which uses this technique to get real-time Spectrum performance without
             // having to spin the PC CPU all the time. This reduces our CPU use considerably
             // (but not as much as theirs does... not sure why).
 
             _cpu.Initialise(timingMode: TimingMode.TimeSliced, ticksPerTimeSlice: 70000);
             _cpu.OnTimeSliceEnded += OnTimeSliceEnded;
+            
+            _cpu.Debug.SetDataBusDefaultValue(0xFF); // Spectrum has pull-up resistors on data bus lines, so will always read 0xFF if not otherwise set by the ULA
+
+            // load a snapshot if we have one
             if (snapshotPath != null) LoadSnapshot(snapshotPath);
+            
+            // this timer will control the display updates and audio sync
             _timer = new Timer();
             _timer.Interval = TimeSpan.FromMilliseconds(20);
             _timer.Elapsed += UpdateDisplay;
+
             _cpu.Start();
             _timer.Start();
+            _beeper.Start();
         }
 
         private void OnTimeSliceEnded(object sender, long e)
@@ -239,14 +237,9 @@ namespace ZXSpectrum.VM
             _cpu.Resume();
             _cpu.RaiseInterrupt();
 
-            // we're faking the screen update process here:
-            // up to this point, we've been adding wait cycles to the processor
-            // to simulate the contention of video memory (the ULA would be reading
-            // the video RAM at this point, but in our emulation nothing happpens);
-            // then, when we have counted enough ticks since the last screen update 
-            // to be at the vertical blanking interval (that's crazy CRT talk, but Google it 
-            // if you want to understand how TVs used to work!), we 'instantaneously' 
-            // update the display
+            // we're faking the screen update process here - in reality there are lots
+            // of timing issues around 'contended' memory access by the ULA, and tstate counting etc
+            // but for our purposes here we don't need any of that - remember, this is just a demo VM!
 
             byte[] pixelBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x4000, 6144);
             byte[] attributeBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x5800, 768);
@@ -271,7 +264,6 @@ namespace ZXSpectrum.VM
 
             if (portAddress.LowByte() == 0xFE)
             {
-                
                 result = SpectrumKeyboard.GetBitValuesFor(portAddress.HighByte(), result);
             }
 
@@ -289,8 +281,9 @@ namespace ZXSpectrum.VM
                 if (portAddress.LowByte() == 0xFE) // PORT OxFE
                 {
                     _screen.SetBorderColour(output);
-                    _beeper.Update(output);
                 }
+
+                _beeper.Update(output);
             }
         }
 
@@ -313,19 +306,7 @@ namespace ZXSpectrum.VM
             map.Map(new ReadOnlyMemorySegment(File.ReadAllBytes(romPath)), 0);
             map.Map(new MemorySegment(49152), 16384);
 
-            // need to even out the CPU timing so that audio works smoothly
-            // the issue is that at 3.5MHz, each Windows Stopwatch tick == 2.85 Z80 ticks, so it drifts out of sync
-            // the following pattern corrects that, but when in DEBUG, the software slows down enough to throw this
-            // timing out, so we use a different pattern
-            int[] cpuWaitPattern = new int[] {
-#if RELEASE
-                3, 3, 3, 2
-#else
-                3, 3, 2, 2, 3, 3, 3, 2
-#endif
-            };
-
-            _cpu = new Processor(map: map, frequencyInMHz: 3.5f, cycleWaitPattern: cpuWaitPattern);
+            _cpu = new Processor(map: map, frequencyInMHz: 3.5f);
             _beeper = new Beeper(_cpu);
 
             // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 

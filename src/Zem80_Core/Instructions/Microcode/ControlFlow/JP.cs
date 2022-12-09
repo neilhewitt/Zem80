@@ -16,7 +16,7 @@ namespace Zem80.Core.Instructions
             if (instruction.Source != InstructionElement.WordValue)
             {
                 // JP HL / IX / IY
-                cpu.Registers.PC = instruction.MarshalSourceWord(data, cpu, out ushort address);
+                cpu.Registers.PC = instruction.MarshalSourceWord(data, cpu);
             }
             else if (instruction.Condition == Condition.None || flags.SatisfyCondition(instruction.Condition))
             {

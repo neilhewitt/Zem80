@@ -7,13 +7,14 @@ Console.WriteLine("Zem80 Speed Test\n");
 
 int[] cpuWaitPattern = new int[] {
 #if RELEASE
-            3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 3
+                3, 3, 3, 2
 #else
-            3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 3, 2
+                3, 3, 2, 2, 3, 3, 3, 2
 #endif
             };
 
-Processor cpu = new Processor(frequencyInMHz: 3.5f);//, waitPattern: cpuWaitPattern);
+
+Processor cpu = new Processor(frequencyInMHz: 3.5f, cycleWaitPattern: cpuWaitPattern);
 Instruction lde = InstructionSet.Instructions[0x1E];
 int ticks = ((lde.Timing.TStates * 10000) + 4); // +4 is for the final HALT instruction
 

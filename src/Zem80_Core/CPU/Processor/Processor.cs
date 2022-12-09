@@ -27,7 +27,6 @@ namespace Zem80.Core
         private long _emulatedTStates;
         private long _lastElapsedTicks;
 
-        private int _windowsTicksPerZ80Tick;
         private int[] _cycleWaitPattern;
         private int _cycleWaitCount;
         private long _ticksPerTimeSlice;
@@ -692,29 +691,8 @@ namespace Zem80.Core
             return package;
         }
 
-
-        // IInstructionTiming contains methods to execute the different types of machine cycle that the Z80 supports.
-        // These will be called mostly by the instruction decoder, stack operations and interrupt handlers, but some instruction
-        // microcode uses these methods directly to generate timing (eg IN/OUT) or add 'internal operation' ticks. 
-        // I segregated these onto an interface just to keep them logically partioned from the main API but without moving them out to a class.
-        // Calling code can get at these methods using the Processor.Timing property (or by casting to the interface type, but don't do that, it's ugly).
-
-        public Processor(
-            IMemoryBank memory = null, 
-            IMemoryMap map = null, 
-            ushort topOfStackAddress = 0, 
-            float frequencyInMHz = DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ, 
-            bool enableFlagPrecalculation = true, 
-            int[] cycleWaitPattern = null
-            )
+        private int[] MakeWaitPattern(float frequencyInMHz)
         {
-            if (frequencyInMHz != DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ && cycleWaitPattern is null)
-            {
-                throw new ArgumentNullException("If a non-default processor frequency is specified, a cycle wait pattern must be supplied, but was null.");
-            }
-
-            FrequencyInMHz = frequencyInMHz;
-
             // HACK ALERT!!!
             // To simulate real-time operation, we need to work out how many Windows ticks of the Stopwatch class there are
             // per emulated Z80 tick, so we can wait for the right amount of time for each clock cycle... easy, right?
@@ -722,13 +700,44 @@ namespace Zem80.Core
             // So, we need to create a pattern of waiting for one fewer ticks every x ticks to even out the wait time, otherwise
             // timing-critical stuff in your emulated hardware may not work properly (example: Spectrum beeper sound)
             //
-            // Client code can supply a WaitPattern at constructor time. This is an array of Int32 which will be used as a source
-            // for the number of Windows ticks to wait, one after the other each Z80 tick, until the pattern ends, when it will
-            // repeat. This avoids the need to try to solve the problem generally in the Z80 emulation itself, but puts the onus
-            // on understanding the specific performance of the emulated hardware onto the developer. Sorry!
-            float windowsFrequency = Stopwatch.Frequency / (frequencyInMHz * 1000000);
-            _windowsTicksPerZ80Tick = (int)Math.Ceiling(windowsFrequency);
-            _cycleWaitPattern = cycleWaitPattern ?? DEFAULT_WAIT_PATTERN;
+            // Client code can supply a custom WaitPattern at constructor time. Otherwise we have to generate one.
+
+            int[] cycleWaitPattern = new int[1] { 1 }; // default if not high-resolution platform
+
+            // high-res stopwatch frequency will be 10MHz - if we're on a non-high-res platform then real-time mode is not available anyway
+            if (Stopwatch.IsHighResolution)
+            {
+                float windowsFrequency = Stopwatch.Frequency / (frequencyInMHz * 1000000);
+                int windowsTicksPerZ80Tick = (int)Math.Ceiling(windowsFrequency);
+
+                if (windowsTicksPerZ80Tick % 2 == 0) // even number, so the pattern is regular, for example at 5MHz 10/5 = 2
+                {
+                    cycleWaitPattern = new int[] { windowsTicksPerZ80Tick };
+                }
+                else // odd number - we're approximating here, some hardware emulation may require a custom pattern
+                {
+                    cycleWaitPattern = new int[windowsTicksPerZ80Tick + 1];
+                    for (int i = 0; i < windowsTicksPerZ80Tick; i++)
+                    {
+                        cycleWaitPattern[i] = windowsTicksPerZ80Tick;
+                    }
+                    cycleWaitPattern[windowsTicksPerZ80Tick] = windowsTicksPerZ80Tick - 1;
+                }
+            }
+
+            return cycleWaitPattern;
+        }
+
+        public Processor(
+            IMemoryBank memory = null, 
+            IMemoryMap map = null, 
+            ushort topOfStackAddress = 0, 
+            float frequencyInMHz = DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ, 
+            int[] cycleWaitPattern = null
+            )
+        {
+            FrequencyInMHz = frequencyInMHz;
+            _cycleWaitPattern = cycleWaitPattern ?? MakeWaitPattern(frequencyInMHz);
 
             Registers = new Registers();
             Ports = new Ports(this);
@@ -742,13 +751,6 @@ namespace Zem80.Core
             IO = new ProcessorIO(this);
 
             Registers.SP = Stack.Top;
-
-            // If precalculation is enabled, all flag combinations for all input values for 8-bit ALU / bitwise operations are pre-built now 
-            // (but not the 16-bit ALU operations, the number space is far too big).
-            // This is *slightly* faster than calculating them in real-time, but if you need to debug flag calculation you should
-            // disable this and attach a debugger to the flag calculation methods in FlagLookup.cs.
-            FlagLookup.EnablePrecalculation = enableFlagPrecalculation;
-            FlagLookup.BuildFlagLookupTables();
             
             // The Z80 instruction set needs to be built (all Instruction objects are created, bound to the microcode instances, and indexed into a hashtable - undocumented 'overloads' are built here too)
             InstructionSet.Build();

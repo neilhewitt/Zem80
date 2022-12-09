@@ -20,7 +20,7 @@ namespace Zem80.Core.Tests.Zexall
         [OneTimeSetUp]
         public void Setup()
         {
-            _cpu = new Processor(enableFlagPrecalculation: false);
+            _cpu = new Processor();
 
             // set up the ZexNext test runner using the zipped test file (zexall.zip)
             Task.Run(() => _runner = new TestRunner(
