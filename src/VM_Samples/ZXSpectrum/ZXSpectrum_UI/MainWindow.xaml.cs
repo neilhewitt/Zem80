@@ -1,3 +1,4 @@
+using Microsoft.Win32;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -27,8 +28,16 @@ namespace ZXSpectrum.UI
             KeyDown += MainWindow_KeyDown;
             KeyUp += MainWindow_KeyUp;
 
-            //_vm.Start();
-            _vm.StartWithSnapshot("c:\\temp\\elite.sna");
+            OpenFileDialog dialog = new OpenFileDialog();
+            if (dialog.ShowDialog() == true)
+            {
+                string imagePath = dialog.FileName;
+                _vm.StartWithSnapshot(imagePath);
+            }
+            else
+            {
+                _vm.Start();
+            }
         }
 
         private void MainWindow_KeyUp(object sender, KeyEventArgs e)

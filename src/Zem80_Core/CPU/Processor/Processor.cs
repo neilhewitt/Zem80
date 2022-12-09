@@ -27,7 +27,6 @@ namespace Zem80.Core
         private long _emulatedTStates;
         private long _lastElapsedTicks;
 
-        private int _windowsTicksPerZ80Tick;
         private int[] _cycleWaitPattern;
         private int _cycleWaitCount;
         private long _ticksPerTimeSlice;
@@ -692,6 +691,43 @@ namespace Zem80.Core
             return package;
         }
 
+        private int[] MakeWaitPattern(float frequencyInMHz)
+        {
+            // HACK ALERT!!!
+            // To simulate real-time operation, we need to work out how many Windows ticks of the Stopwatch class there are
+            // per emulated Z80 tick, so we can wait for the right amount of time for each clock cycle... easy, right?
+            // Well, no. Because it isn't always a whole number, and we can't wait for a fractional number of Stopwatch ticks.
+            // So, we need to create a pattern of waiting for one fewer ticks every x ticks to even out the wait time, otherwise
+            // timing-critical stuff in your emulated hardware may not work properly (example: Spectrum beeper sound)
+            //
+            // Client code can supply a custom WaitPattern at constructor time. Otherwise we have to generate one.
+
+            int[] cycleWaitPattern = new int[1] { 1 }; // default if not high-resolution platform
+
+            // high-res stopwatch frequency will be 10MHz - if we're on a non-high-res platform then real-time mode is not available anyway
+            if (Stopwatch.IsHighResolution)
+            {
+                float windowsFrequency = Stopwatch.Frequency / (frequencyInMHz * 1000000);
+                int windowsTicksPerZ80Tick = (int)Math.Ceiling(windowsFrequency);
+
+                if (windowsTicksPerZ80Tick % 2 == 0) // even number, so the pattern is regular, for example at 5MHz 10/5 = 2
+                {
+                    cycleWaitPattern = new int[] { windowsTicksPerZ80Tick };
+                }
+                else // odd number - we're approximating here, some hardware emulation may require a custom pattern
+                {
+                    cycleWaitPattern = new int[windowsTicksPerZ80Tick + 1];
+                    for (int i = 0; i < windowsTicksPerZ80Tick; i++)
+                    {
+                        cycleWaitPattern[i] = windowsTicksPerZ80Tick;
+                    }
+                    cycleWaitPattern[windowsTicksPerZ80Tick] = windowsTicksPerZ80Tick - 1;
+                }
+            }
+
+            return cycleWaitPattern;
+        }
+
         public Processor(
             IMemoryBank memory = null, 
             IMemoryMap map = null, 
@@ -700,27 +736,8 @@ namespace Zem80.Core
             int[] cycleWaitPattern = null
             )
         {
-            if (frequencyInMHz != DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ && cycleWaitPattern is null)
-            {
-                throw new ArgumentNullException("If a non-default processor frequency is specified, a cycle wait pattern must be supplied, but was null.");
-            }
-
             FrequencyInMHz = frequencyInMHz;
-
-            // HACK ALERT!!!
-            // To simulate real-time operation, we need to work out how many Windows ticks of the Stopwatch class there are
-            // per emulated Z80 tick, so we can wait for the right amount of time for each clock cycle... easy, right?
-            // Well, no. Because it isn't always a whole number, and we can't wait for a fractional number of Stopwatch ticks.
-            // So, we need to create a pattern of waiting for one fewer ticks every x ticks to even out the wait time, otherwise
-            // timing-critical stuff in your emulated hardware may not work properly (example: Spectrum beeper sound)
-            //
-            // Client code can supply a WaitPattern at constructor time. This is an array of Int32 which will be used as a source
-            // for the number of Windows ticks to wait, one after the other each Z80 tick, until the pattern ends, when it will
-            // repeat. This avoids the need to try to solve the problem generally in the Z80 emulation itself, but puts the onus
-            // on understanding the specific performance of the emulated hardware onto the developer. Sorry!
-            float windowsFrequency = Stopwatch.Frequency / (frequencyInMHz * 1000000);
-            _windowsTicksPerZ80Tick = (int)Math.Ceiling(windowsFrequency);
-            _cycleWaitPattern = cycleWaitPattern ?? DEFAULT_WAIT_PATTERN;
+            _cycleWaitPattern = cycleWaitPattern ?? MakeWaitPattern(frequencyInMHz);
 
             Registers = new Registers();
             Ports = new Ports(this);
