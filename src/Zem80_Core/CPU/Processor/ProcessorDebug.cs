@@ -24,5 +24,26 @@ namespace Zem80.Core
         {
             IO.SetDataBusDefault(defaultValue);
         }
+
+        void IDebugProcessor.AddBreakpoint(ushort address)
+        {
+            if (_breakpoints == null) _breakpoints = new List<ushort>();
+
+            // Note that the breakpoint functionality is *very* simple and not checked
+            // so if you add a breakpoint for an address which is not the start
+            // of an instruction in the code, it will never be triggered as PC will never get there
+            if (!_breakpoints.Contains(address))
+            {
+                _breakpoints.Add(address);
+            }
+        }
+
+        void IDebugProcessor.RemoveBreakpoint(ushort address)
+        {
+            if (_breakpoints != null && _breakpoints.Contains(address))
+            {
+                _breakpoints.Remove(address);
+            }
+        }
     }
 }

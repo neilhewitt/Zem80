@@ -209,8 +209,7 @@ namespace ZXSpectrum.VM
             // having to spin the PC CPU all the time. This reduces our CPU use considerably
             // (but not as much as theirs does... not sure why).
 
-            _cpu.Initialise(timingMode: TimingMode.TimeSliced, ticksPerTimeSlice: 70000);
-            _cpu.OnTimeSliceEnded += OnTimeSliceEnded;
+            _cpu.Initialise(timingMode: TimingMode.TimeSliced, ticksPerTimeSlice: 70000); // CPU will suspend at end of time slice
             
             _cpu.Debug.SetDataBusDefaultValue(0xFF); // Spectrum has pull-up resistors on data bus lines, so will always read 0xFF if not otherwise set by the ULA
 
@@ -227,14 +226,9 @@ namespace ZXSpectrum.VM
             _beeper.Start();
         }
 
-        private void OnTimeSliceEnded(object sender, long e)
-        {
-            _cpu.Suspend();
-        }
-
         private void UpdateDisplay(object sender, EventArgs e)
         {
-            _cpu.Resume();
+            _cpu.Resume(); // need to resume CPU to start next time slice
             _cpu.RaiseInterrupt();
 
             // we're faking the screen update process here - in reality there are lots

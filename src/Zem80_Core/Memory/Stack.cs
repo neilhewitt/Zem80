@@ -71,7 +71,12 @@ namespace Zem80.Core.Memory
 
         ushort IDebugStack.PeekStack()
         {
-            return _cpu.Memory.Untimed.ReadWordAt(_cpu.Registers.SP);
+            return Debug.PeekStack(0);
+        }
+
+        ushort IDebugStack.PeekStack(int wordsFromTop)
+        {
+            return _cpu.Memory.Untimed.ReadWordAt((ushort)(_cpu.Registers.SP - (wordsFromTop * 2)));
         }
 
         public Stack(ushort topOfStackAddress, Processor cpu)

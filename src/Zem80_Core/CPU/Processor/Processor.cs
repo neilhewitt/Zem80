@@ -13,17 +13,18 @@ namespace Zem80.Core
     {
         public const int MAX_MEMORY_SIZE_IN_BYTES = 65536;
         public const float DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ = 4;
-        public readonly int[] DEFAULT_WAIT_PATTERN = { 3, 2 };
 
         private bool _running;
         private bool _halted;
         private bool _suspended;
         private bool _realTime;
         private bool _timeSliced;
+        
         private HaltReason _reasonForLastHalt;
         private bool _suspendMachineCycles;
         private int _pendingWaitCycles;
         private int _waitCyclesAdded;
+        
         private long _emulatedTStates;
         private long _lastElapsedTicks;
 
@@ -38,6 +39,7 @@ namespace Zem80.Core
         
         private Func<byte> _interruptCallback;
         private bool _interruptLatch;
+        private bool _runExtraNOP;
        
         public bool EndOnHalt { get; private set; }
 
@@ -52,6 +54,7 @@ namespace Zem80.Core
         public InterruptMode InterruptMode { get; private set; }
         public bool InterruptsEnabled { get; private set; }
         public bool InterruptsEnabledAfterNMI { get; private set; }
+
         public float FrequencyInMHz { get; private set; }
         public TimingMode TimingMode { get; private set; }
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; 
@@ -138,7 +141,7 @@ namespace Zem80.Core
             while (_running) Thread.Sleep(1); // main thread can sleep while instruction thread does its thing
         }
 
-        public void ResetAndClearMemory(bool restartAfterReset = true)
+        public void ResetAndClearMemory(bool restartAfterReset = true, ushort startAddress = 0, InterruptMode interruptMode = InterruptMode.IM0)
         {
             IO.SetResetState();
             Stop();
@@ -148,7 +151,7 @@ namespace Zem80.Core
             Registers.SP = Stack.Top;
             if (restartAfterReset)
             {
-                Initialise(0, this.EndOnHalt, this.TimingMode);
+                Initialise(startAddress, this.EndOnHalt, this.TimingMode, _ticksPerTimeSlice, interruptMode);
                 Start();
             }
         }
@@ -212,27 +215,6 @@ namespace Zem80.Core
             }
         }
 
-        void IDebugProcessor.AddBreakpoint(ushort address)
-        {
-            if (_breakpoints == null) _breakpoints = new List<ushort>();
-
-            // Note that the breakpoint functionality is *very* simple and not checked
-            // so if you add a breakpoint for an address which is not the start
-            // of an instruction in the code, it will never be triggered as PC will never get there
-            if (!_breakpoints.Contains(address))
-            {
-                _breakpoints.Add(address);
-            }    
-        }
-
-        void IDebugProcessor.RemoveBreakpoint(ushort address)
-        {
-            if (_breakpoints != null && _breakpoints.Contains(address))
-            {
-                _breakpoints.Remove(address);
-            }
-        }
-
         private void InstructionCycle()
         {
             _clock = new Stopwatch();
@@ -249,9 +231,19 @@ namespace Zem80.Core
                     InstructionPackage package = null;
                     ushort pc = Registers.PC;
 
-                    if (_halted)
+                    if (_halted || _runExtraNOP)
                     {
-                        package = DecodeNOP();
+                        // halted - run NOP until we resume (don't advance PC)
+                        // runExtrNOP - run a single NOP and advance PC so we can continue on
+
+                        FetchNextOpcodeByte(); // enable devices to run, interrupts etc
+                        package = new InstructionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
+                        
+                        if (_runExtraNOP)
+                        {
+                            Registers.PC++;
+                            _runExtraNOP= false;
+                        }
                     }
                     else
                     {
@@ -270,9 +262,10 @@ namespace Zem80.Core
                     if (_timeSliced && _ticksPerTimeSlice > 0)
                     {
                         _ticksThisTimeSlice += package.Instruction.Timing.TStates;
-                        if (_ticksThisTimeSlice > _ticksPerTimeSlice)
+                        if (_ticksThisTimeSlice >= _ticksPerTimeSlice)
                         {
                             _ticksThisTimeSlice = 0;
+                            Suspend();
                             OnTimeSliceEnded?.Invoke(this, _ticksThisTimeSlice);
                         }
                     }
@@ -356,12 +349,6 @@ namespace Zem80.Core
             return Execute(package);
         }
 
-        private InstructionPackage DecodeNOP()
-        {
-            FetchNextOpcodeByte(); // enable devices to run, interrupts etc
-            return new InstructionPackage(InstructionSet.NOP, new InstructionData(), Registers.PC);
-        }
-
         private InstructionPackage DecodeInstructionAtProgramCounter()
         {
             byte b0, b1, b3; // placeholders for upcoming instruction bytes
@@ -382,8 +369,8 @@ namespace Zem80.Core
                     // sequences of 0xDD / 0xFD / 0xED count as NOP until the final 0xDD / 0xFD / 0xED which is then the prefix byte
                     b1 = FetchNextOpcodeByte();
                     Registers.PC++;
-                    
-                    return new InstructionPackage(InstructionSet.NOP, data, instructionAddress);
+
+                    instruction = InstructionSet.NOP;
                 }
                 else if ((b0 == 0xDD || b0 == 0xFD) && b1 == 0xCB)
                 {
@@ -406,25 +393,23 @@ namespace Zem80.Core
                 else 
                 {
                     // all other prefixed instructions (CB, ED, DD, FD): a two-byte opcode + up to 2 operand bytes
+                    
                     if (!InstructionSet.Instructions.TryGetValue(b1 | b0 << 8, out instruction))
                     {
                         // if prefix was 0xED and the instruction is invalid, the spec says run *two* NOPs
-                        // so we need to fix up the code to simulate this
                         if (b0 == 0xED)
                         {
-                            instructionAddress--;
-                            Memory.Untimed.WriteBytesAt(instructionAddress, new byte[] { 0x00, 0x00 }); // two NOPs
-                            Registers.PC = instructionAddress;
+                            _runExtraNOP = true; // causes the processor to run an extra NOP *after* this one and skip over the invalid instruction byte
                         }
-                        // if the prefix was DD or FD and the instruction is invalid, the spec says we should run a NOP now but then run the equivalent
+                        
+                        // if the prefix was 0xDD or 0xFD and the instruction is invalid, the spec says we should run a NOP now but then run the equivalent
                         // unprefixed instruction next
-                        else if (b0 == 0xDD || b0 == 0xFD)
+                        if (b0 == 0xDD || b0 == 0xFD)
                         {
-                            instructionAddress--;
+                            instructionAddress++;
                             Registers.PC = instructionAddress;
                         }
 
-                        // not a valid instruction - the Z80 spec says we should run a NOP instead (if prefix was CB, just run a single NOP)
                         instruction = InstructionSet.NOP;
                     }
                     else
@@ -432,7 +417,7 @@ namespace Zem80.Core
                         b1 = FetchNextOpcodeByte();
                         Registers.PC++;
 
-                        WaitForClockTicks(instruction.Timing.Exceptions.ExtraOpcodeFetchTStates);
+                        WaitForClockTicks(instruction.Timing.Exceptions.ExtraOpcodeFetchTStates); // some instructions have prolonged opcode fetch
 
                         // fetch the operand bytes (as required)
                         if (instruction.Argument1 != InstructionElement.None)

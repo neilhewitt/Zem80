@@ -77,13 +77,13 @@ namespace ZXSpectrum.VM
 
             byte getPixel(int y, int x, int rgbIndex)
             {
-                Color pixelColour;
+                Color pixelColor;
                 if (rgbIndex == 3) return 0xFF; // alpha channel is always max
 
                 if (y < 32 || y > 223 || x < 32 || x > 287)
                 {
                     // this is the border
-                    pixelColour = _border.Normal;
+                    pixelColor = _border.Normal;
                 }
                 else
                 {
@@ -92,18 +92,10 @@ namespace ZXSpectrum.VM
                     int x8 = (int)(x / 8);
                     int y8 = (int)(y / 8);
                     ScreenPixel pixel = new ScreenPixel(_pixels[y, x], _attributes[y8, x8]);
-                    Color ink = pixel.Attribute.Bright ? pixel.Attribute.Ink.Bright : pixel.Attribute.Ink.Normal;
-                    Color paper = pixel.Attribute.Bright ? pixel.Attribute.Paper.Bright : pixel.Attribute.Paper.Normal;
-                    if (flashOn && pixel.Attribute.Flash)
-                    {
-                        pixelColour = ink;
-                        ink = paper;
-                        paper = pixelColour;
-                    }
-                    pixelColour = pixel.Set ? ink : paper;
+                    pixelColor = pixel.GetColor(flashOn);
                 }
 
-                return rgbIndex switch { 0 => pixelColour.B, 1 => pixelColour.G, 2 => pixelColour.R, _ => 0xFF };
+                return rgbIndex switch { 0 => pixelColor.B, 1 => pixelColor.G, 2 => pixelColor.R, _ => 0xFF };
             }
         }
 
@@ -115,8 +107,8 @@ namespace ZXSpectrum.VM
             {
                 for (int x = 0; x < 256; x++)
                 {
-                        output.Append(getPixel(y, x));
-                        pixelIndex += 1;
+                    output.Append(getPixel(y, x));
+                    pixelIndex += 1;
                 }
                 output.Append("\n");
             }
