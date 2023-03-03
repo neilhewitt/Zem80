@@ -83,6 +83,7 @@ namespace ZXSpectrum.VM
             r.IY = getWord(15);
             r.IX = getWord(17);
 
+            _cpu.DisableInterrupts();
             if (snapshot[19].GetBit(2))
             {
                 _cpu.EnableInterrupts();
@@ -98,7 +99,6 @@ namespace ZXSpectrum.VM
             _cpu.Memory.Untimed.WriteBytesAt(16384, snapshot[27..]);
             ushort pc = _cpu.Stack.Debug.PopStackDirect(); // pops the top value from the stack and moves the stack pointer, but doesn't run any internal cycles
             _cpu.Registers.PC = pc;
-            _cpu.RestoreInterruptsAfterNMI();
 
             ushort getWord(int index)
             {
@@ -108,6 +108,8 @@ namespace ZXSpectrum.VM
 
         private void LoadZ80(string path)
         {
+            // BUG: sometimes overfills memory - look at decompression routine
+
             byte[] snapshot = File.ReadAllBytes(path);
             Registers r = _cpu.Registers;
 
@@ -139,6 +141,8 @@ namespace ZXSpectrum.VM
 
             r.IY = getWord(23);
             r.IX = getWord(25);
+
+            _cpu.DisableInterrupts();
             if (snapshot[27] == 1)
             {
                 _cpu.EnableInterrupts();
@@ -185,7 +189,6 @@ namespace ZXSpectrum.VM
             }
 
             _cpu.Memory.Untimed.WriteBytesAt(16384, memoryImage);
-            _cpu.RestoreInterruptsAfterNMI();
 
             ushort getWord(int index)
             {

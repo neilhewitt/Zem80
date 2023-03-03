@@ -38,7 +38,6 @@ namespace Zem80.Core
         private InstructionPackage _executingInstructionPackage;
         
         private Func<byte> _interruptCallback;
-        private bool _interruptLatch;
         private bool _runExtraNOP;
        
         public bool EndOnHalt { get; private set; }
@@ -53,7 +52,7 @@ namespace Zem80.Core
 
         public InterruptMode InterruptMode { get; private set; }
         public bool InterruptsEnabled { get; private set; }
-        public bool InterruptsEnabledAfterNMI { get; private set; }
+        internal bool InterruptsWereEnabledBeforeNMI { get; private set; }
 
         public float FrequencyInMHz { get; private set; }
         public TimingMode TimingMode { get; private set; }
@@ -175,21 +174,11 @@ namespace Zem80.Core
         public void DisableInterrupts()
         {
             InterruptsEnabled = false;
-            InterruptsEnabledAfterNMI = false;
-            _interruptLatch = false;
         }
 
         public void EnableInterrupts()
         {
             InterruptsEnabled = true;
-            InterruptsEnabledAfterNMI = true;
-            _interruptLatch = true;
-        }
-
-        public void RestoreInterruptsAfterNMI()
-        {
-            InterruptsEnabled = InterruptsEnabledAfterNMI;
-            _interruptLatch = InterruptsEnabled;
         }
 
         public void AddWaitCycles(int waitCycles)
@@ -213,6 +202,11 @@ namespace Zem80.Core
                     Stop();
                 }
             }
+        }
+
+        internal void RestoreInterruptsAfterNMI()
+        {
+            InterruptsEnabled = InterruptsWereEnabledBeforeNMI;
         }
 
         private void InstructionCycle()
@@ -275,16 +269,9 @@ namespace Zem80.Core
 
         private void HandleInterrupts()
         {
-            bool handledNMI = HandleNMI();
-
-            // when interrupts are enabled during an instruction cycle, handling should not resume until the *next* cycle, hence the latch here
-            if (!_interruptLatch && !handledNMI)
+            if (!HandleNMI())
             {
                 HandleMaskableInterrupts();
-            }
-            else
-            {
-                _interruptLatch = false;
             }
         }
 
@@ -541,7 +528,7 @@ namespace Zem80.Core
                     Resume();
                 }
 
-                InterruptsEnabledAfterNMI = InterruptsEnabled; // save IFF1 state ready for RETN
+                InterruptsWereEnabledBeforeNMI = InterruptsEnabled; // save IFF1 state ready for RETN
                 InterruptsEnabled = false; // disable maskable interrupts until RETN
 
                 Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
