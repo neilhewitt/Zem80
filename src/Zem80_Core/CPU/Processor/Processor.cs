@@ -39,6 +39,7 @@ namespace Zem80.Core
         
         private Func<byte> _interruptCallback;
         private bool _runExtraNOP;
+        private bool _uninterruptableNOP;
        
         public bool EndOnHalt { get; private set; }
 
@@ -269,6 +270,13 @@ namespace Zem80.Core
 
         private void HandleInterrupts()
         {
+            // in some situations, a NOP may not allow any interrupts (including NMI) to run after it
+            if (_uninterruptableNOP)
+            {
+                _uninterruptableNOP = false;
+                return;
+            }
+
             if (!HandleNMI())
             {
                 HandleMaskableInterrupts();
@@ -453,6 +461,11 @@ namespace Zem80.Core
                 }
             }
 
+            if (instruction == InstructionSet.NOP && b0 != 0x00)
+            {
+                _uninterruptableNOP = true; // this is a 'pseudo-NOP' caused by a special case / invalid opcode, after which interrupts (including NMI) must not run
+            }
+
             return new InstructionPackage(instruction, data, instructionAddress);
         }
 
@@ -622,6 +635,9 @@ namespace Zem80.Core
                         break;
                 }
 
+                // handling an interrupt always results in two extra wait cycles being added, so we'll add those here
+                WaitForClockTicks(2);
+
                 _interruptCallback = null;
                 Timing.EndInterruptRequestAcknowledgeCycle();
             }
@@ -629,8 +645,8 @@ namespace Zem80.Core
 
         private InstructionPackage DecodeIM0Interrupt()
         {
-            // In IM0, when an interrupt is generated, the CPU will ask the device
-            // to supply four bytes one at a time via a callback method, which are then decoded into an instruction to be executed.
+            // In IM0, when an interrupt is generated, the CPU will ask the device to supply four bytes one at a time via
+            // a callback method, which are then decoded into an instruction to be executed.
             
             // To emulate this without heavily re-writing the decode loop (which expects the instruction bytes to be 
             // in memory at the address pointed to by the program counter), we will temporarily copy 
@@ -642,15 +658,16 @@ namespace Zem80.Core
             ushort pc = Registers.PC;
             Registers.PC = address;
 
+            // we need to suspend all machine cycle timing so things don't get out of sync
             _suspendMachineCycles = true;
-            
+           
+            byte[] opcode = new byte[4];
             for (int i = 0; i < 4; i++)
             {
                 // The callback will be called 4 times; it should return the opcode bytes of the instruction to run in sequence.
                 // If there are fewer than 4 bytes in the opcode, return 0x00 for the 'extra' bytes
-                byte value = _interruptCallback();
-                IO.SetDataBusValue(value);
-                Memory.Untimed.WriteByteAt((ushort)(address + i), value);
+                opcode[i] = _interruptCallback();
+                Memory.Untimed.WriteByteAt((ushort)(address + i), opcode[i]);
             }
 
             InstructionPackage package = DecodeInstructionAtProgramCounter();
@@ -659,6 +676,13 @@ namespace Zem80.Core
             Memory.Untimed.WriteBytesAt(address, lastFour);
             
             _suspendMachineCycles = false;
+
+            // The first opcode byte is read during the interrupt request acknowledge cycle, so no additional timing is required.
+            // Any additional bytes read should be timed as a normal memory read (4 clock cycles each).
+            for (int i = 1; i < 4; i++)
+            {
+                if (opcode[i] != 0) WaitForClockTicks(4);
+            }
 
             return package;
         }
@@ -703,7 +727,7 @@ namespace Zem80.Core
         public Processor(
             IMemoryBank memory = null, 
             IMemoryMap map = null, 
-            ushort topOfStackAddress = 0, 
+            ushort topOfStackAddress = 0xFFFF, 
             float frequencyInMHz = DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ, 
             int[] cycleWaitPattern = null
             )
@@ -718,11 +742,12 @@ namespace Zem80.Core
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.
             Memory = memory ?? new MemoryBank();
             Memory.Initialise(this, map ?? new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES, true));
-            Stack = new Stack(topOfStackAddress, this);
             
-            IO = new ProcessorIO(this);
-
+            // stack pointer defaults to 0xFFFF - this is undocumented but verified behaviour of the Z80
+            Stack = new Stack(topOfStackAddress, this);
             Registers.SP = Stack.Top;
+
+            IO = new ProcessorIO(this);
             
             // The Z80 instruction set needs to be built (all Instruction objects are created, bound to the microcode instances, and indexed into a hashtable - undocumented 'overloads' are built here too)
             InstructionSet.Build();
