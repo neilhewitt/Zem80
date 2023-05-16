@@ -46,9 +46,9 @@ namespace Zem80.Core
             return new RealTimeClock(frequencyInMHz, cycleWaitPattern);
         }
 
-        public static IClock TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice, bool clockHandlesResume)
+        public static IClock TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice)
         {
-            return new TimeSlicedClock(frequencyInMHz, timeSlice, clockHandlesResume);
+            return new TimeSlicedClock(frequencyInMHz, timeSlice);
         }
     }
 }

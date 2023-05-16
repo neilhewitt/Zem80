@@ -39,7 +39,7 @@ namespace ZXSpectrum.VM
 
         public void Stop()
         {
-            _timer.Stop();
+            //_timer.Stop();
             _beeper.Dispose();
             _cpu.Stop();
         }
@@ -217,20 +217,21 @@ namespace ZXSpectrum.VM
 
             // load a snapshot if we have one
             if (snapshotPath != null) LoadSnapshot(snapshotPath);
-            
+
             // this timer will control the display updates and audio sync
-            _timer = new Timer();
-            _timer.Interval = TimeSpan.FromMilliseconds(20);
-            _timer.Elapsed += UpdateDisplay;
+            //_timer = new Timer();
+            //_timer.Interval = TimeSpan.FromMilliseconds(20);
+            //_timer.Elapsed += UpdateDisplay;
+            _cpu.Clock.OnTimeSliceEnded += UpdateDisplay;
 
             _cpu.Start();
-            _timer.Start();
+            //_timer.Start();
             _beeper.Start();
         }
 
-        private void UpdateDisplay(object sender, EventArgs e)
+        private void UpdateDisplay(object sender, long e)
         {
-            _cpu.Resume(); // need to resume CPU to start next time slice
+            //_cpu.Clock.StartNextTimeSlice();
             _cpu.RaiseInterrupt();
 
             // we're faking the screen update process here - in reality there are lots
@@ -304,7 +305,7 @@ namespace ZXSpectrum.VM
 
             _cpu = new Processor(
                 map: map, 
-                clock: ClockMaker.TimeSlicedClock(3.5f, TimeSpan.FromMilliseconds(20), false)
+                clock: ClockMaker.TimeSlicedClock(3.5f, TimeSpan.FromMilliseconds(20))
                 );
             _beeper = new Beeper(_cpu);
 

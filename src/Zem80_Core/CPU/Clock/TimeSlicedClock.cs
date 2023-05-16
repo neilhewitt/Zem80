@@ -10,18 +10,19 @@ namespace Zem80.Core
         private Timer _timer;
         private int _ticksPerTimeSlice;
         private int _ticksThisTimeSlice;
-        private bool _handleResume;
 
         public override void Start()
         {
             base.Start();
-            if (_handleResume) _timer.Start();
+            _timer.Start();
+            SignalTimeSliceStarted();
         }
 
         public override void Stop()
         {
             base.Stop();
-            if (_handleResume) _timer.Stop();
+            _timer.Stop();
+            SignalTimeSliceEnded();
         }
 
         public override void WaitForNextClockTick()
@@ -31,7 +32,7 @@ namespace Zem80.Core
             {
                 _ticksThisTimeSlice = 0;
                 _cpu.Suspend();
-                Task.Run(SignalTimeSliceEnded).ConfigureAwait(false);
+                SignalTimeSliceEnded();
             }
             else
             {
@@ -42,6 +43,7 @@ namespace Zem80.Core
         private void TimerElapsed(object sender, EventArgs e)
         {
             _cpu.Resume();
+            SignalTimeSliceStarted();
         }
 
         public void Dispose()
@@ -49,7 +51,7 @@ namespace Zem80.Core
             Stop();
         }
 
-        protected internal TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice, bool handleResume)
+        protected internal TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice)
             : base(frequencyInMHz)
         {
             int z80TicksPerSecond = (int)(frequencyInMHz * 1000000);
@@ -59,7 +61,6 @@ namespace Zem80.Core
             _timer = new Timer();
             _timer.Interval = timeSlice;
             _timer.Elapsed += TimerElapsed;
-            _handleResume = handleResume;
         }
     }
 }

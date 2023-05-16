@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Zem80.Core.IO;
 
 namespace Zem80.Core
@@ -16,6 +17,7 @@ namespace Zem80.Core
 
         public event EventHandler<long> OnTick;
         public event EventHandler<long> OnTimeSliceEnded;
+        public event EventHandler<long> OnTimeSliceStarted;
 
         public virtual void Initialise(Processor cpu)
         {
@@ -48,7 +50,12 @@ namespace Zem80.Core
 
         protected internal void SignalTimeSliceEnded()
         {
-            OnTimeSliceEnded?.Invoke(this, Ticks);
+            Task.Run(() => OnTimeSliceEnded?.Invoke(this, Ticks)).ConfigureAwait(false);
+        }
+
+        protected internal void SignalTimeSliceStarted()
+        {
+            Task.Run(() => OnTimeSliceStarted?.Invoke(this, Ticks)).ConfigureAwait(false);
         }
 
         protected internal ClockBase(float frequencyInMHz)

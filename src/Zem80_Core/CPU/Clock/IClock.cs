@@ -8,6 +8,7 @@ namespace Zem80.Core
         long Ticks { get; }
 
         event EventHandler<long> OnTick;
+        event EventHandler<long> OnTimeSliceStarted;
         event EventHandler<long> OnTimeSliceEnded;
 
         void Initialise(Processor cpu);
