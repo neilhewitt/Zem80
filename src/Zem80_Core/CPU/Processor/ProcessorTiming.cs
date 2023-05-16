@@ -20,37 +20,37 @@ namespace Zem80.Core
         void IInstructionTiming.OpcodeFetchCycle(ushort address, byte data)
         {
             IO.SetOpcodeFetchState(address);
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
             IO.AddOpcodeFetchData(data);
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
             IO.EndOpcodeFetchState();
             IO.SetAddressBusValue(Registers.IR);
             IO.SetDataBusValue(0x00);
 
-            WaitForNextClockTick();
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
         }
 
         void IInstructionTiming.MemoryReadCycle(ushort address, byte data)
         {
             IO.SetMemoryReadState(address);
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
 
             IO.AddMemoryData(data);
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
             IO.EndMemoryReadState();
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
 
             Instruction instruction = _executingInstructionPackage?.Instruction;
             if (instruction != null)
             {
                 if (instruction.Timing.Exceptions.HasProlongedMemoryRead)
                 {
-                    WaitForNextClockTick();
+                    Clock.WaitForNextClockTick();
                 }
             }
         }
@@ -58,20 +58,20 @@ namespace Zem80.Core
         void IInstructionTiming.MemoryWriteCycle(ushort address, byte data)
         {
             IO.SetMemoryWriteState(address, data);
-            WaitForNextClockTick();
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
             IO.EndMemoryWriteState();
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
 
             Instruction instruction = _executingInstructionPackage?.Instruction;
             if (instruction != null)
             {
                 if (instruction.Timing.Exceptions.HasProlongedMemoryWrite)
                 {
-                    WaitForNextClockTick();
-                    WaitForNextClockTick();
+                    Clock.WaitForNextClockTick();
+                    Clock.WaitForNextClockTick();
                 }
             }
         }
@@ -79,32 +79,32 @@ namespace Zem80.Core
         void IInstructionTiming.BeginStackReadCycle()
         {
             IO.SetMemoryReadState(Registers.SP);
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
         }
 
 
         void IInstructionTiming.EndStackReadCycle(bool highByte, byte data)
         {
             IO.AddMemoryData(data);
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
             IO.EndMemoryReadState();
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
         }
 
         void IInstructionTiming.BeginStackWriteCycle(bool highByte, byte data)
         {
             IO.SetMemoryWriteState(Registers.SP, data);
-            WaitForNextClockTick();
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
             InsertWaitCycles();
         }
 
         void IInstructionTiming.EndStackWriteCycle()
         {
             IO.EndMemoryWriteState();
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
         }
 
         void IInstructionTiming.BeginPortReadCycle(byte n, bool bc)
@@ -112,18 +112,18 @@ namespace Zem80.Core
             ushort address = bc ? (Registers.C, Registers.B).ToWord() : (n, Registers.A).ToWord();
 
             IO.SetPortReadState(address);
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
         }
 
         void IInstructionTiming.EndPortReadCycle(byte data)
         {
             IO.AddPortReadData(data);
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
             IO.EndPortReadState();
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
         }
 
         void IInstructionTiming.BeginPortWriteCycle(byte data, byte n, bool bc)
@@ -131,17 +131,17 @@ namespace Zem80.Core
             ushort address = bc ? (Registers.C, Registers.B).ToWord() : (n, Registers.A).ToWord();
 
             IO.SetPortWriteState(address, data);
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
         }
 
         void IInstructionTiming.EndPortWriteCycle()
         {
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
             IO.EndPortWriteState();
-            WaitForNextClockTick();
+            Clock.WaitForNextClockTick();
         }
 
         void IInstructionTiming.BeginInterruptRequestAcknowledgeCycle(int tStates)
@@ -149,7 +149,7 @@ namespace Zem80.Core
             IO.SetInterruptState();
             for (int i = 0; i < tStates; i++)
             {
-                WaitForNextClockTick();
+                Clock.WaitForNextClockTick();
             }
         }
 
@@ -162,8 +162,27 @@ namespace Zem80.Core
         {
             for (int i = 0; i < tStates; i++)
             {
-                WaitForNextClockTick();
+                Clock.WaitForNextClockTick();
             }
+        }
+
+        private void InsertWaitCycles()
+        {
+            int cyclesToAdd = _pendingWaitCycles;
+
+            if (cyclesToAdd > 0)
+            {
+                BeforeInsertWaitCycles?.Invoke(this, cyclesToAdd);
+            }
+
+            while (cyclesToAdd > 0)
+            {
+                Clock.WaitForNextClockTick();
+                cyclesToAdd--;
+            }
+
+            _waitCyclesAdded = _pendingWaitCycles;
+            _pendingWaitCycles = 0;
         }
     }
 }

@@ -17,23 +17,20 @@ namespace Zem80.Core
         private bool _running;
         private bool _halted;
         private bool _suspended;
-        private bool _realTime;
         private bool _timeSliced;
         
         private HaltReason _reasonForLastHalt;
         private bool _suspendMachineCycles;
         private int _pendingWaitCycles;
         private int _waitCyclesAdded;
-        
-        private long _emulatedTStates;
-        private long _lastElapsedTicks;
 
-        private int[] _cycleWaitPattern;
-        private int _cycleWaitCount;
+        private DateTime _lastStart;
+        private DateTime _lastEnd;
+        private long _emulatedTStates;
+
         private long _ticksPerTimeSlice;
         private long _ticksThisTimeSlice;
 
-        private Stopwatch _clock;
         private Thread _instructionCycle;
         private InstructionPackage _executingInstructionPackage;
         
@@ -43,11 +40,12 @@ namespace Zem80.Core
        
         public bool EndOnHalt { get; private set; }
 
-        public Registers Registers { get; private set; }
-        public IMemoryBank Memory { get; private set; }
-        public Stack Stack { get; private set; }
-        public Ports Ports { get; private set; }
-        public ProcessorIO IO { get; private set; }
+        public Registers Registers { get; init; }
+        public IMemoryBank Memory { get; init; }
+        public Stack Stack { get; init; }
+        public Ports Ports { get; init; }
+        public ProcessorIO IO { get; init; }
+        public IClock Clock { get; private set; }
 
         public IReadOnlyFlags Flags => new Flags(Registers.F, true);
 
@@ -55,19 +53,15 @@ namespace Zem80.Core
         public bool InterruptsEnabled { get; private set; }
         internal bool InterruptsWereEnabledBeforeNMI { get; private set; }
 
-        public float FrequencyInMHz { get; private set; }
         public TimingMode TimingMode { get; private set; }
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; 
-        public long EmulatedTStates => _emulatedTStates;
 
-        public event EventHandler<InstructionPackage> OnClockTick;
         public event EventHandler<InstructionPackage> BeforeExecuteInstruction;
         public event EventHandler<ExecutionResult> AfterExecuteInstruction;
         public event EventHandler<int> BeforeInsertWaitCycles;
         public event EventHandler BeforeStart;
         public event EventHandler OnStop;
         public event EventHandler<HaltReason> OnHalt;
-        public event EventHandler<long> OnTimeSliceEnded;
 
         public void Dispose()
         {
@@ -75,19 +69,14 @@ namespace Zem80.Core
             _instructionCycle?.Interrupt(); // just in case
         }
 
-        public void Initialise(ushort address = 0x0000, bool endOnHalt = false, TimingMode timingMode = TimingMode.FastAndFurious, long ticksPerTimeSlice = 0, InterruptMode interruptMode = InterruptMode.IM0)
+        public void Initialise(ushort address = 0x0000, bool endOnHalt = false, InterruptMode interruptMode = InterruptMode.IM0)
         {
             if (!_running)
             {
                 EndOnHalt = endOnHalt; // if set, will summarily end execution at the first HALT instruction. This is mostly for test / debug scenarios.
-                TimingMode = timingMode;
-                _ticksPerTimeSlice = ticksPerTimeSlice;
                 InterruptMode = interruptMode;
                 
-                _realTime = (timingMode == TimingMode.PseudoRealTime && Stopwatch.IsHighResolution);
-                _timeSliced = (timingMode == TimingMode.TimeSliced);
                 _emulatedTStates = 0;
-
                 DisableInterrupts();
 
                 Registers.PC = address; // ordinarily, execution will start at 0x0000, but this can be overridden
@@ -97,24 +86,24 @@ namespace Zem80.Core
         public void Start()
         {
             BeforeStart?.Invoke(null, null);
-            _lastElapsedTicks = 0;
-            _cycleWaitCount = 0;
             _running = true;
 
             IO.Clear();
             _instructionCycle = new Thread(InstructionCycle);
             _instructionCycle.IsBackground = true;
             _instructionCycle.Start();
+
+            _lastStart = DateTime.Now;
         }
 
         public void Stop()
         {
             _running = false;
             _halted = false;
-
-            _clock.Stop();
-            _lastRunTimeInMilliseconds = _clock.ElapsedMilliseconds;
-
+            
+            Clock.Stop();
+            _lastEnd = DateTime.Now;  
+            
             OnStop?.Invoke(null, null);
         }
 
@@ -151,7 +140,7 @@ namespace Zem80.Core
             Registers.SP = Stack.Top;
             if (restartAfterReset)
             {
-                Initialise(startAddress, this.EndOnHalt, this.TimingMode, _ticksPerTimeSlice, interruptMode);
+                Initialise(startAddress, this.EndOnHalt, interruptMode);
                 Start();
             }
         }
@@ -212,8 +201,7 @@ namespace Zem80.Core
 
         private void InstructionCycle()
         {
-            _clock = new Stopwatch();
-            _clock.Start();
+            Clock.Start();
 
             while (_running)
             {
@@ -253,17 +241,6 @@ namespace Zem80.Core
                     Execute(package);
                     HandleInterrupts();
                     RefreshMemory();
-
-                    if (_timeSliced && _ticksPerTimeSlice > 0)
-                    {
-                        _ticksThisTimeSlice += package.Instruction.Timing.TStates;
-                        if (_ticksThisTimeSlice >= _ticksPerTimeSlice)
-                        {
-                            _ticksThisTimeSlice = 0;
-                            Suspend();
-                            OnTimeSliceEnded?.Invoke(this, _ticksThisTimeSlice);
-                        }
-                    }
                 }
             }
         }
@@ -412,7 +389,7 @@ namespace Zem80.Core
                         b1 = FetchNextOpcodeByte();
                         Registers.PC++;
 
-                        WaitForClockTicks(instruction.Timing.Exceptions.ExtraOpcodeFetchTStates); // some instructions have prolonged opcode fetch
+                        Clock.WaitForClockTicks(instruction.Timing.Exceptions.ExtraOpcodeFetchTStates); // some instructions have prolonged opcode fetch
 
                         // fetch the operand bytes (as required)
                         if (instruction.Argument1 != InstructionElement.None)
@@ -436,7 +413,7 @@ namespace Zem80.Core
                     instruction = InstructionSet.NOP;
                 }
 
-                WaitForClockTicks(instruction.Timing.Exceptions.ExtraOpcodeFetchTStates);
+                Clock.WaitForClockTicks(instruction.Timing.Exceptions.ExtraOpcodeFetchTStates);
 
                 // fetch the operand bytes (as required)
                 if (instruction.Argument1 != InstructionElement.None)
@@ -451,7 +428,7 @@ namespace Zem80.Core
                         {
                             if (instruction.Condition == Condition.None || Flags.SatisfyCondition(instruction.Condition))
                             {
-                                WaitForClockTicks(1);
+                                Clock.WaitForClockTicks(1);
                             }
                         }
 
@@ -467,53 +444,6 @@ namespace Zem80.Core
             }
 
             return new InstructionPackage(instruction, data, instructionAddress);
-        }
-
-        private void WaitForClockTicks(int ticks)
-        {
-            for (int i = 0; i < ticks; i++)
-            {
-                WaitForNextClockTick();
-            }
-        }
-
-        private void WaitForNextClockTick()
-        {
-            if (_running)
-            {
-                if (_realTime)
-                {
-                    if (_cycleWaitCount == _cycleWaitPattern.Length) _cycleWaitCount = 0;
-                    int ticksToWait = _cycleWaitPattern[_cycleWaitCount++];
-                    long targetTicks = _lastElapsedTicks + ticksToWait;
-
-                    while (_clock.ElapsedTicks < targetTicks) ; // wait until enough Windows ticks have elapsed
-                    
-                    _lastElapsedTicks = _clock.ElapsedTicks;
-                }
-
-                OnClockTick?.Invoke(this, _executingInstructionPackage);
-                _emulatedTStates++;
-            }
-        }
-
-        private void InsertWaitCycles()
-        {
-            int cyclesToAdd = _pendingWaitCycles;
-
-            if (cyclesToAdd > 0)
-            {
-                BeforeInsertWaitCycles?.Invoke(this, cyclesToAdd);
-            }
-
-            while (cyclesToAdd > 0)
-            {
-                WaitForNextClockTick();
-                cyclesToAdd--;
-            }
-
-            _waitCyclesAdded = _pendingWaitCycles;
-            _pendingWaitCycles = 0;
         }
 
         private byte FetchNextOpcodeByte()
@@ -636,7 +566,7 @@ namespace Zem80.Core
                 }
 
                 // handling an interrupt always results in two extra wait cycles being added, so we'll add those here
-                WaitForClockTicks(2);
+                Clock.WaitForClockTicks(2);
 
                 _interruptCallback = null;
                 Timing.EndInterruptRequestAcknowledgeCycle();
@@ -681,59 +611,24 @@ namespace Zem80.Core
             // Any additional bytes read should be timed as a normal memory read (4 clock cycles each).
             for (int i = 1; i < 4; i++)
             {
-                if (opcode[i] != 0) WaitForClockTicks(4);
+                if (opcode[i] != 0) Clock.WaitForClockTicks(4);
             }
 
             return package;
         }
 
-        private int[] MakeWaitPattern(float frequencyInMHz)
-        {
-            // HACK ALERT!!!
-            // To simulate real-time operation, we need to work out how many Windows ticks of the Stopwatch class there are
-            // per emulated Z80 tick, so we can wait for the right amount of time for each clock cycle... easy, right?
-            // Well, no. Because it isn't always a whole number, and we can't wait for a fractional number of Stopwatch ticks.
-            // So, we need to create a pattern of waiting for one fewer ticks every x ticks to even out the wait time, otherwise
-            // timing-critical stuff in your emulated hardware may not work properly (example: Spectrum beeper sound)
-            //
-            // Client code can supply a custom WaitPattern at constructor time. Otherwise we have to generate one.
-
-            int[] cycleWaitPattern = new int[1] { 1 }; // default if not high-resolution platform
-
-            // high-res stopwatch frequency will be 10MHz - if we're on a non-high-res platform then real-time mode is not available anyway
-            if (Stopwatch.IsHighResolution)
-            {
-                float windowsFrequency = Stopwatch.Frequency / (frequencyInMHz * 1000000);
-                int windowsTicksPerZ80Tick = (int)Math.Ceiling(windowsFrequency);
-
-                if (windowsTicksPerZ80Tick % 2 == 0) // even number, so the pattern is regular, for example at 5MHz 10/5 = 2
-                {
-                    cycleWaitPattern = new int[] { windowsTicksPerZ80Tick };
-                }
-                else // odd number - we're approximating here, some hardware emulation may require a custom pattern
-                {
-                    cycleWaitPattern = new int[windowsTicksPerZ80Tick + 1];
-                    for (int i = 0; i < windowsTicksPerZ80Tick; i++)
-                    {
-                        cycleWaitPattern[i] = windowsTicksPerZ80Tick;
-                    }
-                    cycleWaitPattern[windowsTicksPerZ80Tick] = windowsTicksPerZ80Tick - 1;
-                }
-            }
-
-            return cycleWaitPattern;
-        }
-
         public Processor(
             IMemoryBank memory = null, 
-            IMemoryMap map = null, 
-            ushort topOfStackAddress = 0xFFFF, 
-            float frequencyInMHz = DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ, 
-            int[] cycleWaitPattern = null
+            IMemoryMap map = null,
+            IClock clock = null,
+            ushort topOfStackAddress = 0xFFFF
             )
         {
-            FrequencyInMHz = frequencyInMHz;
-            _cycleWaitPattern = cycleWaitPattern ?? MakeWaitPattern(frequencyInMHz);
+            // Default clock is the FastClock which, well, isn't really a clock. It'll run as fast as possible on the hardware and in .NET
+            // but it'll *say* that it's running at 4MHz. It's a lying liar that lies. You may want a different clock - luckily there are several.
+            // Clocks and timing are a thing, too much to go into here, so check the docs (one day, there will be docs!).
+            Clock = clock ?? ClockMaker.FastClock(DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ);
+            Clock.Initialise(this);
 
             Registers = new Registers();
             Ports = new Ports(this);

@@ -15,7 +15,7 @@ namespace Zem80_Zexall
             VirtualMachine vm = new VirtualMachine(enforceTiming: true);
             vm.Load(0x0005, "..\\..\\..\\zexall\\cpm_patch.bin");
             vm.Load(0x0100, "..\\..\\..\\zexall\\zexall.bin");
-            vm.Start(address: 0x100, synchronous: false, debugOutput: false);//, outputLogPath: "zexall.log");
+            vm.Start(address: 0x100, synchronous: true, debugOutput: false);//, outputLogPath: "zexall.log");
 
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("\nProgram finished. Press any key to close.");

@@ -5,7 +5,7 @@
     <AssemblyName>Zem80.Core</AssemblyName>
     <RootNamespace>Zem80.Core</RootNamespace>
     <Platforms>AnyCPU;x64</Platforms>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <Authors>Neil Hewitt</Authors>
     <Company>Radius Zero</Company>
     <Product>Zem80</Product>

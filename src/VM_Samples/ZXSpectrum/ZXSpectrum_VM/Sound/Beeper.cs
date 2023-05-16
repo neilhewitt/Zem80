@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Security.Permissions;
 using System.Text;
 using System.Threading.Tasks;
 using Zem80.Core;
@@ -83,7 +84,7 @@ namespace ZXSpectrum.VM.Sound
 
             if (changedState)
             {
-                long currentTStates = _cpu.EmulatedTStates;
+                long currentTStates = _cpu.Clock.Ticks;
                 long ticks = currentTStates - _lastTStates;
 
                 long samplesRequired = (ticks / TICKS_PER_SAMPLE);

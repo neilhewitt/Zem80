@@ -10,7 +10,6 @@ namespace Zem80.SimpleVM
         private Processor _cpu;
         private ushort _address;
         private bool _endOnHalt;
-        private TimingMode _timingMode;
         private bool _synchronous;
         private static string _outputLogPath;
         private static Registers _lastRegisters;
@@ -24,7 +23,7 @@ namespace Zem80.SimpleVM
             _synchronous = synchronous;
             _outputLogPath = outputLogPath;
 
-            _cpu.Initialise(address, endOnHalt, _timingMode);
+            _cpu.Initialise(address, endOnHalt);
             if (debugOutput)
             {
                 _cpu.AfterExecuteInstruction += DebugOutput_AfterExecute;
@@ -48,7 +47,7 @@ namespace Zem80.SimpleVM
         {
             _cpu.Stop();
             _cpu.ResetAndClearMemory();
-            _cpu.Initialise(_address, _endOnHalt, _timingMode);
+            _cpu.Initialise(_address, _endOnHalt);
             _cpu.Start();
             if (_synchronous) _cpu.RunUntilStopped();
         }
@@ -153,12 +152,12 @@ namespace Zem80.SimpleVM
         {
         }
 
-        public VirtualMachine(float speed = 4, bool enforceTiming = true)
+        public VirtualMachine(bool enforceTiming = true, IClock clock = null)
         {
-            _cpu = new Processor(frequencyInMHz: speed);
+            clock ??= enforceTiming ? ClockMaker.RealTimeClock(4) : null;
+            _cpu = new Processor(clock: clock);
             _cpu.Ports[0].Connect(ReadChar, WriteChar, SignalRead, SignalWrite);
             _cpu.Ports[1].Connect(ReadByte, WriteByte, SignalRead, SignalWrite);
-            _timingMode = enforceTiming ? TimingMode.PseudoRealTime : TimingMode.FastAndFurious;
         }
     }
 }

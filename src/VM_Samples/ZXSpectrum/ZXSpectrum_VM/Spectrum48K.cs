@@ -212,8 +212,7 @@ namespace ZXSpectrum.VM
             // having to spin the PC CPU all the time. This reduces our CPU use considerably
             // (but not as much as theirs does... not sure why).
 
-            _cpu.Initialise(timingMode: TimingMode.TimeSliced, ticksPerTimeSlice: 70000); // CPU will suspend at end of time slice
-            
+            _cpu.Initialise(); // CPU will suspend at end of time slice
             _cpu.Debug.SetDataBusDefaultValue(0xFF); // Spectrum has pull-up resistors on data bus lines, so will always read 0xFF if not otherwise set by the ULA
 
             // load a snapshot if we have one
@@ -303,7 +302,10 @@ namespace ZXSpectrum.VM
             map.Map(new ReadOnlyMemorySegment(File.ReadAllBytes(romPath)), 0);
             map.Map(new MemorySegment(49152), 16384);
 
-            _cpu = new Processor(map: map, frequencyInMHz: 3.5f);
+            _cpu = new Processor(
+                map: map, 
+                clock: ClockMaker.TimeSlicedClock(3.5f, TimeSpan.FromMilliseconds(20), false)
+                );
             _beeper = new Beeper(_cpu);
 
             // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 
