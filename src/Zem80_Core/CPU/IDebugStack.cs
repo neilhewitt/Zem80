@@ -1,4 +1,4 @@
-﻿namespace Zem80.Core.Memory
+﻿namespace Zem80.Core.CPU
 {
     public interface IDebugStack
     {

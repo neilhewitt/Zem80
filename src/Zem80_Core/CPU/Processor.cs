@@ -6,9 +6,9 @@ using Zem80.Core.CPU;
 using Zem80.Core.Instructions;
 using Zem80.Core.IO;
 using Zem80.Core.Memory;
-using Stack = Zem80.Core.Memory.Stack;
+using Stack = Zem80.Core.CPU.Stack;
 
-namespace Zem80.Core
+namespace Zem80.Core.CPU
 {
     public partial class Processor : IDisposable
     {
@@ -18,7 +18,6 @@ namespace Zem80.Core
         private bool _running;
         private bool _halted;
         private bool _suspended;
-        private bool _timeSliced;
         
         private HaltReason _reasonForLastHalt;
         private bool _suspendMachineCycles;
@@ -41,7 +40,7 @@ namespace Zem80.Core
         public IMemoryBank Memory { get; init; }
         public Stack Stack { get; init; }
         public Ports Ports { get; init; }
-        public Bus Bus { get; init; }
+        public Interface Interface { get; init; }
         public IClock Clock { get; private set; }
 
         public IReadOnlyFlags Flags => new Flags(Registers.F, true);
@@ -78,7 +77,7 @@ namespace Zem80.Core
 
             _running = true;
 
-            Bus.Clear();
+            Interface.Clear();
             _instructionCycle = new Thread(InstructionCycle);
             _instructionCycle.IsBackground = true;
             _instructionCycle.Start();
@@ -124,11 +123,11 @@ namespace Zem80.Core
 
         public void ResetAndClearMemory(bool restartAfterReset = true, ushort startAddress = 0, InterruptMode interruptMode = InterruptMode.IM0)
         {
-            Bus.SetResetState();
+            Interface.SetResetState();
             Stop();
             Memory.Clear();
             Registers.Clear();
-            Bus.Clear();
+            Interface.Clear();
             Registers.SP = Stack.Top;
             if (restartAfterReset)
             {
@@ -143,13 +142,13 @@ namespace Zem80.Core
 
         public void RaiseInterrupt(Func<byte> callback = null)
         {
-            Bus.SetInterruptState();
+            Interface.SetInterruptState();
             _interruptCallback = callback;
         }
 
         public void RaiseNonMaskableInterrupt()
         {
-            Bus.SetNMIState();
+            Interface.SetNMIState();
         }
 
         public void DisableInterrupts()
@@ -455,7 +454,7 @@ namespace Zem80.Core
         {
             bool handledNMI = false;
 
-            if (Bus.NMI)
+            if (Interface.NMI)
             {
                 if (_halted)
                 {
@@ -476,14 +475,14 @@ namespace Zem80.Core
                 handledNMI = true;
             }
 
-            Bus.EndNMIState();
+            Interface.EndNMIState();
 
             return handledNMI;
         }
 
         private void HandleMaskableInterrupts()
         {
-            if (Bus.INT && InterruptsEnabled)
+            if (Interface.INT && InterruptsEnabled)
             {
                 if (_interruptCallback == null && InterruptMode == InterruptMode.IM0)
                 {
@@ -547,10 +546,10 @@ namespace Zem80.Core
                         // the programmer to divert that interrupt to a routine of their choice and then call down to the ROM routine [which handles the
                         // keyboard, sound etc] afterwards).
 
-                        Bus.SetDataBusValue(_interruptCallback?.Invoke() ?? 0); 
+                        Interface.SetDataBusValue(_interruptCallback?.Invoke() ?? 0); 
                         Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         Stack.Push(WordRegister.PC);
-                        ushort address = (Bus.DATA_BUS, Registers.I).ToWord();
+                        ushort address = (Interface.DATA_BUS, Registers.I).ToWord();
                         Registers.PC = Memory.Timed.ReadWordAt(address);
                         Registers.WZ = Registers.PC;
                         break;
@@ -628,7 +627,7 @@ namespace Zem80.Core
             Stack = new Stack(topOfStackAddress, this);
             Registers.SP = Stack.Top;
 
-            Bus = new Bus(this);
+            Interface = new Interface(this);
             
             // The Z80 instruction set needs to be built (all Instruction objects are created, bound to the microcode instances, and indexed into a hashtable - undocumented 'overloads' are built here too)
             InstructionSet.Build();

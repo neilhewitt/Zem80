@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Schema;
+using Zem80.Core.CPU;
 
 namespace Zem80.Core.Memory
 {
@@ -28,17 +29,17 @@ namespace Zem80.Core.Memory
             _initialised = true;
         }
 
-        internal byte ReadByteAt(ushort address, bool timing)
+        internal byte ReadByteAt(ushort address, bool timed)
         {
             if (!_initialised) throw new MemoryNotInitialisedException();
 
             IMemorySegment segment = _map.SegmentFor(address);
             byte output = (segment?.ReadByteAt(AddressOffset(address, segment)) ?? 0x00); // 0x00 if address is unallocated
-            if (timing) _cpu.Timing.MemoryReadCycle(address, output);
+            if (timed) _cpu.Timing.MemoryReadCycle(address, output);
             return output;
         }
 
-        internal byte[] ReadBytesAt(ushort address, ushort numberOfBytes, bool timing)
+        internal byte[] ReadBytesAt(ushort address, ushort numberOfBytes, bool timed)
         {
             if (!_initialised) throw new MemoryNotInitialisedException();
 
@@ -48,7 +49,7 @@ namespace Zem80.Core.Memory
             IMemorySegment segment = _map.SegmentFor(address);
             if (segment == null) return new byte[numberOfBytes]; // if memory is not allocated return all 0x00s
 
-            if (!timing && segment.SizeInBytes - AddressOffset(address, segment) >= numberOfBytes)
+            if (!timed && segment.SizeInBytes - AddressOffset(address, segment) >= numberOfBytes)
             {
                 // if the read fits entirely within the memory segment and we aren't generating read timing, then optimise for speed
                 return segment.ReadBytesAt(AddressOffset(address, segment), numberOfBytes);
@@ -58,22 +59,22 @@ namespace Zem80.Core.Memory
                 byte[] bytes = new byte[numberOfBytes];
                 for (int i = 0; i < availableBytes; i++)
                 {
-                    bytes[i] = ReadByteAt((ushort)(address + i), timing);
+                    bytes[i] = ReadByteAt((ushort)(address + i), timed);
                 }
                 return bytes; // bytes beyond the available byte limit (if any) will be 0x00
             }
         }
 
-        internal ushort ReadWordAt(ushort address, bool timing)
+        internal ushort ReadWordAt(ushort address, bool timed)
         {
             if (!_initialised) throw new MemoryNotInitialisedException();
 
-            byte low = ReadByteAt(address, timing);
-            byte high = ReadByteAt(++address, timing);
+            byte low = ReadByteAt(address, timed);
+            byte high = ReadByteAt(++address, timed);
             return (ushort)((high * 256) + low);
         }
 
-        internal void WriteByteAt(ushort address, byte value, bool timing)
+        internal void WriteByteAt(ushort address, byte value, bool timed)
         {
             if (!_initialised) throw new MemoryNotInitialisedException();
 
@@ -83,10 +84,10 @@ namespace Zem80.Core.Memory
                 segment.WriteByteAt(AddressOffset(address, segment), value);
             }
 
-            if (timing) _cpu.Timing.MemoryWriteCycle(address, value);
+            if (timed) _cpu.Timing.MemoryWriteCycle(address, value);
         }
 
-        internal void WriteBytesAt(ushort address, byte[] bytes, bool timing)
+        internal void WriteBytesAt(ushort address, byte[] bytes, bool timed)
         {
             // similar optimisation to ReadBytesAt above
             if (!_initialised) throw new MemoryNotInitialisedException();
@@ -94,7 +95,7 @@ namespace Zem80.Core.Memory
             IMemorySegment segment = _map.SegmentFor(address);
             if (segment != null && !segment.ReadOnly)
             {
-                if (!timing && segment.SizeInBytes - AddressOffset(address, segment) >= bytes.Length)
+                if (!timed && segment.SizeInBytes - AddressOffset(address, segment) >= bytes.Length)
                 {
                     segment.WriteBytesAt(AddressOffset(address, segment), bytes);
                 }
@@ -102,18 +103,18 @@ namespace Zem80.Core.Memory
                 {
                     for (ushort i = 0; i < bytes.Length; i++)
                     {
-                        WriteByteAt((ushort)(address + i), bytes[i], timing);
+                        WriteByteAt((ushort)(address + i), bytes[i], timed);
                     }
                 }
             }
         }
 
-        internal void WriteWordAt(ushort address, ushort value, bool timing)
+        internal void WriteWordAt(ushort address, ushort value, bool timed)
         {
             if (!_initialised) throw new MemoryNotInitialisedException();
 
-            WriteByteAt(address, (byte)(value % 256), timing);
-            WriteByteAt(++address, (byte)(value / 256), timing);
+            WriteByteAt(address, (byte)(value % 256), timed);
+            WriteByteAt(++address, (byte)(value / 256), timed);
         }
 
 

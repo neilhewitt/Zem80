@@ -1,4 +1,6 @@
-﻿namespace Zem80.Core.Memory
+﻿using Zem80.Core.CPU;
+
+namespace Zem80.Core.Memory
 {
     public interface IMemoryBank
     {

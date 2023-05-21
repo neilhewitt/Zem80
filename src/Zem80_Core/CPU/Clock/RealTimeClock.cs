@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace Zem80.Core
+namespace Zem80.Core.CPU
 {
     public class RealTimeClock : FastClock
     {

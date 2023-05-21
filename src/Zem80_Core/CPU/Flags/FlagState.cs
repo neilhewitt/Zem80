@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Zem80.Core
+namespace Zem80.Core.CPU
 {
     [Flags]
     public enum FlagState

@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Timer = MultimediaTimer.Timer;
 
-namespace Zem80.Core
+namespace Zem80.Core.CPU
 {
     public class TimeSlicedClock : FastClock, IClock, ITimeSliced, IDisposable
     {

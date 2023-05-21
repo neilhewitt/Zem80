@@ -8,6 +8,7 @@ using System.Security.Permissions;
 using System.Text;
 using System.Threading.Tasks;
 using Zem80.Core;
+using Zem80.Core.CPU;
 using Zem80.Core.Instructions;
 
 namespace ZXSpectrum.VM.Sound

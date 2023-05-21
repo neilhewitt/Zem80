@@ -1,4 +1,5 @@
 ﻿using Zem80.Core;
+using Zem80.Core.CPU;
 using Zem80.Core.Instructions;
 
 //test how near the actual execution speed of the emulated CPU is to the theoretical speed

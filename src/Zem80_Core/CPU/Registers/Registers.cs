@@ -4,7 +4,7 @@ using System.Text;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-namespace Zem80.Core
+namespace Zem80.Core.CPU
 {
     public class Registers : IShadowRegisters
     {

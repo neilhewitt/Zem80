@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Zem80.Core.Memory
+namespace Zem80.Core.CPU
 {
     public class Stack : IDebugStack
     {
@@ -76,7 +76,7 @@ namespace Zem80.Core.Memory
 
         ushort IDebugStack.PeekStack(int wordsFromTop)
         {
-            return _cpu.Memory.Untimed.ReadWordAt((ushort)(_cpu.Registers.SP - (wordsFromTop * 2)));
+            return _cpu.Memory.Untimed.ReadWordAt((ushort)(_cpu.Registers.SP - wordsFromTop * 2));
         }
 
         public Stack(ushort topOfStackAddress, Processor cpu)

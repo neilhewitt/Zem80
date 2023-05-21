@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Globalization;
+using Zem80.Core.CPU;
 
 namespace Zem80.Core.Instructions
 {

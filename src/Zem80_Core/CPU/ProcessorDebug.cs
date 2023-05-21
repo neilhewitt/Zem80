@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Zem80.Core.CPU;
 using Zem80.Core.Instructions;
 
-namespace Zem80.Core
+namespace Zem80.Core.CPU
 {
     public partial class Processor : IDebugProcessor
     {
@@ -22,7 +22,7 @@ namespace Zem80.Core
 
         public void SetDataBusDefaultValue(byte defaultValue)
         {
-            Bus.SetDataBusDefault(defaultValue);
+            Interface.SetDataBusDefault(defaultValue);
         }
 
         void IDebugProcessor.AddBreakpoint(ushort address)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.SymbolStore;
 using System.Runtime.CompilerServices;
+using Zem80.Core.CPU;
 
 namespace Zem80.Core.Instructions
 {

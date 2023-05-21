@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Zem80.Core.IO;
 
-namespace Zem80.Core
+namespace Zem80.Core.CPU
 {
     public class FastClock : IClock
     {
