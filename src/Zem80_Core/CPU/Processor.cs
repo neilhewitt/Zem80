@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using Zem80.Core.CPU;
 using Zem80.Core.Instructions;
 using Zem80.Core.IO;
 using Zem80.Core.Memory;
@@ -26,10 +27,6 @@ namespace Zem80.Core
 
         private DateTime _lastStart;
         private DateTime _lastEnd;
-        private long _emulatedTStates;
-
-        private long _ticksPerTimeSlice;
-        private long _ticksThisTimeSlice;
 
         private Thread _instructionCycle;
         private InstructionPackage _executingInstructionPackage;
@@ -44,24 +41,26 @@ namespace Zem80.Core
         public IMemoryBank Memory { get; init; }
         public Stack Stack { get; init; }
         public Ports Ports { get; init; }
-        public ProcessorIO IO { get; init; }
+        public Bus Bus { get; init; }
         public IClock Clock { get; private set; }
 
         public IReadOnlyFlags Flags => new Flags(Registers.F, true);
 
         public InterruptMode InterruptMode { get; private set; }
         public bool InterruptsEnabled { get; private set; }
-        internal bool InterruptsWereEnabledBeforeNMI { get; private set; }
 
-        public TimingMode TimingMode { get; private set; }
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; 
 
         public event EventHandler<InstructionPackage> BeforeExecuteInstruction;
         public event EventHandler<ExecutionResult> AfterExecuteInstruction;
         public event EventHandler<int> BeforeInsertWaitCycles;
-        public event EventHandler BeforeStart;
+        public event EventHandler AfterInitialise;
         public event EventHandler OnStop;
+        public event EventHandler OnSuspend;
+        public event EventHandler OnResume;
         public event EventHandler<HaltReason> OnHalt;
+
+        internal bool InterruptsWereEnabledBeforeNMI { get; private set; }
 
         public void Dispose()
         {
@@ -69,26 +68,17 @@ namespace Zem80.Core
             _instructionCycle?.Interrupt(); // just in case
         }
 
-        public void Initialise(ushort address = 0x0000, bool endOnHalt = false, InterruptMode interruptMode = InterruptMode.IM0)
+        public void Start(ushort address = 0x0000, bool endOnHalt = false, InterruptMode interruptMode = InterruptMode.IM0)
         {
-            if (!_running)
-            {
-                EndOnHalt = endOnHalt; // if set, will summarily end execution at the first HALT instruction. This is mostly for test / debug scenarios.
-                InterruptMode = interruptMode;
-                
-                _emulatedTStates = 0;
-                DisableInterrupts();
+            EndOnHalt = endOnHalt; // if set, will summarily end execution at the first HALT instruction. This is mostly for test / debug scenarios.
+            InterruptMode = interruptMode;
+            DisableInterrupts();
+            Registers.PC = address; // ordinarily, execution will start at 0x0000, but this can be overridden
+            AfterInitialise?.Invoke(null, null);
 
-                Registers.PC = address; // ordinarily, execution will start at 0x0000, but this can be overridden
-            }
-        }
-
-        public void Start()
-        {
-            BeforeStart?.Invoke(null, null);
             _running = true;
 
-            IO.Clear();
+            Bus.Clear();
             _instructionCycle = new Thread(InstructionCycle);
             _instructionCycle.IsBackground = true;
             _instructionCycle.Start();
@@ -110,6 +100,7 @@ namespace Zem80.Core
         public void Suspend()
         {
             _suspended = true;
+            OnSuspend?.Invoke(null, null);
         }
 
         public void Resume()
@@ -123,6 +114,7 @@ namespace Zem80.Core
             }
 
             _suspended = false;
+            OnResume?.Invoke(null, null);
         }
 
         public void RunUntilStopped()
@@ -132,16 +124,15 @@ namespace Zem80.Core
 
         public void ResetAndClearMemory(bool restartAfterReset = true, ushort startAddress = 0, InterruptMode interruptMode = InterruptMode.IM0)
         {
-            IO.SetResetState();
+            Bus.SetResetState();
             Stop();
             Memory.Clear();
             Registers.Clear();
-            IO.Clear();
+            Bus.Clear();
             Registers.SP = Stack.Top;
             if (restartAfterReset)
             {
-                Initialise(startAddress, this.EndOnHalt, interruptMode);
-                Start();
+                Start(startAddress, this.EndOnHalt, interruptMode);
             }
         }
 
@@ -152,13 +143,13 @@ namespace Zem80.Core
 
         public void RaiseInterrupt(Func<byte> callback = null)
         {
-            IO.SetInterruptState();
+            Bus.SetInterruptState();
             _interruptCallback = callback;
         }
 
         public void RaiseNonMaskableInterrupt()
         {
-            IO.SetNMIState();
+            Bus.SetNMIState();
         }
 
         public void DisableInterrupts()
@@ -464,7 +455,7 @@ namespace Zem80.Core
         {
             bool handledNMI = false;
 
-            if (IO.NMI)
+            if (Bus.NMI)
             {
                 if (_halted)
                 {
@@ -485,14 +476,14 @@ namespace Zem80.Core
                 handledNMI = true;
             }
 
-            IO.EndNMIState();
+            Bus.EndNMIState();
 
             return handledNMI;
         }
 
         private void HandleMaskableInterrupts()
         {
-            if (IO.INT && InterruptsEnabled)
+            if (Bus.INT && InterruptsEnabled)
             {
                 if (_interruptCallback == null && InterruptMode == InterruptMode.IM0)
                 {
@@ -556,10 +547,10 @@ namespace Zem80.Core
                         // the programmer to divert that interrupt to a routine of their choice and then call down to the ROM routine [which handles the
                         // keyboard, sound etc] afterwards).
 
-                        IO.SetDataBusValue(_interruptCallback?.Invoke() ?? 0); 
+                        Bus.SetDataBusValue(_interruptCallback?.Invoke() ?? 0); 
                         Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         Stack.Push(WordRegister.PC);
-                        ushort address = (IO.DATA_BUS, Registers.I).ToWord();
+                        ushort address = (Bus.DATA_BUS, Registers.I).ToWord();
                         Registers.PC = Memory.Timed.ReadWordAt(address);
                         Registers.WZ = Registers.PC;
                         break;
@@ -617,12 +608,7 @@ namespace Zem80.Core
             return package;
         }
 
-        public Processor(
-            IMemoryBank memory = null, 
-            IMemoryMap map = null,
-            IClock clock = null,
-            ushort topOfStackAddress = 0xFFFF
-            )
+        public Processor(IMemoryBank memory = null, IMemoryMap map = null, IClock clock = null, ushort topOfStackAddress = 0xFFFF)
         {
             // Default clock is the FastClock which, well, isn't really a clock. It'll run as fast as possible on the hardware and in .NET
             // but it'll *say* that it's running at 4MHz. It's a lying liar that lies. You may want a different clock - luckily there are several.
@@ -642,7 +628,7 @@ namespace Zem80.Core
             Stack = new Stack(topOfStackAddress, this);
             Registers.SP = Stack.Top;
 
-            IO = new ProcessorIO(this);
+            Bus = new Bus(this);
             
             // The Z80 instruction set needs to be built (all Instruction objects are created, bound to the microcode instances, and indexed into a hashtable - undocumented 'overloads' are built here too)
             InstructionSet.Build();

@@ -1,6 +1,6 @@
 ﻿namespace Zem80.Core.Memory
 {
-    public interface IUntimedMemory
+    public interface IMemory
     {
         byte ReadByteAt(ushort address);
         byte[] ReadBytesAt(ushort address, ushort numberOfBytes);

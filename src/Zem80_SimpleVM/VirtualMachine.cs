@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.IO;
 using Zem80.Core;
+using Zem80.Core.CPU;
 
 namespace Zem80.SimpleVM
 {
@@ -23,13 +24,12 @@ namespace Zem80.SimpleVM
             _synchronous = synchronous;
             _outputLogPath = outputLogPath;
 
-            _cpu.Initialise(address, endOnHalt);
             if (debugOutput)
             {
                 _cpu.AfterExecuteInstruction += DebugOutput_AfterExecute;
             }
 
-            _cpu.Start();
+            _cpu.Start(address, endOnHalt);
             if (synchronous) _cpu.RunUntilStopped();
         }
 
@@ -47,8 +47,7 @@ namespace Zem80.SimpleVM
         {
             _cpu.Stop();
             _cpu.ResetAndClearMemory();
-            _cpu.Initialise(_address, _endOnHalt);
-            _cpu.Start();
+            _cpu.Start(_address, _endOnHalt);
             if (_synchronous) _cpu.RunUntilStopped();
         }
 

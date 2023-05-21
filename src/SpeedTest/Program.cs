@@ -32,7 +32,6 @@ while (!quit)
 {
     for (int i = 1; i <= 10; i++)
     {
-        cpu.Initialise(endOnHalt: true);
         Console.WriteLine("\nPress Q to stop, any key to start next run.");
         ConsoleKeyInfo key = Console.ReadKey();
         if (key.KeyChar == 'q' || key.KeyChar == 'Q')
@@ -43,7 +42,7 @@ while (!quit)
 
         Console.WriteLine("Run #" + i);
         long ticksIn = cpu.Clock.Ticks;
-        cpu.Start();
+        cpu.Start(endOnHalt: true);
         cpu.RunUntilStopped();
         long ticksOut = cpu.Clock.Ticks;
         Console.WriteLine($"Was {ticksOut - ticksIn} ticks, should be { ticks} ticks.");

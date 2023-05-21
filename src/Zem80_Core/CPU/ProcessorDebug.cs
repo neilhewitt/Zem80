@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Zem80.Core.CPU;
 using Zem80.Core.Instructions;
 
 namespace Zem80.Core
@@ -21,7 +22,7 @@ namespace Zem80.Core
 
         public void SetDataBusDefaultValue(byte defaultValue)
         {
-            IO.SetDataBusDefault(defaultValue);
+            Bus.SetDataBusDefault(defaultValue);
         }
 
         void IDebugProcessor.AddBreakpoint(ushort address)

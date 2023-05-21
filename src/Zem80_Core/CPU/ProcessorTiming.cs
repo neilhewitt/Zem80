@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Zem80.Core.CPU;
 using Zem80.Core.Instructions;
 
 namespace Zem80.Core
@@ -19,15 +20,15 @@ namespace Zem80.Core
 
         void IInstructionTiming.OpcodeFetchCycle(ushort address, byte data)
         {
-            IO.SetOpcodeFetchState(address);
+            Bus.SetOpcodeFetchState(address);
             Clock.WaitForNextClockTick();
-            IO.AddOpcodeFetchData(data);
+            Bus.AddOpcodeFetchData(data);
             Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
-            IO.EndOpcodeFetchState();
-            IO.SetAddressBusValue(Registers.IR);
-            IO.SetDataBusValue(0x00);
+            Bus.EndOpcodeFetchState();
+            Bus.SetAddressBusValue(Registers.IR);
+            Bus.SetDataBusValue(0x00);
 
             Clock.WaitForNextClockTick();
             Clock.WaitForNextClockTick();
@@ -35,14 +36,14 @@ namespace Zem80.Core
 
         void IInstructionTiming.MemoryReadCycle(ushort address, byte data)
         {
-            IO.SetMemoryReadState(address);
+            Bus.SetMemoryReadState(address);
             Clock.WaitForNextClockTick();
 
-            IO.AddMemoryData(data);
+            Bus.AddMemoryData(data);
             Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
-            IO.EndMemoryReadState();
+            Bus.EndMemoryReadState();
             Clock.WaitForNextClockTick();
 
             Instruction instruction = _executingInstructionPackage?.Instruction;
@@ -57,12 +58,12 @@ namespace Zem80.Core
 
         void IInstructionTiming.MemoryWriteCycle(ushort address, byte data)
         {
-            IO.SetMemoryWriteState(address, data);
+            Bus.SetMemoryWriteState(address, data);
             Clock.WaitForNextClockTick();
             Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
-            IO.EndMemoryWriteState();
+            Bus.EndMemoryWriteState();
             Clock.WaitForNextClockTick();
 
             Instruction instruction = _executingInstructionPackage?.Instruction;
@@ -78,24 +79,24 @@ namespace Zem80.Core
 
         void IInstructionTiming.BeginStackReadCycle()
         {
-            IO.SetMemoryReadState(Registers.SP);
+            Bus.SetMemoryReadState(Registers.SP);
             Clock.WaitForNextClockTick();
         }
 
 
         void IInstructionTiming.EndStackReadCycle(bool highByte, byte data)
         {
-            IO.AddMemoryData(data);
+            Bus.AddMemoryData(data);
             Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
-            IO.EndMemoryReadState();
+            Bus.EndMemoryReadState();
             Clock.WaitForNextClockTick();
         }
 
         void IInstructionTiming.BeginStackWriteCycle(bool highByte, byte data)
         {
-            IO.SetMemoryWriteState(Registers.SP, data);
+            Bus.SetMemoryWriteState(Registers.SP, data);
             Clock.WaitForNextClockTick();
             Clock.WaitForNextClockTick();
             InsertWaitCycles();
@@ -103,7 +104,7 @@ namespace Zem80.Core
 
         void IInstructionTiming.EndStackWriteCycle()
         {
-            IO.EndMemoryWriteState();
+            Bus.EndMemoryWriteState();
             Clock.WaitForNextClockTick();
         }
 
@@ -111,18 +112,18 @@ namespace Zem80.Core
         {
             ushort address = bc ? (Registers.C, Registers.B).ToWord() : (n, Registers.A).ToWord();
 
-            IO.SetPortReadState(address);
+            Bus.SetPortReadState(address);
             Clock.WaitForNextClockTick();
         }
 
         void IInstructionTiming.EndPortReadCycle(byte data)
         {
-            IO.AddPortReadData(data);
+            Bus.AddPortReadData(data);
             Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
             Clock.WaitForNextClockTick();
-            IO.EndPortReadState();
+            Bus.EndPortReadState();
             Clock.WaitForNextClockTick();
         }
 
@@ -130,7 +131,7 @@ namespace Zem80.Core
         {
             ushort address = bc ? (Registers.C, Registers.B).ToWord() : (n, Registers.A).ToWord();
 
-            IO.SetPortWriteState(address, data);
+            Bus.SetPortWriteState(address, data);
             Clock.WaitForNextClockTick();
         }
 
@@ -140,13 +141,13 @@ namespace Zem80.Core
             InsertWaitCycles();
 
             Clock.WaitForNextClockTick();
-            IO.EndPortWriteState();
+            Bus.EndPortWriteState();
             Clock.WaitForNextClockTick();
         }
 
         void IInstructionTiming.BeginInterruptRequestAcknowledgeCycle(int tStates)
         {
-            IO.SetInterruptState();
+            Bus.SetInterruptState();
             for (int i = 0; i < tStates; i++)
             {
                 Clock.WaitForNextClockTick();
@@ -155,7 +156,7 @@ namespace Zem80.Core
 
         void IInstructionTiming.EndInterruptRequestAcknowledgeCycle()
         {
-            IO.EndInterruptState();
+            Bus.EndInterruptState();
         }
 
         void IInstructionTiming.InternalOperationCycle(int tStates)
@@ -175,11 +176,7 @@ namespace Zem80.Core
                 BeforeInsertWaitCycles?.Invoke(this, cyclesToAdd);
             }
 
-            while (cyclesToAdd > 0)
-            {
-                Clock.WaitForNextClockTick();
-                cyclesToAdd--;
-            }
+            Clock.WaitForClockTicks(cyclesToAdd);
 
             _waitCyclesAdded = _pendingWaitCycles;
             _pendingWaitCycles = 0;

@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
+using Zem80.Core.CPU;
 using ZexNext.Core;
 
 namespace Zem80.Core.Tests.Zexall

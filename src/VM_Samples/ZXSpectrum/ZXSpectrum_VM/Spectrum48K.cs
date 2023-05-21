@@ -9,6 +9,7 @@ using Zem80.Core.Memory;
 using ZXSpectrum.VM.Sound;
 using MultimediaTimer;
 using Timer = MultimediaTimer.Timer;
+using Zem80.Core.CPU;
 
 namespace ZXSpectrum.VM
 {
@@ -39,7 +40,6 @@ namespace ZXSpectrum.VM
 
         public void Stop()
         {
-            //_timer.Stop();
             _beeper.Dispose();
             _cpu.Stop();
         }
@@ -198,42 +198,29 @@ namespace ZXSpectrum.VM
 
         private void StartInternal(string snapshotPath = null)
         {
-            // We're moving the CPU timing into this class by setting the CPU to run SliceTimed and
-            // specifying a time slice in ticks (at 3.5MHz, 70000 = 20ms). The CPU will pause after executing
-            // those 70000 ticks, which in non-real-time will happen in <1ms, and then begin thread.sleeping;
-            // then when the next timer tick occurs after the *real* 20ms, the CPU is resumed and quickly
-            // does the interrupt, sound update, screen update etc.
+            // We're setting the CPU to run TimeSliced. The CPU will run as fast as possible (ie not real time),
+            // then pause after executing 70000 ticks (20ms worth in real-time), which in non-real-time will happen
+            // in a much shorter time (generally <1ms), and begin sleeping;
+            // then after the *real* 20ms, the CPU is resumed and we do the interrupt, sound update, screen update etc.
 
             // We do lose some real-time aspects such as synchronised calls to OnClockTick etc, but for the Spectrum
             // emulation we don't need these. It also makes the keyboard *slightly* less responsive but for human
             // beings this is unlikely to be a problem.
 
             // Kudos due to SoftSpectrum48 which uses this technique to get real-time Spectrum performance without
-            // having to spin the PC CPU all the time. This reduces our CPU use considerably
-            // (but not as much as theirs does... not sure why).
+            // having to spin the PC CPU all the time. This reduces our CPU use considerably.
 
-            _cpu.Initialise(); // CPU will suspend at end of time slice
-            _cpu.Debug.SetDataBusDefaultValue(0xFF); // Spectrum has pull-up resistors on data bus lines, so will always read 0xFF if not otherwise set by the ULA
-
-            // load a snapshot if we have one
-            if (snapshotPath != null) LoadSnapshot(snapshotPath);
-
-            // this timer will control the display updates and audio sync
-            //_timer = new Timer();
-            //_timer.Interval = TimeSpan.FromMilliseconds(20);
-            //_timer.Elapsed += UpdateDisplay;
-            _cpu.Clock.OnTimeSliceEnded += UpdateDisplay;
+            _cpu.Debug.SetDataBusDefaultValue(0xFF); // Spectrum has pull-up resistors on data bus lines, so will always read 0xFF, not 0x00, if not otherwise set by the ULA
+            _cpu.AfterInitialise += (sender, e) => { 
+                if (snapshotPath != null) LoadSnapshot(snapshotPath); // snapshot loading must happen after CPU is initialised, but before it starts
+            };
 
             _cpu.Start();
-            //_timer.Start();
             _beeper.Start();
         }
 
         private void UpdateDisplay(object sender, long e)
         {
-            //_cpu.Clock.StartNextTimeSlice();
-            _cpu.RaiseInterrupt();
-
             // we're faking the screen update process here - in reality there are lots
             // of timing issues around 'contended' memory access by the ULA, and tstate counting etc
             // but for our purposes here we don't need any of that - remember, this is just a demo VM!
@@ -252,11 +239,20 @@ namespace ZXSpectrum.VM
             OnUpdateDisplay?.Invoke(this, screenBitmap);
 
             if (_displayUpdatesSinceLastFlash > FLASH_FRAME_RATE) _displayUpdatesSinceLastFlash = 0;
+
+            // this state remains until the CPU resumes at the end of the actual time slice period, at which point
+            // the interrupt is handled just as on the real Spectrum to accept keyboard input etc
+            _cpu.RaiseInterrupt();
+
+            // this gives us 50 screen updates per second, faking a PAL TV display; however, since the screen painting
+            // is not at all synchronised with Windows screen refresh, we will see tearing; the only way to fix this
+            // would be to enable some form of vsync with Windows, probably via DirectX, which is very much
+            // out of scope for this sample.
         }
 
         private byte ReadPort()
         {
-            ushort portAddress = _cpu.IO.ADDRESS_BUS;
+            ushort portAddress = _cpu.Bus.ADDRESS_BUS;
             byte result = 0xFF;
 
             if (portAddress.LowByte() == 0xFE)
@@ -269,11 +265,12 @@ namespace ZXSpectrum.VM
 
         private void WritePort(byte output)
         {
-            ushort portAddress = _cpu.IO.ADDRESS_BUS;
+            ushort portAddress = _cpu.Bus.ADDRESS_BUS;
 
             if (portAddress % 2 == 0)
             {
-                // ULA will respond to all even port numbers
+                // ULA will respond to all even port numbers - this is
+                // a supreme Sinclair hack, but it works well
 
                 if (portAddress.LowByte() == 0xFE) // PORT OxFE
                 {
@@ -305,7 +302,12 @@ namespace ZXSpectrum.VM
 
             _cpu = new Processor(
                 map: map, 
-                clock: ClockMaker.TimeSlicedClock(3.5f, TimeSpan.FromMilliseconds(20))
+                clock: ClockMaker.TimeSlicedClock(
+                    3.5f, // 3.5MHz 
+                    TimeSpan.FromMilliseconds(20), // 20ms time slices (PAL Spectrum only)
+                    null, // we're not handling the time slice start event
+                    UpdateDisplay // run the display update at the end of each time slice
+                    )
                 );
             _beeper = new Beeper(_cpu);
 

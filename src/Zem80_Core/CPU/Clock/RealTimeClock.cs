@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace Zem80.Core
 {
-    public class RealTimeClock : ClockBase
+    public class RealTimeClock : FastClock
     {
         private Stopwatch _stopwatch;
         
@@ -30,7 +30,7 @@ namespace Zem80.Core
             int ticksToWait = _waitPattern[_waitCount++];
             long targetTicks = _lastElapsedTicks + ticksToWait;
 
-            while (_stopwatch.ElapsedTicks < targetTicks) ; // wait until enough Windows ticks have elapsed
+            while (_stopwatch.ElapsedTicks < targetTicks) ; // spin until enough Windows ticks have elapsed
             _lastElapsedTicks = _stopwatch.ElapsedTicks;
 
             base.WaitForNextClockTick();

@@ -1,6 +1,6 @@
-﻿namespace Zem80.Core
+﻿namespace Zem80.Core.CPU
 {
-    public class ProcessorIO
+    public class Bus
     {
         /*
             This class represents the IO pin state of the Z80. The pin values are read-only, but there are internal methods to set various states
@@ -224,7 +224,7 @@
             _defaultDataBusValue = defaultValue;
         }
 
-        internal ProcessorIO(Processor cpu)
+        internal Bus(Processor cpu)
         {
             _cpu = cpu;
         }

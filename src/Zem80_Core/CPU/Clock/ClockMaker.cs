@@ -5,7 +5,10 @@ namespace Zem80.Core
 {
     public static class ClockMaker
     {
-        public static IClock FastClock(float frequencyInMHz) => new FastClock(frequencyInMHz);
+        // just runs as fast as possible, so not real time, but all events happen in the right order
+        public static IClock FastClock(float frequencyInMHz) => new FastClock(frequencyInMHz); 
+       
+        // attempts to run all events at the same time intervals they would run on the actual hardware
         public static IClock RealTimeClock(float frequencyInMHz, int[] cycleWaitPattern = null)
         {
             if (cycleWaitPattern is null)
@@ -19,9 +22,9 @@ namespace Zem80.Core
                 //
                 // Client code can supply a custom WaitPattern at constructor time. Otherwise we have to generate one.
 
-                cycleWaitPattern ??= new int[1] { 1 }; // default if not high-resolution platform
+                cycleWaitPattern ??= new int[1] { 1 }; // default if not on a high-resolution platform (will NOT be real-time)
 
-                // high-res stopwatch frequency will be 10MHz - if we're on a non-high-res platform then real-time mode is not available anyway
+                // high-res stopwatch frequency will be 10MHz
                 if (Stopwatch.IsHighResolution)
                 {
                     float windowsFrequency = Stopwatch.Frequency / (frequencyInMHz * 1000000);
@@ -46,9 +49,14 @@ namespace Zem80.Core
             return new RealTimeClock(frequencyInMHz, cycleWaitPattern);
         }
 
-        public static IClock TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice)
+        // runs as fast as possible, but only for as many ticks as there would be in the defined slice of time
+        // after which the CPU suspends until the end of the time slice in real time, then begins the next slice
+        public static IClock TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice, EventHandler<long> onTimeSliceStarted = null, EventHandler<long> onTimeSliceEnded = null)
         {
-            return new TimeSlicedClock(frequencyInMHz, timeSlice);
+            TimeSlicedClock clock = new TimeSlicedClock(frequencyInMHz, timeSlice);
+            if (onTimeSliceStarted != null) clock.OnTimeSliceStarted += onTimeSliceStarted;
+            if (onTimeSliceEnded != null) clock.OnTimeSliceEnded += onTimeSliceEnded;
+            return clock;
         }
     }
 }
