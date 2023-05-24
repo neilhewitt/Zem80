@@ -40,7 +40,7 @@ namespace Zem80.Core.CPU
         public IMemoryBank Memory { get; init; }
         public Stack Stack { get; init; }
         public Ports Ports { get; init; }
-        public Interface Interface { get; init; }
+        public Buses Buses { get; init; }
         public IClock Clock { get; private set; }
 
         public IReadOnlyFlags Flags => new Flags(Registers.F, true);
@@ -77,7 +77,7 @@ namespace Zem80.Core.CPU
 
             _running = true;
 
-            Interface.Clear();
+            Buses.Clear();
             _instructionCycle = new Thread(InstructionCycle);
             _instructionCycle.IsBackground = true;
             _instructionCycle.Start();
@@ -123,11 +123,11 @@ namespace Zem80.Core.CPU
 
         public void ResetAndClearMemory(bool restartAfterReset = true, ushort startAddress = 0, InterruptMode interruptMode = InterruptMode.IM0)
         {
-            Interface.SetResetState();
+            Buses.SetResetState();
             Stop();
             Memory.Clear();
             Registers.Clear();
-            Interface.Clear();
+            Buses.Clear();
             Registers.SP = Stack.Top;
             if (restartAfterReset)
             {
@@ -142,13 +142,13 @@ namespace Zem80.Core.CPU
 
         public void RaiseInterrupt(Func<byte> callback = null)
         {
-            Interface.SetInterruptState();
+            Buses.SetInterruptState();
             _interruptCallback = callback;
         }
 
         public void RaiseNonMaskableInterrupt()
         {
-            Interface.SetNMIState();
+            Buses.SetNMIState();
         }
 
         public void DisableInterrupts()
@@ -277,38 +277,6 @@ namespace Zem80.Core.CPU
 
             _executingInstructionPackage = null;
             return result;
-        }
-
-        // execute an instruction directly (without the processor loop running), for example for directly testing instructions
-        ExecutionResult IDebugProcessor.ExecuteDirect(byte[] opcode)
-        {
-            Memory.Untimed.WriteBytesAt(Registers.PC, opcode);
-            InstructionPackage package = DecodeInstructionAtProgramCounter();
-            if (package == null)
-            {
-                throw new InstructionDecoderException("Supplied opcode sequence does not decode to a valid instruction.");
-            }
-
-            return Execute(package);
-        }
-
-        // execute an instruction directly (specified by mnemonic, so no decoding necessary)
-        ExecutionResult IDebugProcessor.ExecuteDirect(string mnemonic, byte? arg1, byte? arg2)
-        {
-            if (!InstructionSet.InstructionsByMnemonic.TryGetValue(mnemonic, out Instruction instruction))
-            {
-                throw new InstructionDecoderException("Supplied mnemonic does not correspond to a valid instruction");
-            }
-
-            InstructionData data = new InstructionData()
-            {
-                Argument1 = arg1 ?? 0,
-                Argument2 = arg2 ?? 0
-            };
-
-            InstructionPackage package = new InstructionPackage(instruction, data, Registers.PC);
-            Registers.PC += package.Instruction.SizeInBytes; // simulate the decode cycle effect on PC
-            return Execute(package);
         }
 
         private InstructionPackage DecodeInstructionAtProgramCounter()
@@ -454,7 +422,7 @@ namespace Zem80.Core.CPU
         {
             bool handledNMI = false;
 
-            if (Interface.NMI)
+            if (Buses.NMI)
             {
                 if (_halted)
                 {
@@ -475,14 +443,14 @@ namespace Zem80.Core.CPU
                 handledNMI = true;
             }
 
-            Interface.EndNMIState();
+            Buses.EndNMIState();
 
             return handledNMI;
         }
 
         private void HandleMaskableInterrupts()
         {
-            if (Interface.INT && InterruptsEnabled)
+            if (Buses.INT && InterruptsEnabled)
             {
                 if (_interruptCallback == null && InterruptMode == InterruptMode.IM0)
                 {
@@ -546,10 +514,10 @@ namespace Zem80.Core.CPU
                         // the programmer to divert that interrupt to a routine of their choice and then call down to the ROM routine [which handles the
                         // keyboard, sound etc] afterwards).
 
-                        Interface.SetDataBusValue(_interruptCallback?.Invoke() ?? 0); 
+                        Buses.SetDataBusValue(_interruptCallback?.Invoke() ?? 0); 
                         Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         Stack.Push(WordRegister.PC);
-                        ushort address = (Interface.DATA_BUS, Registers.I).ToWord();
+                        ushort address = (Buses.DATA_BUS, Registers.I).ToWord();
                         Registers.PC = Memory.Timed.ReadWordAt(address);
                         Registers.WZ = Registers.PC;
                         break;
@@ -627,7 +595,7 @@ namespace Zem80.Core.CPU
             Stack = new Stack(topOfStackAddress, this);
             Registers.SP = Stack.Top;
 
-            Interface = new Interface(this);
+            Buses = new Buses(this);
             
             // The Z80 instruction set needs to be built (all Instruction objects are created, bound to the microcode instances, and indexed into a hashtable - undocumented 'overloads' are built here too)
             InstructionSet.Build();

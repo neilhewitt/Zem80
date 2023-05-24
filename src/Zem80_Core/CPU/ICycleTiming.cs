@@ -1,6 +1,6 @@
 ﻿namespace Zem80.Core.CPU
 {
-    public interface IInstructionTiming
+    public interface ICycleTiming
     {
         void OpcodeFetchCycle(ushort address, byte data);
         void MemoryReadCycle(ushort address, byte data);

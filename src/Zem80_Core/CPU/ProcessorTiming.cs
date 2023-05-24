@@ -14,36 +14,36 @@ namespace Zem80.Core.CPU
     // I segregated these onto an interface just to keep them logically partioned from the main API but without moving them out to a class.
     // Calling code can get at these methods using the Processor.Timing property (or by casting to the interface type, but don't do that, it's ugly).
 
-    public partial class Processor : IInstructionTiming
+    public partial class Processor : ICycleTiming
     {
-        public IInstructionTiming Timing => this;
+        public ICycleTiming Timing => this;
 
-        void IInstructionTiming.OpcodeFetchCycle(ushort address, byte data)
+        void ICycleTiming.OpcodeFetchCycle(ushort address, byte data)
         {
-            Interface.SetOpcodeFetchState(address);
+            Buses.SetOpcodeFetchState(address);
             Clock.WaitForNextClockTick();
-            Interface.AddOpcodeFetchData(data);
+            Buses.AddOpcodeFetchData(data);
             Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
-            Interface.EndOpcodeFetchState();
-            Interface.SetAddressBusValue(Registers.IR);
-            Interface.SetDataBusValue(0x00);
+            Buses.EndOpcodeFetchState();
+            Buses.SetAddressBusValue(Registers.IR);
+            Buses.SetDataBusValue(0x00);
 
             Clock.WaitForNextClockTick();
             Clock.WaitForNextClockTick();
         }
 
-        void IInstructionTiming.MemoryReadCycle(ushort address, byte data)
+        void ICycleTiming.MemoryReadCycle(ushort address, byte data)
         {
-            Interface.SetMemoryReadState(address);
+            Buses.SetMemoryReadState(address);
             Clock.WaitForNextClockTick();
 
-            Interface.AddMemoryData(data);
+            Buses.AddMemoryData(data);
             Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
-            Interface.EndMemoryReadState();
+            Buses.EndMemoryReadState();
             Clock.WaitForNextClockTick();
 
             Instruction instruction = _executingInstructionPackage?.Instruction;
@@ -56,14 +56,14 @@ namespace Zem80.Core.CPU
             }
         }
 
-        void IInstructionTiming.MemoryWriteCycle(ushort address, byte data)
+        void ICycleTiming.MemoryWriteCycle(ushort address, byte data)
         {
-            Interface.SetMemoryWriteState(address, data);
+            Buses.SetMemoryWriteState(address, data);
             Clock.WaitForNextClockTick();
             Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
-            Interface.EndMemoryWriteState();
+            Buses.EndMemoryWriteState();
             Clock.WaitForNextClockTick();
 
             Instruction instruction = _executingInstructionPackage?.Instruction;
@@ -77,89 +77,89 @@ namespace Zem80.Core.CPU
             }
         }
 
-        void IInstructionTiming.BeginStackReadCycle()
+        void ICycleTiming.BeginStackReadCycle()
         {
-            Interface.SetMemoryReadState(Registers.SP);
+            Buses.SetMemoryReadState(Registers.SP);
             Clock.WaitForNextClockTick();
         }
 
 
-        void IInstructionTiming.EndStackReadCycle(bool highByte, byte data)
+        void ICycleTiming.EndStackReadCycle(bool highByte, byte data)
         {
-            Interface.AddMemoryData(data);
+            Buses.AddMemoryData(data);
             Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
-            Interface.EndMemoryReadState();
+            Buses.EndMemoryReadState();
             Clock.WaitForNextClockTick();
         }
 
-        void IInstructionTiming.BeginStackWriteCycle(bool highByte, byte data)
+        void ICycleTiming.BeginStackWriteCycle(bool highByte, byte data)
         {
-            Interface.SetMemoryWriteState(Registers.SP, data);
+            Buses.SetMemoryWriteState(Registers.SP, data);
             Clock.WaitForNextClockTick();
             Clock.WaitForNextClockTick();
             InsertWaitCycles();
         }
 
-        void IInstructionTiming.EndStackWriteCycle()
+        void ICycleTiming.EndStackWriteCycle()
         {
-            Interface.EndMemoryWriteState();
+            Buses.EndMemoryWriteState();
             Clock.WaitForNextClockTick();
         }
 
-        void IInstructionTiming.BeginPortReadCycle(byte n, bool bc)
+        void ICycleTiming.BeginPortReadCycle(byte n, bool bc)
         {
             ushort address = bc ? (Registers.C, Registers.B).ToWord() : (n, Registers.A).ToWord();
 
-            Interface.SetPortReadState(address);
+            Buses.SetPortReadState(address);
             Clock.WaitForNextClockTick();
         }
 
-        void IInstructionTiming.EndPortReadCycle(byte data)
+        void ICycleTiming.EndPortReadCycle(byte data)
         {
-            Interface.AddPortReadData(data);
+            Buses.AddPortReadData(data);
             Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
             Clock.WaitForNextClockTick();
-            Interface.EndPortReadState();
+            Buses.EndPortReadState();
             Clock.WaitForNextClockTick();
         }
 
-        void IInstructionTiming.BeginPortWriteCycle(byte data, byte n, bool bc)
+        void ICycleTiming.BeginPortWriteCycle(byte data, byte n, bool bc)
         {
             ushort address = bc ? (Registers.C, Registers.B).ToWord() : (n, Registers.A).ToWord();
 
-            Interface.SetPortWriteState(address, data);
+            Buses.SetPortWriteState(address, data);
             Clock.WaitForNextClockTick();
         }
 
-        void IInstructionTiming.EndPortWriteCycle()
+        void ICycleTiming.EndPortWriteCycle()
         {
             Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
             Clock.WaitForNextClockTick();
-            Interface.EndPortWriteState();
+            Buses.EndPortWriteState();
             Clock.WaitForNextClockTick();
         }
 
-        void IInstructionTiming.BeginInterruptRequestAcknowledgeCycle(int tStates)
+        void ICycleTiming.BeginInterruptRequestAcknowledgeCycle(int tStates)
         {
-            Interface.SetInterruptState();
+            Buses.SetInterruptState();
             for (int i = 0; i < tStates; i++)
             {
                 Clock.WaitForNextClockTick();
             }
         }
 
-        void IInstructionTiming.EndInterruptRequestAcknowledgeCycle()
+        void ICycleTiming.EndInterruptRequestAcknowledgeCycle()
         {
-            Interface.EndInterruptState();
+            Buses.EndInterruptState();
         }
 
-        void IInstructionTiming.InternalOperationCycle(int tStates)
+        void ICycleTiming.InternalOperationCycle(int tStates)
         {
             for (int i = 0; i < tStates; i++)
             {

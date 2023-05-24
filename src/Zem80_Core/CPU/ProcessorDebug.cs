@@ -22,7 +22,7 @@ namespace Zem80.Core.CPU
 
         public void SetDataBusDefaultValue(byte defaultValue)
         {
-            Interface.SetDataBusDefault(defaultValue);
+            Buses.SetDataBusDefault(defaultValue);
         }
 
         void IDebugProcessor.AddBreakpoint(ushort address)
@@ -44,6 +44,38 @@ namespace Zem80.Core.CPU
             {
                 _breakpoints.Remove(address);
             }
+        }
+
+        // execute an instruction directly (without the processor loop running), for example for directly testing instructions
+        ExecutionResult IDebugProcessor.ExecuteDirect(byte[] opcode)
+        {
+            Memory.Untimed.WriteBytesAt(Registers.PC, opcode);
+            InstructionPackage package = DecodeInstructionAtProgramCounter();
+            if (package == null)
+            {
+                throw new InstructionDecoderException("Supplied opcode sequence does not decode to a valid instruction.");
+            }
+
+            return Execute(package);
+        }
+
+        // execute an instruction directly (specified by mnemonic, so no decoding necessary)
+        ExecutionResult IDebugProcessor.ExecuteDirect(string mnemonic, byte? arg1, byte? arg2)
+        {
+            if (!InstructionSet.InstructionsByMnemonic.TryGetValue(mnemonic, out Instruction instruction))
+            {
+                throw new InstructionDecoderException("Supplied mnemonic does not correspond to a valid instruction");
+            }
+
+            InstructionData data = new InstructionData()
+            {
+                Argument1 = arg1 ?? 0,
+                Argument2 = arg2 ?? 0
+            };
+
+            InstructionPackage package = new InstructionPackage(instruction, data, Registers.PC);
+            Registers.PC += package.Instruction.SizeInBytes; // simulate the decode cycle effect on PC
+            return Execute(package);
         }
     }
 }

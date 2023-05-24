@@ -25,7 +25,7 @@ namespace Zem80.Core.IO
             }
         }
 
-        public Ports(IInstructionTiming timing)
+        public Ports(ICycleTiming timing)
         {
             _ports = new Dictionary<byte, Port>();
             for (int i = 0; i <= 255; i++)

@@ -252,7 +252,7 @@ namespace ZXSpectrum.VM
 
         private byte ReadPort()
         {
-            ushort portAddress = _cpu.Interface.ADDRESS_BUS;
+            ushort portAddress = _cpu.Buses.ADDRESS_BUS;
             byte result = 0xFF;
 
             if (portAddress.LowByte() == 0xFE)
@@ -265,7 +265,7 @@ namespace ZXSpectrum.VM
 
         private void WritePort(byte output)
         {
-            ushort portAddress = _cpu.Interface.ADDRESS_BUS;
+            ushort portAddress = _cpu.Buses.ADDRESS_BUS;
 
             if (portAddress % 2 == 0)
             {
