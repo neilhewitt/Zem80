@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Zem80.Core.CPU;
-using Zem80.Core.IO;
+using Zem80.Core.InputOutput;
 
 namespace Zem80.Core.Instructions
 {
@@ -14,7 +14,7 @@ namespace Zem80.Core.Instructions
             Registers r = cpu.Registers;
 
             Port port = cpu.Ports[r.C];
-            byte output = cpu.Memory.Timed.ReadByteAt(r.HL);
+            byte output = cpu.Memory.TimedFor(package.Instruction).ReadByteAt(r.HL);
             r.WZ = r.BC;
             r.B--;
             port.SignalWrite();

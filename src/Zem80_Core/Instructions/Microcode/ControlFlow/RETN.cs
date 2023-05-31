@@ -11,7 +11,7 @@ namespace Zem80.Core.Instructions
         {
             cpu.Stack.Pop(WordRegister.PC);
             cpu.Registers.WZ = cpu.Registers.PC;
-            cpu.RestoreInterruptsAfterNMI(); // will re-enable maskable interrupts if they were enabled before entering the NMI handler
+            cpu.Interrupts.RestoreAfterNMI(); // will re-enable maskable interrupts if they were enabled before entering the NMI handler
             return new ExecutionResult(package, null);
         }
 

@@ -18,6 +18,7 @@ namespace Zem80.Core.Instructions
                 // specifically for CALL instructions, the high byte operand read is 4 clock cycles rather than 3 *if* the condition is true (or there is no condition)
                 odh4 = true;
             }
+
             if (timing.MachineCycles.Any(x => x.TStates == 4)) mr4 = true;
             if (timing.MachineCycles.Any(x => x.TStates == 5)) mw5 = true;
 
@@ -25,7 +26,7 @@ namespace Zem80.Core.Instructions
             HasProlongedMemoryRead = mr4;
             HasProlongedMemoryWrite = mw5;
 
-            ExtraOpcodeFetchTStates = (timing.MachineCycles.Where(x => x.Type == MachineCycleType.OpcodeFetch).Sum(x => x.TStates)) - InstructionTiming.OPCODE_FETCH_TSTATES;
+            ExtraOpcodeFetchTStates = (timing.MachineCycles.Where(x => x.Type == MachineCycleType.OpcodeFetch).Sum(x => x.TStates)) - InstructionTiming.OPCODE_FETCH_NORMAL_TSTATES;
         }
     }
 }

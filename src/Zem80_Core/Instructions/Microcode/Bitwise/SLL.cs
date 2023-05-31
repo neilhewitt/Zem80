@@ -41,10 +41,10 @@ namespace Zem80.Core.Instructions
                     0xFDCB => (ushort)(r.IY + offset),
                     _ => (ushort)0xFFFF
                 };
-                original = cpu.Memory.Timed.ReadByteAt(address);
+                original = cpu.Memory.TimedFor(package.Instruction).ReadByteAt(address);
                 shifted = (byte)((original << 1) + 1);
                 setFlags(original);
-                cpu.Memory.Timed.WriteByteAt(address, shifted);
+                cpu.Memory.TimedFor(package.Instruction).WriteByteAt(address, shifted);
                 if (instruction.CopyResultTo != ByteRegister.None)
                 {
                     r[instruction.CopyResultTo.Value] = shifted;

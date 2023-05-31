@@ -9,7 +9,7 @@ namespace Zem80.Core.Instructions
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
-            cpu.DisableInterrupts();
+            cpu.Interrupts.Disable();
             return new ExecutionResult(package, null);
         }
 

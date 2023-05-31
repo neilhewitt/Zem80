@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Zem80.Core.CPU;
-using Zem80.Core.IO;
+using Zem80.Core.InputOutput;
 
 namespace Zem80.Core.Instructions
 {

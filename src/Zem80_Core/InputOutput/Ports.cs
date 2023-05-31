@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Zem80.Core.CPU;
 
-namespace Zem80.Core.IO
+namespace Zem80.Core.InputOutput
 {
     public class Ports
     {
@@ -25,7 +25,7 @@ namespace Zem80.Core.IO
             }
         }
 
-        public Ports(ICycleTiming timing)
+        public Ports(IMachineCycleTiming timing)
         {
             _ports = new Dictionary<byte, Port>();
             for (int i = 0; i <= 255; i++)

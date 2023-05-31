@@ -83,17 +83,17 @@ namespace ZXSpectrum.VM
             r.IY = getWord(15);
             r.IX = getWord(17);
 
-            _cpu.DisableInterrupts();
+            _cpu.Interrupts.Disable();
             if (snapshot[19].GetBit(2))
             {
-                _cpu.EnableInterrupts();
+                _cpu.Interrupts.Enable();
             }
 
             r.R = snapshot[20];
             r[WordRegister.AF] = getWord(21);
             r.SP = getWord(23);
 
-            _cpu.SetInterruptMode((InterruptMode)snapshot[25]);
+            _cpu.Interrupts.SetMode((InterruptMode)snapshot[25]);
             _screen.SetBorderColour(DisplayColour.FromThreeBit(snapshot[26]));
 
             _cpu.Memory.Untimed.WriteBytesAt(16384, snapshot[27..]);
@@ -142,15 +142,15 @@ namespace ZXSpectrum.VM
             r.IY = getWord(23);
             r.IX = getWord(25);
 
-            _cpu.DisableInterrupts();
+            _cpu.Interrupts.Disable();
             if (snapshot[27] == 1)
             {
-                _cpu.EnableInterrupts();
+                _cpu.Interrupts.Enable();
             }
 
             InterruptMode interruptMode = (InterruptMode)snapshot[29].GetByteFromBits(0, 2);
             if (interruptMode == InterruptMode.IM0) interruptMode = InterruptMode.IM1; // IM0 not used on Spectrum
-            _cpu.SetInterruptMode(interruptMode);
+            _cpu.Interrupts.SetMode(interruptMode);
 
             byte[] memoryImage;
             if (compressed)
@@ -242,7 +242,7 @@ namespace ZXSpectrum.VM
 
             // this state remains until the CPU resumes at the end of the actual time slice period, at which point
             // the interrupt is handled just as on the real Spectrum to accept keyboard input etc
-            _cpu.RaiseInterrupt();
+            _cpu.Interrupts.RaiseMaskable();
 
             // this gives us 50 screen updates per second, faking a PAL TV display; however, since the screen painting
             // is not at all synchronised with Windows screen refresh, we will see tearing; the only way to fix this
@@ -252,7 +252,7 @@ namespace ZXSpectrum.VM
 
         private byte ReadPort()
         {
-            ushort portAddress = _cpu.Buses.ADDRESS_BUS;
+            ushort portAddress = _cpu.IO.ADDRESS_BUS;
             byte result = 0xFF;
 
             if (portAddress.LowByte() == 0xFE)
@@ -265,7 +265,7 @@ namespace ZXSpectrum.VM
 
         private void WritePort(byte output)
         {
-            ushort portAddress = _cpu.Buses.ADDRESS_BUS;
+            ushort portAddress = _cpu.IO.ADDRESS_BUS;
 
             if (portAddress % 2 == 0)
             {

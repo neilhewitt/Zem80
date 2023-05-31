@@ -1,7 +1,7 @@
 ﻿using System;
 using Zem80.Core.CPU;
 
-namespace Zem80.Core.IO
+namespace Zem80.Core.InputOutput
 {
     public class Port
     {
@@ -9,7 +9,7 @@ namespace Zem80.Core.IO
         private Action<byte> _write;
         private Action _signalRead;
         private Action _signalWrite;
-        private ICycleTiming _timing;
+        private IMachineCycleTiming _timing;
 
         public byte Number { get; private set; }
 
@@ -62,7 +62,7 @@ namespace Zem80.Core.IO
             _signalWrite = null;
         }
 
-        public Port(byte number, ICycleTiming timing)
+        public Port(byte number, IMachineCycleTiming timing)
         {
             Number = number;
             _timing = timing;

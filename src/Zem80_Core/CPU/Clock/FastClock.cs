@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Zem80.Core.IO;
+using Zem80.Core.InputOutput;
 
 namespace Zem80.Core.CPU
 {

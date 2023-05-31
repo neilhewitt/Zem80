@@ -34,12 +34,12 @@ namespace Zem80.Core.Instructions
                     0xFDCB => (ushort)(r.IY + offset),
                     _ => (ushort)0xFFFF
                 };
-                original = cpu.Memory.Timed.ReadByteAt(address);
+                original = cpu.Memory.TimedFor(package.Instruction).ReadByteAt(address);
                 shifted = (byte)(original << 1);
                 shifted = shifted.SetBit(0, original.GetBit(7));
                 setFlags(original, shifted);
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(4);
-                cpu.Memory.Timed.WriteByteAt(address, shifted);
+                cpu.Memory.TimedFor(package.Instruction).WriteByteAt(address, shifted);
             }
 
             void setFlags(byte original, byte shifted)

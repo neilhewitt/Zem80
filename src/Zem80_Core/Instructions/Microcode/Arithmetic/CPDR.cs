@@ -13,7 +13,7 @@ namespace Zem80.Core.Instructions
 
             bool carry = flags.Carry;
             byte a = cpu.Registers.A;
-            byte b = cpu.Memory.Timed.ReadByteAt(cpu.Registers.HL);
+            byte b = cpu.Memory.TimedFor(package.Instruction).ReadByteAt(cpu.Registers.HL);
 
             var compare = ALUOperations.Subtract(a, b, false);
             flags = compare.Flags;

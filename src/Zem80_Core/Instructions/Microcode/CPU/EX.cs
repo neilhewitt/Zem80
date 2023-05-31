@@ -28,7 +28,7 @@ namespace Zem80.Core.Instructions
                     ushort valueAtSP = cpu.Memory.Untimed.ReadWordAt(r.SP);
 
                     r[instruction.Source.AsWordRegister()] = valueAtSP;
-                    cpu.Memory.Timed.WriteWordAt(r.SP, value);
+                    cpu.Memory.TimedFor(package.Instruction).WriteWordAt(r.SP, value);
 
                     r.WZ = valueAtSP;
                 }

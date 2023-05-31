@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Globalization;
 using Zem80.Core.CPU;
+using System.Buffers.Binary;
 
 namespace Zem80.Core.Instructions
 {
@@ -11,13 +12,16 @@ namespace Zem80.Core.Instructions
     {
         public int Prefix { get; private set; }
         public byte Opcode { get; private set; }
-        public string FullOpcode { get; private set; }
+        public string FullOpcodeAsString { get; private set; }
+        public byte[] FullOpcodeAsByteArray { get; private set; }
         public string Mnemonic { get; private set; }
         public Condition Condition { get; private set; }
         public byte SizeInBytes { get; private set; }
         public InstructionTiming Timing { get; private set; }
         public bool IsIndexed { get; private set; }
         public bool IsConditional { get; private set; }
+        public bool HasIntermediateDisplacementByte { get; private set; }
+        public bool IsLoopingInstruction { get; private set; }
         public IMicrocode Microcode { get; private set; }
         public InstructionElement Target { get; private set; }
         public InstructionElement Source { get; private set; }
@@ -28,18 +32,20 @@ namespace Zem80.Core.Instructions
         public bool TargetsWordRegister { get; private set; }
         public bool TargetsByteInMemory { get; private set; }
         public ByteRegister? CopyResultTo { get; private set; }
+        public int NumberOfOperandBytes { get; init; }
 
         public Instruction(string fullOpcode, string mnemonic, Condition condition, InstructionElement target, InstructionElement source, InstructionElement arg1, InstructionElement arg2, 
             byte sizeInBytes, IEnumerable<MachineCycle> machineCycles, ByteRegister? copyResultTo = ByteRegister.None, IMicrocode microcode = null)
         {
-            FullOpcode = fullOpcode;
             CopyResultTo = copyResultTo;
 
-            if (int.TryParse(fullOpcode[..^2], NumberStyles.HexNumber, null, out int prefix))
-            {
-                Prefix = prefix;
-            }
+            if (int.TryParse(fullOpcode[..^2], NumberStyles.HexNumber, null, out int prefix)) Prefix = prefix;
             Opcode = byte.Parse(fullOpcode[^2..], NumberStyles.HexNumber);
+            FullOpcodeAsString = fullOpcode;
+            
+            byte[] opcodeBytes = new byte[4];
+            BinaryPrimitives.WriteInt32LittleEndian(opcodeBytes, int.Parse(fullOpcode, NumberStyles.HexNumber));
+            FullOpcodeAsByteArray = opcodeBytes.Take(fullOpcode.Length / 2).ToArray();
             
             Mnemonic = mnemonic;
             SizeInBytes = sizeInBytes;
@@ -53,8 +59,10 @@ namespace Zem80.Core.Instructions
             TargetsWordRegister = Target >= InstructionElement.AF && Target <= InstructionElement.SP;
             TargetsByteInMemory = Target >= InstructionElement.AddressFromHL && Target <= InstructionElement.AddressFromIYAndOffset;
             IndexedRegister = WordRegister.None;
-            IsIndexed = Prefix == 0xDDCB || Prefix == 0xFDCB;
+            IsIndexed = Source.IsAddressFromIndexAndOffset() || Target.IsAddressFromIndexAndOffset();
+            HasIntermediateDisplacementByte = Prefix == 0xDDCB || Prefix == 0xFDCB;
             IsConditional = Condition != Condition.None;
+            IsLoopingInstruction = (new[] { "CPDR", "CPIR", "INDR", "INIR", "OTDR", "OTIR", "LDDR", "LDIR" }).Contains(mnemonic);
 
             if (IsIndexed)
             {
@@ -75,6 +83,7 @@ namespace Zem80.Core.Instructions
 
             // deal with timing + any exceptions
             Timing = new InstructionTiming(this, machineCycles);
+            NumberOfOperandBytes = Timing.OperandReads.Count();
         }
     }
 }

@@ -31,7 +31,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
         public void IM(int mode)
         {
             ExecuteInstruction($"IM {mode}");
-            Assert.That(CPU.InterruptMode == (InterruptMode)mode);
+            Assert.That(CPU.Interrupts.Mode == (InterruptMode)mode);
         }
 
         [Test]

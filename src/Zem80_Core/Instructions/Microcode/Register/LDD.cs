@@ -12,8 +12,8 @@ namespace Zem80.Core.Instructions
             Flags flags = cpu.Flags.Clone();
             Registers r = cpu.Registers;
 
-            byte value = cpu.Memory.Timed.ReadByteAt(r.HL);
-            cpu.Memory.Timed.WriteByteAt(r.DE, value);
+            byte value = cpu.Memory.TimedFor(package.Instruction).ReadByteAt(r.HL);
+            cpu.Memory.TimedFor(package.Instruction).WriteByteAt(r.DE, value);
             r.HL--;
             r.DE--;
             r.BC--;

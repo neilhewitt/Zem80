@@ -1,9 +1,12 @@
-﻿namespace Zem80.Core.Memory
+﻿using Zem80.Core.Instructions;
+
+namespace Zem80.Core.Memory
 {
     public class MemoryWrapper : IMemory
     {
         private bool _timed;
         private MemoryBank _memoryBank;
+        private Instruction _instruction;
 
         public byte ReadByteAt(ushort address)
         {
@@ -35,10 +38,11 @@
             _memoryBank.WriteWordAt(address, value, _timed);
         }
 
-        public MemoryWrapper(MemoryBank memoryBank, bool timed)
+        public MemoryWrapper(MemoryBank memoryBank, bool timed, Instruction instruction = null)
         {
             _timed = timed;
             _memoryBank = memoryBank;
+            _instruction = instruction;
         }
     }
 }

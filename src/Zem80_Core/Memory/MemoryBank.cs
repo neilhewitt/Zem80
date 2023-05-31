@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml.Schema;
 using Zem80.Core.CPU;
+using Zem80.Core.Instructions;
 
 namespace Zem80.Core.Memory
 {
@@ -12,10 +13,14 @@ namespace Zem80.Core.Memory
         internal Processor _cpu;
         internal bool _initialised;
 
-        public IMemory Timed { get; init; }
         public IMemory Untimed { get; init; }
 
         public uint SizeInBytes => _map.SizeInBytes;
+
+        public IMemory TimedFor(Instruction instruction)
+        {
+            return new MemoryWrapper(this, true, instruction);
+        }
 
         public void Clear()
         {
@@ -35,7 +40,7 @@ namespace Zem80.Core.Memory
 
             IMemorySegment segment = _map.SegmentFor(address);
             byte output = (segment?.ReadByteAt(AddressOffset(address, segment)) ?? 0x00); // 0x00 if address is unallocated
-            if (timed) _cpu.Timing.MemoryReadCycle(address, output);
+            if (timed) _cpu.Timing.MemoryReadCycle(address, output, 0);
             return output;
         }
 
@@ -84,7 +89,7 @@ namespace Zem80.Core.Memory
                 segment.WriteByteAt(AddressOffset(address, segment), value);
             }
 
-            if (timed) _cpu.Timing.MemoryWriteCycle(address, value);
+            if (timed) _cpu.Timing.MemoryWriteCycle(address, value, 0);
         }
 
         internal void WriteBytesAt(ushort address, byte[] bytes, bool timed)
@@ -126,7 +131,6 @@ namespace Zem80.Core.Memory
         public MemoryBank()
         {
             Untimed = new MemoryWrapper(this, false);
-            Timed = new MemoryWrapper(this, true);
         }
     }
 }

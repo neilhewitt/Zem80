@@ -1,10 +1,12 @@
-﻿namespace Zem80.Core.CPU
+﻿using Zem80.Core.Instructions;
+
+namespace Zem80.Core.CPU
 {
-    public interface ICycleTiming
+    public interface IMachineCycleTiming
     {
-        void OpcodeFetchCycle(ushort address, byte data);
-        void MemoryReadCycle(ushort address, byte data);
-        void MemoryWriteCycle(ushort address, byte data);
+        void OpcodeFetchCycle(ushort address, byte opcode, byte extraTStates);
+        void MemoryReadCycle(ushort address, byte data, byte extraTStatesd);
+        void MemoryWriteCycle(ushort address, byte data, byte extraTStates);
         void BeginStackReadCycle();
         void EndStackReadCycle(bool highByte, byte data);
         void BeginStackWriteCycle(bool highByte, byte data);

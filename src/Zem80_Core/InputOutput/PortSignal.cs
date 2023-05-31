@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Zem80.Core.IO
+namespace Zem80.Core.InputOutput
 {
     public enum PortSignal
     {

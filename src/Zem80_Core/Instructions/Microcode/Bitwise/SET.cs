@@ -32,9 +32,9 @@ namespace Zem80.Core.Instructions
                 };
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
                 
-                byte value = cpu.Memory.Timed.ReadByteAt(address);
+                byte value = cpu.Memory.TimedFor(package.Instruction).ReadByteAt(address);
                 value = value.SetBit(bitIndex, true);
-                cpu.Memory.Timed.WriteByteAt(address, value);
+                cpu.Memory.TimedFor(package.Instruction).WriteByteAt(address, value);
                 if (instruction.CopyResultTo != ByteRegister.None)
                 {
                     r[instruction.CopyResultTo.Value] = value;
