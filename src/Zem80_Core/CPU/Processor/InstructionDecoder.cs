@@ -132,7 +132,7 @@ namespace Zem80.Core.CPU
             foreach (MachineCycle cycle in instruction.Timing.MachineCycles.ByType(new[] { MachineCycleType.OperandRead, MachineCycleType.OperandReadHigh, MachineCycleType.OperandReadLow }))
             {
                 byte operand = _cpu.Memory.Untimed.ReadByteAt(address);
-                _cpu.Timing.MemoryReadCycle(address++, operand, (byte)(cycle.TStates - InstructionTiming.MEMORY_READ_NORMAL_TSTATES));
+                byte tStates = (byte)(cycle.TStates - InstructionTiming.MEMORY_READ_NORMAL_TSTATES);
 
                 if (!setArgument1)
                 {
@@ -158,10 +158,12 @@ namespace Zem80.Core.CPU
                     {
                         if (instruction.Condition == Condition.None || _cpu.Flags.SatisfyCondition(instruction.Condition))
                         {
-                            _cpu.Clock.WaitForNextClockTick();
+                            tStates++;
                         }
                     }
                 }
+
+                _cpu.Timing.MemoryReadCycle(address++, operand, tStates);
             }
 
             return data;
