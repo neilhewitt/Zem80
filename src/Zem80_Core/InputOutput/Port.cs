@@ -9,7 +9,7 @@ namespace Zem80.Core.InputOutput
         private Action<byte> _write;
         private Action _signalRead;
         private Action _signalWrite;
-        private IMachineCycleTiming _timing;
+        private ICycleTiming _timing;
 
         public byte Number { get; private set; }
 
@@ -62,7 +62,7 @@ namespace Zem80.Core.InputOutput
             _signalWrite = null;
         }
 
-        public Port(byte number, IMachineCycleTiming timing)
+        public Port(byte number, ICycleTiming timing)
         {
             Number = number;
             _timing = timing;

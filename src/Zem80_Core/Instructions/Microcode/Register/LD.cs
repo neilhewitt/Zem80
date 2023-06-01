@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Zem80.Core.CPU;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class LD : IMicrocode
     {
@@ -20,18 +19,18 @@ namespace Zem80.Core.Instructions
             
             byte readByte(ushort address)
             {
-                return cpu.Memory.TimedFor(package.Instruction).ReadByteAt(address);
+                return cpu.Memory.Timed.ReadByteAt(address);
             }
 
             ushort readWord(ushort address)
             {
-                return cpu.Memory.TimedFor(package.Instruction).ReadWordAt(address);
+                return cpu.Memory.Timed.ReadWordAt(address);
             }
 
             byte readOffset(ushort address, byte offset)
             {
                 address = (ushort)(address + (sbyte)offset);
-                byte value = cpu.Memory.TimedFor(package.Instruction).ReadByteAt(address);
+                byte value = cpu.Memory.Timed.ReadByteAt(address);
                 flags.X = (address & 0x08) > 0; // copy bit 3
                 flags.Y = (address & 0x20) > 0; // copy bit 5
                 return value;
@@ -39,17 +38,17 @@ namespace Zem80.Core.Instructions
 
             void writeByte(ushort address, byte value)
             {
-                cpu.Memory.TimedFor(package.Instruction).WriteByteAt(address, value);
+                cpu.Memory.Timed.WriteByteAt(address, value);
             }
 
             void writeWord(ushort address, ushort value)
             {
-                cpu.Memory.TimedFor(package.Instruction).WriteWordAt(address, value);
+                cpu.Memory.Timed.WriteWordAt(address, value);
             }
 
             void writeOffset(ushort address, byte offset, byte value)
             {
-                cpu.Memory.TimedFor(package.Instruction).WriteByteAt((ushort)(address + (sbyte)offset), value);
+                cpu.Memory.Timed.WriteByteAt((ushort)(address + (sbyte)offset), value);
             }
 
             void handleIRFlags(byte input)

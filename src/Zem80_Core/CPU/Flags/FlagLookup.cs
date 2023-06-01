@@ -4,7 +4,7 @@ using System.Text;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Reflection;
-using Zem80.Core.Instructions;
+using Zem80.Core.CPU;
 
 namespace Zem80.Core.CPU
 {

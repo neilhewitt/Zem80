@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Zem80.Core.CPU;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class RES : IMicrocode
     {
@@ -32,9 +31,9 @@ namespace Zem80.Core.Instructions
                 };
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
 
-                byte value = cpu.Memory.TimedFor(package.Instruction).ReadByteAt(address);
+                byte value = cpu.Memory.Timed.ReadByteAt(address);
                 value = value.SetBit(bitIndex, false);
-                cpu.Memory.TimedFor(package.Instruction).WriteByteAt(address, value);
+                cpu.Memory.Timed.WriteByteAt(address, value);
                 if (instruction.CopyResultTo != ByteRegister.None)
                 {
                     r[instruction.CopyResultTo.Value] = value;

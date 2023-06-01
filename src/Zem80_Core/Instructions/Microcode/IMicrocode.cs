@@ -1,7 +1,6 @@
 ﻿using System;
-using Zem80.Core.CPU;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public interface IMicrocode
     {

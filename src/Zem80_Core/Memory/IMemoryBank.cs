@@ -1,5 +1,5 @@
 ﻿using Zem80.Core.CPU;
-using Zem80.Core.Instructions;
+using Zem80.Core.CPU;
 
 namespace Zem80.Core.Memory
 {
@@ -7,8 +7,7 @@ namespace Zem80.Core.Memory
     {
         uint SizeInBytes { get; }
         IMemory Untimed { get; }
-
-        IMemory TimedFor(Instruction instruction);
+        IMemory Timed { get; }
 
         void Clear();
         void Initialise(Processor cpu, IMemoryMap map);

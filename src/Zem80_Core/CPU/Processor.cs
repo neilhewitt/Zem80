@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using Zem80.Core.CPU;
-using Zem80.Core.Instructions;
 using Zem80.Core.InputOutput;
 using Zem80.Core.Memory;
 using Stack = Zem80.Core.CPU.Stack;
@@ -23,14 +21,9 @@ namespace Zem80.Core.CPU
         private HaltReason _reasonForLastHalt;
         private int _waitCyclesAdded;
 
-        private DateTime _lastStart;
-        private DateTime _lastEnd;
-
         private Thread _instructionCycle;
         private InstructionDecoder _instructionDecoder;
-        
-        private bool _runExtraNOP;
-       
+               
         public bool EndOnHalt { get; private set; }
 
         public Registers Registers { get; init; }
@@ -38,16 +31,22 @@ namespace Zem80.Core.CPU
         public Ports Ports { get; init; }
         public IO IO { get; init; }
         public Interrupts Interrupts { get; init; }
-        public IMachineCycleTiming Timing { get; init; }
-        
+
+        public ICycleTiming Timing { get; init; }
         public IMemoryBank Memory { get; init; }
         public IClock Clock { get; init; }
 
         public IReadOnlyFlags Flags => new Flags(Registers.F, true);
 
+        public DebugProcessor Debug { get; init; }
+
         public int PendingWaitCycles { get; private set; }
 
-        public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped; 
+        public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped;
+
+        public DateTime LastStarted { get; private set; }
+        public DateTime LastStopped { get; private set; }
+        public long LastRunTimeInMilliseconds => (LastStopped - LastStarted).Milliseconds;
 
         public event EventHandler<InstructionPackage> BeforeExecuteInstruction;
         public event EventHandler<ExecutionResult> AfterExecuteInstruction;
@@ -72,6 +71,7 @@ namespace Zem80.Core.CPU
             Interrupts.SetMode(interruptMode);
             Interrupts.Disable();
             Registers.PC = address; // ordinarily, execution will start at 0x0000, but this can be overridden
+            
             AfterInitialise?.Invoke(null, null);
 
             _running = true;
@@ -81,7 +81,7 @@ namespace Zem80.Core.CPU
             _instructionCycle.IsBackground = true;
             _instructionCycle.Start();
 
-            _lastStart = DateTime.Now;
+            LastStarted = DateTime.Now;
         }
 
         public void Stop()
@@ -90,7 +90,7 @@ namespace Zem80.Core.CPU
             _halted = false;
             
             Clock.Stop();
-            _lastEnd = DateTime.Now;  
+            LastStopped = DateTime.Now;  
             
             OnStop?.Invoke(null, null);
         }
@@ -169,8 +169,9 @@ namespace Zem80.Core.CPU
                 }
                 else
                 {
-                    // instructon decoder handle decode timing; if HALTed, we run NOP until resumed
+                    // instructon decoder handles decode timing; if HALTed, we run NOP until resumed
                     DecodeResult result;
+                    long ticksIn = Clock.Ticks;
 
                     if (_halted)
                     {
@@ -182,21 +183,30 @@ namespace Zem80.Core.CPU
                         Registers.PC += result.InstructionSizeInBytes;
                     }
 
-                    Run(result);
+                    long ticksOut = ticksIn + result.InstructionPackage.Instruction.Timing.TStates;
+
+                    Run(result, ticksOut);
                 }
             }
 
-            void Run(DecodeResult result)
+            void Run(DecodeResult result, long ticksOut)
             {
                 ExecuteInstruction(result.InstructionPackage);
                 if (!result.OpcodeError) Interrupts.HandleAll(result.InstructionPackage, ExecuteInstruction);
                 RefreshMemory();
 
+                // memory timing can be prolonged, this is a hack to handle it
+                if (ticksOut > Clock.Ticks)
+                {
+                    long clockTicks = Clock.Ticks;
+                    Clock.WaitForClockTicks((int)(ticksOut - clockTicks));
+                }
+
                 if (result.SkipNextByte) // special case - opcode error for 0xED prefix
                 {
                     // run another NOP to cover the next byte
                     result = _instructionDecoder.DecodeNOPAt(Registers.PC);
-                    Run(result);
+                    Run(result, ticksOut + 1);
                 }
             }
         }
@@ -206,10 +216,7 @@ namespace Zem80.Core.CPU
             BeforeExecuteInstruction?.Invoke(this, package);
 
             // check for breakpoints
-            if (_breakpoints != null && _breakpoints.Contains(package.InstructionAddress))
-            {
-                _onBreakpoint?.Invoke(this, package);
-            }
+            Debug.EvaluateAndRunBreakpoint(package.InstructionAddress, package);
 
             // set the internal WZ register to an initial value based on whether this is an indexed instruction or not; the instruction that runs may alter/set WZ itself
             // the value in WZ (sometimes known as MEMPTR in Z80 enthusiast circles) is only ever used to control the behavior of the BIT instruction
@@ -236,11 +243,12 @@ namespace Zem80.Core.CPU
             Clock = clock ?? ClockMaker.FastClock(DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ);
             Clock.Initialise(this);
 
-            Timing = new MachineCycleTiming(this);
+            Timing = new CycleTiming(this);
             Registers = new Registers();
             Ports = new Ports(Timing);
             IO = new IO(this);
             Interrupts = new Interrupts(this);
+            Debug = new DebugProcessor(this, ExecuteInstruction);
 
             // You can supply your own memory implementations, for example if you need to do RAM paging for >64K implementations.
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.

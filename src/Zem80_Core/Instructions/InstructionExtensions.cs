@@ -2,9 +2,8 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Zem80.Core.CPU;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public static class InstructionExtensions
     {
@@ -52,7 +51,7 @@ namespace Zem80.Core.Instructions
                         _ => r.HL
                     };
 
-                    value = cpu.Memory.TimedFor(instruction).ReadByteAt(address);
+                    value = cpu.Memory.Timed.ReadByteAt(address);
                 }
                 else
                 {
@@ -64,7 +63,7 @@ namespace Zem80.Core.Instructions
                         _ => r.HL
                     };
 
-                    value = cpu.Memory.TimedFor(instruction).ReadByteAt(address);
+                    value = cpu.Memory.Timed.ReadByteAt(address);
                 }
             }
 
@@ -98,7 +97,7 @@ namespace Zem80.Core.Instructions
                         _ => r.HL
                     };
 
-                    value = cpu.Memory.TimedFor(instruction).ReadWordAt(address);
+                    value = cpu.Memory.Timed.ReadWordAt(address);
                 }
             }
 

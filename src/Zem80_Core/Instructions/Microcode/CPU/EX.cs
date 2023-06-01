@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
-using Zem80.Core.CPU;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class EX : IMicrocode
     {
@@ -28,7 +27,7 @@ namespace Zem80.Core.Instructions
                     ushort valueAtSP = cpu.Memory.Untimed.ReadWordAt(r.SP);
 
                     r[instruction.Source.AsWordRegister()] = valueAtSP;
-                    cpu.Memory.TimedFor(package.Instruction).WriteWordAt(r.SP, value);
+                    cpu.Memory.Timed.WriteWordAt(r.SP, value);
 
                     r.WZ = valueAtSP;
                 }

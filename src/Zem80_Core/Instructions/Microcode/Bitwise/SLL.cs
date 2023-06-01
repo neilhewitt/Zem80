@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Zem80.Core.CPU;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class SLL : IMicrocode
     {
@@ -41,10 +40,10 @@ namespace Zem80.Core.Instructions
                     0xFDCB => (ushort)(r.IY + offset),
                     _ => (ushort)0xFFFF
                 };
-                original = cpu.Memory.TimedFor(package.Instruction).ReadByteAt(address);
+                original = cpu.Memory.Timed.ReadByteAt(address);
                 shifted = (byte)((original << 1) + 1);
                 setFlags(original);
-                cpu.Memory.TimedFor(package.Instruction).WriteByteAt(address, shifted);
+                cpu.Memory.Timed.WriteByteAt(address, shifted);
                 if (instruction.CopyResultTo != ByteRegister.None)
                 {
                     r[instruction.CopyResultTo.Value] = shifted;

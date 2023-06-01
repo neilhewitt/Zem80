@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Zem80.Core.CPU;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class RRD : IMicrocode
     {
@@ -11,7 +10,7 @@ namespace Zem80.Core.Instructions
         {
             Flags flags = cpu.Flags.Clone();
 
-            byte xHL = cpu.Memory.TimedFor(package.Instruction).ReadByteAt(cpu.Registers.HL);
+            byte xHL = cpu.Memory.Timed.ReadByteAt(cpu.Registers.HL);
             byte a = cpu.Registers.A;
 
             // result = (HL) = LO: high-order bits of (HL) + HI: low-order bits of A
@@ -23,7 +22,7 @@ namespace Zem80.Core.Instructions
             xHL = xHL.SetHighNybble(lowA);
 
             cpu.Timing.InternalOperationCycle(4);
-            cpu.Memory.TimedFor(package.Instruction).WriteByteAt(cpu.Registers.HL, xHL);
+            cpu.Memory.Timed.WriteByteAt(cpu.Registers.HL, xHL);
             cpu.Registers.A = a;
 
             // bitwise flag lookup doesn't work for this instruction

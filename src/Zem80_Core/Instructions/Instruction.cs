@@ -6,7 +6,7 @@ using System.Globalization;
 using Zem80.Core.CPU;
 using System.Buffers.Binary;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class Instruction
     {

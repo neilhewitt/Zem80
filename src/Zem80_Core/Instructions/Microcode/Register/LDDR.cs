@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Zem80.Core.CPU;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class LDDR : IMicrocode
     {
@@ -12,8 +11,8 @@ namespace Zem80.Core.Instructions
             Flags flags = cpu.Flags.Clone();
             Registers r = cpu.Registers;
 
-            byte value = cpu.Memory.TimedFor(package.Instruction).ReadByteAt(r.HL);
-            cpu.Memory.TimedFor(package.Instruction).WriteByteAt(r.DE, value);
+            byte value = cpu.Memory.Timed.ReadByteAt(r.HL);
+            cpu.Memory.Timed.WriteByteAt(r.DE, value);
             r.HL--;
             r.DE--;
             r.BC--;

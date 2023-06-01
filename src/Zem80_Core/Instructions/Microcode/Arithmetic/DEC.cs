@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Zem80.Core.CPU;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class DEC : IMicrocode
     {
@@ -29,7 +28,7 @@ namespace Zem80.Core.Instructions
                     // dec byte in memory
                     if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
                     value = instruction.MarshalSourceByte(data, cpu, out ushort address);
-                    cpu.Memory.TimedFor(package.Instruction).WriteByteAt(address, (byte)(value - 1));
+                    cpu.Memory.Timed.WriteByteAt(address, (byte)(value - 1));
                 }
                 else
                 {

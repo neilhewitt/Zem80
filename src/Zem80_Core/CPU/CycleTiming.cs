@@ -4,17 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Zem80.Core.CPU;
-using Zem80.Core.Instructions;
+using Zem80.Core.CPU;
 
 namespace Zem80.Core.CPU
 {
-    public class MachineCycleTiming : IMachineCycleTiming
+    public class CycleTiming : ICycleTiming
     {
         private Processor _cpu;
 
         public int WaitCyclesAdded { get; private set; }
 
-        void IMachineCycleTiming.OpcodeFetchCycle(ushort address, byte opcode, byte extraTStates)
+        void ICycleTiming.OpcodeFetchCycle(ushort address, byte opcode, byte extraTStates)
         {
             _cpu.IO.SetOpcodeFetchState(address);
             _cpu.Clock.WaitForNextClockTick();
@@ -32,7 +32,7 @@ namespace Zem80.Core.CPU
             if (extraTStates > 0) _cpu.Clock.WaitForClockTicks(extraTStates);
         }
 
-        void IMachineCycleTiming.MemoryReadCycle(ushort address, byte data, byte extraTStates)
+        void ICycleTiming.MemoryReadCycle(ushort address, byte data, byte extraTStates)
         {
             _cpu.IO.SetMemoryReadState(address);
             _cpu.Clock.WaitForNextClockTick();
@@ -47,7 +47,7 @@ namespace Zem80.Core.CPU
             if (extraTStates > 0) _cpu.Clock.WaitForClockTicks(extraTStates);
         }
 
-        void IMachineCycleTiming.MemoryWriteCycle(ushort address, byte data, byte extraTStates)
+        void ICycleTiming.MemoryWriteCycle(ushort address, byte data, byte extraTStates)
         {
             _cpu.IO.SetMemoryWriteState(address, data);
             _cpu.Clock.WaitForNextClockTick();
@@ -60,14 +60,14 @@ namespace Zem80.Core.CPU
             if (extraTStates > 0) _cpu.Clock.WaitForClockTicks(extraTStates);
         }
 
-        void IMachineCycleTiming.BeginStackReadCycle()
+        void ICycleTiming.BeginStackReadCycle()
         {
             _cpu.IO.SetMemoryReadState(_cpu.Registers.SP);
             _cpu.Clock.WaitForNextClockTick();
         }
 
 
-        void IMachineCycleTiming.EndStackReadCycle(bool highByte, byte data)
+        void ICycleTiming.EndStackReadCycle(bool highByte, byte data)
         {
             _cpu.IO.AddMemoryData(data);
             _cpu.Clock.WaitForNextClockTick();
@@ -77,7 +77,7 @@ namespace Zem80.Core.CPU
             _cpu.Clock.WaitForNextClockTick();
         }
 
-        void IMachineCycleTiming.BeginStackWriteCycle(bool highByte, byte data)
+        void ICycleTiming.BeginStackWriteCycle(bool highByte, byte data)
         {
             _cpu.IO.SetMemoryWriteState(_cpu.Registers.SP, data);
             _cpu.Clock.WaitForNextClockTick();
@@ -85,13 +85,13 @@ namespace Zem80.Core.CPU
             InsertWaitCycles();
         }
 
-        void IMachineCycleTiming.EndStackWriteCycle()
+        void ICycleTiming.EndStackWriteCycle()
         {
             _cpu.IO.EndMemoryWriteState();
             _cpu.Clock.WaitForNextClockTick();
         }
 
-        void IMachineCycleTiming.BeginPortReadCycle(byte n, bool bc)
+        void ICycleTiming.BeginPortReadCycle(byte n, bool bc)
         {
             ushort address = bc ? (_cpu.Registers.C, _cpu.Registers.B).ToWord() : (n, _cpu.Registers.A).ToWord();
 
@@ -99,7 +99,7 @@ namespace Zem80.Core.CPU
             _cpu.Clock.WaitForNextClockTick();
         }
 
-        void IMachineCycleTiming.EndPortReadCycle(byte data)
+        void ICycleTiming.EndPortReadCycle(byte data)
         {
             _cpu.IO.AddPortReadData(data);
             _cpu.Clock.WaitForNextClockTick();
@@ -110,7 +110,7 @@ namespace Zem80.Core.CPU
             _cpu.Clock.WaitForNextClockTick();
         }
 
-        void IMachineCycleTiming.BeginPortWriteCycle(byte data, byte n, bool bc)
+        void ICycleTiming.BeginPortWriteCycle(byte data, byte n, bool bc)
         {
             ushort address = bc ? (_cpu.Registers.C, _cpu.Registers.B).ToWord() : (n, _cpu.Registers.A).ToWord();
 
@@ -118,7 +118,7 @@ namespace Zem80.Core.CPU
             _cpu.Clock.WaitForNextClockTick();
         }
 
-        void IMachineCycleTiming.EndPortWriteCycle()
+        void ICycleTiming.EndPortWriteCycle()
         {
             _cpu.Clock.WaitForNextClockTick();
             InsertWaitCycles();
@@ -128,7 +128,7 @@ namespace Zem80.Core.CPU
             _cpu.Clock.WaitForNextClockTick();
         }
 
-        void IMachineCycleTiming.BeginInterruptRequestAcknowledgeCycle(int tStates)
+        void ICycleTiming.BeginInterruptRequestAcknowledgeCycle(int tStates)
         {
             _cpu.IO.SetInterruptState();
             for (int i = 0; i < tStates; i++)
@@ -137,12 +137,12 @@ namespace Zem80.Core.CPU
             }
         }
 
-        void IMachineCycleTiming.EndInterruptRequestAcknowledgeCycle()
+        void ICycleTiming.EndInterruptRequestAcknowledgeCycle()
         {
             _cpu.IO.EndInterruptState();
         }
 
-        void IMachineCycleTiming.InternalOperationCycle(int tStates)
+        void ICycleTiming.InternalOperationCycle(int tStates)
         {
             for (int i = 0; i < tStates; i++)
             {
@@ -153,11 +153,14 @@ namespace Zem80.Core.CPU
         private void InsertWaitCycles()
         {
             int cyclesToAdd = _cpu.PendingWaitCycles;
-            _cpu.Clock.WaitForClockTicks(cyclesToAdd);
-            WaitCyclesAdded = cyclesToAdd;
+            if (cyclesToAdd > 0)
+            {
+                _cpu.Clock.WaitForClockTicks(cyclesToAdd);
+                WaitCyclesAdded = cyclesToAdd;
+            }
         }
 
-        public MachineCycleTiming(Processor cpu)
+        public CycleTiming(Processor cpu)
         {
             _cpu = cpu;
         }

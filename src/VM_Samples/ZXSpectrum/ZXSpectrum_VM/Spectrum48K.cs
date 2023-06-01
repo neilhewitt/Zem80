@@ -4,7 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Zem80.Core;
-using Zem80.Core.Instructions;
+using Zem80.Core.CPU;
 using Zem80.Core.Memory;
 using ZXSpectrum.VM.Sound;
 using MultimediaTimer;
@@ -16,10 +16,12 @@ namespace ZXSpectrum.VM
     public class Spectrum48K
     {
         public const int FLASH_FRAME_RATE = 16; // PAL only
+        public const int TICKS_PER_FRAME = 69888;
+        public const int CONTENTION_START = 14335;
+        public const int CONTENTION_END = 14463;
 
         private Processor _cpu;
         private Beeper _beeper;
-        private Timer _timer;
         private int _displayUpdatesSinceLastFlash;
         private bool _flashOn;
         private ScreenMap _screen;

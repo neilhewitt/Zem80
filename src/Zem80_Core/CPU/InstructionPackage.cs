@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Zem80.Core.CPU;
-using Zem80.Core.Instructions;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class InstructionPackage
     {

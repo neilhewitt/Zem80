@@ -22,7 +22,7 @@ namespace Zem80.Core.CPU
                 //
                 // Client code can supply a custom WaitPattern at constructor time. Otherwise we have to generate one.
 
-                cycleWaitPattern ??= new int[1] { 1 }; // default if not on a high-resolution platform (will NOT be real-time)
+                cycleWaitPattern = new int[1] { 1 }; // default if not on a high-resolution platform (will NOT be real-time)
 
                 // high-res stopwatch frequency will be 10MHz
                 if (Stopwatch.IsHighResolution)

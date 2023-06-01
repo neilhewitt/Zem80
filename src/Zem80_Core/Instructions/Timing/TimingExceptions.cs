@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Linq;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class TimingExceptions
     {

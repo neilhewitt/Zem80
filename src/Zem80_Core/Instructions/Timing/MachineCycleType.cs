@@ -1,4 +1,4 @@
-﻿namespace Zem80.Core.Instructions
+﻿namespace Zem80.Core.CPU
 {
     public enum MachineCycleType
     {

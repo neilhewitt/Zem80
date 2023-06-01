@@ -1,6 +1,6 @@
 ﻿using Zem80.Core;
 using Zem80.Core.CPU;
-using Zem80.Core.Instructions;
+using Zem80.Core.CPU;
 
 //test how near the actual execution speed of the emulated CPU is to the theoretical speed
 
@@ -8,9 +8,9 @@ Console.WriteLine("Zem80 Speed Test\n");
 
 int[] cpuWaitPattern = new int[] {
 #if RELEASE
-                3, 3, 3, 2
+                3, 3, 3, 3, 3, 2
 #else
-                3, 3, 2, 2, 3, 3, 3, 2
+                2, 2, 1, 1
 #endif
             };
 
@@ -48,7 +48,7 @@ while (!quit)
         long ticksOut = cpu.Clock.Ticks;
         Console.WriteLine($"Was {ticksOut - ticksIn} ticks, should be { ticks} ticks.");
         // should be 40ms
-        Console.WriteLine($"Elapsed was {cpu.Debug.LastRunTimeInMilliseconds}ms, should be 20ms");
+        Console.WriteLine($"Elapsed was {cpu.LastRunTimeInMilliseconds}ms, should be 20ms");
     }
 }
 

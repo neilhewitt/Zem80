@@ -1,4 +1,5 @@
-﻿using Zem80.Core.Instructions;
+﻿using System;
+using Zem80.Core.CPU;
 
 namespace Zem80.Core.Memory
 {
@@ -10,32 +11,37 @@ namespace Zem80.Core.Memory
 
         public byte ReadByteAt(ushort address)
         {
-            return _memoryBank.ReadByteAt(address, _timed);
+            return _memoryBank.ReadByteAt(address, _timed, ExtraTStates());
         }
 
         public byte[] ReadBytesAt(ushort address, ushort numberOfBytes)
         {
-            return _memoryBank.ReadBytesAt(address, numberOfBytes, _timed);
+            return _memoryBank.ReadBytesAt(address, numberOfBytes, _timed, ExtraTStates());
         }
 
         public ushort ReadWordAt(ushort address)
         {
-            return _memoryBank.ReadWordAt(address, _timed);
+            return _memoryBank.ReadWordAt(address, _timed, ExtraTStates());
         }
 
         public void WriteByteAt(ushort address, byte value)
         {
-            _memoryBank.WriteByteAt(address, value, _timed);
+            _memoryBank.WriteByteAt(address, value, _timed, ExtraTStates());
         }
 
         public void WriteBytesAt(ushort address, byte[] bytes)
         {
-            _memoryBank.WriteBytesAt(address, bytes, _timed);
+            _memoryBank.WriteBytesAt(address, bytes, _timed, ExtraTStates());
         }
 
         public void WriteWordAt(ushort address, ushort value)
         {
-            _memoryBank.WriteWordAt(address, value, _timed);
+            _memoryBank.WriteWordAt(address, value, _timed, ExtraTStates());
+        }
+
+        private byte ExtraTStates()
+        {
+            return 0;
         }
 
         public MemoryWrapper(MemoryBank memoryBank, bool timed, Instruction instruction = null)

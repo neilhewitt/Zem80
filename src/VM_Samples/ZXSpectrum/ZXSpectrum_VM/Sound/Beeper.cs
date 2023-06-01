@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Zem80.Core;
 using Zem80.Core.CPU;
-using Zem80.Core.Instructions;
+using Zem80.Core.CPU;
 
 namespace ZXSpectrum.VM.Sound
 {

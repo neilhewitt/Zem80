@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Zem80.Core.Instructions;
 
 namespace Zem80.Core.CPU
 {
@@ -157,7 +156,7 @@ namespace Zem80.Core.CPU
                         _cpu.Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         _cpu.Stack.Push(WordRegister.PC);
                         ushort address = (_cpu.IO.DATA_BUS, _cpu.Registers.I).ToWord();
-                        _cpu.Registers.PC = _cpu.Memory.TimedFor(executingPackage.Instruction).ReadWordAt(address);
+                        _cpu.Registers.PC = _cpu.Memory.Timed.ReadWordAt(address);
                         _cpu.Registers.WZ = _cpu.Registers.PC;
                         break;
                 }
