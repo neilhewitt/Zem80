@@ -14,15 +14,14 @@ int[] cpuWaitPattern = new int[] {
 #endif
             };
 
-
-Processor cpu = new Processor(clock: ClockMaker.RealTimeClock(4, cpuWaitPattern));
+Processor cpu = new Processor(clock: ClockMaker.TimeSlicedClock(3.5f, TimeSpan.FromMilliseconds(20)));  //ClockMaker.RealTimeClock(4, cpuWaitPattern));
 Instruction lde = InstructionSet.Instructions[0x1E];
-int ticks = ((lde.Timing.TStates * 10000) + 4); // +4 is for the final HALT instruction
+int ticks = ((lde.MachineCycles.TStates * 10000) + 4); // +4 is for the final HALT instruction
 
 byte[] program = new byte[20001]; // 20000 x LD E,A
 for (int i = 0; i < 20000; i++)
 {
-    program[i] = lde.Opcode;
+    program[i] = lde.LastOpcodeByte;
 }
 program[20000] = 0x76; // HALT
 

@@ -1,9 +1,9 @@
 ﻿namespace Zem80.Core.CPU
 {
-    public class IO
+    public class IO : IIO
     {
         /*
-            This class represents the IO pin state of the Z80. The pin values are read-only, but there are internal methods to set various states
+            This class represents the IO pin state of the Z80. The pin values are read-only, but there are public methods to set various states
             as required by the processor. You cannot set or change the state of the IO pins directly. Please see the Processor class for details of how to 
             integrate emulated hardware devices via interrupts etc.
 
@@ -63,7 +63,7 @@
         public bool NMI { get; private set; }
         public bool RESET { get; private set; }
 
-        internal void Clear()
+        public void Clear()
         {
             ADDRESS_BUS = 0;
             DATA_BUS = _defaultDataBusValue;
@@ -78,7 +78,7 @@
             RESET = false;
         }
 
-        internal void SetOpcodeFetchState(ushort address)
+        public void SetOpcodeFetchState(ushort address)
         {
             M1 = true;
             ADDRESS_BUS = address;
@@ -86,38 +86,38 @@
             RD = true;
         }
 
-        internal void AddOpcodeFetchData(byte data)
+        public void AddOpcodeFetchData(byte data)
         {
             DATA_BUS = data;
         }
 
-        internal void EndOpcodeFetchState()
+        public void EndOpcodeFetchState()
         {
             MREQ = false;
             RD = false;
             M1 = false;
         }
 
-        internal void SetMemoryReadState(ushort address)
+        public void SetMemoryReadState(ushort address)
         {
             MREQ = true;
             RD = true;
             ADDRESS_BUS = address;
         }
 
-        internal void AddMemoryData(byte data)
+        public void AddMemoryData(byte data)
         {
             DATA_BUS = data;
         }
 
-        internal void EndMemoryReadState()
+        public void EndMemoryReadState()
         {
             DATA_BUS = _defaultDataBusValue;
             MREQ = false;
             RD = false;
         }
 
-        internal void SetMemoryWriteState(ushort address, byte data)
+        public void SetMemoryWriteState(ushort address, byte data)
         {
             MREQ = true;
             WR = true;
@@ -125,33 +125,33 @@
             DATA_BUS = data;
         }
 
-        internal void EndMemoryWriteState()
+        public void EndMemoryWriteState()
         {
             DATA_BUS = _defaultDataBusValue;
             MREQ = false;
             WR = false;
         }
 
-        internal void SetPortReadState(ushort portAddress)
+        public void SetPortReadState(ushort portAddress)
         {
             IORQ = true;
             RD = true;
             ADDRESS_BUS = portAddress;
         }
 
-        internal void AddPortReadData(byte data)
+        public void AddPortReadData(byte data)
         {
             DATA_BUS = data;
         }
 
-        internal void EndPortReadState()
+        public void EndPortReadState()
         {
             DATA_BUS = _defaultDataBusValue;
             IORQ = false;
             RD = false;
         }
 
-        internal void SetPortWriteState(ushort portAddress, byte data)
+        public void SetPortWriteState(ushort portAddress, byte data)
         {
             IORQ = true;
             WR = true;
@@ -159,72 +159,72 @@
             DATA_BUS = data;
         }
 
-        internal void EndPortWriteState()
+        public void EndPortWriteState()
         {
             DATA_BUS = _defaultDataBusValue;
             IORQ = false;
             WR = false;
         }
 
-        internal void SetInterruptState()
+        public void SetInterruptState()
         {
             INT = true;
             M1 = true;
             IORQ = true;
         }
 
-        internal void EndInterruptState()
+        public void EndInterruptState()
         {
             INT = false;
             M1 = false;
             IORQ = false;
         }
 
-        internal void SetNMIState()
+        public void SetNMIState()
         {
             NMI = true;
             M1 = true;
             IORQ = true;
         }
 
-        internal void EndNMIState()
+        public void EndNMIState()
         {
             NMI = false;
             M1 = false;
             IORQ = false;
         }
 
-        internal void SetWaitState()
+        public void SetWaitState()
         {
             WAIT = true;
         }
 
-        internal void EndWaitState()
+        public void EndWaitState()
         {
             WAIT = false;
         }
 
-        internal void SetResetState()
+        public void SetResetState()
         {
             RESET = true;
         }
 
-        internal void SetAddressBusValue(ushort value)
+        public void SetAddressBusValue(ushort value)
         {
             ADDRESS_BUS = value;
         }
 
-        internal void SetDataBusValue(byte value)
+        public void SetDataBusValue(byte value)
         {
             DATA_BUS = value;
         }
 
-        internal void SetDataBusDefault(byte defaultValue)
+        public void SetDataBusDefault(byte defaultValue)
         {
             _defaultDataBusValue = defaultValue;
         }
 
-        internal IO(Processor cpu)
+        public IO(Processor cpu)
         {
             _cpu = cpu;
         }

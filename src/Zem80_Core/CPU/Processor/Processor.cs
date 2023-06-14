@@ -17,28 +17,26 @@ namespace Zem80.Core.CPU
         private bool _running;
         private bool _halted;
         private bool _suspended;
-        
+
         private HaltReason _reasonForLastHalt;
         private int _waitCyclesAdded;
 
         private Thread _instructionCycle;
         private InstructionDecoder _instructionDecoder;
-               
+
         public bool EndOnHalt { get; private set; }
 
-        public Registers Registers { get; init; }
-        public Stack Stack { get; init; }
-        public Ports Ports { get; init; }
-        public IO IO { get; init; }
-        public Interrupts Interrupts { get; init; }
-
-        public ICycleTiming Timing { get; init; }
+        public IRegisters Registers { get; init; }
+        public IStack Stack { get; init; }
+        public IPorts Ports { get; init; }
+        public IIO IO { get; init; }
+        public IInterrupts Interrupts { get; init; }
+        public ProcessorTiming Timing { get; init; }
+        public IDebugProcessor Debug { get; init; }
         public IMemoryBank Memory { get; init; }
         public IClock Clock { get; init; }
 
         public IReadOnlyFlags Flags => new Flags(Registers.F, true);
-
-        public DebugProcessor Debug { get; init; }
 
         public int PendingWaitCycles { get; private set; }
 
@@ -48,6 +46,8 @@ namespace Zem80.Core.CPU
         public DateTime LastStopped { get; private set; }
         public long LastRunTimeInMilliseconds => (LastStopped - LastStarted).Milliseconds;
 
+        public InstructionPackage ExecutingInstructionPackage { get; private set; }
+
         public event EventHandler<InstructionPackage> BeforeExecuteInstruction;
         public event EventHandler<ExecutionResult> AfterExecuteInstruction;
         public event EventHandler<int> BeforeInsertWaitCycles;
@@ -56,8 +56,6 @@ namespace Zem80.Core.CPU
         public event EventHandler OnSuspend;
         public event EventHandler OnResume;
         public event EventHandler<HaltReason> OnHalt;
-
-        internal bool InterruptsWereEnabledBeforeNMI { get; private set; }
 
         public void Dispose()
         {
@@ -71,7 +69,7 @@ namespace Zem80.Core.CPU
             Interrupts.SetMode(interruptMode);
             Interrupts.Disable();
             Registers.PC = address; // ordinarily, execution will start at 0x0000, but this can be overridden
-            
+
             AfterInitialise?.Invoke(null, null);
 
             _running = true;
@@ -88,10 +86,10 @@ namespace Zem80.Core.CPU
         {
             _running = false;
             _halted = false;
-            
+
             Clock.Stop();
-            LastStopped = DateTime.Now;  
-            
+            LastStopped = DateTime.Now;
+
             OnStop?.Invoke(null, null);
         }
 
@@ -130,13 +128,12 @@ namespace Zem80.Core.CPU
             Registers.SP = Stack.Top;
             if (restartAfterReset)
             {
-                Start(startAddress, this.EndOnHalt, interruptMode);
+                Start(startAddress, EndOnHalt, interruptMode);
             }
         }
 
         public void AddWaitCycles(int waitCycles)
         {
-            // Will add *waitCycles* wait states at the next insertion point.
             // Waits are only actually inserted at certain points in the instruction cycle.
             // If some waits are already pending, the new waits will be added to that total.
             PendingWaitCycles += waitCycles;
@@ -169,50 +166,52 @@ namespace Zem80.Core.CPU
                 }
                 else
                 {
-                    // instructon decoder handles decode timing; if HALTed, we run NOP until resumed
-                    DecodeResult result;
-                    long ticksIn = Clock.Ticks;
+                    bool skipNextByte = false;
 
-                    if (_halted)
+                    do
                     {
-                        result = _instructionDecoder.DecodeNOPAt(Registers.PC); // don't advance PC, resume will do that
+                        ushort address = Registers.PC;
+                        byte[] instructionBytes;
+
+                        if (_halted || skipNextByte)
+                        {
+                            instructionBytes = new byte[] { 0, 0, 0, 0 }; // when halted, we run NOP until resumed
+                        }
+                        else
+                        {
+                            instructionBytes = Memory.Untimed.ReadBytesAt(address, 4); // read 4 bytes, but instruction length could be 1-4
+                        }
+
+                        InstructionPackage package = _instructionDecoder.DecodeInstruction(instructionBytes, address, out skipNextByte, out bool isOpcodeErrorNOP);
+
+                        long ticksIn = Clock.Ticks;
+
+                        // the *real* decode cycle generates a bunch of timing which we haven't done yet... so we need to do that here
+                        Timing.OpcodeFetchTiming(package.Instruction, address);
+                        Timing.OperandReadTiming(package.Instruction, address, package.Data.Argument1, package.Data.Argument2);
+
+                        // all the rest of the timing happens during the execution of the instruction microcode, and the microcode is responsible for it
+
+                        Registers.PC += (ushort)package.Instruction.SizeInBytes;
+                        ExecuteInstruction(package);
+
+                        long ticksOut = Clock.Ticks;
+                        if (ticksOut - ticksIn > package.Instruction.MachineCycles.TStates)
+                        {
+                            throw new TimingException($"Fatal instruction timing error in {package.Instruction.Mnemonic}. Time to call the Ghostbusters!");
+                        }
+
+                        if (!isOpcodeErrorNOP) Interrupts.Handle(package, ExecuteInstruction);
+                        RefreshMemory();
                     }
-                    else
-                    {
-                        result = _instructionDecoder.DecodeInstructionAt(Registers.PC);
-                        Registers.PC += result.InstructionSizeInBytes;
-                    }
-
-                    long ticksOut = ticksIn + result.InstructionPackage.Instruction.Timing.TStates;
-
-                    Run(result, ticksOut);
-                }
-            }
-
-            void Run(DecodeResult result, long ticksOut)
-            {
-                ExecuteInstruction(result.InstructionPackage);
-                if (!result.OpcodeError) Interrupts.HandleAll(result.InstructionPackage, ExecuteInstruction);
-                RefreshMemory();
-
-                // memory timing can be prolonged, this is a hack to handle it
-                if (ticksOut > Clock.Ticks)
-                {
-                    long clockTicks = Clock.Ticks;
-                    Clock.WaitForClockTicks((int)(ticksOut - clockTicks));
-                }
-
-                if (result.SkipNextByte) // special case - opcode error for 0xED prefix
-                {
-                    // run another NOP to cover the next byte
-                    result = _instructionDecoder.DecodeNOPAt(Registers.PC);
-                    Run(result, ticksOut + 1);
+                    while (skipNextByte);
                 }
             }
         }
 
-        private ExecutionResult ExecuteInstruction(InstructionPackage package)
+        private void ExecuteInstruction(InstructionPackage package)
         {
+            ExecutingInstructionPackage = package;
             BeforeExecuteInstruction?.Invoke(this, package);
 
             // check for breakpoints
@@ -226,16 +225,16 @@ namespace Zem80.Core.CPU
             if (result.Flags != null) Registers.F = result.Flags.Value;
             result.WaitCyclesAdded = _waitCyclesAdded;
             AfterExecuteInstruction?.Invoke(this, result);
-
-            return result;
+            ExecutingInstructionPackage = null;
         }
 
         private void RefreshMemory()
         {
-            Registers.R = (byte)(((Registers.R + 1) & 0x7F) | (Registers.R & 0x80)); // bits 0-6 of R are incremented as part of the memory refresh - bit 7 is preserved 
+            Registers.R = (byte)(Registers.R + 1 & 0x7F | Registers.R & 0x80); // bits 0-6 of R are incremented as part of the memory refresh - bit 7 is preserved 
         }
 
-        public Processor(IMemoryBank memory = null, IMemoryMap map = null, IClock clock = null, ushort topOfStackAddress = 0xFFFF)
+        public Processor(IMemoryBank memory = null, IMemoryMap map = null, IStack stack = null, IClock clock = null, IRegisters registers = null, IPorts ports = null,
+            ProcessorTiming cycleTiming = null, IIO io = null, IInterrupts interrupts = null, IDebugProcessor debug = null, ushort topOfStackAddress = 0xFFFF)
         {
             // Default clock is the FastClock which, well, isn't really a clock. It'll run as fast as possible on the hardware and in .NET
             // but it'll *say* that it's running at 4MHz. It's a lying liar that lies. You may want a different clock - luckily there are several.
@@ -243,22 +242,22 @@ namespace Zem80.Core.CPU
             Clock = clock ?? ClockMaker.FastClock(DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ);
             Clock.Initialise(this);
 
-            Timing = new CycleTiming(this);
-            Registers = new Registers();
-            Ports = new Ports(Timing);
-            IO = new IO(this);
-            Interrupts = new Interrupts(this);
-            Debug = new DebugProcessor(this, ExecuteInstruction);
+            Timing = cycleTiming ?? new ProcessorTiming(this);
+            Registers = registers ?? new Registers();
+            Ports = ports ?? new Ports(Timing);
+            IO = io ?? new IO(this);
+            Interrupts = interrupts ?? new Interrupts(this);
+            Debug = debug ?? new DebugProcessor(this, ExecuteInstruction);
 
             // You can supply your own memory implementations, for example if you need to do RAM paging for >64K implementations.
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.
             Memory = memory ?? new MemoryBank();
             Memory.Initialise(this, map ?? new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES, true));
-            
+
             // stack pointer defaults to 0xFFFF - this is undocumented but verified behaviour of the Z80
-            Stack = new Stack(topOfStackAddress, this);
+            Stack = stack ?? new Stack(topOfStackAddress, this);
             Registers.SP = Stack.Top;
-            
+
             // The Z80 instruction set needs to be built (all Instruction objects are created, bound to the microcode instances, and indexed into a hashtable - undocumented 'overloads' are built here too)
             InstructionSet.Build();
             _instructionDecoder = new InstructionDecoder(this);

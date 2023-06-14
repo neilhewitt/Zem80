@@ -10,7 +10,7 @@ namespace Zem80.Core.CPU
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
             Flags flags = cpu.Flags.Clone();
 
             if (instruction.TargetsWordRegister)
@@ -27,8 +27,8 @@ namespace Zem80.Core.CPU
                 {
                     // dec byte in memory
                     if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-                    value = instruction.MarshalSourceByte(data, cpu, out ushort address);
-                    cpu.Memory.Timed.WriteByteAt(address, (byte)(value - 1));
+                    value = instruction.MarshalSourceByte(data, cpu, out ushort address, 4);
+                    cpu.Memory.WriteByteAt(address, (byte)(value - 1), 3);
                 }
                 else
                 {

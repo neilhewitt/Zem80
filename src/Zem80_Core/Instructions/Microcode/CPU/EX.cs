@@ -11,9 +11,9 @@ namespace Zem80.Core.CPU
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
 
-            if (instruction.Opcode == 0x08)
+            if (instruction.LastOpcodeByte == 0x08)
             {
                 // EX AF,AF'
                 r.ExchangeAF();
@@ -21,13 +21,27 @@ namespace Zem80.Core.CPU
             else
             {
                 if (instruction.Target == InstructionElement.AddressFromSP)
-                {
+                { 
                     // EX (SP),HL/IX/IY
-                    ushort value = instruction.MarshalSourceWord(data, cpu);
+                    ushort value = instruction.MarshalSourceWord(data, cpu, 0); // 0 tStates == untimed
                     ushort valueAtSP = cpu.Memory.Untimed.ReadWordAt(r.SP);
-
                     r[instruction.Source.AsWordRegister()] = valueAtSP;
-                    cpu.Memory.Timed.WriteWordAt(r.SP, value);
+                    cpu.Memory.WriteWordAt(r.SP, value, 0);
+
+                    // timing is weird here - 4,3,4,3,5 (OF,SRL,SRH,SWL,SWH)
+                    // whereas we're reading from and writing to memory rather than 
+                    // pushing and popping the stack, so we'll operate untimed and
+                    // then add the correct timing in below...
+
+                    cpu.Timing.BeginStackReadCycle();
+                    cpu.Timing.EndStackReadCycle(valueAtSP.LowByte());
+                    cpu.Timing.BeginStackReadCycle();
+                    cpu.Timing.EndStackReadCycle(valueAtSP.HighByte());
+
+                    cpu.Timing.BeginStackWriteCycle(value.LowByte());
+                    cpu.Timing.EndStackWriteCycle();
+                    cpu.Timing.BeginStackWriteCycle(value.HighByte());
+                    cpu.Timing.EndStackWriteCycle();
 
                     r.WZ = valueAtSP;
                 }

@@ -15,10 +15,8 @@
         OperandReadLow,
         PortRead,
         PortWrite,
-        StackRead,
         StackReadHigh,
         StackReadLow,
-        StackWrite,
         StackWriteHigh,
         StackWriteLow
     }

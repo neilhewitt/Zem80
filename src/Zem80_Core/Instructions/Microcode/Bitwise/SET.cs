@@ -10,7 +10,7 @@ namespace Zem80.Core.CPU
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
             byte bitIndex = instruction.GetBitIndex();
             sbyte offset = (sbyte)(data.Argument1);
             
@@ -31,9 +31,9 @@ namespace Zem80.Core.CPU
                 };
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
                 
-                byte value = cpu.Memory.Timed.ReadByteAt(address);
+                byte value = cpu.Memory.ReadByteAt(address, 4);
                 value = value.SetBit(bitIndex, true);
-                cpu.Memory.Timed.WriteByteAt(address, value);
+                cpu.Memory.WriteByteAt(address, value, 3);
                 if (instruction.CopyResultTo != ByteRegister.None)
                 {
                     r[instruction.CopyResultTo.Value] = value;

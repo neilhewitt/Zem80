@@ -10,7 +10,7 @@ namespace Zem80.Core.CPU
         {
             Instruction instruction = package.Instruction;
 
-            byte t_index = instruction.Opcode.GetByteFromBits(3, 3);
+            byte t_index = instruction.LastOpcodeByte.GetByteFromBits(3, 3);
             ushort address = (ushort)(t_index * 8);
 
             cpu.Stack.Push(WordRegister.PC);

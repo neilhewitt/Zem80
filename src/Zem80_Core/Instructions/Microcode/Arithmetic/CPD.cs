@@ -12,7 +12,7 @@ namespace Zem80.Core.CPU
 
             bool carry = flags.Carry;
             byte a = cpu.Registers.A;
-            byte b = cpu.Memory.Timed.ReadByteAt(cpu.Registers.HL);
+            byte b = cpu.Memory.ReadByteAt(cpu.Registers.HL, 3);
 
             var compare = ALUOperations.Subtract(a, b, false);
             flags = compare.Flags;
@@ -30,6 +30,7 @@ namespace Zem80.Core.CPU
             flags.Y = (valueXY & 0x02) > 0; // copy bit 1 (note: non-standard behaviour)
             
             cpu.Registers.WZ++;
+            cpu.Timing.InternalOperationCycle(5);
 
             return new ExecutionResult(package, flags);
         }

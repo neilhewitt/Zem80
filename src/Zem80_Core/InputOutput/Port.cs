@@ -3,13 +3,13 @@ using Zem80.Core.CPU;
 
 namespace Zem80.Core.InputOutput
 {
-    public class Port
+    public class Port : IPort
     {
         private Func<byte> _read;
         private Action<byte> _write;
         private Action _signalRead;
         private Action _signalWrite;
-        private ICycleTiming _timing;
+        private ProcessorTiming _timing;
 
         public byte Number { get; private set; }
 
@@ -39,10 +39,10 @@ namespace Zem80.Core.InputOutput
 
         public void SignalWrite()
         {
-            // tells port to read the data bus
-            if (_signalWrite != null) 
+            // tells port to write to the data bus
+            if (_signalWrite != null)
             {
-                _signalWrite(); 
+                _signalWrite();
             }
         }
 
@@ -62,7 +62,7 @@ namespace Zem80.Core.InputOutput
             _signalWrite = null;
         }
 
-        public Port(byte number, ICycleTiming timing)
+        public Port(byte number, ProcessorTiming timing)
         {
             Number = number;
             _timing = timing;

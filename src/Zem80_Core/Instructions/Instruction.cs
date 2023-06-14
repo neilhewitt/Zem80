@@ -11,13 +11,13 @@ namespace Zem80.Core.CPU
     public class Instruction
     {
         public int Prefix { get; private set; }
-        public byte Opcode { get; private set; }
-        public string FullOpcodeAsString { get; private set; }
-        public byte[] FullOpcodeAsByteArray { get; private set; }
+        public byte LastOpcodeByte { get; private set; }
+        public string OpcodeString { get; private set; }
+        public byte[] OpcodeBytes { get; private set; }
         public string Mnemonic { get; private set; }
         public Condition Condition { get; private set; }
         public byte SizeInBytes { get; private set; }
-        public InstructionTiming Timing { get; private set; }
+        public InstructionMachineCycles MachineCycles { get; private set; }
         public bool IsIndexed { get; private set; }
         public bool IsConditional { get; private set; }
         public bool HasIntermediateDisplacementByte { get; private set; }
@@ -32,7 +32,6 @@ namespace Zem80.Core.CPU
         public bool TargetsWordRegister { get; private set; }
         public bool TargetsByteInMemory { get; private set; }
         public ByteRegister? CopyResultTo { get; private set; }
-        public int NumberOfOperandBytes { get; init; }
 
         public Instruction(string fullOpcode, string mnemonic, Condition condition, InstructionElement target, InstructionElement source, InstructionElement arg1, InstructionElement arg2, 
             byte sizeInBytes, IEnumerable<MachineCycle> machineCycles, ByteRegister? copyResultTo = ByteRegister.None, IMicrocode microcode = null)
@@ -40,12 +39,12 @@ namespace Zem80.Core.CPU
             CopyResultTo = copyResultTo;
 
             if (int.TryParse(fullOpcode[..^2], NumberStyles.HexNumber, null, out int prefix)) Prefix = prefix;
-            Opcode = byte.Parse(fullOpcode[^2..], NumberStyles.HexNumber);
-            FullOpcodeAsString = fullOpcode;
+            LastOpcodeByte = byte.Parse(fullOpcode[^2..], NumberStyles.HexNumber);
+            OpcodeString = fullOpcode;
             
             byte[] opcodeBytes = new byte[4];
             BinaryPrimitives.WriteInt32LittleEndian(opcodeBytes, int.Parse(fullOpcode, NumberStyles.HexNumber));
-            FullOpcodeAsByteArray = opcodeBytes.Take(fullOpcode.Length / 2).ToArray();
+            OpcodeBytes = opcodeBytes.Take(fullOpcode.Length / 2).ToArray();
             
             Mnemonic = mnemonic;
             SizeInBytes = sizeInBytes;
@@ -82,8 +81,7 @@ namespace Zem80.Core.CPU
             }
 
             // deal with timing + any exceptions
-            Timing = new InstructionTiming(this, machineCycles);
-            NumberOfOperandBytes = Timing.OperandReads.Count();
+            MachineCycles = new InstructionMachineCycles(machineCycles);
         }
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Zem80.Core.CPU
 {
-    public class Stack : IDebugStack
+    public class Stack : IDebugStack, IStack
     {
         private Processor _cpu;
 
@@ -19,12 +19,12 @@ namespace Zem80.Core.CPU
         {
             ushort value = _cpu.Registers[register];
             _cpu.Registers.SP--;
-            _cpu.Timing.BeginStackWriteCycle(true, value.HighByte());
+            _cpu.Timing.BeginStackWriteCycle(value.HighByte());
             _cpu.Memory.Untimed.WriteByteAt(_cpu.Registers.SP, value.HighByte());
             _cpu.Timing.EndStackWriteCycle();
 
             _cpu.Registers.SP--;
-            _cpu.Timing.BeginStackWriteCycle(false, value.LowByte());
+            _cpu.Timing.BeginStackWriteCycle(value.LowByte());
             _cpu.Memory.Untimed.WriteByteAt(_cpu.Registers.SP, value.LowByte());
             _cpu.Timing.EndStackWriteCycle();
         }
@@ -35,12 +35,12 @@ namespace Zem80.Core.CPU
 
             _cpu.Timing.BeginStackReadCycle();
             low = _cpu.Memory.Untimed.ReadByteAt(_cpu.Registers.SP);
-            _cpu.Timing.EndStackReadCycle(false, low);
+            _cpu.Timing.EndStackReadCycle(low);
             _cpu.Registers.SP++;
 
             _cpu.Timing.BeginStackReadCycle();
             high = _cpu.Memory.Untimed.ReadByteAt(_cpu.Registers.SP);
-            _cpu.Timing.EndStackReadCycle(true, high);
+            _cpu.Timing.EndStackReadCycle(high);
             _cpu.Registers.SP++;
 
             ushort value = (low, high).ToWord();

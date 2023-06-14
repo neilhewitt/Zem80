@@ -10,21 +10,21 @@ namespace Zem80.Core.CPU
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte GetBitIndex(this Instruction instruction)
         {
-            return instruction.Opcode.GetByteFromBits(3, 3);
+            return instruction.LastOpcodeByte.GetByteFromBits(3, 3);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte MarshalSourceByte(this Instruction instruction, InstructionData data, Processor cpu)
+        public static byte MarshalSourceByte(this Instruction instruction, InstructionData data, Processor cpu, byte memoryReadTStates)
         {
-            return MarshalSourceByte(instruction, data, cpu, out ushort address);
+            return MarshalSourceByte(instruction, data, cpu, out ushort _, memoryReadTStates);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte MarshalSourceByte(this Instruction instruction, InstructionData data, Processor cpu, out ushort address)
+        public static byte MarshalSourceByte(this Instruction instruction, InstructionData data, Processor cpu, out ushort address, byte memoryReadTStates)
         {
             // this fetches a byte operand value for the instruction given, adjusting how it is fetched based on the addressing of the instruction
 
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
             address = 0x0000;
 
             byte value;
@@ -51,7 +51,7 @@ namespace Zem80.Core.CPU
                         _ => r.HL
                     };
 
-                    value = cpu.Memory.Timed.ReadByteAt(address);
+                    value = cpu.Memory.ReadByteAt(address, memoryReadTStates);
                 }
                 else
                 {
@@ -63,7 +63,7 @@ namespace Zem80.Core.CPU
                         _ => r.HL
                     };
 
-                    value = cpu.Memory.Timed.ReadByteAt(address);
+                    value = cpu.Memory.ReadByteAt(address, memoryReadTStates);
                 }
             }
 
@@ -71,9 +71,9 @@ namespace Zem80.Core.CPU
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ushort MarshalSourceWord(this Instruction instruction, InstructionData data, Processor cpu)
+        public static ushort MarshalSourceWord(this Instruction instruction, InstructionData data, Processor cpu, byte memoryReadTStates)
         {
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
             ushort address = 0x0000;
 
             ushort value;
@@ -97,7 +97,7 @@ namespace Zem80.Core.CPU
                         _ => r.HL
                     };
 
-                    value = cpu.Memory.Timed.ReadWordAt(address);
+                    value = cpu.Memory.ReadWordAt(address, memoryReadTStates);
                 }
             }
 

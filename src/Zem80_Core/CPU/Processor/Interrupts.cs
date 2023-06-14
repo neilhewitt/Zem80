@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Zem80.Core;
 
 namespace Zem80.Core.CPU
 {
-    public class Interrupts
+    public class Interrupts : IInterrupts
     {
         private Processor _cpu;
         private Func<byte> _interruptCallback;
@@ -48,7 +49,7 @@ namespace Zem80.Core.CPU
             IFF2 = false;
         }
 
-        internal void HandleAll(InstructionPackage package, Func<InstructionPackage, ExecutionResult> IM0_ExecuteInstruction)
+        public void Handle(InstructionPackage package, Action<InstructionPackage> IM0_ExecuteInstruction)
         {
             if (!HandleNMI())
             {
@@ -70,7 +71,7 @@ namespace Zem80.Core.CPU
                 IFF2 = Enabled; // save IFF1 state ready for RETN
                 Enabled = false; // disable maskable interrupts until RETN
 
-                _cpu.Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                _cpu.Timing.BeginInterruptRequestAcknowledgeCycle(ProcessorTiming.NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
 
                 _cpu.Stack.Push(WordRegister.PC);
                 _cpu.Registers.PC = 0x0066;
@@ -86,7 +87,7 @@ namespace Zem80.Core.CPU
             return handledNMI;
         }
 
-        private void HandleMaskableInterrupts(InstructionPackage executingPackage, Func<InstructionPackage, ExecutionResult> IM0_ExecuteInstruction)
+        private void HandleMaskableInterrupts(InstructionPackage executingPackage, Action<InstructionPackage> IM0_ExecuteInstruction)
         {
             if (_cpu.IO.INT && Enabled)
             {
@@ -117,7 +118,7 @@ namespace Zem80.Core.CPU
                         // NOTE: I have not been able to test this mode extensively based on real-world examples. It may well be buggy compared to the real Z80. 
                         // TODO: verify the behaviour of the real Z80 and fix the code if necessary
 
-                        _cpu.Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        _cpu.Timing.BeginInterruptRequestAcknowledgeCycle(ProcessorTiming.IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         InstructionPackage IM0Package = DecodeIM0Interrupt();
                         ushort pc = _cpu.Registers.PC;
                         _cpu.Stack.Push(WordRegister.PC);
@@ -131,7 +132,7 @@ namespace Zem80.Core.CPU
                         // This mode is simple. When IM1 is set (this is the default mode) then a jump to 0x0038 is performed when 
                         // the interrupt occurs. 
 
-                        _cpu.Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.IM1_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        _cpu.Timing.BeginInterruptRequestAcknowledgeCycle(ProcessorTiming.IM1_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         _cpu.Stack.Push(WordRegister.PC);
                         _cpu.Registers.PC = 0x0038;
                         _cpu.Registers.WZ = _cpu.Registers.PC;
@@ -153,10 +154,10 @@ namespace Zem80.Core.CPU
                         // keyboard, sound etc] afterwards).
 
                         _cpu.IO.SetDataBusValue(_interruptCallback?.Invoke() ?? 0);
-                        _cpu.Timing.BeginInterruptRequestAcknowledgeCycle(InstructionTiming.IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        _cpu.Timing.BeginInterruptRequestAcknowledgeCycle(ProcessorTiming.IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         _cpu.Stack.Push(WordRegister.PC);
                         ushort address = (_cpu.IO.DATA_BUS, _cpu.Registers.I).ToWord();
-                        _cpu.Registers.PC = _cpu.Memory.Timed.ReadWordAt(address);
+                        _cpu.Registers.PC = _cpu.Memory.ReadWordAt(address, ProcessorTiming.MEMORY_READ_NORMAL_TSTATES);
                         _cpu.Registers.WZ = _cpu.Registers.PC;
                         break;
                 }
@@ -176,32 +177,18 @@ namespace Zem80.Core.CPU
             // In IM0, when an interrupt is generated, the CPU will ask the device to supply four bytes one at a time via
             // a callback method, which are then decoded into an instruction to be executed.
 
-            // To emulate this without heavily re-writing the decode loop (which expects the instruction bytes to be 
-            // in memory at the address pointed to by the program counter), we will temporarily copy 
-            // the last 4 bytes of RAM to an array, move the program counter and use those 4 bytes for the interrupt decode, 
-            // then restore them and fix up the program counter. Sneaky, eh?
-
-            ushort address = (ushort)(_cpu.Memory.SizeInBytes - 5);
-            byte[] lastFour = _cpu.Memory.Untimed.ReadBytesAt(address, 4);
-            ushort pc = _cpu.Registers.PC;
-            _cpu.Registers.PC = address;
-
             byte[] opcode = new byte[4];
             for (int i = 0; i < 4; i++)
             {
                 // The callback will be called 4 times; it should return the opcode bytes of the instruction to run in sequence.
                 // If there are fewer than 4 bytes in the opcode, return 0x00 for the 'extra' bytes
                 opcode[i] = _interruptCallback();
-                _cpu.Memory.Untimed.WriteByteAt((ushort)(address + i), opcode[i]);
             }
 
             InstructionDecoder decoder = new InstructionDecoder(_cpu);
-            DecodeResult result = decoder.DecodeInstructionAt(_cpu.Registers.PC);
+            InstructionPackage package = decoder.DecodeInstruction(opcode, _cpu.Registers.PC, out bool _, out bool _);
 
-            _cpu.Registers.PC = pc;
-            _cpu.Memory.Untimed.WriteBytesAt(address, lastFour);
-
-            return result.InstructionPackage;
+            return package;
         }
 
         public Interrupts(Processor cpu)

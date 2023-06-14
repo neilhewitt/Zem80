@@ -39,10 +39,8 @@ namespace Zem80.Core.CPU
                 _cpu.Suspend();
                 SignalTimeSliceEnded();
             }
-            else
-            {
-                base.WaitForNextClockTick();
-            }
+            
+            base.WaitForNextClockTick();
         }
 
         private void TimerElapsed(object sender, EventArgs e)
@@ -53,14 +51,20 @@ namespace Zem80.Core.CPU
 
         private void SignalTimeSliceStarted()
         {
-            // event is dispatched on a thread so the Z80 suspend doesn't have to wait for you to handle it
-            Task.Run(() => OnTimeSliceStarted?.Invoke(this, Ticks)).ConfigureAwait(false);
+            if (OnTimeSliceStarted != null)
+            {
+                // event is dispatched on a thread so the Z80 suspend doesn't have to wait for you to handle it
+                Task.Run(() => OnTimeSliceStarted.Invoke(this, Ticks)).ConfigureAwait(false);
+            }
         }
 
         private void SignalTimeSliceEnded()
         {
-            // event is dispatched on a thread so the Z80 resume doesn't have to wait for you to handle it
-            Task.Run(() => OnTimeSliceEnded?.Invoke(this, Ticks)).ConfigureAwait(false);
+            if (OnTimeSliceEnded != null)
+            {
+                // event is dispatched on a thread so the Z80 resume doesn't have to wait for you to handle it
+                Task.Run(() => OnTimeSliceEnded.Invoke(this, Ticks)).ConfigureAwait(false);
+            }
         }
 
         public void Dispose()
@@ -76,6 +80,7 @@ namespace Zem80.Core.CPU
             _ticksPerTimeSlice = (int)(z80TicksPerSecond * timeSliceInSeconds);
 
             _timer = new Timer();
+            _timer.Resolution = timeSlice;
             _timer.Interval = timeSlice;
             _timer.Elapsed += TimerElapsed;
         }

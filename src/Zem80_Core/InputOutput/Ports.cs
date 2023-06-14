@@ -5,11 +5,11 @@ using Zem80.Core.CPU;
 
 namespace Zem80.Core.InputOutput
 {
-    public class Ports
+    public class Ports : IPorts
     {
-        private IDictionary<byte, Port> _ports;
+        private IDictionary<byte, IPort> _ports;
 
-        public Port this[byte portNumber]
+        public IPort this[byte portNumber]
         {
             get
             {
@@ -19,18 +19,18 @@ namespace Zem80.Core.InputOutput
 
         public void DisconnectAll()
         {
-            foreach(Port port in _ports.Values)
+            foreach (IPort port in _ports.Values)
             {
                 port.Disconnect();
             }
         }
 
-        public Ports(ICycleTiming timing)
+        public Ports(ProcessorTiming timing)
         {
-            _ports = new Dictionary<byte, Port>();
+            _ports = new Dictionary<byte, IPort>();
             for (int i = 0; i <= 255; i++)
             {
-                Port port = new Port((byte)i, timing);
+                IPort port = new Port((byte)i, timing);
                 _ports.Add((byte)i, port);
             }
         }

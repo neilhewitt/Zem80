@@ -9,7 +9,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Zem80.Core;
 using Zem80.Core.CPU;
-using Zem80.Core.CPU;
 
 namespace ZXSpectrum.VM.Sound
 {
@@ -19,7 +18,7 @@ namespace ZXSpectrum.VM.Sound
      * anywhere that I could find, I have written this code entirely from scratch but have based it on the design of the 
      * relevant class in SoftSpectrum 48. 
      */
-    
+
     public class Beeper : IDisposable
     {
         private Processor _cpu;

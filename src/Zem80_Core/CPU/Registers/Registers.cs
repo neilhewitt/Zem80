@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace Zem80.Core.CPU
 {
-    public class Registers : IShadowRegisters
+    public class Registers : IShadowRegisters, IRegisters
     {
         private byte[] _registers;
 
@@ -60,7 +60,7 @@ namespace Zem80.Core.CPU
         // program counter
         public ushort PC { get { return Get16BitValue(24); } set { Set16BitValue(24, value); } }
 
-        internal ushort WZ { get; set; } // internal register, never exposed to the outside world and not saved / restored with snapshot
+        public ushort WZ { get; set; } // internal register, never exposed to the outside world and not saved / restored with snapshot
 
         public void ExchangeAF()
         {

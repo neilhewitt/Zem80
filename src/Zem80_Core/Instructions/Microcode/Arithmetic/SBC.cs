@@ -11,15 +11,14 @@ namespace Zem80.Core.CPU
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             Flags flags = cpu.Flags.Clone();
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
 
             if (instruction.TargetsWordRegister)
             {
                 ushort left = r.HL;
                 cpu.Timing.InternalOperationCycle(4);
                 cpu.Timing.InternalOperationCycle(3);
-
-                ushort right = instruction.MarshalSourceWord(data, cpu);
+                ushort right = instruction.MarshalSourceWord(data, cpu, 3);
 
                 var subtraction = ALUOperations.Subtract(left, right, flags.Carry, true, flags);
                 r.HL = subtraction.Result;
@@ -30,7 +29,7 @@ namespace Zem80.Core.CPU
             {
                 byte left = r.A;
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-                byte right = instruction.MarshalSourceByte(data, cpu);
+                byte right = instruction.MarshalSourceByte(data, cpu, 3);
 
                 var subtraction = ALUOperations.Subtract(left, right, flags.Carry);
                 r.A = subtraction.Result;

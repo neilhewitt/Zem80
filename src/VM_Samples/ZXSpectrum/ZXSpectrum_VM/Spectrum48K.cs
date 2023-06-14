@@ -9,7 +9,6 @@ using Zem80.Core.Memory;
 using ZXSpectrum.VM.Sound;
 using MultimediaTimer;
 using Timer = MultimediaTimer.Timer;
-using Zem80.Core.CPU;
 
 namespace ZXSpectrum.VM
 {
@@ -68,7 +67,7 @@ namespace ZXSpectrum.VM
         private void LoadSNA(string path)
         {
             byte[] snapshot = File.ReadAllBytes(path);
-            Registers r = _cpu.Registers;
+            IRegisters r = _cpu.Registers;
 
             r.I = snapshot[0];
 
@@ -113,7 +112,7 @@ namespace ZXSpectrum.VM
             // BUG: sometimes overfills memory - look at decompression routine
 
             byte[] snapshot = File.ReadAllBytes(path);
-            Registers r = _cpu.Registers;
+            IRegisters r = _cpu.Registers;
 
             r.AF = getWord(0);
             r.BC = getWord(2);

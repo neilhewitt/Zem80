@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Zem80.Core.CPU;
+using Zem80.Core.CPU;
 using ZexNext.Core;
 
 namespace Zem80.Core.Tests.Zexall
@@ -102,6 +103,7 @@ namespace Zem80.Core.Tests.Zexall
 
             // run the specified test set
             IEnumerable<TestResult> results = _runner.Run(testSetName, ExecuteTestCycle, true);
+            var fail = results.Where(x => !x.Passed).FirstOrDefault();
             Assert.That(results.All(x => x.Passed));
         }
 
@@ -117,7 +119,7 @@ namespace Zem80.Core.Tests.Zexall
             _cpu.Registers.PC = 0x1D42;
             _cpu.Memory.Untimed.WriteBytesAt(input.DataAddress, input.Data);
 
-            ExecutionResult result = _cpu.Debug.ExecuteDirect(input.Opcode);
+            _cpu.Debug.ExecuteDirect(input.Opcode);
 
             TestState afterExecution = new TestState(
             input.Opcode,

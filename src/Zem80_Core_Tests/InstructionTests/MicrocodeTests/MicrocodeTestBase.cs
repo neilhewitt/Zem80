@@ -10,7 +10,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
     public abstract class MicrocodeTestBase
     {
         public Processor CPU { get; private set; }
-        public Registers Registers => CPU.Registers;
+        public IRegisters Registers => CPU.Registers;
         public IReadOnlyFlags Flags => CPU.Flags;
 
         [OneTimeSetUp]
@@ -25,12 +25,11 @@ namespace Zem80.Core.Tests.MicrocodeTests
             CPU.ResetAndClearMemory(false);
         }
 
-        public ExecutionResult ExecuteInstruction(string mnemonic, byte? arg1 = null, byte? arg2 = null)
+        public void ExecuteInstruction(string mnemonic, byte? arg1 = null, byte? arg2 = null)
         {
             // only available on Processor debug interface - sets flags but does not advance PC 
             // (but if PC is assigned in the instruction, that value is preserved)
-            ExecutionResult result = CPU.Debug.ExecuteDirect(mnemonic, arg1, arg2);
-            return result;
+            CPU.Debug.ExecuteDirect(mnemonic, arg1, arg2);
         }
 
         public void SetCPUFlagsFromCondition(Condition condition, bool conditionIsTrue)

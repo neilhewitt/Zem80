@@ -9,10 +9,10 @@ namespace Zem80.Core.CPU
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Flags flags = cpu.Flags.Clone();
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
 
-            byte value = cpu.Memory.Timed.ReadByteAt(r.HL);
-            cpu.Memory.Timed.WriteByteAt(r.DE, value);
+            byte value = cpu.Memory.ReadByteAt(r.HL, 3);
+            cpu.Memory.WriteByteAt(r.DE, value, 5);
             r.HL++;
             r.DE++;
             r.BC--;

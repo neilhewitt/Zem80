@@ -10,10 +10,10 @@ namespace Zem80.Core.CPU
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
 
             byte left = r.A;
-            byte right = instruction.MarshalSourceByte(data, cpu);
+            byte right = instruction.MarshalSourceByte(data, cpu, 3);
 
             if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
             var sub = ALUOperations.Subtract(left, right, false);

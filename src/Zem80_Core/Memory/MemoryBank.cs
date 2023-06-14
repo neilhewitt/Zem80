@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml.Schema;
 using Zem80.Core.CPU;
-using Zem80.Core.CPU;
 
 namespace Zem80.Core.Memory
 {
@@ -14,7 +13,6 @@ namespace Zem80.Core.Memory
         internal bool _initialised;
 
         public IMemory Untimed { get; init; }
-        public IMemory Timed { get; init; }
 
         public uint SizeInBytes => _map.SizeInBytes;
 
@@ -30,17 +28,24 @@ namespace Zem80.Core.Memory
             _initialised = true;
         }
 
-        internal byte ReadByteAt(ushort address, bool timed, byte extraTStates)
+        public IMemory WithTimingFor(MachineCycle cycle)
+        {
+            return new TimedMemoryWrapper(this, cycle);
+        }
+
+        private IMemoryBank Me => this as IMemoryBank;
+
+        byte IMemoryBank.ReadByteAt(ushort address, byte tStates)
         {
             if (!_initialised) throw new MemoryNotInitialisedException();
 
             IMemorySegment segment = _map.SegmentFor(address);
             byte output = (segment?.ReadByteAt(AddressOffset(address, segment)) ?? 0x00); // 0x00 if address is unallocated
-            if (timed) _cpu.Timing.MemoryReadCycle(address, output, 0);
+            if (tStates > 0) _cpu.Timing.MemoryReadCycle(address, output, tStates);
             return output;
         }
 
-        internal byte[] ReadBytesAt(ushort address, ushort numberOfBytes, bool timed, byte extraTStates)
+        byte[] IMemoryBank.ReadBytesAt(ushort address, ushort numberOfBytes, byte tStatesPerByte)
         {
             if (!_initialised) throw new MemoryNotInitialisedException();
 
@@ -50,7 +55,7 @@ namespace Zem80.Core.Memory
             IMemorySegment segment = _map.SegmentFor(address);
             if (segment == null) return new byte[numberOfBytes]; // if memory is not allocated return all 0x00s
 
-            if (!timed && segment.SizeInBytes - AddressOffset(address, segment) >= numberOfBytes)
+            if (tStatesPerByte == 0 && segment.SizeInBytes - AddressOffset(address, segment) >= numberOfBytes)
             {
                 // if the read fits entirely within the memory segment and we aren't generating read timing, then optimise for speed
                 return segment.ReadBytesAt(AddressOffset(address, segment), numberOfBytes);
@@ -60,22 +65,22 @@ namespace Zem80.Core.Memory
                 byte[] bytes = new byte[numberOfBytes];
                 for (int i = 0; i < availableBytes; i++)
                 {
-                    bytes[i] = ReadByteAt((ushort)(address + i), timed, extraTStates);
+                    bytes[i] = Me.ReadByteAt((ushort)(address + i), tStatesPerByte);
                 }
                 return bytes; // bytes beyond the available byte limit (if any) will be 0x00
             }
         }
 
-        internal ushort ReadWordAt(ushort address, bool timed, byte extraTStates)
+        ushort IMemoryBank.ReadWordAt(ushort address, byte tStatesPerByte)
         {
             if (!_initialised) throw new MemoryNotInitialisedException();
 
-            byte low = ReadByteAt(address, timed, extraTStates);
-            byte high = ReadByteAt(++address, timed, extraTStates);
+            byte low = Me.ReadByteAt(address, tStatesPerByte);
+            byte high = Me.ReadByteAt(++address, tStatesPerByte);
             return (ushort)((high * 256) + low);
         }
 
-        internal void WriteByteAt(ushort address, byte value, bool timed, byte extraTStates)
+        void IMemoryBank.WriteByteAt(ushort address, byte value, byte tStatesPerByte)
         {
             if (!_initialised) throw new MemoryNotInitialisedException();
 
@@ -85,10 +90,10 @@ namespace Zem80.Core.Memory
                 segment.WriteByteAt(AddressOffset(address, segment), value);
             }
 
-            if (timed) _cpu.Timing.MemoryWriteCycle(address, value, extraTStates);
+            if (tStatesPerByte > 0) _cpu.Timing.MemoryWriteCycle(address, value, tStatesPerByte);
         }
 
-        internal void WriteBytesAt(ushort address, byte[] bytes, bool timed, byte extraTStates)
+        void IMemoryBank.WriteBytesAt(ushort address, byte[] bytes, byte tStates)
         {
             // similar optimisation to ReadBytesAt above
             if (!_initialised) throw new MemoryNotInitialisedException();
@@ -96,7 +101,7 @@ namespace Zem80.Core.Memory
             IMemorySegment segment = _map.SegmentFor(address);
             if (segment != null && !segment.ReadOnly)
             {
-                if (!timed && segment.SizeInBytes - AddressOffset(address, segment) >= bytes.Length)
+                if (tStates == 0 && segment.SizeInBytes - AddressOffset(address, segment) >= bytes.Length)
                 {
                     segment.WriteBytesAt(AddressOffset(address, segment), bytes);
                 }
@@ -104,30 +109,29 @@ namespace Zem80.Core.Memory
                 {
                     for (ushort i = 0; i < bytes.Length; i++)
                     {
-                        WriteByteAt((ushort)(address + i), bytes[i], timed, extraTStates);
+                        Me.WriteByteAt((ushort)(address + i), bytes[i], tStates);
                     }
                 }
             }
         }
 
-        internal void WriteWordAt(ushort address, ushort value, bool timed, byte extraTStates)
+        void IMemoryBank.WriteWordAt(ushort address, ushort value, byte tStatesPerByte)
         {
             if (!_initialised) throw new MemoryNotInitialisedException();
 
-            WriteByteAt(address, (byte)(value % 256), timed, extraTStates);
-            WriteByteAt(++address, (byte)(value / 256), timed, extraTStates);
+            Me.WriteByteAt(address, (byte)(value % 256), tStatesPerByte);
+            Me.WriteByteAt(++address, (byte)(value / 256), tStatesPerByte);
         }
 
 
-        internal ushort AddressOffset(ushort address, IMemorySegment segment)
+        public ushort AddressOffset(ushort address, IMemorySegment segment)
         {
             return (ushort)(address - segment.StartAddress);
         }
 
         public MemoryBank()
         {
-            Untimed = new MemoryWrapper(this, false);
-            Timed = new MemoryWrapper(this, true);
+            Untimed = new UntimedMemoryWrapper(this);
         }
     }
 }

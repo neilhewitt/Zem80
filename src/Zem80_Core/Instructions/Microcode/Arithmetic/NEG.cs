@@ -8,7 +8,7 @@ namespace Zem80.Core.CPU
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
 
             int result = 0x00 - r.A;
             Flags flags = FlagLookup.ByteArithmeticFlags(0x00, r.A, false, true);

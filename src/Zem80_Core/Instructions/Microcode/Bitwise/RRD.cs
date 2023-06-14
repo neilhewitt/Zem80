@@ -10,7 +10,7 @@ namespace Zem80.Core.CPU
         {
             Flags flags = cpu.Flags.Clone();
 
-            byte xHL = cpu.Memory.Timed.ReadByteAt(cpu.Registers.HL);
+            byte xHL = cpu.Memory.ReadByteAt(cpu.Registers.HL, 4);
             byte a = cpu.Registers.A;
 
             // result = (HL) = LO: high-order bits of (HL) + HI: low-order bits of A
@@ -22,7 +22,7 @@ namespace Zem80.Core.CPU
             xHL = xHL.SetHighNybble(lowA);
 
             cpu.Timing.InternalOperationCycle(4);
-            cpu.Memory.Timed.WriteByteAt(cpu.Registers.HL, xHL);
+            cpu.Memory.WriteByteAt(cpu.Registers.HL, xHL, 3);
             cpu.Registers.A = a;
 
             // bitwise flag lookup doesn't work for this instruction

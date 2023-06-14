@@ -8,10 +8,10 @@ namespace Zem80.Core.CPU
         None = 0,
         Carry = 1,
         Subtract = 2,
-        X = 4,
-        ParityOverflow = 8,
-        Y = 16,
-        HalfCarry = 32,
+        ParityOverflow = 4,
+        X = 8,
+        HalfCarry = 16,
+        Y = 32,
         Zero = 64,
         Sign = 128
     }

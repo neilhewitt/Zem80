@@ -10,12 +10,12 @@ namespace Zem80.Core.CPU
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Flags flags = cpu.Flags.Clone();
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
 
-            Port port = cpu.Ports[r.C];
+            IPort port = cpu.Ports[r.C];
             port.SignalRead();
             byte input = port.ReadByte(true);
-            cpu.Memory.Timed.WriteByteAt(r.HL, input);
+            cpu.Memory.WriteByteAt(r.HL, input, 3); // timing may be incorrect in the Z80 user manual?
             r.HL--;
             r.WZ = r.BC;
             r.B--;

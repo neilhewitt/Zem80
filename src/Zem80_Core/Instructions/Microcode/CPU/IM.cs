@@ -10,7 +10,7 @@ namespace Zem80.Core.CPU
         {
             Instruction instruction = package.Instruction;
 
-            switch (instruction.Opcode)
+            switch (instruction.LastOpcodeByte)
             {
                 case 0x46:
                 case 0x4E:

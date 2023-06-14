@@ -12,11 +12,11 @@ namespace Zem80.Core.CPU
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             Flags flags = cpu.Flags.Clone();
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
 
             void @out(byte portNumber, ByteRegister dataRegister, bool bc)
             {
-                Port port = cpu.Ports[portNumber];
+                IPort port = cpu.Ports[portNumber];
                 byte output = 0;
                 if (dataRegister != ByteRegister.None) output = r[dataRegister];
                 port.SignalWrite();

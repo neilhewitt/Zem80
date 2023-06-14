@@ -9,7 +9,7 @@ namespace Zem80.Core.CPU
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Flags flags = cpu.Flags.Clone();
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
             byte A = r.A;
             int mode = 0;
 

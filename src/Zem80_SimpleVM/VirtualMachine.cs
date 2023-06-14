@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using Zem80.Core;
 using Zem80.Core.CPU;
+using Zem80.Core.CPU;
 
 namespace Zem80.SimpleVM
 {
@@ -14,15 +15,17 @@ namespace Zem80.SimpleVM
         private bool _synchronous;
         private static string _outputLogPath;
         private static Registers _lastRegisters;
+        private Action<ExecutionResult> _callback;
 
         public Processor CPU => _cpu;
 
-        public void Start(ushort address = 0x0000, bool endOnHalt = false, bool synchronous = false, bool debugOutput = false, string outputLogPath = null)
+        public void Start(ushort address = 0x0000, bool endOnHalt = false, bool synchronous = false, bool debugOutput = false, string outputLogPath = null, Action<ExecutionResult> callbackAfterInstructionExecute = null)
         {
             _address = address;
             _endOnHalt = endOnHalt;
             _synchronous = synchronous;
             _outputLogPath = outputLogPath;
+            _callback = callbackAfterInstructionExecute;
 
             if (debugOutput)
             {
@@ -83,6 +86,8 @@ namespace Zem80.SimpleVM
             Write("\n");
 
             _lastRegisters = _cpu.Registers.Snapshot();
+
+            _callback?.Invoke(e);
 
             void regValue(ByteRegister r)
             {

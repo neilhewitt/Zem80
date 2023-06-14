@@ -12,11 +12,11 @@ namespace Zem80.Core.CPU
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             Flags flags = cpu.Flags.Clone();
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
 
             byte @in(byte portNumber, ByteRegister toRegister, bool bc)
             {
-                Port port = cpu.Ports[portNumber];
+                IPort port = cpu.Ports[portNumber];
                 port.SignalRead();
                 byte input = port.ReadByte(bc);
                 if (toRegister != ByteRegister.F) r[toRegister] = input;

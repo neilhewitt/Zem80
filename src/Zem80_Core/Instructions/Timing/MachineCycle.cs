@@ -8,10 +8,10 @@ namespace Zem80.Core.CPU
     public class MachineCycle
     {
         public MachineCycleType Type { get; private set; }
-        public int TStates { get; private set; }
+        public byte TStates { get; private set; }
         public bool RunsOnlyIfConditionTrue { get; private set; }
 
-        public MachineCycle(MachineCycleType type, int tStates, bool runsOnlyIfConditionTrue)
+        public MachineCycle(MachineCycleType type, byte tStates, bool runsOnlyIfConditionTrue)
         {
             Type = type;
             TStates = tStates;
