@@ -9,6 +9,7 @@ using Zem80.Core.Memory;
 using ZXSpectrum.VM.Sound;
 using MultimediaTimer;
 using Timer = MultimediaTimer.Timer;
+using System.Linq;
 
 namespace ZXSpectrum.VM
 {
@@ -24,6 +25,9 @@ namespace ZXSpectrum.VM
         private int _displayUpdatesSinceLastFlash;
         private bool _flashOn;
         private ScreenMap _screen;
+        private int _ticksThisFrame;
+
+        private Dictionary<int, int> _displayWaits;
 
         public event EventHandler<byte[]> OnUpdateDisplay;
 
@@ -51,7 +55,7 @@ namespace ZXSpectrum.VM
             {
                 throw new FileNotFoundException($"Snapshot file {path} does not exist.");
             }
-            
+
             switch (Path.GetExtension(path).ToUpper())
             {
                 case ".SNA":
@@ -212,7 +216,8 @@ namespace ZXSpectrum.VM
             // having to spin the PC CPU all the time. This reduces our CPU use considerably.
 
             _cpu.Debug.SetDataBusDefaultValue(0xFF); // Spectrum has pull-up resistors on data bus lines, so will always read 0xFF, not 0x00, if not otherwise set by the ULA
-            _cpu.AfterInitialise += (sender, e) => { 
+            _cpu.AfterInitialise += (sender, e) =>
+            {
                 if (snapshotPath != null) LoadSnapshot(snapshotPath); // snapshot loading must happen after CPU is initialised, but before it starts
             };
 
@@ -220,8 +225,15 @@ namespace ZXSpectrum.VM
             _beeper.Start();
         }
 
+        private void ClockTick(object sender, long e)
+        {
+            _ticksThisFrame++;
+        }
+
         private void UpdateDisplay(object sender, long e)
         {
+            _ticksThisFrame = 0;
+
             // we're faking the screen update process here - in reality there are lots
             // of timing issues around 'contended' memory access by the ULA, and tstate counting etc
             // but for our purposes here we don't need any of that - remember, this is just a demo VM!
@@ -290,8 +302,53 @@ namespace ZXSpectrum.VM
         {
         }
 
+        private void BeforeExecuteInstruction(object sender, InstructionPackage e)
+        {
+            int ticksIn = _ticksThisFrame;       
+            int extraTicks = 0;
+            foreach(MachineCycle machineCycle in e.Instruction.MachineCycles.Cycles)
+            {
+                if (machineCycle.HasMemoryAccess && _displayWaits.TryGetValue(ticksIn, out int ticksToAdd))
+                {
+                    extraTicks+= ticksToAdd;
+                }
+                ticksIn += machineCycle.TStates;
+            }
+
+            if (extraTicks > 0) _cpu.Timing.AddWaitCycles(extraTicks);
+        }
+
+        private void GenerateDisplayWaits()
+        {
+            _displayWaits = new Dictionary<int, int>();
+
+            // Since two devices cannot read RAM at the same time, when the ULA would be reading the screen RAM directly
+            // during the display update, the CPU needs to be turned off so no memory reads can occur. This is called 'memory contention'.
+            // To do this, the ULA holds the CPU's WAIT pin low to cause the CPU to suspend for a certain number of cycles while it reads
+            // the screen RAM. This function generates the correct number of wait cycles at the right points in the screen update cycle, which 
+            // will be used when we update the display.
+
+            MapWaits(14335, 14463);
+            MapWaits(14559, 16095);
+
+            void MapWaits(int start, int end)
+            {
+                for (int i = start; i <= end; i += 8)
+                {
+                    int tstate = i;
+                    for (int j = 6; j >= 0; j--)
+                    {
+                        _displayWaits[tstate++] = j;
+                    }
+                    _displayWaits[tstate] = 0;
+                }
+            }
+        }
+
         public Spectrum48K()
         {
+            GenerateDisplayWaits();
+
             string romPath = "rom\\48k.rom";
 
             _screen = new ScreenMap();
@@ -302,14 +359,19 @@ namespace ZXSpectrum.VM
             map.Map(new MemorySegment(49152), 16384);
 
             _cpu = new Processor(
-                map: map, 
+                map: map,
                 clock: ClockMaker.TimeSlicedClock(
                     3.5f, // 3.5MHz 
-                    TimeSpan.FromMilliseconds(20), // 20ms time slices (PAL Spectrum only)
+                    TimeSpan.FromMilliseconds(20),
+                    TICKS_PER_FRAME,
                     null, // we're not handling the time slice start event
                     UpdateDisplay // run the display update at the end of each time slice
                     )
                 );
+
+            //_cpu.BeforeExecuteInstruction += BeforeExecuteInstruction;
+            //_cpu.Clock.OnTick += ClockTick;
+
             _beeper = new Beeper(_cpu);
 
             // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 

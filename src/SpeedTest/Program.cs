@@ -14,7 +14,7 @@ int[] cpuWaitPattern = new int[] {
 #endif
             };
 
-Processor cpu = new Processor(clock: ClockMaker.TimeSlicedClock(3.5f, TimeSpan.FromMilliseconds(20)));  //ClockMaker.RealTimeClock(4, cpuWaitPattern));
+Processor cpu = new Processor(clock: ClockMaker.RealTimeClock(4, cpuWaitPattern));
 Instruction lde = InstructionSet.Instructions[0x1E];
 int ticks = ((lde.MachineCycles.TStates * 10000) + 4); // +4 is for the final HALT instruction
 

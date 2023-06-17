@@ -38,8 +38,6 @@ namespace Zem80.Core.CPU
 
         public IReadOnlyFlags Flags => new Flags(Registers.F, true);
 
-        public int PendingWaitCycles { get; private set; }
-
         public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped;
 
         public DateTime LastStarted { get; private set; }
@@ -132,13 +130,6 @@ namespace Zem80.Core.CPU
             }
         }
 
-        public void AddWaitCycles(int waitCycles)
-        {
-            // Waits are only actually inserted at certain points in the instruction cycle.
-            // If some waits are already pending, the new waits will be added to that total.
-            PendingWaitCycles += waitCycles;
-        }
-
         public void Halt(HaltReason reason = HaltReason.HaltCalledDirectly)
         {
             if (!_halted)
@@ -175,7 +166,7 @@ namespace Zem80.Core.CPU
 
                         if (_halted || skipNextByte)
                         {
-                            instructionBytes = new byte[] { 0, 0, 0, 0 }; // when halted, we run NOP until resumed
+                            instructionBytes = new byte[4]; // when halted, we run NOP until resumed
                         }
                         else
                         {
@@ -183,8 +174,6 @@ namespace Zem80.Core.CPU
                         }
 
                         InstructionPackage package = _instructionDecoder.DecodeInstruction(instructionBytes, address, out skipNextByte, out bool isOpcodeErrorNOP);
-
-                        long ticksIn = Clock.Ticks;
 
                         // the *real* decode cycle generates a bunch of timing which we haven't done yet... so we need to do that here
                         Timing.OpcodeFetchTiming(package.Instruction, address);
@@ -194,12 +183,6 @@ namespace Zem80.Core.CPU
 
                         Registers.PC += (ushort)package.Instruction.SizeInBytes;
                         ExecuteInstruction(package);
-
-                        long ticksOut = Clock.Ticks;
-                        if (ticksOut - ticksIn > package.Instruction.MachineCycles.TStates)
-                        {
-                            throw new TimingException($"Fatal instruction timing error in {package.Instruction.Mnemonic}. Time to call the Ghostbusters!");
-                        }
 
                         if (!isOpcodeErrorNOP) Interrupts.Handle(package, ExecuteInstruction);
                         RefreshMemory();

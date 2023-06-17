@@ -25,8 +25,14 @@ namespace Zem80.Core.CPU
         public const byte IM2_INTERRUPT_ACKNOWLEDGE_TSTATES = 7;
 
         private Processor _cpu;
+        private int _waitCyclesPending;
 
         public int WaitCyclesAdded { get; private set; }
+
+        public void AddWaitCycles(int waitCycles)
+        {
+            _waitCyclesPending += waitCycles;
+        }
 
         public void OpcodeFetchTiming(Instruction instruction, ushort address)
         {
@@ -193,7 +199,8 @@ namespace Zem80.Core.CPU
 
         private void InsertWaitCycles()
         {
-            int cyclesToAdd = _cpu.PendingWaitCycles;
+            int cyclesToAdd = _waitCyclesPending;
+            _waitCyclesPending = 0;
             if (cyclesToAdd > 0)
             {
                 _cpu.Clock.WaitForClockTicks(cyclesToAdd);

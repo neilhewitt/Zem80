@@ -72,15 +72,17 @@ namespace Zem80.Core.CPU
             Stop();
         }
 
-        protected internal TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice)
+        protected internal TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice, int? ticksPerTimeSlice)
             : base(frequencyInMHz)
         {
             int z80TicksPerSecond = (int)(frequencyInMHz * 1000000);
             float timeSliceInSeconds = (float)timeSlice.Ticks / 10000000f;
             _ticksPerTimeSlice = (int)(z80TicksPerSecond * timeSliceInSeconds);
 
+            if (ticksPerTimeSlice.HasValue) _ticksPerTimeSlice = ticksPerTimeSlice.Value;
+
             _timer = new Timer();
-            _timer.Resolution = timeSlice;
+            _timer.Resolution = TimeSpan.FromMilliseconds(1);
             _timer.Interval = timeSlice;
             _timer.Elapsed += TimerElapsed;
         }

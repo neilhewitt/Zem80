@@ -2,22 +2,22 @@
 {
     public enum MachineCycleType
     {
-        InternalOperation,
+        OpcodeFetch,
+        OperandRead,
+        OperandReadHigh,
+        OperandReadLow,
         MemoryRead,
         MemoryWrite,
         MemoryReadHigh,
         MemoryReadLow,
         MemoryWriteHigh,
         MemoryWriteLow,
-        OpcodeFetch,
-        OperandRead,
-        OperandReadHigh,
-        OperandReadLow,
-        PortRead,
-        PortWrite,
         StackReadHigh,
         StackReadLow,
         StackWriteHigh,
-        StackWriteLow
+        StackWriteLow,
+        InternalOperation,
+        PortRead,
+        PortWrite
     }
 }

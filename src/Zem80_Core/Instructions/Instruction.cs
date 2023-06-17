@@ -62,7 +62,7 @@ namespace Zem80.Core.CPU
             HasIntermediateDisplacementByte = Prefix == 0xDDCB || Prefix == 0xFDCB;
             IsConditional = Condition != Condition.None;
             IsLoopingInstruction = (new[] { "CPDR", "CPIR", "INDR", "INIR", "OTDR", "OTIR", "LDDR", "LDIR" }).Contains(mnemonic);
-
+            
             if (IsIndexed)
             {
                 IndexedRegister = Source.IsAddressFromIndexAndOffset() ? Source.AsWordRegister() : Target.AsWordRegister();
