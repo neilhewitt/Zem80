@@ -96,6 +96,7 @@
             MREQ = false;
             RD = false;
             M1 = false;
+            DATA_BUS = _defaultDataBusValue;
         }
 
         public void SetMemoryReadState(ushort address)
@@ -217,6 +218,11 @@
         public void SetDataBusValue(byte value)
         {
             DATA_BUS = value;
+        }
+
+        public void ResetDataBusValue()
+        {
+            DATA_BUS = _defaultDataBusValue;
         }
 
         public void SetDataBusDefault(byte defaultValue)

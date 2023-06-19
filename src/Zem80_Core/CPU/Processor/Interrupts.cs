@@ -153,9 +153,9 @@ namespace Zem80.Core.CPU
                         // the programmer to divert that interrupt to a routine of their choice and then call down to the ROM routine [which handles the
                         // keyboard, sound etc] afterwards).
 
-                        _cpu.IO.SetDataBusValue(_interruptCallback?.Invoke() ?? 0);
                         _cpu.Timing.BeginInterruptRequestAcknowledgeCycle(ProcessorTiming.IM2_INTERRUPT_ACKNOWLEDGE_TSTATES);
                         _cpu.Stack.Push(WordRegister.PC);
+                        _cpu.IO.SetDataBusValue(_interruptCallback?.Invoke() ?? 0);
                         ushort address = (_cpu.IO.DATA_BUS, _cpu.Registers.I).ToWord();
                         _cpu.Registers.PC = _cpu.Memory.ReadWordAt(address, ProcessorTiming.MEMORY_READ_NORMAL_TSTATES);
                         _cpu.Registers.WZ = _cpu.Registers.PC;

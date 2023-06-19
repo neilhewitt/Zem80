@@ -24,6 +24,8 @@ namespace Zem80.Core.CPU
         private Thread _instructionCycle;
         private InstructionDecoder _instructionDecoder;
 
+        private bool _looping;
+
         public bool EndOnHalt { get; private set; }
 
         public IRegisters Registers { get; init; }
@@ -174,8 +176,6 @@ namespace Zem80.Core.CPU
                         }
 
                         InstructionPackage package = _instructionDecoder.DecodeInstruction(instructionBytes, address, out skipNextByte, out bool isOpcodeErrorNOP);
-
-                        // the *real* decode cycle generates a bunch of timing which we haven't done yet... so we need to do that here
                         Timing.OpcodeFetchTiming(package.Instruction, address);
                         Timing.OperandReadTiming(package.Instruction, address, package.Data.Argument1, package.Data.Argument2);
 
@@ -202,13 +202,22 @@ namespace Zem80.Core.CPU
 
             // set the internal WZ register to an initial value based on whether this is an indexed instruction or not; the instruction that runs may alter/set WZ itself
             // the value in WZ (sometimes known as MEMPTR in Z80 enthusiast circles) is only ever used to control the behavior of the BIT instruction
-            Registers.WZ = (ushort)(Registers[package.Instruction.IndexedRegister] + package.Data.Argument1);
+            if (!_looping && package.Instruction.IsIndexed)
+            {
+                Registers.WZ = (ushort)(Registers[package.Instruction.IndexedRegister] + package.Data.Argument1);
+            }
+            else
+            {
+                Registers.WZ = 0x0000;
+            }
 
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
             if (result.Flags != null) Registers.F = result.Flags.Value;
             result.WaitCyclesAdded = _waitCyclesAdded;
             AfterExecuteInstruction?.Invoke(this, result);
             ExecutingInstructionPackage = null;
+
+            _looping = (package.Instruction.IsLoopingInstruction && Registers.PC == package.InstructionAddress);
         }
 
         private void RefreshMemory()

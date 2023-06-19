@@ -53,6 +53,7 @@
         void SetAddressBusValue(ushort value);
         void SetDataBusDefault(byte defaultValue);
         void SetDataBusValue(byte value);
+        void ResetDataBusValue();
         void SetInterruptState();
         void SetMemoryReadState(ushort address);
         void SetMemoryWriteState(ushort address, byte data);

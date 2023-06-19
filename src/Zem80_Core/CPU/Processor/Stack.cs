@@ -10,8 +10,8 @@ namespace Zem80.Core.CPU
     {
         private Processor _cpu;
 
-        public ushort Top { get; init; }
         public ushort Pointer => _cpu.Registers.SP;
+        public ushort Top { get; init; }
 
         public IDebugStack Debug => this;
 

@@ -25,9 +25,11 @@ namespace ZXSpectrum.VM
         private int _displayUpdatesSinceLastFlash;
         private bool _flashOn;
         private ScreenMap _screen;
+        
         private int _ticksThisFrame;
-
         private Dictionary<int, int> _displayWaits;
+
+        private Timer _screenTimer;
 
         public event EventHandler<byte[]> OnUpdateDisplay;
 
@@ -45,6 +47,7 @@ namespace ZXSpectrum.VM
 
         public void Stop()
         {
+            _screenTimer.Stop();
             _beeper.Dispose();
             _cpu.Stop();
         }
@@ -223,16 +226,23 @@ namespace ZXSpectrum.VM
 
             _cpu.Start();
             _beeper.Start();
+            _screenTimer.Start();
         }
 
         private void ClockTick(object sender, long e)
         {
             _ticksThisFrame++;
+            if (_ticksThisFrame >= TICKS_PER_FRAME)
+            {
+                _ticksThisFrame = 0;
+                _cpu.Interrupts.RaiseMaskable();
+                //Task.Run(() => UpdateDisplay(this, 0));
+            }
         }
 
-        private void UpdateDisplay(object sender, long e)
+        private void UpdateDisplay(object sender, EventArgs e)
         {
-            _ticksThisFrame = 0;
+            //_ticksThisFrame = 0;
 
             // we're faking the screen update process here - in reality there are lots
             // of timing issues around 'contended' memory access by the ULA, and tstate counting etc
@@ -255,7 +265,7 @@ namespace ZXSpectrum.VM
 
             // this state remains until the CPU resumes at the end of the actual time slice period, at which point
             // the interrupt is handled just as on the real Spectrum to accept keyboard input etc
-            _cpu.Interrupts.RaiseMaskable();
+            //_cpu.Interrupts.RaiseMaskable();
 
             // this gives us 50 screen updates per second, faking a PAL TV display; however, since the screen painting
             // is not at all synchronised with Windows screen refresh, we will see tearing; the only way to fix this
@@ -358,21 +368,33 @@ namespace ZXSpectrum.VM
             map.Map(new ReadOnlyMemorySegment(File.ReadAllBytes(romPath)), 0);
             map.Map(new MemorySegment(49152), 16384);
 
+            //_cpu = new Processor(
+            //    map: map,
+            //    clock: ClockMaker.TimeSlicedClock(
+            //        3.5f, // 3.5MHz 
+            //        TimeSpan.FromMilliseconds(20),
+            //        TICKS_PER_FRAME,
+            //        null, // we're not handling the time slice start event
+            //        UpdateDisplay // run the display update at the end of each time slice
+            //        )
+            //    );
+
             _cpu = new Processor(
                 map: map,
-                clock: ClockMaker.TimeSlicedClock(
-                    3.5f, // 3.5MHz 
-                    TimeSpan.FromMilliseconds(20),
-                    TICKS_PER_FRAME,
-                    null, // we're not handling the time slice start event
-                    UpdateDisplay // run the display update at the end of each time slice
+                clock: ClockMaker.RealTimeClock(
+                    3.5f//,
+                    //new int[] { 3, 3, 4, 4 }
                     )
                 );
 
             //_cpu.BeforeExecuteInstruction += BeforeExecuteInstruction;
-            //_cpu.Clock.OnTick += ClockTick;
+            _cpu.Clock.OnTick += ClockTick;
 
             _beeper = new Beeper(_cpu);
+
+            _screenTimer = new Timer();
+            _screenTimer.Interval = TimeSpan.FromMilliseconds(20);
+            _screenTimer.Elapsed += UpdateDisplay;
 
             // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 
             // devices signal or respond based on a bit-field signature across the 16-bit port address held on the address bus at read/write time.

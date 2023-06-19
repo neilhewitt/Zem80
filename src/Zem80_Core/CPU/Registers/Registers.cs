@@ -102,7 +102,7 @@ namespace Zem80.Core.CPU
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ushort GetRegisterPair(WordRegister registerPair)
         {
-            if (registerPair == WordRegister.None) return 0xFF;
+            if (registerPair == WordRegister.None) return 0xFFFF;
             return Get16BitValue((int)registerPair);
         }
 

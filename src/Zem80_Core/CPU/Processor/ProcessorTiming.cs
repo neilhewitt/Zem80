@@ -27,8 +27,6 @@ namespace Zem80.Core.CPU
         private Processor _cpu;
         private int _waitCyclesPending;
 
-        public int WaitCyclesAdded { get; private set; }
-
         public void AddWaitCycles(int waitCycles)
         {
             _waitCyclesPending += waitCycles;
@@ -54,7 +52,7 @@ namespace Zem80.Core.CPU
 
                 _cpu.IO.EndOpcodeFetchState();
                 _cpu.IO.SetAddressBusValue(_cpu.Registers.IR);
-                _cpu.IO.SetDataBusValue(0x00);
+                _cpu.IO.ResetDataBusValue();
 
                 _cpu.Clock.WaitForNextClockTick();
                 _cpu.Clock.WaitForNextClockTick();
@@ -204,7 +202,6 @@ namespace Zem80.Core.CPU
             if (cyclesToAdd > 0)
             {
                 _cpu.Clock.WaitForClockTicks(cyclesToAdd);
-                WaitCyclesAdded = cyclesToAdd;
             }
         }
 

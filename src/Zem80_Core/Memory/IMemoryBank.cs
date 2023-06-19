@@ -6,7 +6,6 @@ namespace Zem80.Core.Memory
     {
         IMemory Untimed { get; }
         uint SizeInBytes { get; }
-        IMemory WithTimingFor(MachineCycle machineCycle);
         void Clear();
         void Initialise(Processor cpu, IMemoryMap map);
         byte ReadByteAt(ushort address, byte tStates);
