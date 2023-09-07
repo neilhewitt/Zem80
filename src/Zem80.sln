@@ -27,6 +27,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZexNext_Runner", "..\..\Zex
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZexNext_Core", "..\..\ZexNext\src\ZexNext_Core\ZexNext_Core.csproj", "{0D84815A-A259-4E59-A0F9-4024FC922C8D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpectNetRunner", "SpectNetRunner\SpectNetRunner.csproj", "{42BC4371-132B-437B-8D11-0C8B2E462B9C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -107,6 +109,14 @@ Global
 		{0D84815A-A259-4E59-A0F9-4024FC922C8D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0D84815A-A259-4E59-A0F9-4024FC922C8D}.Release|x64.ActiveCfg = Release|Any CPU
 		{0D84815A-A259-4E59-A0F9-4024FC922C8D}.Release|x64.Build.0 = Release|Any CPU
+		{42BC4371-132B-437B-8D11-0C8B2E462B9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42BC4371-132B-437B-8D11-0C8B2E462B9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42BC4371-132B-437B-8D11-0C8B2E462B9C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{42BC4371-132B-437B-8D11-0C8B2E462B9C}.Debug|x64.Build.0 = Debug|Any CPU
+		{42BC4371-132B-437B-8D11-0C8B2E462B9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42BC4371-132B-437B-8D11-0C8B2E462B9C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42BC4371-132B-437B-8D11-0C8B2E462B9C}.Release|x64.ActiveCfg = Release|Any CPU
+		{42BC4371-132B-437B-8D11-0C8B2E462B9C}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

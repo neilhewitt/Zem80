@@ -8,7 +8,6 @@ namespace Zem80.Core.CPU
     public enum ProcessorState
     {
         Running,
-        Suspended,
         Halted,
         Stopped
     }

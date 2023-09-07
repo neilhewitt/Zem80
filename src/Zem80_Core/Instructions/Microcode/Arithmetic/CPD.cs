@@ -10,7 +10,7 @@ namespace Zem80.Core.CPU
         {
             Flags flags = cpu.Flags.Clone();
 
-            bool carry = flags.Carry;
+            bool carry = flags.Carry; // current value before CPD
             byte a = cpu.Registers.A;
             byte b = cpu.Memory.ReadByteAt(cpu.Registers.HL, 3);
 
@@ -28,8 +28,8 @@ namespace Zem80.Core.CPU
             byte valueXY = (byte)(a - b - (flags.HalfCarry ? 1 : 0));
             flags.X = (valueXY & 0x08) > 0; // copy bit 3
             flags.Y = (valueXY & 0x02) > 0; // copy bit 1 (note: non-standard behaviour)
-            
-            cpu.Registers.WZ++;
+
+            cpu.Registers.WZ--;
             cpu.Timing.InternalOperationCycle(5);
 
             return new ExecutionResult(package, flags);

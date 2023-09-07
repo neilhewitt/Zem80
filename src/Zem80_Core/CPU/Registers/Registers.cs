@@ -82,7 +82,7 @@ namespace Zem80.Core.CPU
         public void Clear()
         {
             _registers = new byte[26];
-            WZ = 0x00;
+            WZ = 0x0000;
         }
 
         private void Swap(int offset)

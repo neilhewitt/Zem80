@@ -51,9 +51,9 @@ namespace Zem80.Core.CPU
 
         // runs as fast as possible, but only for as many ticks as there would be in the defined slice of time
         // after which the CPU suspends until the end of the time slice in real time, then begins the next slice
-        public static IClock TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice, int? ticksPerTimeSlice = null, EventHandler<long> onTimeSliceStarted = null, EventHandler<long> onTimeSliceEnded = null)
+        public static IClock TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice, int? timeSliceTicks, EventHandler<long> onTimeSliceStarted = null, EventHandler<long> onTimeSliceEnded = null)
         {
-            TimeSlicedClock clock = new TimeSlicedClock(frequencyInMHz, timeSlice, ticksPerTimeSlice);
+            TimeSlicedClock clock = new TimeSlicedClock(frequencyInMHz, timeSlice, timeSliceTicks);
             if (onTimeSliceStarted != null) clock.OnTimeSliceStarted += onTimeSliceStarted;
             if (onTimeSliceEnded != null) clock.OnTimeSliceEnded += onTimeSliceEnded;
             return clock;

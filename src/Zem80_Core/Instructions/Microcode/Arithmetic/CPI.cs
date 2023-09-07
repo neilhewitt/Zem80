@@ -29,8 +29,8 @@ namespace Zem80.Core.CPU
             flags.X = (valueXY & 0x08) > 0; // copy bit 3
             flags.Y = (valueXY & 0x02) > 0; // copy bit 1 (note: non-standard behaviour)
 
-            cpu.Timing.InternalOperationCycle(5);
             cpu.Registers.WZ++;
+            cpu.Timing.InternalOperationCycle(5);
 
             return new ExecutionResult(package, flags);
         }

@@ -40,7 +40,17 @@ namespace Zem80.Core.CPU
 
         public IReadOnlyFlags Flags => new Flags(Registers.F, true);
 
-        public ProcessorState State => _running ? _halted ? ProcessorState.Halted : ProcessorState.Running : ProcessorState.Stopped;
+        public ProcessorState State
+        {
+            get
+            {
+                if (_halted) return ProcessorState.Halted;
+                if (_running) return ProcessorState.Running;
+                return ProcessorState.Stopped;
+            }
+        }
+
+        public bool Suspended => _suspended;
 
         public DateTime LastStarted { get; private set; }
         public DateTime LastStopped { get; private set; }
@@ -202,13 +212,9 @@ namespace Zem80.Core.CPU
 
             // set the internal WZ register to an initial value based on whether this is an indexed instruction or not; the instruction that runs may alter/set WZ itself
             // the value in WZ (sometimes known as MEMPTR in Z80 enthusiast circles) is only ever used to control the behavior of the BIT instruction
-            if (!_looping && package.Instruction.IsIndexed)
+            if (package.Instruction.IsIndexed)
             {
                 Registers.WZ = (ushort)(Registers[package.Instruction.IndexedRegister] + package.Data.Argument1);
-            }
-            else
-            {
-                Registers.WZ = 0x0000;
             }
 
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);

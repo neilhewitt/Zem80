@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using Timer = MultimediaTimer.Timer;
 
@@ -27,17 +28,17 @@ namespace Zem80.Core.CPU
         {
             base.Stop();
             _timer.Stop();
-            SignalTimeSliceEnded();
         }
 
         public override void WaitForNextClockTick()
         {
             _ticksThisTimeSlice++;
-            if (_ticksThisTimeSlice >= _ticksPerTimeSlice)
+            if (_ticksThisTimeSlice > _ticksPerTimeSlice)
             {
                 _ticksThisTimeSlice = 0;
                 _cpu.Suspend();
                 SignalTimeSliceEnded();
+                while (_cpu.Suspended) Thread.Sleep(1);
             }
             
             base.WaitForNextClockTick();
@@ -72,8 +73,7 @@ namespace Zem80.Core.CPU
             Stop();
         }
 
-        protected internal TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice, int? ticksPerTimeSlice)
-            : base(frequencyInMHz)
+        protected internal TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice, int? ticksPerTimeSlice) : base(frequencyInMHz)
         {
             int z80TicksPerSecond = (int)(frequencyInMHz * 1000000);
             float timeSliceInSeconds = (float)timeSlice.Ticks / 10000000f;

@@ -7,9 +7,8 @@ using Zem80.Core;
 using Zem80.Core.CPU;
 using Zem80.Core.Memory;
 using ZXSpectrum.VM.Sound;
-using MultimediaTimer;
-using Timer = MultimediaTimer.Timer;
 using System.Linq;
+using System.Timers;
 
 namespace ZXSpectrum.VM
 {
@@ -29,8 +28,6 @@ namespace ZXSpectrum.VM
         private int _ticksThisFrame;
         private Dictionary<int, int> _displayWaits;
 
-        private Timer _screenTimer;
-
         public event EventHandler<byte[]> OnUpdateDisplay;
 
         public Processor CPU => _cpu;
@@ -47,7 +44,6 @@ namespace ZXSpectrum.VM
 
         public void Stop()
         {
-            _screenTimer.Stop();
             _beeper.Dispose();
             _cpu.Stop();
         }
@@ -226,24 +222,21 @@ namespace ZXSpectrum.VM
 
             _cpu.Start();
             _beeper.Start();
-            _screenTimer.Start();
         }
 
         private void ClockTick(object sender, long e)
         {
             _ticksThisFrame++;
-            if (_ticksThisFrame >= TICKS_PER_FRAME)
+            if (_ticksThisFrame > TICKS_PER_FRAME)
             {
                 _ticksThisFrame = 0;
                 _cpu.Interrupts.RaiseMaskable();
-                //Task.Run(() => UpdateDisplay(this, 0));
+                Task.Run(() => UpdateDisplay(this, 0)).ConfigureAwait(false);
             }
         }
 
-        private void UpdateDisplay(object sender, EventArgs e)
+        private void UpdateDisplay(object sender, long ticks)
         {
-            //_ticksThisFrame = 0;
-
             // we're faking the screen update process here - in reality there are lots
             // of timing issues around 'contended' memory access by the ULA, and tstate counting etc
             // but for our purposes here we don't need any of that - remember, this is just a demo VM!
@@ -262,10 +255,6 @@ namespace ZXSpectrum.VM
             OnUpdateDisplay?.Invoke(this, screenBitmap);
 
             if (_displayUpdatesSinceLastFlash > FLASH_FRAME_RATE) _displayUpdatesSinceLastFlash = 0;
-
-            // this state remains until the CPU resumes at the end of the actual time slice period, at which point
-            // the interrupt is handled just as on the real Spectrum to accept keyboard input etc
-            //_cpu.Interrupts.RaiseMaskable();
 
             // this gives us 50 screen updates per second, faking a PAL TV display; however, since the screen painting
             // is not at all synchronised with Windows screen refresh, we will see tearing; the only way to fix this
@@ -314,13 +303,13 @@ namespace ZXSpectrum.VM
 
         private void BeforeExecuteInstruction(object sender, InstructionPackage e)
         {
-            int ticksIn = _ticksThisFrame;       
+            int ticksIn = _ticksThisFrame;
             int extraTicks = 0;
-            foreach(MachineCycle machineCycle in e.Instruction.MachineCycles.Cycles)
+            foreach (MachineCycle machineCycle in e.Instruction.MachineCycles.Cycles)
             {
                 if (machineCycle.HasMemoryAccess && _displayWaits.TryGetValue(ticksIn, out int ticksToAdd))
                 {
-                    extraTicks+= ticksToAdd;
+                    extraTicks += ticksToAdd;
                 }
                 ticksIn += machineCycle.TStates;
             }
@@ -373,7 +362,7 @@ namespace ZXSpectrum.VM
             //    clock: ClockMaker.TimeSlicedClock(
             //        3.5f, // 3.5MHz 
             //        TimeSpan.FromMilliseconds(20),
-            //        TICKS_PER_FRAME,
+            //        null,
             //        null, // we're not handling the time slice start event
             //        UpdateDisplay // run the display update at the end of each time slice
             //        )
@@ -382,19 +371,15 @@ namespace ZXSpectrum.VM
             _cpu = new Processor(
                 map: map,
                 clock: ClockMaker.RealTimeClock(
-                    3.5f//,
-                    //new int[] { 3, 3, 4, 4 }
+                    3.5f,
+                    new int[] { 3, 3, 3, 2 }
                     )
                 );
 
-            //_cpu.BeforeExecuteInstruction += BeforeExecuteInstruction;
+            _cpu.BeforeExecuteInstruction += BeforeExecuteInstruction;
             _cpu.Clock.OnTick += ClockTick;
 
             _beeper = new Beeper(_cpu);
-
-            _screenTimer = new Timer();
-            _screenTimer.Interval = TimeSpan.FromMilliseconds(20);
-            _screenTimer.Elapsed += UpdateDisplay;
 
             // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 
             // devices signal or respond based on a bit-field signature across the 16-bit port address held on the address bus at read/write time.

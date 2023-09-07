@@ -1,6 +1,5 @@
 ﻿using Zem80.Core;
 using Zem80.Core.CPU;
-using Zem80.Core.CPU;
 
 //test how near the actual execution speed of the emulated CPU is to the theoretical speed
 
@@ -14,7 +13,9 @@ int[] cpuWaitPattern = new int[] {
 #endif
             };
 
-Processor cpu = new Processor(clock: ClockMaker.RealTimeClock(4, cpuWaitPattern));
+Processor cpu = new Processor(clock: 
+    //ClockMaker.TimeSlicedClock(4, TimeSpan.FromMilliseconds(10))); 
+    ClockMaker.RealTimeClock(4, cpuWaitPattern));
 Instruction lde = InstructionSet.Instructions[0x1E];
 int ticks = ((lde.MachineCycles.TStates * 10000) + 4); // +4 is for the final HALT instruction
 
