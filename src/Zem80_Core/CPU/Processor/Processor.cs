@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 
 namespace Zem80.Core.CPU
 {
-    public partial class Processor : IDisposable
+    public class Processor : IDisposable
     {
         public const int MAX_MEMORY_SIZE_IN_BYTES = 65536;
         public const float DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ = 4;
@@ -33,7 +33,7 @@ namespace Zem80.Core.CPU
         public IPorts Ports { get; init; }
         public IIO IO { get; init; }
         public IInterrupts Interrupts { get; init; }
-        public ProcessorTiming Timing { get; init; }
+        public IProcessorTiming Timing { get; init; }
         public IDebugProcessor Debug { get; init; }
         public IMemoryBank Memory { get; init; }
         public IClock Clock { get; init; }
@@ -194,7 +194,7 @@ namespace Zem80.Core.CPU
                         Registers.PC += (ushort)package.Instruction.SizeInBytes;
                         ExecuteInstruction(package);
 
-                        if (!isOpcodeErrorNOP) Interrupts.Handle(package, ExecuteInstruction);
+                        if (!isOpcodeErrorNOP) Interrupts.HandleAll(package, ExecuteInstruction);
                         RefreshMemory();
                     }
                     while (skipNextByte);
@@ -232,7 +232,7 @@ namespace Zem80.Core.CPU
         }
 
         public Processor(IMemoryBank memory = null, IMemoryMap map = null, IStack stack = null, IClock clock = null, IRegisters registers = null, IPorts ports = null,
-            ProcessorTiming cycleTiming = null, IIO io = null, IInterrupts interrupts = null, IDebugProcessor debug = null, ushort topOfStackAddress = 0xFFFF)
+            IProcessorTiming cycleTiming = null, IIO io = null, IInterrupts interrupts = null, IDebugProcessor debug = null, ushort topOfStackAddress = 0xFFFF)
         {
             // Default clock is the FastClock which, well, isn't really a clock. It'll run as fast as possible on the hardware and in .NET
             // but it'll *say* that it's running at 4MHz. It's a lying liar that lies. You may want a different clock - luckily there are several.

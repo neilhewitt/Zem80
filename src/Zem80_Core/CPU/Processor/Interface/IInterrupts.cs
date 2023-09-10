@@ -11,7 +11,7 @@ namespace Zem80.Core.CPU
 
         void Disable();
         void Enable();
-        void Handle(InstructionPackage package, Action<InstructionPackage> IM0_ExecuteInstruction);
+        void HandleAll(InstructionPackage package, Action<InstructionPackage> IM0_ExecuteInstruction);
         void RaiseMaskable(Func<byte> callback = null);
         void RaiseNonMaskable();
         void RestoreAfterNMI();

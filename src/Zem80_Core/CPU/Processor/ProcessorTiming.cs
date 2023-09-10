@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,14 +6,8 @@ using Zem80.Core;
 
 namespace Zem80.Core.CPU
 {
-    public class PortTiming
-    {
-        public byte PortNumber { get; init; }
-        public bool AddressFromBC { get; init; }
-        public Func<byte> PortReadCallback { get; init; }
-    }
 
-    public class ProcessorTiming
+    public class ProcessorTiming : IProcessorTiming
     {
         public const byte OPCODE_FETCH_NORMAL_TSTATES = 4;
         public const byte MEMORY_READ_NORMAL_TSTATES = 3;
@@ -35,30 +28,30 @@ namespace Zem80.Core.CPU
         public void OpcodeFetchTiming(Instruction instruction, ushort address)
         {
             int opcodeByteIndex = 0;
-            foreach(MachineCycle machineCycle in instruction.MachineCycles.OpcodeFetches)
+            foreach (MachineCycle machineCycle in instruction.MachineCycles.OpcodeFetches)
             {
                 OpcodeFetchCycle(address, instruction.OpcodeBytes[opcodeByteIndex++], machineCycle.TStates);
             }
+        }
 
-            void OpcodeFetchCycle(ushort address, byte opcode, byte tStates)
-            {
-                byte extraTStates = (byte)(tStates - OPCODE_FETCH_NORMAL_TSTATES);
+        public void OpcodeFetchCycle(ushort address, byte opcode, byte tStates)
+        {
+            byte extraTStates = (byte)(tStates - OPCODE_FETCH_NORMAL_TSTATES);
 
-                _cpu.IO.SetOpcodeFetchState(address);
-                _cpu.Clock.WaitForNextClockTick();
-                _cpu.IO.AddOpcodeFetchData(opcode);
-                _cpu.Clock.WaitForNextClockTick();
-                InsertWaitCycles();
+            _cpu.IO.SetOpcodeFetchState(address);
+            _cpu.Clock.WaitForNextClockTick();
+            _cpu.IO.AddOpcodeFetchData(opcode);
+            _cpu.Clock.WaitForNextClockTick();
+            InsertWaitCycles();
 
-                _cpu.IO.EndOpcodeFetchState();
-                _cpu.IO.SetAddressBusValue(_cpu.Registers.IR);
-                _cpu.IO.ResetDataBusValue();
+            _cpu.IO.EndOpcodeFetchState();
+            _cpu.IO.SetAddressBusValue(_cpu.Registers.IR);
+            _cpu.IO.ResetDataBusValue();
 
-                _cpu.Clock.WaitForNextClockTick();
-                _cpu.Clock.WaitForNextClockTick();
+            _cpu.Clock.WaitForNextClockTick();
+            _cpu.Clock.WaitForNextClockTick();
 
-                if (extraTStates > 0) _cpu.Clock.WaitForClockTicks(extraTStates);
-            }
+            if (extraTStates > 0) _cpu.Clock.WaitForClockTicks(extraTStates);
         }
 
         public void OperandReadTiming(Instruction instruction, ushort address, params byte[] operands)

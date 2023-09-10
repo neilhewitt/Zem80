@@ -25,7 +25,7 @@ namespace Zem80.Core.InputOutput
             }
         }
 
-        public Ports(ProcessorTiming timing)
+        public Ports(IProcessorTiming timing)
         {
             _ports = new Dictionary<byte, IPort>();
             for (int i = 0; i <= 255; i++)

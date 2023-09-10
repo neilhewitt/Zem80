@@ -49,7 +49,7 @@ namespace Zem80.Core.CPU
             IFF2 = false;
         }
 
-        public void Handle(InstructionPackage package, Action<InstructionPackage> IM0_ExecuteInstruction)
+        public void HandleAll(InstructionPackage package, Action<InstructionPackage> IM0_ExecuteInstruction)
         {
             if (!HandleNMI())
             {
