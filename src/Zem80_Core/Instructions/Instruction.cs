@@ -20,6 +20,8 @@ namespace Zem80.Core.CPU
         public InstructionMachineCycles MachineCycles { get; private set; }
         public bool IsIndexed { get; private set; }
         public bool IsConditional { get; private set; }
+        public bool AccessesMemory { get; private set; }
+        public bool PerformsIO { get; private set; }
         public bool HasIntermediateDisplacementByte { get; private set; }
         public bool IsLoopingInstruction { get; private set; }
         public IMicrocode Microcode { get; private set; }
@@ -82,6 +84,8 @@ namespace Zem80.Core.CPU
 
             // deal with timing + any exceptions
             MachineCycles = new InstructionMachineCycles(machineCycles);
+            AccessesMemory = MachineCycles.Cycles.Any(x => x.HasMemoryAccess);
+            PerformsIO = MachineCycles.Cycles.Any(x => x.HasIO);
         }
     }
 }

@@ -9,6 +9,9 @@ namespace Zem80.Core.CPU
         bool IFF2 { get; }
         InterruptMode Mode { get; }
 
+        event EventHandler<long> OnMaskableInterrupt;
+        event EventHandler<long> OnNonMaskableInterrupt;
+
         void Disable();
         void Enable();
         void HandleAll(InstructionPackage package, Action<InstructionPackage> IM0_ExecuteInstruction);

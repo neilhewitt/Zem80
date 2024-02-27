@@ -6,7 +6,7 @@ namespace Zem80.Core.CPU
     public static class ClockMaker
     {
         // just runs as fast as possible, so not real time, but all events happen in the right order
-        public static IClock FastClock(float frequencyInMHz) => new FastClock(frequencyInMHz); 
+        public static IClock DefaultClock(float frequencyInMHz) => new DefaultClock(frequencyInMHz); 
        
         // attempts to run all events at the same time intervals they would run on the actual hardware
         public static IClock RealTimeClock(float frequencyInMHz, int[] cycleWaitPattern = null)
@@ -41,7 +41,7 @@ namespace Zem80.Core.CPU
                         {
                             cycleWaitPattern[i] = windowsTicksPerZ80Tick;
                         }
-                        cycleWaitPattern[windowsTicksPerZ80Tick] = windowsTicksPerZ80Tick - 1;
+                        cycleWaitPattern[windowsTicksPerZ80Tick] = windowsTicksPerZ80Tick - 2;
                     }
                 }
             }
@@ -51,11 +51,11 @@ namespace Zem80.Core.CPU
 
         // runs as fast as possible, but only for as many ticks as there would be in the defined slice of time
         // after which the CPU suspends until the end of the time slice in real time, then begins the next slice
-        public static IClock TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice, int? timeSliceTicks, EventHandler<long> onTimeSliceStarted = null, EventHandler<long> onTimeSliceEnded = null)
+        public static IClock TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice, Action beforeSuspend = null , Action beforeResume = null)
         {
-            TimeSlicedClock clock = new TimeSlicedClock(frequencyInMHz, timeSlice, timeSliceTicks);
-            if (onTimeSliceStarted != null) clock.OnTimeSliceStarted += onTimeSliceStarted;
-            if (onTimeSliceEnded != null) clock.OnTimeSliceEnded += onTimeSliceEnded;
+            TimeSlicedClock clock = new TimeSlicedClock(frequencyInMHz, timeSlice);
+            if (beforeSuspend != null) clock.OnBeforeSuspend += (s, e) => beforeSuspend?.Invoke();
+            if (beforeResume != null) clock.OnBeforeResume += (s, e) => beforeResume?.Invoke();
             return clock;
         }
     }

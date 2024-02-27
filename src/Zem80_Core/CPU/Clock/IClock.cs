@@ -6,8 +6,6 @@ namespace Zem80.Core.CPU
     {
         float FrequencyInMHz { get; }
         long Ticks { get; }
-        bool IsTimeSliced { get { return this is ITimeSliced; } }
-        ITimeSliced TimeSliced => IsTimeSliced ? (ITimeSliced)this : null;
 
         event EventHandler<long> OnTick;
 
@@ -18,11 +16,5 @@ namespace Zem80.Core.CPU
         void WaitForNextClockTick();
         void WaitForClockTicks(int ticks);
 
-    }
-
-    public interface ITimeSliced
-    {
-        event EventHandler<long> OnTimeSliceStarted;
-        event EventHandler<long> OnTimeSliceEnded;
     }
 }

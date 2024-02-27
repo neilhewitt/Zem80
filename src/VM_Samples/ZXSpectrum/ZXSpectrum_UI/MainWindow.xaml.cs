@@ -23,7 +23,7 @@ namespace ZXSpectrum.UI
         {
             InitializeComponent();
             _vm = new Spectrum48K();
-            _vm.OnUpdateDisplay += UpdateDisplay;
+            _vm.ULA.OnUpdateDisplay += UpdateDisplay;
 
             KeyDown += MainWindow_KeyDown;
             KeyUp += MainWindow_KeyUp;

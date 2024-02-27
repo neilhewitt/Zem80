@@ -17,6 +17,9 @@ namespace Zem80.Core.CPU
         public bool IFF1 { get; private set; }
         public bool IFF2 { get; private set; }
 
+        public event EventHandler<long> OnMaskableInterrupt;
+        public event EventHandler<long> OnNonMaskableInterrupt;
+
         public void SetMode(InterruptMode mode)
         {
             Mode = mode;
@@ -82,6 +85,7 @@ namespace Zem80.Core.CPU
                 handledNMI = true;
             }
 
+            OnNonMaskableInterrupt?.Invoke(this, _cpu.Clock.Ticks);
             _cpu.IO.EndNMIState();
 
             return handledNMI;
@@ -166,6 +170,7 @@ namespace Zem80.Core.CPU
                 _cpu.Clock.WaitForClockTicks(2);
 
                 _interruptCallback = null;
+                OnMaskableInterrupt?.Invoke(this, _cpu.Clock.Ticks);
                 _cpu.Timing.EndInterruptRequestAcknowledgeCycle();
             }
         }

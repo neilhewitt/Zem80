@@ -8,7 +8,7 @@ using Zem80.Core.InputOutput;
 
 namespace Zem80.Core.CPU
 {
-    public class FastClock : IClock
+    public class DefaultClock : IClock
     {
         protected Processor _cpu;
 
@@ -45,7 +45,7 @@ namespace Zem80.Core.CPU
             }
         }
 
-        protected internal FastClock(float frequencyInMHz)
+        protected internal DefaultClock(float frequencyInMHz)
         {
             FrequencyInMHz = frequencyInMHz;
         }

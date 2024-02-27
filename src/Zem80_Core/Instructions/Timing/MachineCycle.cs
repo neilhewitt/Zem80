@@ -11,6 +11,7 @@ namespace Zem80.Core.CPU
         public byte TStates { get; private set; }
         public bool RunsOnlyIfConditionTrue { get; private set; }
         public bool HasMemoryAccess { get; private set; }
+        public bool HasIO { get; private set; }
 
         public MachineCycle(MachineCycleType type, byte tStates, bool runsOnlyIfConditionTrue)
         {
@@ -18,6 +19,7 @@ namespace Zem80.Core.CPU
             TStates = tStates;
             RunsOnlyIfConditionTrue = runsOnlyIfConditionTrue;
             HasMemoryAccess = type < MachineCycleType.InternalOperation;
+            HasIO = type == MachineCycleType.PortRead || type == MachineCycleType.PortWrite;
         }
     }
 

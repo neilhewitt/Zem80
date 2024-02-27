@@ -1,4 +1,6 @@
-﻿namespace Zem80.Core.CPU
+﻿using System;
+
+namespace Zem80.Core.CPU
 {
     public interface IProcessorTiming
     {

@@ -54,7 +54,7 @@ namespace Zem80.Core.CPU
 
         public DateTime LastStarted { get; private set; }
         public DateTime LastStopped { get; private set; }
-        public long LastRunTimeInMilliseconds => (LastStopped - LastStarted).Milliseconds;
+        public TimeSpan LastRunTime { get; private set; }
 
         public InstructionPackage ExecutingInstructionPackage { get; private set; }
 
@@ -99,6 +99,7 @@ namespace Zem80.Core.CPU
 
             Clock.Stop();
             LastStopped = DateTime.Now;
+            LastRunTime = (LastStopped - LastStarted);
 
             OnStop?.Invoke(null, null);
         }
@@ -163,42 +164,36 @@ namespace Zem80.Core.CPU
 
             while (_running)
             {
-                if (_suspended)
-                {
-                    Thread.Sleep(1);
-                }
-                else
-                {
-                    bool skipNextByte = false;
+                while (_suspended) Thread.Yield();
 
-                    do
+                bool skipNextByte = false;
+                do
+                {
+                    ushort address = Registers.PC;
+                    byte[] instructionBytes;
+
+                    if (_halted || skipNextByte)
                     {
-                        ushort address = Registers.PC;
-                        byte[] instructionBytes;
-
-                        if (_halted || skipNextByte)
-                        {
-                            instructionBytes = new byte[4]; // when halted, we run NOP until resumed
-                        }
-                        else
-                        {
-                            instructionBytes = Memory.Untimed.ReadBytesAt(address, 4); // read 4 bytes, but instruction length could be 1-4
-                        }
-
-                        InstructionPackage package = _instructionDecoder.DecodeInstruction(instructionBytes, address, out skipNextByte, out bool isOpcodeErrorNOP);
-                        Timing.OpcodeFetchTiming(package.Instruction, address);
-                        Timing.OperandReadTiming(package.Instruction, address, package.Data.Argument1, package.Data.Argument2);
-
-                        // all the rest of the timing happens during the execution of the instruction microcode, and the microcode is responsible for it
-
-                        Registers.PC += (ushort)package.Instruction.SizeInBytes;
-                        ExecuteInstruction(package);
-
-                        if (!isOpcodeErrorNOP) Interrupts.HandleAll(package, ExecuteInstruction);
-                        RefreshMemory();
+                        instructionBytes = new byte[4]; // when halted, we run NOP until resumed
                     }
-                    while (skipNextByte);
+                    else
+                    {
+                        instructionBytes = Memory.Untimed.ReadBytesAt(address, 4); // read 4 bytes, but instruction length could be 1-4
+                    }
+
+                    InstructionPackage package = _instructionDecoder.DecodeInstruction(instructionBytes, address, out skipNextByte, out bool isOpcodeErrorNOP);
+                    Timing.OpcodeFetchTiming(package.Instruction, address);
+                    Timing.OperandReadTiming(package.Instruction, address, package.Data.Argument1, package.Data.Argument2);
+
+                    // all the rest of the timing happens during the execution of the instruction microcode, and the microcode is responsible for it
+
+                    Registers.PC += (ushort)package.Instruction.SizeInBytes;
+                    ExecuteInstruction(package);
+
+                    if (!isOpcodeErrorNOP) Interrupts.HandleAll(package, ExecuteInstruction);
+                    RefreshMemory();
                 }
+                while (skipNextByte);
             }
         }
 
@@ -237,7 +232,7 @@ namespace Zem80.Core.CPU
             // Default clock is the FastClock which, well, isn't really a clock. It'll run as fast as possible on the hardware and in .NET
             // but it'll *say* that it's running at 4MHz. It's a lying liar that lies. You may want a different clock - luckily there are several.
             // Clocks and timing are a thing, too much to go into here, so check the docs (one day, there will be docs!).
-            Clock = clock ?? ClockMaker.FastClock(DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ);
+            Clock = clock ?? ClockMaker.DefaultClock(DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ);
             Clock.Initialise(this);
 
             Timing = cycleTiming ?? new ProcessorTiming(this);

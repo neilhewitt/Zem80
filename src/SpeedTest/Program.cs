@@ -14,17 +14,17 @@ int[] cpuWaitPattern = new int[] {
             };
 
 Processor cpu = new Processor(clock:
-    ClockMaker.TimeSlicedClock(4, TimeSpan.FromMilliseconds(5))); 
+    ClockMaker.TimeSlicedClock(3.5f, TimeSpan.FromMilliseconds(5))); 
     //ClockMaker.RealTimeClock(4));//, cpuWaitPattern));
 Instruction lde = InstructionSet.Instructions[0x1E];
 int ticks = ((lde.MachineCycles.TStates * 10000) + 4); // +4 is for the final HALT instruction
 
-byte[] program = new byte[20001]; // 20000 x LD E,A
-for (int i = 0; i < 20000; i++)
+byte[] program = new byte[10001]; // 40000 x LD E,A
+for (int i = 0; i < 10000; i++)
 {
     program[i] = lde.LastOpcodeByte;
 }
-program[20000] = 0x76; // HALT
+program[10000] = 0x76; // HALT
 
 cpu.Memory.Untimed.WriteBytesAt(0, program);
 
@@ -48,7 +48,7 @@ while (!quit)
         long ticksOut = cpu.Clock.Ticks;
         Console.WriteLine($"Was {ticksOut - ticksIn} ticks, should be { ticks} ticks.");
         // should be 40ms
-        Console.WriteLine($"Elapsed was {cpu.LastRunTimeInMilliseconds}ms, should be 20ms");
+        Console.WriteLine($"Elapsed was {cpu.LastRunTime.ToString()}, should be 10ms");
     }
 }
 

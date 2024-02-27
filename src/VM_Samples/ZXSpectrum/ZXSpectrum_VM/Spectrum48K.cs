@@ -9,29 +9,20 @@ using Zem80.Core.Memory;
 using ZXSpectrum.VM.Sound;
 using System.Linq;
 using Timer = MultimediaTimer.Timer;
+using System.Reflection.Metadata.Ecma335;
 
 namespace ZXSpectrum.VM
 {
     public class Spectrum48K
     {
-        public const int FLASH_FRAME_RATE = 16; // PAL only
-        public const int TICKS_PER_FRAME = 69888;
-        public const int CONTENTION_START = 14335;
-        public const int CONTENTION_END = 14463;
-
         private Processor _cpu;
-        private Beeper _beeper;
-        private int _displayUpdatesSinceLastFlash;
-        private bool _flashOn;
-        private ScreenMap _screen;
-        private Timer _screenRefreshTimer;
+        private ULA _ula;
         
         private int _ticksThisFrame;
         private Dictionary<int, int> _displayWaits;
 
-        public event EventHandler<byte[]> OnUpdateDisplay;
-
         public Processor CPU => _cpu;
+        public ULA ULA => _ula;
 
         public void Start()
         {
@@ -45,8 +36,7 @@ namespace ZXSpectrum.VM
 
         public void Stop()
         {
-            _screenRefreshTimer.Stop();
-            _beeper.Dispose();
+            _ula.Stop();
             _cpu.Stop();
         }
 
@@ -100,7 +90,7 @@ namespace ZXSpectrum.VM
             r.SP = getWord(23);
 
             _cpu.Interrupts.SetMode((InterruptMode)snapshot[25]);
-            _screen.SetBorderColour(DisplayColour.FromThreeBit(snapshot[26]));
+            _ula.SetBorderColour(snapshot[26]);
 
             _cpu.Memory.Untimed.WriteBytesAt(16384, snapshot[27..]);
             ushort pc = _cpu.Stack.Debug.PopStackDirect(); // pops the top value from the stack and moves the stack pointer, but doesn't run any internal cycles
@@ -130,7 +120,7 @@ namespace ZXSpectrum.VM
             byte twelve = snapshot[12];
             if (twelve == 255) twelve = 1;
             byte borderColour = twelve.GetByteFromBits(1, 3);
-            _screen.SetBorderColour(DisplayColour.FromThreeBit(borderColour));
+            _ula.SetBorderColour(borderColour);
 
             bool compressed = twelve.GetBit(5);
 
@@ -223,37 +213,7 @@ namespace ZXSpectrum.VM
             };
 
             _cpu.Start();
-            _beeper.Start();
-            _screenRefreshTimer.Start();
-        }
-
-        private void UpdateDisplay(object sender, object e)
-        {
-            // we're faking the screen update process here - in reality there are lots
-            // of timing issues around 'contended' memory access by the ULA, and tstate counting etc
-            // but for our purposes here we don't need any of that - remember, this is just a demo VM!
-
-            byte[] pixelBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x4000, 6144);
-            byte[] attributeBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x5800, 768);
-            _screen.Fill(pixelBuffer, attributeBuffer);
-
-            // every FLASH_FRAME_RATE frames, we invert any attribute block that has FLASH set
-            if (_displayUpdatesSinceLastFlash++ >= FLASH_FRAME_RATE)
-            {
-                _flashOn = !_flashOn;
-            }
-
-            byte[] screenBitmap = _screen.ToRGBA(_flashOn);
-            OnUpdateDisplay?.Invoke(this, screenBitmap);
-
-            if (_displayUpdatesSinceLastFlash > FLASH_FRAME_RATE) _displayUpdatesSinceLastFlash = 0;
-
-            // this gives us 50 screen updates per second, faking a PAL TV display; however, since the screen painting
-            // is not at all synchronised with Windows screen refresh, we will see tearing; the only way to fix this
-            // would be to enable some form of vsync with Windows, probably via DirectX, which is very much
-            // out of scope for this sample.
-
-            _cpu.Interrupts.RaiseMaskable();
+            _ula.Start();
         }
 
         private byte ReadPort()
@@ -280,10 +240,10 @@ namespace ZXSpectrum.VM
 
                 if (portAddress.LowByte() == 0xFE) // PORT OxFE
                 {
-                    _screen.SetBorderColour(output);
+                    _ula.SetBorderColour(output);
                 }
 
-                _beeper.Update(output);
+                _ula.SetBeeper(output);
             }
         }
 
@@ -294,57 +254,14 @@ namespace ZXSpectrum.VM
         private void SignalPortWrite()
         {
         }
-
-        private void BeforeExecuteInstruction(object sender, InstructionPackage e)
+        private void BeforeResume()
         {
-            int ticksIn = _ticksThisFrame;
-            int extraTicks = 0;
-            foreach (MachineCycle machineCycle in e.Instruction.MachineCycles.Cycles)
-            {
-                if (machineCycle.HasMemoryAccess && _displayWaits.TryGetValue(ticksIn, out int ticksToAdd))
-                {
-                    extraTicks += ticksToAdd;
-                }
-                ticksIn += machineCycle.TStates;
-            }
-
-            if (extraTicks > 0) _cpu.Timing.AddWaitCycles(extraTicks);
-        }
-
-        private void GenerateDisplayWaits()
-        {
-            _displayWaits = new Dictionary<int, int>();
-
-            // Since two devices cannot read RAM at the same time, when the ULA would be reading the screen RAM directly
-            // during the display update, the CPU needs to be turned off so no memory reads can occur. This is called 'memory contention'.
-            // To do this, the ULA holds the CPU's WAIT pin low to cause the CPU to suspend for a certain number of cycles while it reads
-            // the screen RAM. This function generates the correct number of wait cycles at the right points in the screen update cycle, which 
-            // will be used when we update the display.
-
-            MapWaits(14335, 14463);
-            MapWaits(14559, 16095);
-
-            void MapWaits(int start, int end)
-            {
-                for (int i = start; i <= end; i += 8)
-                {
-                    int tstate = i;
-                    for (int j = 6; j >= 0; j--)
-                    {
-                        _displayWaits[tstate++] = j;
-                    }
-                    _displayWaits[tstate] = 0;
-                }
-            }
+            _ula.UpdateDisplay();
         }
 
         public Spectrum48K()
         {
-            GenerateDisplayWaits();
-
             string romPath = "rom\\48k.rom";
-
-            _screen = new ScreenMap();
 
             // set up the memory map - 16K ROM + 48K RAM = 64K
             IMemoryMap map = new MemoryMap(65536, false);
@@ -357,17 +274,11 @@ namespace ZXSpectrum.VM
                     3.5f, // 3.5MHz 
                     TimeSpan.FromMilliseconds(20),
                     null,
-                    null, // we're not handling the time slice start event
-                    null
+                    BeforeResume
                     )
                 );
 
-            _cpu.BeforeExecuteInstruction += BeforeExecuteInstruction;
-
-            _beeper = new Beeper(_cpu);
-            _screenRefreshTimer = new Timer();
-            _screenRefreshTimer.Interval = TimeSpan.FromMilliseconds(20);
-            _screenRefreshTimer.Elapsed += UpdateDisplay;
+            _ula = new ULA(_cpu);
 
             // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 
             // devices signal or respond based on a bit-field signature across the 16-bit port address held on the address bus at read/write time.

@@ -867,23 +867,6 @@ namespace Zem80.Core.CPU
                 // and a second dictionary keyed on the instruction mnemonic for easy lookup
                 // (this is expensive but only runs once at startup)
 
-                //List<string> lines = new List<string>();
-                //string heading = "Opcode|Mnemonic|M1|M2|M3|M4|M5|M6";
-                //lines.Add(heading);
-                //foreach(Instruction instruction in instructions)
-                //{
-                //    string row = $"{instruction.FullOpcodeAsString}|{instruction.Mnemonic}|{getType(instruction.Timing.M1)}|{getType(instruction.Timing.M2)}|{getType(instruction.Timing.M3)}|{getType(instruction.Timing.M4)}|{getType(instruction.Timing.M5)}|{getType(instruction.Timing.M6)}";
-                //    lines.Add(row);
-                //}
-                //File.WriteAllLines("c:\\temp\\instructions.txt", lines);
-
-                //string getType(MachineCycle machineCycle)
-                //{
-                //    if (machineCycle is not null) return machineCycle.Type.ToString();
-                //    return "";
-                //}
-
-
                 foreach (Instruction instruction in instructions)
                 {
                     Instructions.Add(int.Parse(instruction.OpcodeString, NumberStyles.HexNumber), instruction);
