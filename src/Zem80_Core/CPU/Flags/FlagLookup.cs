@@ -141,7 +141,7 @@ namespace Zem80.Core.CPU
         {
             int c = (carry ? 1 : 0);
             int signed = (isSubtraction ? ((short)first - (short)second - c) : ((short)first + (short)second + c));
-            return (signed >= 0x8000 || signed < -0x8000);
+            return (signed >= 0x8000 || signed < -0x8001);
         }
     }
 }

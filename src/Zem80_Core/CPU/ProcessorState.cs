@@ -9,6 +9,7 @@ namespace Zem80.Core.CPU
     {
         Running,
         Halted,
-        Stopped
+        Stopped,
+        Suspended
     }
 }

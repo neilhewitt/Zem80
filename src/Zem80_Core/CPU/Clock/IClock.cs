@@ -12,6 +12,8 @@ namespace Zem80.Core.CPU
         void Initialise(Processor cpu);
         void Start();
         void Stop();
+        int SetEvent(long ticks, Action onElapsed, bool repeats);
+        void UnsetEvent(int timerIndex);
 
         void WaitForNextClockTick();
         void WaitForClockTicks(int ticks);

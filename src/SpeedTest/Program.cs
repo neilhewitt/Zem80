@@ -48,7 +48,7 @@ while (!quit)
         long ticksOut = cpu.Clock.Ticks;
         Console.WriteLine($"Was {ticksOut - ticksIn} ticks, should be { ticks} ticks.");
         // should be 40ms
-        Console.WriteLine($"Elapsed was {cpu.LastRunTime.ToString()}, should be 10ms");
+        Console.WriteLine($"Elapsed was {cpu.LastRunTime.Milliseconds}ms, should be 10ms");
     }
 }
 

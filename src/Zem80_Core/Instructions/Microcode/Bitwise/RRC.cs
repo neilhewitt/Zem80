@@ -39,9 +39,9 @@ namespace Zem80.Core.CPU
                 setFlags(original, shifted);
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(4);
                 cpu.Memory.WriteByteAt(address, shifted, 3);
-                if (instruction.CopyResultTo != ByteRegister.None)
+                if (instruction.CopiesResultToRegister)
                 {
-                    r[instruction.CopyResultTo.Value] = shifted;
+                    r[instruction.CopyResultTo] = shifted;
                 }
             }
 

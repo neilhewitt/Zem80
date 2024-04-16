@@ -66,10 +66,7 @@ namespace Zem80.Core.CPU
 
             if (_cpu.IO.NMI)
             {
-                if (_cpu.State.HasFlag(ProcessorState.Halted))
-                {
-                    _cpu.Resume();
-                }
+                _cpu.Resume(); // in case we're halted
 
                 IFF2 = Enabled; // save IFF1 state ready for RETN
                 Enabled = false; // disable maskable interrupts until RETN
@@ -100,10 +97,7 @@ namespace Zem80.Core.CPU
                     throw new InterruptException("Interrupt mode is IM0 which requires a callback for reading data from the interrupting device. Callback was null.");
                 }
 
-                if (_cpu.State.HasFlag(ProcessorState.Halted))
-                {
-                    _cpu.Resume();
-                }
+                _cpu.Resume(); // in case we're halted
 
                 switch (Mode)
                 {

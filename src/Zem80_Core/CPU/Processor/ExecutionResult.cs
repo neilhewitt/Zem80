@@ -10,7 +10,6 @@ namespace Zem80.Core.CPU
         public InstructionData Data { get; }
         public Flags Flags { get; }
         public ushort InstructionAddress { get; }
-        public int WaitCyclesAdded { get; internal set; }
 
         public ExecutionResult(InstructionPackage package, Flags flags)
         {

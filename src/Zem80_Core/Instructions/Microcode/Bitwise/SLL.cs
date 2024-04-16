@@ -44,9 +44,9 @@ namespace Zem80.Core.CPU
                 shifted = (byte)((original << 1) + 1);
                 setFlags(original);
                 cpu.Memory.WriteByteAt(address, shifted, 3);
-                if (instruction.CopyResultTo != ByteRegister.None)
+                if (instruction.CopiesResultToRegister)
                 {
-                    r[instruction.CopyResultTo.Value] = shifted;
+                    r[instruction.CopyResultTo] = shifted;
                 }
             }
 

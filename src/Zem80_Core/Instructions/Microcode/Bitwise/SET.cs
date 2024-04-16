@@ -34,9 +34,9 @@ namespace Zem80.Core.CPU
                 byte value = cpu.Memory.ReadByteAt(address, 4);
                 value = value.SetBit(bitIndex, true);
                 cpu.Memory.WriteByteAt(address, value, 3);
-                if (instruction.CopyResultTo != ByteRegister.None)
+                if (instruction.CopiesResultToRegister)
                 {
-                    r[instruction.CopyResultTo.Value] = value;
+                    r[instruction.CopyResultTo] = value;
                 }
             }
 

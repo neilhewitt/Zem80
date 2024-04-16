@@ -11,8 +11,8 @@ namespace Zem80.Core.CPU
 {
     public static class InstructionSet
     {
-        public static IDictionary<int, Instruction> Instructions = new Dictionary<int, Instruction>();
-        public static IDictionary<string, Instruction> InstructionsByMnemonic = new Dictionary<string, Instruction>();
+        public static IDictionary<int, Instruction> Instructions { get; private set; } = new Dictionary<int, Instruction>();
+        public static IDictionary<string, Instruction> InstructionsByMnemonic { get; private set; } = new Dictionary<string, Instruction>();
 
         public static Instruction NOP => Instructions[0];
 
@@ -861,7 +861,7 @@ namespace Zem80.Core.CPU
                 // *********************** END INSTRUCTION TABLE ************************
 
                 // add the undocumented overloads for documented instructions
-                BuildUndocumentedRegisterCopyOverloads(instructions);
+                instructions = AddUndocumentedRegisterCopyOverloads(instructions);
 
                 // we add each instruction (plus the undocumented overloads) to a dictionary (keyed on the full 1-4 byte opcode as an integer for lookup performance reasons)
                 // and a second dictionary keyed on the instruction mnemonic for easy lookup
@@ -875,7 +875,7 @@ namespace Zem80.Core.CPU
             }
         }
 
-        private static void BuildUndocumentedRegisterCopyOverloads(List<Instruction> instructions)
+        private static List<Instruction> AddUndocumentedRegisterCopyOverloads(List<Instruction> instructions)
         {
             List<Instruction> undocumentedInstructions = new List<Instruction>();
 
@@ -888,12 +888,11 @@ namespace Zem80.Core.CPU
 
                 if (instruction.Prefix == 0xDDCB || instruction.Prefix == 0xFDCB)
                 {
-                    for (int i = 0; i <= 7; i++)
+                    for (byte i = 0; i <= 7; i++)
                     {
                         if (i != 6)
                         {
-                            byte opcode = instruction.LastOpcodeByte;
-                            opcode = opcode.SetBits(0, false, false, false);
+                            byte opcode = instruction.LastOpcodeByte.SetBits(0, false, false, false);
                             opcode += (byte)i;
 
                             string opcodeAsString = instruction.OpcodeString.Substring(0, 4);
@@ -914,7 +913,7 @@ namespace Zem80.Core.CPU
                             Instruction undocumentedInstruction = new Instruction(
                                 opcodeAsString,
                                 // unofficial mnemonic form is eg RES 0,(IX+o),C - resets bit 0 of memory location (IX+o) and copies that byte to C
-                                instruction.Mnemonic + "," + destination.ToString(), 
+                                instruction.Mnemonic + "," + destination.ToString(),
                                 Condition.None,
                                 instruction.Target,
                                 instruction.Source,
@@ -931,6 +930,7 @@ namespace Zem80.Core.CPU
             }
 
             instructions.AddRange(undocumentedInstructions);
+            return instructions;
         }
 
         static InstructionSet()

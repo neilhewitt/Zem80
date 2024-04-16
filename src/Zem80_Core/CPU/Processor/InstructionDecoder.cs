@@ -62,7 +62,6 @@ namespace Zem80.Core.CPU
 
                         // otherwise, if the prefix was 0xDD or 0xFD and the instruction is invalid, the spec says we should run a NOP now but then run the equivalent
                         // unprefixed instruction next - this will happen automatically when PC advances past the synthetic NOP
-
                         instruction = InstructionSet.NOP;
                     }
                     else
@@ -98,7 +97,7 @@ namespace Zem80.Core.CPU
                 }
             }
 
-            if (instruction == InstructionSet.NOP && b0 != 0x00)
+            if (b0 != 0x00 && instruction == InstructionSet.NOP)
             {
                 opcodeErrorNOP = true; // this is a 'pseudo-NOP' caused by an invalid opcode, after which interrupts (including NMI) must not run
             }

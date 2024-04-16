@@ -254,10 +254,6 @@ namespace ZXSpectrum.VM
         private void SignalPortWrite()
         {
         }
-        private void BeforeResume()
-        {
-            _ula.UpdateDisplay();
-        }
 
         public Spectrum48K()
         {
@@ -272,13 +268,12 @@ namespace ZXSpectrum.VM
                 map: map,
                 clock: ClockMaker.TimeSlicedClock(
                     3.5f, // 3.5MHz 
-                    TimeSpan.FromMilliseconds(20),
-                    null,
-                    BeforeResume
+                    TimeSpan.FromMilliseconds(20)
                     )
+                //clock: ClockMaker.RealTimeClock(3.5f)
                 );
 
-            _ula = new ULA(_cpu);
+            _ula = new ULA(_cpu); // models the ULA chip which controls the screen and sound
 
             // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 
             // devices signal or respond based on a bit-field signature across the 16-bit port address held on the address bus at read/write time.
