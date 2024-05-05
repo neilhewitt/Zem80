@@ -38,33 +38,6 @@ namespace Zem80.Core.Memory
             return output;
         }
 
-        byte[] IMemoryBank.ReadBytesAt(ushort address, ushort numberOfBytes, byte? tStatesPerByte)
-        {
-            if (!_initialised) throw new MemoryNotInitialisedException();
-
-            uint availableBytes = numberOfBytes;
-            if (address + availableBytes >= SizeInBytes) availableBytes = SizeInBytes - address; // if this read overflows the end of memory, we can read only this many bytes
-
-            IMemorySegment segment = _map.SegmentFor(address);
-            if (segment == null) return new byte[numberOfBytes]; // if memory is not allocated return all 0x00s
-
-            byte[] bytes = new byte[numberOfBytes];
-            for (int i = 0; i < availableBytes; i++)
-            {
-                bytes[i] = Me.ReadByteAt((ushort)(address + i), tStatesPerByte);
-            }
-            return bytes; // bytes beyond the available byte limit (if any) will be 0x00
-        }
-
-        ushort IMemoryBank.ReadWordAt(ushort address, byte? tStatesPerByte)
-        {
-            if (!_initialised) throw new MemoryNotInitialisedException();
-
-            byte low = Me.ReadByteAt(address, tStatesPerByte);
-            byte high = Me.ReadByteAt(++address, tStatesPerByte);
-            return (ushort)((high * 256) + low);
-        }
-
         void IMemoryBank.WriteByteAt(ushort address, byte value, byte? tStates)
         {
             if (!_initialised) throw new MemoryNotInitialisedException();
@@ -78,30 +51,41 @@ namespace Zem80.Core.Memory
             if (tStates > 0) _cpu.Timing.MemoryWriteCycle(address, value, tStates.Value);
         }
 
-        void IMemoryBank.WriteBytesAt(ushort address, byte[] bytes, byte? tStatesPerByte)
+        ushort IMemoryBank.ReadWordAt(ushort address, byte? tStatesPerByte)
         {
-            if (!_initialised) throw new MemoryNotInitialisedException();
-
-            IMemorySegment segment = _map.SegmentFor(address);
-            if (segment != null && !segment.ReadOnly)
-            {
-                for (ushort i = 0; i < bytes.Length; i++)
-                {
-                    Me.WriteByteAt((ushort)(address + i), bytes[i], tStatesPerByte);
-                }
-            }
+            byte low = Me.ReadByteAt(address, tStatesPerByte);
+            byte high = Me.ReadByteAt(++address, tStatesPerByte);
+            return (ushort)((high * 256) + low);
         }
 
         void IMemoryBank.WriteWordAt(ushort address, ushort value, byte? tStatesPerByte)
         {
-            if (!_initialised) throw new MemoryNotInitialisedException();
-
             Me.WriteByteAt(address, (byte)(value % 256), tStatesPerByte);
             Me.WriteByteAt(++address, (byte)(value / 256), tStatesPerByte);
         }
 
+        byte[] IMemoryBank.ReadBytesAt(ushort address, ushort numberOfBytes, byte? tStatesPerByte)
+        {
+            uint availableBytes = numberOfBytes;
+            if (address + availableBytes >= SizeInBytes) availableBytes = SizeInBytes - address; // if this read overflows the end of memory, we can read only this many bytes
 
-        public ushort AddressOffset(ushort address, IMemorySegment segment)
+            byte[] bytes = new byte[numberOfBytes];
+            for (int i = 0; i < availableBytes; i++)
+            {
+                bytes[i] = Me.ReadByteAt((ushort)(address + i), tStatesPerByte);
+            }
+            return bytes; // bytes beyond the available byte limit (if any) will be 0x00
+        }
+
+        void IMemoryBank.WriteBytesAt(ushort address, byte[] bytes, byte? tStatesPerByte)
+        {
+            for (ushort i = 0; i < bytes.Length; i++)
+            {
+                Me.WriteByteAt((ushort)(address + i), bytes[i], tStatesPerByte);
+            }
+        }
+
+        private ushort AddressOffset(ushort address, IMemorySegment segment)
         {
             return (ushort)(address - segment.StartAddress);
         }
