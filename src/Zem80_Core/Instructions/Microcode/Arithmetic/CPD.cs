@@ -8,14 +8,12 @@ namespace Zem80.Core.CPU
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
-            Flags flags = cpu.Flags.Clone();
-
-            bool carry = flags.Carry; // current value before CPD
+            bool carry = cpu.Flags.Carry; // current value before CPD
             byte a = cpu.Registers.A;
             byte b = cpu.Memory.ReadByteAt(cpu.Registers.HL, 3);
 
             var compare = ALUOperations.Subtract(a, b, false);
-            flags = compare.Flags;
+            Flags flags = compare.Flags;
 
             cpu.Registers.BC--;
             flags.ParityOverflow = (cpu.Registers.BC != 0);
