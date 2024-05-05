@@ -7,6 +7,5 @@
         void ExecuteDirect(byte[] opcode);
         void ExecuteDirect(string mnemonic, byte? arg1, byte? arg2);
         void RemoveBreakpoint(ushort address);
-        void SetDataBusDefaultValue(byte defaultValue);
     }
 }

@@ -225,7 +225,7 @@
             DATA_BUS = _defaultDataBusValue;
         }
 
-        public void SetDataBusDefault(byte defaultValue)
+        public void SetDataBusDefaultValue(byte defaultValue)
         {
             _defaultDataBusValue = defaultValue;
         }

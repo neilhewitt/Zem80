@@ -177,8 +177,6 @@ namespace Zem80.Core.CPU
                         RefreshMemory();
                     }
                     while (skipNextByte); // usually false, so this runs only once; but if true, the cycle will run again immediately with a NOP
-
-                    Thread.Sleep(0);
                 }
                 else
                 {

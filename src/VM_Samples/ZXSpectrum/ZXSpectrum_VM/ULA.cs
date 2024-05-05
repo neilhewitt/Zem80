@@ -20,10 +20,7 @@ namespace ZXSpectrum.VM
         private Processor _cpu;
         private ScreenMap _screen;
         private Beeper _beeper;
-        private bool _running;
 
-        private Dictionary<int, int> _displayWaits;
-        private int _ticksThisFrame;
         private int _displayUpdatesSinceLastFlash;
         private bool _flashOn;
 
@@ -31,14 +28,12 @@ namespace ZXSpectrum.VM
 
         public void Start()
         {
-            //_beeper.Start();
-            _running = true;
+            _beeper.Start();
         }
 
         public void Stop()
         {
-            //_beeper.Dispose();
-            _running = false;
+            _beeper.Dispose();
         }
 
         public void SetBorderColour(byte colour)
@@ -48,7 +43,7 @@ namespace ZXSpectrum.VM
 
         public void SetBeeper(byte output)
         {
-            //_beeper.Update(output);
+            _beeper.Update(output);
         }
 
         public void UpdateDisplay()
@@ -86,7 +81,7 @@ namespace ZXSpectrum.VM
             _cpu.Clock.SetEvent(TICKS_PER_FRAME, () => UpdateDisplay(), true);
 
             _screen = new ScreenMap();
-            //_beeper = new Beeper(cpu);
+            _beeper = new Beeper(cpu);
         }
     }
 }

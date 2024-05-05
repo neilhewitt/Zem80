@@ -18,11 +18,6 @@ namespace Zem80.Core.CPU
 
         event EventHandler<InstructionPackage> OnBreakpoint { add { _onBreakpoint += value; } remove { _onBreakpoint -= value; } }
 
-        public void SetDataBusDefaultValue(byte defaultValue)
-        {
-            _cpu.IO.SetDataBusDefault(defaultValue);
-        }
-
         public void AddBreakpoint(ushort address)
         {
             if (_breakpoints == null) _breakpoints = new List<ushort>();

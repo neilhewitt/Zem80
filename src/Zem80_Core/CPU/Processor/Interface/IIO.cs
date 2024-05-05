@@ -51,7 +51,7 @@
         void EndPortWriteState();
         void EndWaitState();
         void SetAddressBusValue(ushort value);
-        void SetDataBusDefault(byte defaultValue);
+        void SetDataBusDefaultValue(byte defaultValue);
         void SetDataBusValue(byte value);
         void ResetDataBusValue();
         void SetInterruptState();

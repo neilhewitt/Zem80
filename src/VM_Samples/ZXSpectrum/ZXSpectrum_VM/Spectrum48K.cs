@@ -18,12 +18,6 @@ namespace ZXSpectrum.VM
         private Processor _cpu;
         private ULA _ula;
         
-        private int _ticksThisFrame;
-        private Dictionary<int, int> _displayWaits;
-
-        public Processor CPU => _cpu;
-        public ULA ULA => _ula;
-
         public void Start()
         {
             StartInternal();
@@ -206,7 +200,7 @@ namespace ZXSpectrum.VM
             // Kudos due to SoftSpectrum48 which uses this technique to get real-time Spectrum performance without
             // having to spin the PC CPU all the time. This reduces our CPU use considerably.
 
-            _cpu.Debug.SetDataBusDefaultValue(0xFF); // Spectrum has pull-up resistors on data bus lines, so will always read 0xFF, not 0x00, if not otherwise set by the ULA
+            _cpu.IO.SetDataBusDefaultValue(0xFF); // Spectrum has pull-up resistors on data bus lines, so will always read 0xFF, not 0x00, if not otherwise set by the ULA
             _cpu.AfterInitialise += (sender, e) =>
             {
                 if (snapshotPath != null) LoadSnapshot(snapshotPath); // snapshot loading must happen after CPU is initialised, but before it starts
@@ -255,7 +249,7 @@ namespace ZXSpectrum.VM
         {
         }
 
-        public Spectrum48K()
+        public Spectrum48K(EventHandler<byte[]> OnUpdateDisplay)
         {
             string romPath = "rom\\48k.rom";
 
@@ -270,10 +264,10 @@ namespace ZXSpectrum.VM
                     3.5f, // 3.5MHz 
                     TimeSpan.FromMilliseconds(20)
                     )
-                //clock: ClockMaker.RealTimeClock(3.5f)
                 );
 
             _ula = new ULA(_cpu); // models the ULA chip which controls the screen and sound
+            _ula.OnUpdateDisplay += OnUpdateDisplay;
 
             // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 
             // devices signal or respond based on a bit-field signature across the 16-bit port address held on the address bus at read/write time.
