@@ -19,7 +19,7 @@ namespace Zem80.Core.Memory
          * implementation if you wish. 
          */
 
-        public const int PAGE_SIZE_IN_BYTES = 1024;
+        private const int PAGE_SIZE_IN_BYTES = 1024;
         private const uint MAX_MEMORY_MAP_SIZE = 65536;
 
         private IMemorySegment[] _pageMap;
