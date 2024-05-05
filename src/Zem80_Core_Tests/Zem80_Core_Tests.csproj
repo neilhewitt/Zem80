@@ -17,8 +17,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\ZexNext\src\ZexNext_Core\ZexNext_Core.csproj" />
     <ProjectReference Include="..\Zem80_Core\Zem80_Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ZexNext.Core">
+      <HintPath>lib\ZexNext.Core.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>

@@ -23,10 +23,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrum__VM", "VM_Sample
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrum_UI", "VM_Samples\ZXSpectrum\ZXSpectrum_UI\ZXSpectrum_UI.csproj", "{ED2F29C3-B6B8-4C49-8BB4-6AF6C83F4887}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZexNext_Runner", "..\..\ZexNext\src\ZexNext_Runner\ZexNext_Runner.csproj", "{FB98F01E-4C0E-457D-A22A-5AB872AF7010}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZexNext_Core", "..\..\ZexNext\src\ZexNext_Core\ZexNext_Core.csproj", "{0D84815A-A259-4E59-A0F9-4024FC922C8D}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -91,22 +87,6 @@ Global
 		{ED2F29C3-B6B8-4C49-8BB4-6AF6C83F4887}.Release|Any CPU.Build.0 = Release|Any CPU
 		{ED2F29C3-B6B8-4C49-8BB4-6AF6C83F4887}.Release|x64.ActiveCfg = Release|Any CPU
 		{ED2F29C3-B6B8-4C49-8BB4-6AF6C83F4887}.Release|x64.Build.0 = Release|Any CPU
-		{FB98F01E-4C0E-457D-A22A-5AB872AF7010}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FB98F01E-4C0E-457D-A22A-5AB872AF7010}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FB98F01E-4C0E-457D-A22A-5AB872AF7010}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{FB98F01E-4C0E-457D-A22A-5AB872AF7010}.Debug|x64.Build.0 = Debug|Any CPU
-		{FB98F01E-4C0E-457D-A22A-5AB872AF7010}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FB98F01E-4C0E-457D-A22A-5AB872AF7010}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FB98F01E-4C0E-457D-A22A-5AB872AF7010}.Release|x64.ActiveCfg = Release|Any CPU
-		{FB98F01E-4C0E-457D-A22A-5AB872AF7010}.Release|x64.Build.0 = Release|Any CPU
-		{0D84815A-A259-4E59-A0F9-4024FC922C8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0D84815A-A259-4E59-A0F9-4024FC922C8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0D84815A-A259-4E59-A0F9-4024FC922C8D}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{0D84815A-A259-4E59-A0F9-4024FC922C8D}.Debug|x64.Build.0 = Debug|Any CPU
-		{0D84815A-A259-4E59-A0F9-4024FC922C8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0D84815A-A259-4E59-A0F9-4024FC922C8D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0D84815A-A259-4E59-A0F9-4024FC922C8D}.Release|x64.ActiveCfg = Release|Any CPU
-		{0D84815A-A259-4E59-A0F9-4024FC922C8D}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
