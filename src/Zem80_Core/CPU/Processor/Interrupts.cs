@@ -10,6 +10,7 @@ namespace Zem80.Core.CPU
     public class Interrupts : IInterrupts
     {
         private Processor _cpu;
+        private Action<InstructionPackage> _executeInstruction;
         private Func<byte> _interruptCallback;
 
         public InterruptMode Mode { get; private set; }
@@ -52,11 +53,11 @@ namespace Zem80.Core.CPU
             IFF2 = false;
         }
 
-        public void HandleAll(InstructionPackage package, Action<InstructionPackage> IM0_ExecuteInstruction)
+        public void HandleAll()
         {
             if (!HandleNMI())
             {
-                HandleMaskableInterrupts(package, IM0_ExecuteInstruction);
+                HandleMaskableInterrupts();
             }
         }
 
@@ -88,7 +89,7 @@ namespace Zem80.Core.CPU
             return handledNMI;
         }
 
-        private void HandleMaskableInterrupts(InstructionPackage executingPackage, Action<InstructionPackage> IM0_ExecuteInstruction)
+        private void HandleMaskableInterrupts()
         {
             if (_cpu.IO.INT && Enabled)
             {
@@ -117,10 +118,10 @@ namespace Zem80.Core.CPU
                         // TODO: verify the behaviour of the real Z80 and fix the code if necessary
 
                         _cpu.Timing.BeginInterruptRequestAcknowledgeCycle(ProcessorTiming.IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
-                        InstructionPackage IM0Package = DecodeIM0Interrupt();
+                        InstructionPackage package = DecodeIM0Interrupt();
                         ushort pc = _cpu.Registers.PC;
                         _cpu.Stack.Push(WordRegister.PC);
-                        IM0_ExecuteInstruction(IM0Package);
+                        _executeInstruction(package);
                         _cpu.Registers.PC = pc;
                         _cpu.Registers.WZ = _cpu.Registers.PC;
                         break;
@@ -190,9 +191,10 @@ namespace Zem80.Core.CPU
             return package;
         }
 
-        public Interrupts(Processor cpu)
+        public Interrupts(Processor cpu, Action<InstructionPackage> executeInstruction)
         {
             _cpu = cpu;
+            _executeInstruction = executeInstruction;
         }
     }
 }

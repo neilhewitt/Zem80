@@ -171,7 +171,7 @@ namespace Zem80.Core.CPU
 
                         if (!opcodeErrorNOP)
                         {
-                            Interrupts.HandleAll(package, ExecuteInstruction);
+                            Interrupts.HandleAll();
                         }
                         
                         RefreshMemory();
@@ -220,7 +220,7 @@ namespace Zem80.Core.CPU
             Registers = registers ?? new Registers();
             Ports = ports ?? new Ports(Timing);
             IO = io ?? new IO(this);
-            Interrupts = interrupts ?? new Interrupts(this);
+            Interrupts = interrupts ?? new Interrupts(this, ExecuteInstruction);
             Debug = debug ?? new DebugProcessor(this, ExecuteInstruction);
 
             // You can supply your own memory implementations, for example if you need to do RAM paging for >64K implementations.
