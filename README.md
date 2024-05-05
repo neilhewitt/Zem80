@@ -1,6 +1,10 @@
 # Zem80
 
-A simple emulation of the Z80 CPU written in C# and running on .NET 7. 
+A simple emulation of the Z80 CPU written in C# and running on .NET 7.
+
+## Version 2.0 coming in 2024
+
+I've been working on a significant re-design of the emulator core for about a year now, and I'm close to releasing a 2.0 of Zem80. The remaining goal is to make it compile under NativeAOT to have predictable execution timing.
 
 ## Project goals
 
