@@ -20,12 +20,12 @@ namespace Zem80.Core.CPU
             ushort value = _cpu.Registers[register];
             _cpu.Registers.SP--;
             _cpu.Timing.BeginStackWriteCycle(value.HighByte());
-            _cpu.Memory.Untimed.WriteByteAt(_cpu.Registers.SP, value.HighByte());
+            _cpu.Memory.WriteByteAt(_cpu.Registers.SP, value.HighByte());
             _cpu.Timing.EndStackWriteCycle();
 
             _cpu.Registers.SP--;
             _cpu.Timing.BeginStackWriteCycle(value.LowByte());
-            _cpu.Memory.Untimed.WriteByteAt(_cpu.Registers.SP, value.LowByte());
+            _cpu.Memory.WriteByteAt(_cpu.Registers.SP, value.LowByte());
             _cpu.Timing.EndStackWriteCycle();
         }
 
@@ -34,12 +34,12 @@ namespace Zem80.Core.CPU
             byte high, low;
 
             _cpu.Timing.BeginStackReadCycle();
-            low = _cpu.Memory.Untimed.ReadByteAt(_cpu.Registers.SP);
+            low = _cpu.Memory.ReadByteAt(_cpu.Registers.SP);
             _cpu.Timing.EndStackReadCycle(low);
             _cpu.Registers.SP++;
 
             _cpu.Timing.BeginStackReadCycle();
-            high = _cpu.Memory.Untimed.ReadByteAt(_cpu.Registers.SP);
+            high = _cpu.Memory.ReadByteAt(_cpu.Registers.SP);
             _cpu.Timing.EndStackReadCycle(high);
             _cpu.Registers.SP++;
 
@@ -50,20 +50,20 @@ namespace Zem80.Core.CPU
         void IDebugStack.PushStackDirect(ushort value)
         {
             _cpu.Registers.SP--;
-            _cpu.Memory.Untimed.WriteByteAt(_cpu.Registers.SP, value.HighByte());
+            _cpu.Memory.WriteByteAt(_cpu.Registers.SP, value.HighByte());
 
             _cpu.Registers.SP--;
-            _cpu.Memory.Untimed.WriteByteAt(_cpu.Registers.SP, value.LowByte());
+            _cpu.Memory.WriteByteAt(_cpu.Registers.SP, value.LowByte());
         }
 
         ushort IDebugStack.PopStackDirect()
         {
             byte high, low;
 
-            low = _cpu.Memory.Untimed.ReadByteAt(_cpu.Registers.SP);
+            low = _cpu.Memory.ReadByteAt(_cpu.Registers.SP);
             _cpu.Registers.SP++;
 
-            high = _cpu.Memory.Untimed.ReadByteAt(_cpu.Registers.SP);
+            high = _cpu.Memory.ReadByteAt(_cpu.Registers.SP);
             _cpu.Registers.SP++;
 
             return (low, high).ToWord();
@@ -76,7 +76,7 @@ namespace Zem80.Core.CPU
 
         ushort IDebugStack.PeekStack(int wordsFromTop)
         {
-            return _cpu.Memory.Untimed.ReadWordAt((ushort)(_cpu.Registers.SP - wordsFromTop * 2));
+            return _cpu.Memory.ReadWordAt((ushort)(_cpu.Registers.SP - wordsFromTop * 2));
         }
 
         public Stack(ushort topOfStackAddress, Processor cpu)

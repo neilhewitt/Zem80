@@ -155,7 +155,7 @@ namespace Zem80.Core.CPU
                     {
                         // if halted, or skipping because of an instruction set error, we just provide 4 zero-bytes; otherwise, the 4 bytes at the Program Counter
                         ushort address = Registers.PC;
-                        byte[] instructionBytes = (_halted || skipNextByte) ? new byte[4] : Memory.Untimed.ReadBytesAt(address, 4);
+                        byte[] instructionBytes = (_halted || skipNextByte) ? new byte[4] : Memory.ReadBytesAt(address, 4);
 
                         // decode the bytes
                         InstructionPackage package = _instructionDecoder.DecodeInstruction(instructionBytes, address, out skipNextByte, out bool opcodeErrorNOP);

@@ -86,7 +86,7 @@ namespace ZXSpectrum.VM
             _cpu.Interrupts.SetMode((InterruptMode)snapshot[25]);
             _ula.SetBorderColour(snapshot[26]);
 
-            _cpu.Memory.Untimed.WriteBytesAt(16384, snapshot[27..]);
+            _cpu.Memory.WriteBytesAt(16384, snapshot[27..]);
             ushort pc = _cpu.Stack.Debug.PopStackDirect(); // pops the top value from the stack and moves the stack pointer, but doesn't run any internal cycles
             _cpu.Registers.PC = pc;
 
@@ -178,7 +178,7 @@ namespace ZXSpectrum.VM
                 memoryImage = snapshot[30..^4];
             }
 
-            _cpu.Memory.Untimed.WriteBytesAt(16384, memoryImage);
+            _cpu.Memory.WriteBytesAt(16384, memoryImage);
 
             ushort getWord(int index)
             {

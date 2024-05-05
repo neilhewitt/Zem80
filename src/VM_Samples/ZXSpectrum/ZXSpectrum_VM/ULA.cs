@@ -52,8 +52,8 @@ namespace ZXSpectrum.VM
             // of timing issues around 'contended' memory access by the ULA, and tstate counting etc
             // but for our purposes here we don't need any of that - remember, this is just a demo VM!
 
-            byte[] pixelBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x4000, 6144);
-            byte[] attributeBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x5800, 768);
+            byte[] pixelBuffer = _cpu.Memory.ReadBytesAt(0x4000, 6144);
+            byte[] attributeBuffer = _cpu.Memory.ReadBytesAt(0x5800, 768);
             _screen.Fill(pixelBuffer, attributeBuffer);
 
             // every FLASH_FRAME_RATE frames, we invert any attribute block that has FLASH set

@@ -22,7 +22,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
 
             Assert.That(
                 Registers.B == 0x01 &&
-                CPU.Memory.Untimed.ReadByteAt(0x5000) == input &&
+                CPU.Memory.ReadByteAt(0x5000) == input &&
                 Registers.HL == 0x4FFF && 
                 // IN r,(C) sets the flags, unlike the other IN / OUT instructions
                 Flags.Zero == false &&
@@ -46,7 +46,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
 
             Assert.That(
                 Registers.B == 0x01 &&
-                CPU.Memory.Untimed.ReadByteAt(0x5000) == input &&
+                CPU.Memory.ReadByteAt(0x5000) == input &&
                 Registers.HL == 0x5001 &&
                 // IN r,(C) sets the flags, unlike the other IN / OUT instructions
                 Flags.Zero == false &&
@@ -71,7 +71,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
 
             Assert.That(
                 Registers.B == 0x01 &&
-                CPU.Memory.Untimed.ReadByteAt(0x5000) == input &&
+                CPU.Memory.ReadByteAt(0x5000) == input &&
                 Registers.HL == 0x4FFF &&
                 Registers.PC == pc && 
                 Flags.Zero == true &&
@@ -96,7 +96,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
 
             Assert.That(
                 Registers.B == 0x01 &&
-                CPU.Memory.Untimed.ReadByteAt(0x5000) == input &&
+                CPU.Memory.ReadByteAt(0x5000) == input &&
                 Registers.HL == 0x5001 &&
                 Registers.PC == pc &&
                 Flags.Zero == true &&
@@ -147,13 +147,13 @@ namespace Zem80.Core.Tests.MicrocodeTests
             Registers.C = 0x00;
             Registers.B = 0x02;
             Registers.HL = 0x5000;
-            CPU.Memory.Untimed.WriteByteAt(Registers.HL, 0x55);
+            CPU.Memory.WriteByteAt(Registers.HL, 0x55);
 
             ExecuteInstruction("OUTD");
 
             Assert.That(
                 Registers.B == 0x01 &&
-                CPU.Memory.Untimed.ReadByteAt(0x5000) == output &&
+                CPU.Memory.ReadByteAt(0x5000) == output &&
                 Registers.HL == 0x4FFF &&
                 Flags.Zero == false &&
                 Flags.Subtract == true &&
@@ -171,13 +171,13 @@ namespace Zem80.Core.Tests.MicrocodeTests
             Registers.C = 0x00;
             Registers.B = 0x02;
             Registers.HL = 0x5000;
-            CPU.Memory.Untimed.WriteByteAt(Registers.HL, 0x55);
+            CPU.Memory.WriteByteAt(Registers.HL, 0x55);
 
             ExecuteInstruction("OUTI");
 
             Assert.That(
                 Registers.B == 0x01 &&
-                CPU.Memory.Untimed.ReadByteAt(0x5000) == output &&
+                CPU.Memory.ReadByteAt(0x5000) == output &&
                 Registers.HL == 0x5001 &&
                 Flags.Zero == false &&
                 Flags.Subtract == true &&
@@ -196,13 +196,13 @@ namespace Zem80.Core.Tests.MicrocodeTests
             Registers.C = 0x00;
             Registers.B = 0x02;
             Registers.HL = 0x5000;
-            CPU.Memory.Untimed.WriteByteAt(Registers.HL, 0x55);
+            CPU.Memory.WriteByteAt(Registers.HL, 0x55);
 
             ExecuteInstruction("OTDR");
 
             Assert.That(
                 Registers.B == 0x01 &&
-                CPU.Memory.Untimed.ReadByteAt(0x5000) == output &&
+                CPU.Memory.ReadByteAt(0x5000) == output &&
                 Registers.HL == 0x4FFF &&
                 Registers.PC == pc && 
                 Flags.Zero == true &&
@@ -222,13 +222,13 @@ namespace Zem80.Core.Tests.MicrocodeTests
             Registers.C = 0x00;
             Registers.B = 0x02;
             Registers.HL = 0x5000;
-            CPU.Memory.Untimed.WriteByteAt(Registers.HL, 0x55);
+            CPU.Memory.WriteByteAt(Registers.HL, 0x55);
 
             ExecuteInstruction("OTIR");
 
             Assert.That(
                 Registers.B == 0x01 &&
-                CPU.Memory.Untimed.ReadByteAt(0x5000) == output &&
+                CPU.Memory.ReadByteAt(0x5000) == output &&
                 Registers.HL == 0x5001 &&
                 Registers.PC == pc &&
                 Flags.Zero == true &&

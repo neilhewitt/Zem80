@@ -51,7 +51,7 @@ namespace Zem80.Core.CPU
         public void ExecuteDirect(byte[] opcode)
         {
             Array.Resize(ref opcode, 4); // must be 4 bytes to decode
-            _cpu.Memory.Untimed.WriteBytesAt(_cpu.Registers.PC, opcode);
+            _cpu.Memory.WriteBytesAt(_cpu.Registers.PC, opcode);
             InstructionPackage package = _instructionDecoder.DecodeInstruction(opcode, _cpu.Registers.PC, out bool _, out bool _);
             _cpu.Registers.PC += package.Instruction.SizeInBytes;
 

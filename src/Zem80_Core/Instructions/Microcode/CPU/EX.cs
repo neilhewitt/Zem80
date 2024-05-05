@@ -24,7 +24,7 @@ namespace Zem80.Core.CPU
                 { 
                     // EX (SP),HL/IX/IY
                     ushort value = instruction.MarshalSourceWord(data, cpu, 0); // 0 tStates == untimed
-                    ushort valueAtSP = cpu.Memory.Untimed.ReadWordAt(r.SP);
+                    ushort valueAtSP = cpu.Memory.ReadWordAt(r.SP);
                     r[instruction.Source.AsWordRegister()] = valueAtSP;
                     cpu.Memory.WriteWordAt(r.SP, value, 0);
 

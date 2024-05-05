@@ -26,7 +26,7 @@ for (int i = 0; i < 10000; i++)
 }
 program[10000] = 0x76; // HALT
 
-cpu.Memory.Untimed.WriteBytesAt(0, program);
+cpu.Memory.WriteBytesAt(0, program);
 
 bool quit = false;
 while (!quit)

@@ -56,22 +56,22 @@ namespace Zem80.SimpleVM
 
         public void Load(ushort address, string path)
         {
-            _cpu.Memory.Untimed.WriteBytesAt(address, File.ReadAllBytes(path));
+            _cpu.Memory.WriteBytesAt(address, File.ReadAllBytes(path));
         }
 
         public void Load(ushort address, params byte[] code)
         {
-            _cpu.Memory.Untimed.WriteBytesAt(address, code);
+            _cpu.Memory.WriteBytesAt(address, code);
         }
 
         public void Poke(ushort address, byte value)
         {
-            _cpu.Memory.Untimed.WriteByteAt(address, value);
+            _cpu.Memory.WriteByteAt(address, value);
         }
 
         public byte Peek(ushort address)
         {
-            return _cpu.Memory.Untimed.ReadByteAt(address);
+            return _cpu.Memory.ReadByteAt(address);
         }
 
         private void DebugOutput_AfterExecute(object sender, ExecutionResult e)
