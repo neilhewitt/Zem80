@@ -1,10 +1,14 @@
 # Zem80
 
-A simple emulation of the Z80 CPU written in C# and running on .NET 7.
+A simple emulation of the Z80 CPU written in C# and running on .NET 8.0
 
-## Version 2.0 coming in 2024
+## Version 2.0 now available
 
-I've been working on a significant re-design of the emulator core for about a year now, and I'm close to releasing a 2.0 of Zem80. The remaining goal is to make it compile under NativeAOT to have predictable execution timing.
+Zem80 v2.0 includes a completely redesigned emulator core with improved performance. There are some minor breaking API and event changes, but from the point of view of consuming code, little has changed. Most of the work here was to improve the architecture of the system and tidy up the timing mechanisms. 
+
+The emulator is now compiled and built using .NET 8.0, so you will need to have this installed to use it, and your consuming projects must be compiled with .NET 8.0 as well. Since .NET 8.0 is both LTS and about to be superceded by .NET 9.0, I don't feel particularly guilty about this. I am considering a .NET Standard version of the library but this may involve too many compromises. A NativeAOT implementation is still a goal for a potential v3.0.
+
+If you are using the emulator (hi, David!) I strongly suggest you upgrade to v2.0.
 
 ## Project goals
 
@@ -17,19 +21,19 @@ I have now written a complete Z80 emulation including as much of the undocumente
 I have also added a basic ZX Spectrum emulation, but this is a sample and not intended for actual use as an emulator.
 
 ## Performance - some thoughts
-The amount of CPU required to run the Z80 emulation is significant in PseudoRealTime mode. This is because the emulation thread has to spin continuously while waiting for clock ticks in order to generate the right events at exactly the right time. This is likely to only be necessary for emulating hardware that is timing-critical, and even then it's probably possible to do it a different way.
+The amount of CPU required to run the Z80 emulation is significant using the RealTimeClock. This is because the emulation thread has to spin continuously while waiting for clock ticks in order to generate the right events at exactly the right time. This is likely to only be necessary for emulating hardware that is timing-critical, and even then it's probably possible to do it a different way.
 
-To improve this I've added a TimeSliced timing mode where the emulator will run as fast as possible but after a specified number of Z80 ticks (the 'time slice', which you will need to work out against your timing and your Z80 emulated speed) it will fire an event. If you subscribe to this event then you can, for example, choose to suspend the Z80 at this point, wait for a timing event in your own code, and then resume the Z80; this allows for instructions to be 'fast-forwarded' as quickly as possible, while still making sure that code like screen updates can run at the proper time. The ZX Spectrum VM sample now uses this technique and this reduces the PC CPU required to run it to 2% on my machine (Release build).  
+To improve this I've added a TimeSlicedClock as an alternative where the emulator will run as fast as possible but after a specified number of Z80 ticks (the 'time slice', which you will need to work out against your timing and your Z80 emulated speed) it will suspend the CPU and wait for a timer (not on the main thread) to elapse and then resumes the CPU. This will resynchronise execution with real time, while avoiding executing any code on the main thread while the timer runs. This allows for instructions to be 'fast-forwarded' as quickly as possible, while still making sure that code like screen updates can run at the proper time. The ZX Spectrum VM sample now uses this technique and this drastically reduces the PC CPU required to run it on my machine (Release build).  
 
 ## The future for this project
 Where I think this project can be useful is in perhaps explaining how to do CPU emulation in principle. It's a pretty complex subject that requires a lot of learning to approach and do, and learning from the existing code is difficult because it's often quite... opaque. This emulator is actually quite straightforward - not that you would understand it at first glance, or without knowledge of how the Z80 itself works in quite a lot of detail - and hopefully might give people a useful starting point to build their own emulators. If it does, then my work is done!
 
-I built this thing just to prove to myself that I could. I have a fully-functioning emulator built in a platform that's not generally thought of as one you could build something so low-level in, and I'm very glad I did it.
+I built this thing just to prove to myself that I could. I have a fully-functioning emulator built on a platform that's not generally thought of as one you could build something so low-level on. Take that, C++.
 
 ## Project status
-28/11/2022 - 1.2.1 release. I did a bunch of refactoring and I fixed a couple of fairly obscure bugs. I also improved the timing mechanism so that pseudo-real-time mode gets as close as possible to real time, and added a time-slice timing mode (described above). I also replaced the Spectrum audio implementation and this plus the timing work finally fixed the audio.
+16/08/2024 - 2.0 release. Mostly a refactoring and redesign release, 2.0 doesn't add any major new features. Many bugs were fixed and timing improved, but timing is still the emulator's achilles heel. If you don't care about absolutely precise timing, you will be fine. The Spectrum sample was updated to work with this version and slightly refactored itself, but is otherwise untouched and remains a fairly poor implementation intended for demo purposes only.
 
-I moved the whole project to .NET 7, so this is the lowest version you can run the Zem80 library on with this build. I am looking at multi-targeting for the next release since there's no reason in principle why I can't ship a .NET Standard 2.0 version alongside a .NET 7 build. 
+The project moves to .NET 8.0 in this release. 
 
 ### Known issues ###
 
@@ -41,12 +45,6 @@ The other main component is the ZX Spectrum VM, which has several known issues:
 * Game compatibility is very patchy, many games either don't run or don't run properly
 * Audio in is not supported, so you cannot use the LOAD command. The SAVE command will operate but not successfully (data will be corrupt even if recorded)
 * It's frankly just not very good and is certainly not usable as a real emulator for playing games etc. Download FUSE for that!
-
-### Next steps ###
-
-* Add new tests to cover the public API other than those Z80 instructions tested by Zexall
-* Add some documentation / HOWTO etc
-* Consider adding XML comments (but probably not)
 
 ## Acknowledgements ##
 
