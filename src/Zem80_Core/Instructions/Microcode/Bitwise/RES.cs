@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class RES : IMicrocode
     {
@@ -10,7 +10,7 @@ namespace Zem80.Core.Instructions
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
             byte bitIndex = instruction.GetBitIndex();
             sbyte offset = (sbyte)(data.Argument1);
             ByteRegister register = instruction.Source.AsByteRegister();
@@ -31,12 +31,12 @@ namespace Zem80.Core.Instructions
                 };
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
 
-                byte value = cpu.Memory.Timed.ReadByteAt(address);
+                byte value = cpu.Memory.ReadByteAt(address, 4);
                 value = value.SetBit(bitIndex, false);
-                cpu.Memory.Timed.WriteByteAt(address, value);
-                if (instruction.CopyResultTo != ByteRegister.None)
+                cpu.Memory.WriteByteAt(address, value, 3);
+                if (instruction.CopiesResultToRegister)
                 {
-                    r[instruction.CopyResultTo.Value] = value;
+                    r[instruction.CopyResultTo] = value;
                 }
             }
 

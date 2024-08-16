@@ -4,29 +4,20 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Zem80.Core;
-using Zem80.Core.Instructions;
+using Zem80.Core.CPU;
 using Zem80.Core.Memory;
 using ZXSpectrum.VM.Sound;
-using MultimediaTimer;
+using System.Linq;
 using Timer = MultimediaTimer.Timer;
+using System.Reflection.Metadata.Ecma335;
 
 namespace ZXSpectrum.VM
 {
     public class Spectrum48K
     {
-        public const int FLASH_FRAME_RATE = 16; // PAL only
-
         private Processor _cpu;
-        private Beeper _beeper;
-        private Timer _timer;
-        private int _displayUpdatesSinceLastFlash;
-        private bool _flashOn;
-        private ScreenMap _screen;
-
-        public event EventHandler<byte[]> OnUpdateDisplay;
-
-        public Processor CPU => _cpu;
-
+        private ULA _ula;
+        
         public void Start()
         {
             StartInternal();
@@ -39,8 +30,7 @@ namespace ZXSpectrum.VM
 
         public void Stop()
         {
-            _timer.Stop();
-            _beeper.Dispose();
+            _ula.Stop();
             _cpu.Stop();
         }
 
@@ -50,7 +40,7 @@ namespace ZXSpectrum.VM
             {
                 throw new FileNotFoundException($"Snapshot file {path} does not exist.");
             }
-            
+
             switch (Path.GetExtension(path).ToUpper())
             {
                 case ".SNA":
@@ -66,7 +56,7 @@ namespace ZXSpectrum.VM
         private void LoadSNA(string path)
         {
             byte[] snapshot = File.ReadAllBytes(path);
-            Registers r = _cpu.Registers;
+            IRegisters r = _cpu.Registers;
 
             r.I = snapshot[0];
 
@@ -83,20 +73,20 @@ namespace ZXSpectrum.VM
             r.IY = getWord(15);
             r.IX = getWord(17);
 
-            _cpu.DisableInterrupts();
+            _cpu.Interrupts.Disable();
             if (snapshot[19].GetBit(2))
             {
-                _cpu.EnableInterrupts();
+                _cpu.Interrupts.Enable();
             }
 
             r.R = snapshot[20];
             r[WordRegister.AF] = getWord(21);
             r.SP = getWord(23);
 
-            _cpu.SetInterruptMode((InterruptMode)snapshot[25]);
-            _screen.SetBorderColour(DisplayColour.FromThreeBit(snapshot[26]));
+            _cpu.Interrupts.SetMode((InterruptMode)snapshot[25]);
+            _ula.SetBorderColour(snapshot[26]);
 
-            _cpu.Memory.Untimed.WriteBytesAt(16384, snapshot[27..]);
+            _cpu.Memory.WriteBytesAt(16384, snapshot[27..]);
             ushort pc = _cpu.Stack.Debug.PopStackDirect(); // pops the top value from the stack and moves the stack pointer, but doesn't run any internal cycles
             _cpu.Registers.PC = pc;
 
@@ -111,7 +101,7 @@ namespace ZXSpectrum.VM
             // BUG: sometimes overfills memory - look at decompression routine
 
             byte[] snapshot = File.ReadAllBytes(path);
-            Registers r = _cpu.Registers;
+            IRegisters r = _cpu.Registers;
 
             r.AF = getWord(0);
             r.BC = getWord(2);
@@ -124,7 +114,7 @@ namespace ZXSpectrum.VM
             byte twelve = snapshot[12];
             if (twelve == 255) twelve = 1;
             byte borderColour = twelve.GetByteFromBits(1, 3);
-            _screen.SetBorderColour(DisplayColour.FromThreeBit(borderColour));
+            _ula.SetBorderColour(borderColour);
 
             bool compressed = twelve.GetBit(5);
 
@@ -142,15 +132,15 @@ namespace ZXSpectrum.VM
             r.IY = getWord(23);
             r.IX = getWord(25);
 
-            _cpu.DisableInterrupts();
+            _cpu.Interrupts.Disable();
             if (snapshot[27] == 1)
             {
-                _cpu.EnableInterrupts();
+                _cpu.Interrupts.Enable();
             }
 
             InterruptMode interruptMode = (InterruptMode)snapshot[29].GetByteFromBits(0, 2);
             if (interruptMode == InterruptMode.IM0) interruptMode = InterruptMode.IM1; // IM0 not used on Spectrum
-            _cpu.SetInterruptMode(interruptMode);
+            _cpu.Interrupts.SetMode(interruptMode);
 
             byte[] memoryImage;
             if (compressed)
@@ -188,7 +178,7 @@ namespace ZXSpectrum.VM
                 memoryImage = snapshot[30..^4];
             }
 
-            _cpu.Memory.Untimed.WriteBytesAt(16384, memoryImage);
+            _cpu.Memory.WriteBytesAt(16384, memoryImage);
 
             ushort getWord(int index)
             {
@@ -198,60 +188,26 @@ namespace ZXSpectrum.VM
 
         private void StartInternal(string snapshotPath = null)
         {
-            // We're moving the CPU timing into this class by setting the CPU to run SliceTimed and
-            // specifying a time slice in ticks (at 3.5MHz, 70000 = 20ms). The CPU will pause after executing
-            // those 70000 ticks, which in non-real-time will happen in <1ms, and then begin thread.sleeping;
-            // then when the next timer tick occurs after the *real* 20ms, the CPU is resumed and quickly
-            // does the interrupt, sound update, screen update etc.
+            // We're setting the CPU to run TimeSliced. The CPU will run as fast as possible (ie not real time),
+            // then pause after executing 70000 ticks (20ms worth in real-time), which in non-real-time will happen
+            // in a much shorter time (generally <1ms), and begin sleeping;
+            // then after the *real* 20ms, the CPU is resumed and we do the interrupt, sound update, screen update etc.
 
             // We do lose some real-time aspects such as synchronised calls to OnClockTick etc, but for the Spectrum
             // emulation we don't need these. It also makes the keyboard *slightly* less responsive but for human
             // beings this is unlikely to be a problem.
 
             // Kudos due to SoftSpectrum48 which uses this technique to get real-time Spectrum performance without
-            // having to spin the PC CPU all the time. This reduces our CPU use considerably
-            // (but not as much as theirs does... not sure why).
+            // having to spin the PC CPU all the time. This reduces our CPU use considerably.
 
-            _cpu.Initialise(timingMode: TimingMode.TimeSliced, ticksPerTimeSlice: 70000); // CPU will suspend at end of time slice
-            
-            _cpu.Debug.SetDataBusDefaultValue(0xFF); // Spectrum has pull-up resistors on data bus lines, so will always read 0xFF if not otherwise set by the ULA
-
-            // load a snapshot if we have one
-            if (snapshotPath != null) LoadSnapshot(snapshotPath);
-            
-            // this timer will control the display updates and audio sync
-            _timer = new Timer();
-            _timer.Interval = TimeSpan.FromMilliseconds(20);
-            _timer.Elapsed += UpdateDisplay;
+            _cpu.IO.SetDataBusDefaultValue(0xFF); // Spectrum has pull-up resistors on data bus lines, so will always read 0xFF, not 0x00, if not otherwise set by the ULA
+            _cpu.AfterInitialise += (sender, e) =>
+            {
+                if (snapshotPath != null) LoadSnapshot(snapshotPath); // snapshot loading must happen after CPU is initialised, but before it starts
+            };
 
             _cpu.Start();
-            _timer.Start();
-            _beeper.Start();
-        }
-
-        private void UpdateDisplay(object sender, EventArgs e)
-        {
-            _cpu.Resume(); // need to resume CPU to start next time slice
-            _cpu.RaiseInterrupt();
-
-            // we're faking the screen update process here - in reality there are lots
-            // of timing issues around 'contended' memory access by the ULA, and tstate counting etc
-            // but for our purposes here we don't need any of that - remember, this is just a demo VM!
-
-            byte[] pixelBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x4000, 6144);
-            byte[] attributeBuffer = _cpu.Memory.Untimed.ReadBytesAt(0x5800, 768);
-            _screen.Fill(pixelBuffer, attributeBuffer);
-
-            // every FLASH_FRAME_RATE frames, we invert any attribute block that has FLASH set
-            if (_displayUpdatesSinceLastFlash++ >= FLASH_FRAME_RATE)
-            {
-                _flashOn = !_flashOn;
-            }
-
-            byte[] screenBitmap = _screen.ToRGBA(_flashOn);
-            OnUpdateDisplay?.Invoke(this, screenBitmap);
-
-            if (_displayUpdatesSinceLastFlash > FLASH_FRAME_RATE) _displayUpdatesSinceLastFlash = 0;
+            _ula.Start();
         }
 
         private byte ReadPort()
@@ -273,14 +229,15 @@ namespace ZXSpectrum.VM
 
             if (portAddress % 2 == 0)
             {
-                // ULA will respond to all even port numbers
+                // ULA will respond to all even port numbers - this is
+                // a supreme Sinclair hack, but it works well
 
                 if (portAddress.LowByte() == 0xFE) // PORT OxFE
                 {
-                    _screen.SetBorderColour(output);
+                    _ula.SetBorderColour(output);
                 }
 
-                _beeper.Update(output);
+                _ula.SetBeeper(output);
             }
         }
 
@@ -292,19 +249,25 @@ namespace ZXSpectrum.VM
         {
         }
 
-        public Spectrum48K()
+        public Spectrum48K(EventHandler<byte[]> OnUpdateDisplay)
         {
             string romPath = "rom\\48k.rom";
-
-            _screen = new ScreenMap();
 
             // set up the memory map - 16K ROM + 48K RAM = 64K
             IMemoryMap map = new MemoryMap(65536, false);
             map.Map(new ReadOnlyMemorySegment(File.ReadAllBytes(romPath)), 0);
             map.Map(new MemorySegment(49152), 16384);
 
-            _cpu = new Processor(map: map, frequencyInMHz: 3.5f);
-            _beeper = new Beeper(_cpu);
+            _cpu = new Processor(
+                map: map,
+                clock: ClockMaker.TimeSlicedClock(
+                    3.5f, // 3.5MHz 
+                    TimeSpan.FromMilliseconds(20)
+                    )
+                );
+
+            _ula = new ULA(_cpu); // models the ULA chip which controls the screen and sound
+            _ula.OnUpdateDisplay += OnUpdateDisplay;
 
             // The Spectrum doesn't handle ports using the actual port numbers, instead all port reads / writes go to all ports and 
             // devices signal or respond based on a bit-field signature across the 16-bit port address held on the address bus at read/write time.

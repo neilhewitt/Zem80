@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class RLCA : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Flags flags = cpu.Flags.Clone();
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
 
             byte value = r.A;
             flags.Carry = value.GetBit(7);

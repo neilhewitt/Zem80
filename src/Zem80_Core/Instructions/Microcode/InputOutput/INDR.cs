@@ -1,21 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Zem80.Core.IO;
+using Zem80.Core.InputOutput;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class INDR : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Flags flags = cpu.Flags.Clone();
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
 
-            Port port = cpu.Ports[r.C];
+            IPort port = cpu.Ports[r.C];
             port.SignalRead();
             byte input = port.ReadByte(true);
-            cpu.Memory.Timed.WriteByteAt(r.HL, input);
+            cpu.Memory.WriteByteAt(r.HL, input, 3);
             cpu.Timing.InternalOperationCycle(5);
             r.HL--;
             r.WZ = r.BC;

@@ -1,7 +1,8 @@
-﻿namespace Zem80.Core
+﻿namespace Zem80.Core.CPU
 {
     public enum WordRegister
     {
+        // NOTE: the numeric values correspond to the index of the register value in the underlying storage array
         None = 26,
         AF = 0,
         BC = 2,

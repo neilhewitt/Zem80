@@ -3,167 +3,205 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Zem80.Core.Instructions;
+using Zem80.Core;
 
-namespace Zem80.Core
+namespace Zem80.Core.CPU
 {
-    // IInstructionTiming contains methods to execute the different types of machine cycle that the Z80 supports.
-    // These will be called mostly by the instruction decoder, stack operations and interrupt handlers, but some instruction
-    // microcode uses these methods directly to generate timing (eg IN/OUT) or add 'internal operation' ticks. 
-    // I segregated these onto an interface just to keep them logically partioned from the main API but without moving them out to a class.
-    // Calling code can get at these methods using the Processor.Timing property (or by casting to the interface type, but don't do that, it's ugly).
 
-    public partial class Processor : IInstructionTiming
+    public class ProcessorTiming : IProcessorTiming
     {
-        public IInstructionTiming Timing => this;
+        public const byte OPCODE_FETCH_NORMAL_TSTATES = 4;
+        public const byte MEMORY_READ_NORMAL_TSTATES = 3;
+        public const byte MEMORY_WRITE_NORMAL_TSTATES = 3;
+        public const byte NMI_INTERRUPT_ACKNOWLEDGE_TSTATES = 5;
+        public const byte IM0_INTERRUPT_ACKNOWLEDGE_TSTATES = 6;
+        public const byte IM1_INTERRUPT_ACKNOWLEDGE_TSTATES = 7;
+        public const byte IM2_INTERRUPT_ACKNOWLEDGE_TSTATES = 7;
 
-        void IInstructionTiming.OpcodeFetchCycle(ushort address, byte data)
+        private Processor _cpu;
+        private int _waitCyclesPending;
+
+        public void AddWaitCycles(int waitCycles)
         {
-            IO.SetOpcodeFetchState(address);
-            WaitForNextClockTick();
-            IO.AddOpcodeFetchData(data);
-            WaitForNextClockTick();
-            InsertWaitCycles();
-
-            IO.EndOpcodeFetchState();
-            IO.SetAddressBusValue(Registers.IR);
-            IO.SetDataBusValue(0x00);
-
-            WaitForNextClockTick();
-            WaitForNextClockTick();
+            _waitCyclesPending += waitCycles;
         }
 
-        void IInstructionTiming.MemoryReadCycle(ushort address, byte data)
+        public void OpcodeFetchTiming(Instruction instruction, ushort address)
         {
-            IO.SetMemoryReadState(address);
-            WaitForNextClockTick();
-
-            IO.AddMemoryData(data);
-            WaitForNextClockTick();
-            InsertWaitCycles();
-
-            IO.EndMemoryReadState();
-            WaitForNextClockTick();
-
-            Instruction instruction = _executingInstructionPackage?.Instruction;
-            if (instruction != null)
+            int opcodeByteIndex = 0;
+            foreach (MachineCycle machineCycle in instruction.MachineCycles.OpcodeFetches)
             {
-                if (instruction.Timing.Exceptions.HasProlongedMemoryRead)
-                {
-                    WaitForNextClockTick();
-                }
+                OpcodeFetchCycle(address, instruction.OpcodeBytes[opcodeByteIndex++], machineCycle.TStates);
             }
         }
 
-        void IInstructionTiming.MemoryWriteCycle(ushort address, byte data)
+        public void OpcodeFetchCycle(ushort address, byte opcode, byte tStates)
         {
-            IO.SetMemoryWriteState(address, data);
-            WaitForNextClockTick();
-            WaitForNextClockTick();
+            byte extraTStates = (byte)(tStates - OPCODE_FETCH_NORMAL_TSTATES);
+
+            _cpu.IO.SetOpcodeFetchState(address);
+            _cpu.Clock.WaitForNextClockTick();
+            _cpu.IO.AddOpcodeFetchData(opcode);
+            _cpu.Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
-            IO.EndMemoryWriteState();
-            WaitForNextClockTick();
+            _cpu.IO.EndOpcodeFetchState();
+            _cpu.IO.SetAddressBusValue(_cpu.Registers.IR);
+            _cpu.IO.ResetDataBusValue();
 
-            Instruction instruction = _executingInstructionPackage?.Instruction;
-            if (instruction != null)
+            _cpu.Clock.WaitForNextClockTick();
+            _cpu.Clock.WaitForNextClockTick();
+
+            if (extraTStates > 0) _cpu.Clock.WaitForClockTicks(extraTStates);
+        }
+
+        public void OperandReadTiming(Instruction instruction, ushort address, params byte[] operands)
+        {
+            // move on to the operand bytes
+            address += (ushort)instruction.MachineCycles.OpcodeFetches.Count();
+
+            // either single operand byte read, or operand low / high reads
+            int operandByteIndex = 0;
+            foreach (MachineCycle machineCycle in instruction.MachineCycles.OperandReads)
             {
-                if (instruction.Timing.Exceptions.HasProlongedMemoryWrite)
-                {
-                    WaitForNextClockTick();
-                    WaitForNextClockTick();
-                }
+                MemoryReadCycle(address, operands[operandByteIndex++], machineCycle.TStates);
             }
         }
 
-        void IInstructionTiming.BeginStackReadCycle()
+        public void MemoryReadCycle(ushort address, byte data, byte tStates)
         {
-            IO.SetMemoryReadState(Registers.SP);
-            WaitForNextClockTick();
-        }
+            byte extraTStates = (byte)(tStates - MEMORY_READ_NORMAL_TSTATES);
 
+            _cpu.IO.SetMemoryReadState(address);
+            _cpu.Clock.WaitForNextClockTick();
 
-        void IInstructionTiming.EndStackReadCycle(bool highByte, byte data)
-        {
-            IO.AddMemoryData(data);
-            WaitForNextClockTick();
+            _cpu.IO.AddMemoryData(data);
+            _cpu.Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
-            IO.EndMemoryReadState();
-            WaitForNextClockTick();
+            _cpu.IO.EndMemoryReadState();
+            _cpu.Clock.WaitForNextClockTick();
+
+            if (extraTStates > 0) _cpu.Clock.WaitForClockTicks(extraTStates);
         }
 
-        void IInstructionTiming.BeginStackWriteCycle(bool highByte, byte data)
+        public void MemoryWriteCycle(ushort address, byte data, byte tStates)
         {
-            IO.SetMemoryWriteState(Registers.SP, data);
-            WaitForNextClockTick();
-            WaitForNextClockTick();
+            byte extraTStates = (byte)(tStates - MEMORY_WRITE_NORMAL_TSTATES);
+
+            _cpu.IO.SetMemoryWriteState(address, data);
+            _cpu.Clock.WaitForNextClockTick();
+            _cpu.Clock.WaitForNextClockTick();
+            InsertWaitCycles();
+
+            _cpu.IO.EndMemoryWriteState();
+            _cpu.Clock.WaitForNextClockTick();
+
+            if (extraTStates > 0) _cpu.Clock.WaitForClockTicks(extraTStates);
+        }
+
+        public void BeginStackReadCycle()
+        {
+            _cpu.IO.SetMemoryReadState(_cpu.Registers.SP);
+            _cpu.Clock.WaitForNextClockTick();
+        }
+
+        public void EndStackReadCycle(byte data)
+        {
+            _cpu.IO.AddMemoryData(data);
+            _cpu.Clock.WaitForNextClockTick();
+            InsertWaitCycles();
+
+            _cpu.IO.EndMemoryReadState();
+            _cpu.Clock.WaitForNextClockTick();
+        }
+
+        public void BeginStackWriteCycle(byte data)
+        {
+            _cpu.IO.SetMemoryWriteState(_cpu.Registers.SP, data);
+            _cpu.Clock.WaitForNextClockTick();
+            _cpu.Clock.WaitForNextClockTick();
             InsertWaitCycles();
         }
 
-        void IInstructionTiming.EndStackWriteCycle()
+        public void EndStackWriteCycle()
         {
-            IO.EndMemoryWriteState();
-            WaitForNextClockTick();
+            _cpu.IO.EndMemoryWriteState();
+            _cpu.Clock.WaitForNextClockTick();
         }
 
-        void IInstructionTiming.BeginPortReadCycle(byte n, bool bc)
+        public void BeginPortReadCycle(byte port, bool addressFromBC)
         {
-            ushort address = bc ? (Registers.C, Registers.B).ToWord() : (n, Registers.A).ToWord();
+            ushort address = addressFromBC ? (_cpu.Registers.C, _cpu.Registers.B).ToWord() : (port, _cpu.Registers.A).ToWord();
 
-            IO.SetPortReadState(address);
-            WaitForNextClockTick();
+            _cpu.IO.SetPortReadState(address);
+            _cpu.Clock.WaitForNextClockTick();
         }
 
-        void IInstructionTiming.EndPortReadCycle(byte data)
+        public void EndPortReadCycle(byte data)
         {
-            IO.AddPortReadData(data);
-            WaitForNextClockTick();
+            _cpu.IO.AddPortReadData(data);
+            _cpu.Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
-            WaitForNextClockTick();
-            IO.EndPortReadState();
-            WaitForNextClockTick();
+            _cpu.Clock.WaitForNextClockTick();
+            _cpu.IO.EndPortReadState();
+            _cpu.Clock.WaitForNextClockTick();
         }
 
-        void IInstructionTiming.BeginPortWriteCycle(byte data, byte n, bool bc)
+        public void BeginPortWriteCycle(byte data, byte port, bool addressFromBC)
         {
-            ushort address = bc ? (Registers.C, Registers.B).ToWord() : (n, Registers.A).ToWord();
+            ushort address = addressFromBC ? (_cpu.Registers.C, _cpu.Registers.B).ToWord() : (port, _cpu.Registers.A).ToWord();
 
-            IO.SetPortWriteState(address, data);
-            WaitForNextClockTick();
+            _cpu.IO.SetPortWriteState(address, data);
+            _cpu.Clock.WaitForNextClockTick();
         }
 
-        void IInstructionTiming.EndPortWriteCycle()
+        public void EndPortWriteCycle()
         {
-            WaitForNextClockTick();
+            _cpu.Clock.WaitForNextClockTick();
             InsertWaitCycles();
 
-            WaitForNextClockTick();
-            IO.EndPortWriteState();
-            WaitForNextClockTick();
+            _cpu.Clock.WaitForNextClockTick();
+            _cpu.IO.EndPortWriteState();
+            _cpu.Clock.WaitForNextClockTick();
         }
 
-        void IInstructionTiming.BeginInterruptRequestAcknowledgeCycle(int tStates)
+        public void BeginInterruptRequestAcknowledgeCycle(int tStates)
         {
-            IO.SetInterruptState();
+            _cpu.IO.SetInterruptState();
             for (int i = 0; i < tStates; i++)
             {
-                WaitForNextClockTick();
+                _cpu.Clock.WaitForNextClockTick();
             }
         }
 
-        void IInstructionTiming.EndInterruptRequestAcknowledgeCycle()
+        public void EndInterruptRequestAcknowledgeCycle()
         {
-            IO.EndInterruptState();
+            _cpu.IO.EndInterruptState();
         }
 
-        void IInstructionTiming.InternalOperationCycle(int tStates)
+        public void InternalOperationCycle(int tStates)
         {
             for (int i = 0; i < tStates; i++)
             {
-                WaitForNextClockTick();
+                _cpu.Clock.WaitForNextClockTick();
             }
+        }
+
+        private void InsertWaitCycles()
+        {
+            int cyclesToAdd = _waitCyclesPending;
+            _waitCyclesPending = 0;
+            if (cyclesToAdd > 0)
+            {
+                _cpu.Clock.WaitForClockTicks(cyclesToAdd);
+            }
+        }
+
+        public ProcessorTiming(Processor cpu)
+        {
+            _cpu = cpu;
         }
     }
 }

@@ -21,22 +21,9 @@ namespace Zem80.Core.Memory
             return _memory[offset];
         }
 
-        public byte[] ReadBytesAt(ushort offset, int numberOfBytes)
-        {
-            return _memory[offset..(offset + numberOfBytes)];
-        }
-
         public virtual void WriteByteAt(ushort offset, byte value)
         {
             _memory[offset] = value;
-        }
-
-        public virtual void WriteBytesAt(ushort offset, byte[] bytes)
-        {
-            for (int i = offset; i < offset + bytes.Length; i++)
-            {
-                _memory[i] = bytes[i - offset];
-            }
         }
 
         public void MapAt(ushort address)
@@ -47,6 +34,11 @@ namespace Zem80.Core.Memory
         public void Clear()
         {
             _memory = new byte[SizeInBytes];
+        }
+
+        protected MemorySegment(uint sizeInBytes, byte[] contents) : this(sizeInBytes)
+        {
+            contents.CopyTo(_memory, 0);
         }
 
         public MemorySegment(uint sizeInBytes)

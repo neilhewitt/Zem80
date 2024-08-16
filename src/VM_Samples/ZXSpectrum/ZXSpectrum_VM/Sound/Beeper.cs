@@ -1,13 +1,7 @@
 ﻿using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 using Zem80.Core;
-using Zem80.Core.Instructions;
+using Zem80.Core.CPU;
 
 namespace ZXSpectrum.VM.Sound
 {
@@ -17,7 +11,7 @@ namespace ZXSpectrum.VM.Sound
      * anywhere that I could find, I have written this code entirely from scratch but have based it on the design of the 
      * relevant class in SoftSpectrum 48. 
      */
-    
+
     public class Beeper : IDisposable
     {
         private Processor _cpu;
@@ -83,7 +77,7 @@ namespace ZXSpectrum.VM.Sound
 
             if (changedState)
             {
-                long currentTStates = _cpu.EmulatedTStates;
+                long currentTStates = _cpu.Clock.Ticks;
                 long ticks = currentTStates - _lastTStates;
 
                 long samplesRequired = (ticks / TICKS_PER_SAMPLE);

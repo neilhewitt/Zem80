@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class LD : IMicrocode
     {
@@ -12,25 +12,27 @@ namespace Zem80.Core.Instructions
             InstructionData data = package.Data;
             Flags flags = cpu.Flags.Clone();
 
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
             byte arg0 = data.Argument1;
             byte arg1 = data.Argument2;
             ushort argWord = data.ArgumentsAsWord;
             
             byte readByte(ushort address)
             {
-                return cpu.Memory.Timed.ReadByteAt(address);
+                return cpu.Memory.ReadByteAt(address, 3);
             }
 
             ushort readWord(ushort address)
             {
-                return cpu.Memory.Timed.ReadWordAt(address);
+                byte low = cpu.Memory.ReadByteAt(address, 3);
+                byte high = cpu.Memory.ReadByteAt((ushort)(address + 1), 3);
+                return (low, high).ToWord();
             }
 
             byte readOffset(ushort address, byte offset)
             {
                 address = (ushort)(address + (sbyte)offset);
-                byte value = cpu.Memory.Timed.ReadByteAt(address);
+                byte value = cpu.Memory.ReadByteAt(address, 3);
                 flags.X = (address & 0x08) > 0; // copy bit 3
                 flags.Y = (address & 0x20) > 0; // copy bit 5
                 return value;
@@ -38,17 +40,18 @@ namespace Zem80.Core.Instructions
 
             void writeByte(ushort address, byte value)
             {
-                cpu.Memory.Timed.WriteByteAt(address, value);
+                cpu.Memory.WriteByteAt(address, value, 3);
             }
 
             void writeWord(ushort address, ushort value)
             {
-                cpu.Memory.Timed.WriteWordAt(address, value);
+                cpu.Memory.WriteByteAt(address, value.LowByte(), 3);
+                cpu.Memory.WriteByteAt((ushort)(address + 1), value.HighByte(), 3);
             }
 
             void writeOffset(ushort address, byte offset, byte value)
             {
-                cpu.Memory.Timed.WriteByteAt((ushort)(address + (sbyte)offset), value);
+                cpu.Memory.WriteByteAt((ushort)(address + (sbyte)offset), value, 3);
             }
 
             void handleIRFlags(byte input)
@@ -62,7 +65,7 @@ namespace Zem80.Core.Instructions
             switch (instruction.Prefix)
             {
                 case 0x00:
-                    switch (instruction.Opcode)
+                    switch (instruction.LastOpcodeByte)
                     {
                         case 0x01: // LD BC,nn
                             r.BC = argWord;
@@ -326,7 +329,7 @@ namespace Zem80.Core.Instructions
                     break;
 
                 case 0xED:
-                    switch (instruction.Opcode)
+                    switch (instruction.LastOpcodeByte)
                     {
                         case 0x43: // LD (nn),BC
                             writeWord(argWord, r.BC);
@@ -351,7 +354,7 @@ namespace Zem80.Core.Instructions
                         case 0x57: // LD A,I
                             r.A = r.I;
                             handleIRFlags(r.A);
-                            flags.ParityOverflow = cpu.InterruptsWereEnabledBeforeNMI;
+                            flags.ParityOverflow = cpu.Interrupts.IFF2;
                             break;
                         case 0x5B: // LD DE,(nn)
                             r.DE = readWord(argWord);
@@ -360,7 +363,7 @@ namespace Zem80.Core.Instructions
                         case 0x5F: // LD A,R
                             r.A = r.R;
                             handleIRFlags(r.A);
-                            flags.ParityOverflow = cpu.InterruptsWereEnabledBeforeNMI;
+                            flags.ParityOverflow = cpu.Interrupts.IFF2;
                             break;
                         case 0x73: // LD (nn),SP
                             writeWord(argWord, r.SP);
@@ -374,7 +377,7 @@ namespace Zem80.Core.Instructions
                     break;
 
                 case 0xDD:
-                    switch (instruction.Opcode)
+                    switch (instruction.LastOpcodeByte)
                     {
                         case 0x21: // LD IX,nn
                             r.IX = argWord;
@@ -533,7 +536,7 @@ namespace Zem80.Core.Instructions
                     break;
 
                 case 0xFD:
-                    switch (instruction.Opcode)
+                    switch (instruction.LastOpcodeByte)
                     {
                         case 0x21: // LD IY,nn
                             r.IY = argWord;

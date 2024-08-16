@@ -1,6 +1,6 @@
-﻿using Zem80.Core.Instructions;
+﻿using Zem80.Core.CPU;
 
-namespace Zem80.Core
+namespace Zem80.Core.CPU
 {
     public interface IReadOnlyFlags
     {

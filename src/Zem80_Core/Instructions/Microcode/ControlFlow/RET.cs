@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class RET : IMicrocode
     {

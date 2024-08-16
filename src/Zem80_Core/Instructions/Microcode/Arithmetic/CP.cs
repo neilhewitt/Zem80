@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class CP : IMicrocode
     {
@@ -10,11 +10,11 @@ namespace Zem80.Core.Instructions
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
 
             byte left = r.A;
             if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-            byte right = instruction.MarshalSourceByte(data, cpu);
+            byte right = instruction.MarshalSourceByte(data, cpu, 3);
 
             var sub = ALUOperations.Subtract(left, right, false);
             Flags flags = sub.Flags;

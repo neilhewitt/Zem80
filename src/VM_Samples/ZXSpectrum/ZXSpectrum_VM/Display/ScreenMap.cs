@@ -13,7 +13,6 @@ namespace ZXSpectrum.VM
         private PixelMap _pixels;
         private AttributeMap _attributes;
         private byte[] _rgba;
-        private Random _random = new Random();
         private IDictionary<int, ushort> _screenLineAddresses;
 
 
@@ -68,8 +67,7 @@ namespace ZXSpectrum.VM
                 {
                     for (int rgbIndex = 0; rgbIndex < 4; rgbIndex++)
                     {
-                        pixels[pixelIndex] = getPixel(y, x, rgbIndex);
-                        pixelIndex += 1;
+                        pixels[pixelIndex++] = getPixel(y, x, rgbIndex);
                     }
                 }
             }
@@ -77,13 +75,13 @@ namespace ZXSpectrum.VM
 
             byte getPixel(int y, int x, int rgbIndex)
             {
-                Color pixelColor;
+                ColourParts pixelColour;
                 if (rgbIndex == 3) return 0xFF; // alpha channel is always max
 
                 if (y < 32 || y > 223 || x < 32 || x > 287)
                 {
                     // this is the border
-                    pixelColor = _border.Normal;
+                    pixelColour = _border.Normal;
                 }
                 else
                 {
@@ -91,40 +89,19 @@ namespace ZXSpectrum.VM
                     y = y - 32;
                     int x8 = (int)(x / 8);
                     int y8 = (int)(y / 8);
-                    ScreenPixel pixel = new ScreenPixel(_pixels[y, x], _attributes[y8, x8]);
-                    pixelColor = pixel.GetColor(flashOn);
+                    pixelColour = GetColour(_attributes[y8, x8], _pixels[y, x], flashOn);
                 }
 
-                return rgbIndex switch { 0 => pixelColor.B, 1 => pixelColor.G, 2 => pixelColor.R, _ => 0xFF };
+                return rgbIndex switch { 0 => pixelColour.B, 1 => pixelColour.G, 2 => pixelColour.R, _ => 0xFF };
             }
-        }
 
-        public override string ToString()
-        {
-            StringBuilder output = new StringBuilder();
-            int pixelIndex = 0;
-            for (int y = 0; y < 192; y++)
+            ColourParts GetColour(DisplayAttribute attribute, bool set, bool flashOn)
             {
-                for (int x = 0; x < 256; x++)
-                {
-                    output.Append(getPixel(y, x));
-                    pixelIndex += 1;
-                }
-                output.Append("\n");
-            }
-            return output.ToString();
+                ColourParts ink = attribute.Bright ? attribute.Ink.Bright : attribute.Ink.Normal;
+                ColourParts paper = attribute.Bright ? attribute.Paper.Bright : attribute.Paper.Normal;
+                if (attribute.Flash && flashOn) set = !set;
 
-            char getPixel(int y, int x)
-            {
-                ScreenPixel pixel = new ScreenPixel(_pixels[y, x], _attributes[(y / 8), (x / 8)]);
-                char output = pixel switch
-                {
-                    var p when (!p.Set) => ' ',
-                    var p when (p.Set) => '.',
-                    _ => 'x'
-                };
-
-                return output;
+                return set ? ink : paper;
             }
         }
 

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class XOR : IMicrocode
     {
@@ -10,10 +10,10 @@ namespace Zem80.Core.Instructions
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
 
             if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-            byte operand = instruction.MarshalSourceByte(data, cpu, out ushort address);
+            byte operand = instruction.MarshalSourceByte(data, cpu, out ushort address, 3);
             int result = (r.A ^ operand);
             Flags flags = FlagLookup.LogicalFlags(r.A, operand, LogicalOperation.Xor);
             r.A = (byte)result;

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class RST : IMicrocode
     {
@@ -10,7 +10,7 @@ namespace Zem80.Core.Instructions
         {
             Instruction instruction = package.Instruction;
 
-            byte t_index = instruction.Opcode.GetByteFromBits(3, 3);
+            byte t_index = instruction.LastOpcodeByte.GetByteFromBits(3, 3);
             ushort address = (ushort)(t_index * 8);
 
             cpu.Stack.Push(WordRegister.PC);

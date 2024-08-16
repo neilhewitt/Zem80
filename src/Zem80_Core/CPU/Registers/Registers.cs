@@ -4,9 +4,9 @@ using System.Text;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-namespace Zem80.Core
+namespace Zem80.Core.CPU
 {
-    public class Registers : IShadowRegisters
+    public class Registers : IShadowRegisters, IRegisters
     {
         private byte[] _registers;
 
@@ -60,7 +60,7 @@ namespace Zem80.Core
         // program counter
         public ushort PC { get { return Get16BitValue(24); } set { Set16BitValue(24, value); } }
 
-        internal ushort WZ { get; set; } // internal register, never exposed to the outside world and not saved / restored with snapshot
+        public ushort WZ { get; set; } // internal register, never exposed to the outside world and not saved / restored with snapshot
 
         public void ExchangeAF()
         {
@@ -82,7 +82,7 @@ namespace Zem80.Core
         public void Clear()
         {
             _registers = new byte[26];
-            WZ = 0x00;
+            WZ = 0x0000;
         }
 
         private void Swap(int offset)
@@ -102,7 +102,7 @@ namespace Zem80.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ushort GetRegisterPair(WordRegister registerPair)
         {
-            if (registerPair == WordRegister.None) return 0xFF;
+            if (registerPair == WordRegister.None) return 0xFFFF;
             return Get16BitValue((int)registerPair);
         }
 

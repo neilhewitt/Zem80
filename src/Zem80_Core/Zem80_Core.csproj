@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>Zem80.Core</AssemblyName>
     <RootNamespace>Zem80.Core</RootNamespace>
     <Platforms>AnyCPU;x64</Platforms>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <Authors>Neil Hewitt</Authors>
     <Company>Radius Zero</Company>
     <Product>Zem80</Product>

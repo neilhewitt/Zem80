@@ -4,14 +4,12 @@ using System.Text;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Reflection;
-using Zem80.Core.Instructions;
+using Zem80.Core.CPU;
 
-namespace Zem80.Core
+namespace Zem80.Core.CPU
 {
     public static class FlagLookup
     {
-        // the state space of 16 x 16 bit numbers is too large to pre-calculate the flags in a reasonable time
-        // TODO: run the code to completion and store output in a file?
         public static Flags WordArithmeticFlags(Flags currentFlags, ushort startingValue, int addOrSubtractValue, bool carry, bool setSignZeroParityOverflow, bool subtract) 
         {
             Flags flags = new Flags(currentFlags?.Value ?? 0);
@@ -114,7 +112,7 @@ namespace Zem80.Core
             return flags;
         }
 
-        private static bool HalfCarry(byte first, byte second, bool carry, bool isSubtraction)
+        public static bool HalfCarry(byte first, byte second, bool carry, bool isSubtraction)
         {
             int c = carry ? 1 : 0;
             int result = (isSubtraction ? (first - second - c) : (first + second + c));
@@ -123,7 +121,7 @@ namespace Zem80.Core
             return ((first ^ r ^ second) & 0x10) != 0;
         }
 
-        private static bool HalfCarry(ushort first, ushort second, bool carry, bool isSubtraction)
+        public static bool HalfCarry(ushort first, ushort second, bool carry, bool isSubtraction)
         {
             int c = carry ? 1 : 0;
             int result = (isSubtraction ? (first - second - c) : (first + second + c));
@@ -132,18 +130,18 @@ namespace Zem80.Core
             return ((first ^ r ^ second) & 0x1000) != 0;
         }
 
-        private static bool Overflows(byte first, byte second, bool carry, bool isSubtraction)
+        public static bool Overflows(byte first, byte second, bool carry, bool isSubtraction)
         {
             int c = (carry ? 1 : 0);
             int signed = (isSubtraction ? ((sbyte)first - (sbyte)second - c) : ((sbyte)first + (sbyte)second + c));
             return (signed >= 0x80 || signed <= -0x81);
         }
 
-        private static bool Overflows(ushort first, ushort second, bool carry, bool isSubtraction)
+        public static bool Overflows(ushort first, ushort second, bool carry, bool isSubtraction)
         {
             int c = (carry ? 1 : 0);
             int signed = (isSubtraction ? ((short)first - (short)second - c) : ((short)first + (short)second + c));
-            return (signed >= 0x8000 || signed < -0x8000);
+            return (signed >= 0x8000 || signed < -0x8001);
         }
     }
 }

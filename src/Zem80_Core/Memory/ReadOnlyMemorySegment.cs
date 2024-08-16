@@ -14,20 +14,14 @@ namespace Zem80.Core.Memory
             // do nothing
         }
 
-        public override void WriteBytesAt(ushort offset, byte[] bytes)
-        {
-            // do nothing
-        }
-
         new public void Clear()
         {
             // do nothing - we're read-only
         }
 
         public ReadOnlyMemorySegment(byte[] contents)
-            : base((uint)contents.Length)
+            : base((uint)contents.Length, contents)
         {
-            base.WriteBytesAt(0, contents);
         }
     }
 }

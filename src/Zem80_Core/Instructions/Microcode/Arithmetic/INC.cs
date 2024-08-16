@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.SymbolStore;
 using System.Text;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class INC : IMicrocode
     {
@@ -11,7 +11,7 @@ namespace Zem80.Core.Instructions
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
             Flags flags = cpu.Flags.Clone();
 
             if (instruction.TargetsWordRegister)
@@ -28,8 +28,8 @@ namespace Zem80.Core.Instructions
                 {
                     // inc byte in memory
                     if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-                    value = instruction.MarshalSourceByte(data, cpu, out ushort address);
-                    cpu.Memory.Timed.WriteByteAt(address, (byte)(value + 1));
+                    value = instruction.MarshalSourceByte(data, cpu, out ushort address, 4);
+                    cpu.Memory.WriteByteAt(address, (byte)(value + 1), 3);
                 }
                 else
                 {

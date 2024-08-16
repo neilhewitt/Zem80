@@ -25,7 +25,7 @@
 ; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 	aseg
-	.org	100h
+	org	100h
 
 	jp	start
 
@@ -174,7 +174,7 @@ tests:
 	dw	st8ix1
 	dw	st8ix2
 	dw	st8ix3
-	dw	stabd
+	dw	stabd	
 	dw	0
 
 ; jgh: macro syntax changed for ZMAC and MAXAM

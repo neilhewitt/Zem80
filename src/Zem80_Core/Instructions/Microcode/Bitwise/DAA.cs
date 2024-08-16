@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class DAA : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
             Flags flags = cpu.Flags.Clone();
-            Registers r = cpu.Registers;
+            IRegisters r = cpu.Registers;
             byte A = r.A;
             int mode = 0;
 

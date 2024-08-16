@@ -2,6 +2,8 @@
 using System.Globalization;
 using System.IO;
 using Zem80.Core;
+using Zem80.Core.CPU;
+using Zem80.Core.CPU;
 
 namespace Zem80.SimpleVM
 {
@@ -10,27 +12,27 @@ namespace Zem80.SimpleVM
         private Processor _cpu;
         private ushort _address;
         private bool _endOnHalt;
-        private TimingMode _timingMode;
         private bool _synchronous;
         private static string _outputLogPath;
         private static Registers _lastRegisters;
+        private Action<ExecutionResult> _callback;
 
         public Processor CPU => _cpu;
 
-        public void Start(ushort address = 0x0000, bool endOnHalt = false, bool synchronous = false, bool debugOutput = false, string outputLogPath = null)
+        public void Start(ushort address = 0x0000, bool endOnHalt = false, bool synchronous = false, bool debugOutput = false, string outputLogPath = null, Action<ExecutionResult> callbackAfterInstructionExecute = null)
         {
             _address = address;
             _endOnHalt = endOnHalt;
             _synchronous = synchronous;
             _outputLogPath = outputLogPath;
+            _callback = callbackAfterInstructionExecute;
 
-            _cpu.Initialise(address, endOnHalt, _timingMode);
             if (debugOutput)
             {
                 _cpu.AfterExecuteInstruction += DebugOutput_AfterExecute;
             }
 
-            _cpu.Start();
+            _cpu.Start(address, endOnHalt);
             if (synchronous) _cpu.RunUntilStopped();
         }
 
@@ -48,29 +50,28 @@ namespace Zem80.SimpleVM
         {
             _cpu.Stop();
             _cpu.ResetAndClearMemory();
-            _cpu.Initialise(_address, _endOnHalt, _timingMode);
-            _cpu.Start();
+            _cpu.Start(_address, _endOnHalt);
             if (_synchronous) _cpu.RunUntilStopped();
         }
 
         public void Load(ushort address, string path)
         {
-            _cpu.Memory.Untimed.WriteBytesAt(address, File.ReadAllBytes(path));
+            _cpu.Memory.WriteBytesAt(address, File.ReadAllBytes(path));
         }
 
         public void Load(ushort address, params byte[] code)
         {
-            _cpu.Memory.Untimed.WriteBytesAt(address, code);
+            _cpu.Memory.WriteBytesAt(address, code);
         }
 
         public void Poke(ushort address, byte value)
         {
-            _cpu.Memory.Untimed.WriteByteAt(address, value);
+            _cpu.Memory.WriteByteAt(address, value);
         }
 
         public byte Peek(ushort address)
         {
-            return _cpu.Memory.Untimed.ReadByteAt(address);
+            return _cpu.Memory.ReadByteAt(address);
         }
 
         private void DebugOutput_AfterExecute(object sender, ExecutionResult e)
@@ -85,6 +86,8 @@ namespace Zem80.SimpleVM
             Write("\n");
 
             _lastRegisters = _cpu.Registers.Snapshot();
+
+            _callback?.Invoke(e);
 
             void regValue(ByteRegister r)
             {
@@ -153,12 +156,12 @@ namespace Zem80.SimpleVM
         {
         }
 
-        public VirtualMachine(float speed = 4, bool enforceTiming = true)
+        public VirtualMachine(bool enforceTiming = true, IClock clock = null)
         {
-            _cpu = new Processor(frequencyInMHz: speed);
+            clock ??= enforceTiming ? ClockMaker.RealTimeClock(4) : null;
+            _cpu = new Processor(clock: clock);
             _cpu.Ports[0].Connect(ReadChar, WriteChar, SignalRead, SignalWrite);
             _cpu.Ports[1].Connect(ReadByte, WriteByte, SignalRead, SignalWrite);
-            _timingMode = enforceTiming ? TimingMode.PseudoRealTime : TimingMode.FastAndFurious;
         }
     }
 }

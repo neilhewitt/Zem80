@@ -19,7 +19,7 @@ namespace Zem80.Core.Memory
          * implementation if you wish. 
          */
 
-        public const int PAGE_SIZE_IN_BYTES = 1024;
+        private const int PAGE_SIZE_IN_BYTES = 1024;
         private const uint MAX_MEMORY_MAP_SIZE = 65536;
 
         private IMemorySegment[] _pageMap;
@@ -84,11 +84,12 @@ namespace Zem80.Core.Memory
             int pageIndex = (address / PAGE_SIZE_IN_BYTES);
             return pageIndex;
         }
+
         public MemoryMap(uint sizeInBytes, bool autoMap = false)
         {
             if (sizeInBytes > MAX_MEMORY_MAP_SIZE)
             {
-                throw new MemoryMapException("Requested memory map size exceeds the maximum which is " + MAX_MEMORY_MAP_SIZE.ToString() + " bytes.");
+                throw new MemoryMapException($"Requested memory map size exceeds the maximum which is {MAX_MEMORY_MAP_SIZE} bytes.");
             }
 
             SizeInBytes = sizeInBytes;

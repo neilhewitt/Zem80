@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
-using Zem80.Core.Instructions;
+using Zem80.Core.CPU;
+using Zem80.Core.CPU;
 
 namespace Zem80.Core.Tests.MicrocodeTests
 {
@@ -30,7 +31,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
         public void IM(int mode)
         {
             ExecuteInstruction($"IM {mode}");
-            Assert.That(CPU.InterruptMode == (InterruptMode)mode);
+            Assert.That(CPU.Interrupts.Mode == (InterruptMode)mode);
         }
 
         [Test]
@@ -41,7 +42,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
             Registers.SP = 0xFFFD;
 
             ExecuteInstruction("PUSH BC");
-            Assert.That(Registers.SP == 0xFFFB && CPU.Memory.Untimed.ReadWordAt(Registers.SP) == valueToPush);
+            Assert.That(Registers.SP == 0xFFFB && CPU.Memory.ReadWordAt(Registers.SP) == valueToPush);
         }
 
         [Test]
@@ -49,7 +50,7 @@ namespace Zem80.Core.Tests.MicrocodeTests
         {
             ushort valueToPop = 0x1F0D;
             Registers.SP = 0xFFFB;
-            CPU.Memory.Untimed.WriteWordAt(Registers.SP, valueToPop);
+            CPU.Memory.WriteWordAt(Registers.SP, valueToPop);
 
             ExecuteInstruction("POP DE");
             Assert.That(Registers.SP == 0xFFFD && Registers.DE == valueToPop);
@@ -80,11 +81,11 @@ namespace Zem80.Core.Tests.MicrocodeTests
             ushort valueAtSP = 0x2080;
 
             Registers.SP = sp;
-            CPU.Memory.Untimed.WriteWordAt(sp, valueAtSP);
+            CPU.Memory.WriteWordAt(sp, valueAtSP);
             Registers[wordRegister] = value;
 
             ExecuteInstruction($"EX (SP),{ wordRegister.ToString() }");
-            ushort newValueAtSP = CPU.Memory.Untimed.ReadWordAt(sp);
+            ushort newValueAtSP = CPU.Memory.ReadWordAt(sp);
 
             Assert.That(Registers[wordRegister] == valueAtSP && newValueAtSP == value);
         }

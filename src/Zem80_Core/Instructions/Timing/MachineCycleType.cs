@@ -1,25 +1,23 @@
-﻿namespace Zem80.Core.Instructions
+﻿namespace Zem80.Core.CPU
 {
     public enum MachineCycleType
     {
-        InternalOperation,
+        OpcodeFetch,
+        OperandRead,
+        OperandReadHigh,
+        OperandReadLow,
         MemoryRead,
         MemoryWrite,
         MemoryReadHigh,
         MemoryReadLow,
         MemoryWriteHigh,
         MemoryWriteLow,
-        OpcodeFetch,
-        OperandRead,
-        OperandReadHigh,
-        OperandReadLow,
-        PortRead,
-        PortWrite,
-        StackRead,
         StackReadHigh,
         StackReadLow,
-        StackWrite,
         StackWriteHigh,
-        StackWriteLow
+        StackWriteLow,
+        InternalOperation,
+        PortRead,
+        PortWrite
     }
 }

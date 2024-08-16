@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class JP : IMicrocode
     {
@@ -16,7 +16,7 @@ namespace Zem80.Core.Instructions
             if (instruction.Source != InstructionElement.WordValue)
             {
                 // JP HL / IX / IY
-                cpu.Registers.PC = instruction.MarshalSourceWord(data, cpu);
+                cpu.Registers.PC = instruction.MarshalSourceWord(data, cpu, 0);
             }
             else if (instruction.Condition == Condition.None || flags.SatisfyCondition(instruction.Condition))
             {

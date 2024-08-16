@@ -2,20 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Zem80.Core.Instructions
+namespace Zem80.Core.CPU
 {
     public class CPI : IMicrocode
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
-            Flags flags = cpu.Flags.Clone();
-
-            bool carry = flags.Carry;
+            bool carry = cpu.Flags.Carry;
             byte a = cpu.Registers.A;
-            byte b = cpu.Memory.Timed.ReadByteAt(cpu.Registers.HL);
+            byte b = cpu.Memory.ReadByteAt(cpu.Registers.HL, 3);
 
             var compare = ALUOperations.Subtract(a, b, false);
-            flags = compare.Flags;
+            Flags flags = compare.Flags;
 
             cpu.Registers.BC--;
             flags.ParityOverflow = (cpu.Registers.BC != 0);
@@ -30,6 +28,7 @@ namespace Zem80.Core.Instructions
             flags.Y = (valueXY & 0x02) > 0; // copy bit 1 (note: non-standard behaviour)
 
             cpu.Registers.WZ++;
+            cpu.Timing.InternalOperationCycle(5);
 
             return new ExecutionResult(package, flags);
         }
