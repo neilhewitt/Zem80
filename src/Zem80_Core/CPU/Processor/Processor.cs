@@ -153,8 +153,10 @@ namespace Zem80.Core.CPU
                     bool skipNextByte = false;
                     do
                     {
-                        // if halted, or skipping because of an instruction set error, we just provide 4 zero-bytes; otherwise, the 4 bytes at the Program Counter
                         ushort address = Registers.PC;
+                        // when the Z80 is *halted*, it doesn't stop running. It continuously executes NOP instructions until an interrupt occurs;
+                        // if halted (or skipping because of an instruction set error) we provide 4 zero-bytes; otherwise, the 4 bytes at the Program Counter
+                        // note that instructions can be 1-4 bytes long but we always send the next 4 bytes to the decoder
                         byte[] instructionBytes = (_halted || skipNextByte) ? new byte[4] : Memory.ReadBytesAt(address, 4);
 
                         // decode the bytes
@@ -176,7 +178,7 @@ namespace Zem80.Core.CPU
                         
                         RefreshMemory();
                     }
-                    while (skipNextByte); // usually false, so this runs only once; but if true, the cycle will run again immediately with a NOP
+                    while (skipNextByte); // usually false, but if true, the cycle will run again with a NOP and skip over the next byte in RAM
                 }
                 else
                 {

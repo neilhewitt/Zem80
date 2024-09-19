@@ -34,6 +34,7 @@ namespace Zem80.Core.CPU
                 if ((b0 == 0xDD || b0 == 0xFD || b0 == 0xED) && (b1 == 0xDD || b1 == 0xFD || b1 == 0xED))
                 {
                     // sequences of 0xDD / 0xFD / 0xED count as NOP until the final 0xDD / 0xFD / 0xED which is then the prefix byte
+                    // for this pair of bytes, we will decode a NOP and move the program counter on
                     instruction = InstructionSet.NOP;
                 }
                 else if ((b0 == 0xDD || b0 == 0xFD) && b1 == 0xCB)
@@ -46,7 +47,7 @@ namespace Zem80.Core.CPU
                     }
                     else
                     {
-                        data.Argument1 = b2;
+                        data.Argument1 = b2; // byte 2 is the displacement value, which goes into Argument1
                     }
                 }
                 else
@@ -66,6 +67,7 @@ namespace Zem80.Core.CPU
                     }
                     else
                     {
+                        // decode arguments and set the values accordingly
                         if (instruction.Argument1 != InstructionElement.None)
                         {
                             data.Argument1 = b2;

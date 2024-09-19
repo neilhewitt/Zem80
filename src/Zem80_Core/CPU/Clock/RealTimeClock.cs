@@ -12,7 +12,7 @@ namespace Zem80.Core.CPU
         
         private long _lastElapsedTicks;
 
-        public bool IsRealTime => true;
+        public bool IsRealTime => Stopwatch.IsHighResolution;
 
         public override void Start()
         {

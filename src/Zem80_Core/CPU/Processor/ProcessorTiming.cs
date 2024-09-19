@@ -170,10 +170,7 @@ namespace Zem80.Core.CPU
         public void BeginInterruptRequestAcknowledgeCycle(int tStates)
         {
             _cpu.IO.SetInterruptState();
-            for (int i = 0; i < tStates; i++)
-            {
-                _cpu.Clock.WaitForNextClockTick();
-            }
+            _cpu.Clock.WaitForClockTicks(tStates);
         }
 
         public void EndInterruptRequestAcknowledgeCycle()
@@ -183,10 +180,7 @@ namespace Zem80.Core.CPU
 
         public void InternalOperationCycle(int tStates)
         {
-            for (int i = 0; i < tStates; i++)
-            {
-                _cpu.Clock.WaitForNextClockTick();
-            }
+            _cpu.Clock.WaitForClockTicks(tStates);
         }
 
         private void InsertWaitCycles()

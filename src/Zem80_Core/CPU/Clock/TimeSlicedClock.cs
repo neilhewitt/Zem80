@@ -12,8 +12,6 @@ namespace Zem80.Core.CPU
         private int _ticksThisTimeSlice;
         private Timer _timer;
 
-        public bool IsTimeSliced => true;
-
         public override void Start()
         {
             _timer.Start();

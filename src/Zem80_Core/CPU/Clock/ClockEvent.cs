@@ -6,7 +6,7 @@ namespace Zem80.Core.CPU
     public class ClockEvent
     {
         private Action _callback;
-        private DefaultClock _clock;
+        private IClock _clock;
         bool _repeats;
 
         public long TicksToWait { get; init; }
@@ -28,7 +28,7 @@ namespace Zem80.Core.CPU
             }
         }
 
-        public ClockEvent(DefaultClock clock, long ticksToWait, Action callback, bool repeats)
+        public ClockEvent(IClock clock, long ticksToWait, Action callback, bool repeats)
         {
             TicksToWait = ticksToWait;
             _callback = callback;

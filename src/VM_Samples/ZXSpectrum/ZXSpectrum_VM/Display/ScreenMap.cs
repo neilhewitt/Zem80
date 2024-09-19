@@ -15,7 +15,6 @@ namespace ZXSpectrum.VM
         private byte[] _rgba;
         private IDictionary<int, ushort> _screenLineAddresses;
 
-
         public ColourValue BorderColour => _border;
         public PixelMap PixelMap => _pixels;
         public AttributeMap AttributeMap => _attributes;
