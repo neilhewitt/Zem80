@@ -92,21 +92,18 @@ namespace Zem80.Core.CPU
             Set16BitValue(offset + 8, value);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private byte GetRegister(ByteRegister register)
         {
             if (register == ByteRegister.None) return 0xFF;
             return _registers[(int)register];
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ushort GetRegisterPair(WordRegister registerPair)
         {
             if (registerPair == WordRegister.None) return 0xFFFF;
             return Get16BitValue((int)registerPair);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetRegister(ByteRegister register, byte value)
         {
             if (register != ByteRegister.None)
@@ -115,7 +112,6 @@ namespace Zem80.Core.CPU
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetRegisterPair(WordRegister registerPair, ushort value)
         {
             if (registerPair != WordRegister.None)
@@ -124,13 +120,11 @@ namespace Zem80.Core.CPU
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ushort Get16BitValue(int offset)
         {
             return (ushort)((_registers[offset] * 256) + _registers[offset + 1]);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Set16BitValue(int offset, ushort value)
         {
             _registers[offset] = (byte)(value / 256);

@@ -7,7 +7,6 @@ namespace Zem80.Core.CPU
 {
     public static class InstructionElementExtensions
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static WordRegister AsWordRegister(this InstructionElement argument)
         {
             argument = argument switch
@@ -34,7 +33,6 @@ namespace Zem80.Core.CPU
             return register;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ByteRegister AsByteRegister(this InstructionElement argument)
         {
             ByteRegister register = argument switch
@@ -59,7 +57,6 @@ namespace Zem80.Core.CPU
             return register;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsAddressFromIndexAndOffset(this InstructionElement argument)
         {
             return argument == InstructionElement.AddressFromIXAndOffset || argument == InstructionElement.AddressFromIYAndOffset;
