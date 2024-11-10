@@ -21,9 +21,7 @@ namespace Zem80.Core.CPU
             if (register != ByteRegister.None)
             {
                 original = r[register];
-                shifted = (byte)(original >> 1);
-                shifted = shifted.SetBit(7, previousCarry);
-                setFlags(original, shifted, original.GetBit(0));
+                (shifted, flags)  = BitwiseOperations.RotateRightThroughCarry(original, flags);
                 r[register] = shifted;
             }
             else
@@ -36,23 +34,13 @@ namespace Zem80.Core.CPU
                     _ => (ushort)0xFFFF
                 };
                 original = cpu.Memory.ReadByteAt(address, 4);
-                shifted = (byte)(original >> 1);
-                shifted = shifted.SetBit(7, previousCarry);
-                setFlags(original, shifted, original.GetBit(0));
+                (shifted, flags) = BitwiseOperations.RotateRightThroughCarry(original, flags);
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(4);
                 cpu.Memory.WriteByteAt(address, shifted, 3);
                 if (instruction.CopiesResultToRegister)
                 {
                     r[instruction.CopyResultTo] = shifted;
                 }
-            }
-
-            void setFlags(byte original, byte shifted, bool overflowBit)
-            {
-                flags = FlagLookup.BitwiseFlags(original, BitwiseOperation.RotateRightThroughCarry, previousCarry);
-                flags.Carry = overflowBit;
-                flags.HalfCarry = false;
-                flags.Subtract = false;
             }
 
             return new ExecutionResult(package, flags);

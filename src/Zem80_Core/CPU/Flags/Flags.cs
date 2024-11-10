@@ -7,16 +7,19 @@ namespace Zem80.Core.CPU
 {
     public class Flags : IReadOnlyFlags
     {
+        public static FlagState All => FlagState.Carry | FlagState.Subtract | FlagState.ParityOverflow | FlagState.X | FlagState.HalfCarry | FlagState.Y | FlagState.Zero | FlagState.Sign;
+        public static FlagState None => FlagState.None;
+
         private byte _flagByte;
 
-        public bool Sign { get { return _flagByte.GetBit(7); } set { CheckReadOnly(); _flagByte = _flagByte.SetBit(7, value); } }
-        public bool Zero { get { return _flagByte.GetBit(6); } set { CheckReadOnly(); _flagByte = _flagByte.SetBit(6, value); } }
-        public bool Y { get { return _flagByte.GetBit(5); } set { CheckReadOnly(); _flagByte = _flagByte.SetBit(5, value); } }
-        public bool HalfCarry { get { return _flagByte.GetBit(4); } set { CheckReadOnly(); _flagByte = _flagByte.SetBit(4, value); } }
-        public bool X { get { return _flagByte.GetBit(3); } set { CheckReadOnly(); _flagByte = _flagByte.SetBit(3, value); } }
-        public bool ParityOverflow { get { return _flagByte.GetBit(2); } set { CheckReadOnly(); _flagByte = _flagByte.SetBit(2, value); } }
-        public bool Subtract { get { return _flagByte.GetBit(1); } set { CheckReadOnly(); _flagByte = _flagByte.SetBit(1, value); } }
-        public bool Carry { get { return _flagByte.GetBit(0); } set { CheckReadOnly(); _flagByte = _flagByte.SetBit(0, value); } }
+        public bool Sign { get { return (byte)(_flagByte & 0x80) > 0; } set { _flagByte = ReadOnly ? _flagByte : value ? (byte)(_flagByte | 0x80) : (byte)(_flagByte & ~0x80); } }
+        public bool Zero { get { return (byte)(_flagByte & 0x40) > 0; } set { _flagByte = ReadOnly ? _flagByte : value ? (byte)(_flagByte | 0x40) : (byte)(_flagByte & ~0x40); } }
+        public bool Y { get { return (byte)(_flagByte & 0x20) > 0; } set { _flagByte = ReadOnly ? _flagByte : value ? (byte)(_flagByte | 0x20) : (byte)(_flagByte & ~0x20); } }
+        public bool HalfCarry { get { return (byte)(_flagByte & 0x10) > 0; } set { _flagByte = ReadOnly ? _flagByte : value ? (byte)(_flagByte | 0x10) : (byte)(_flagByte & ~0x10); } }
+        public bool X { get { return (byte)(_flagByte & 0x08) > 0; } set { _flagByte = ReadOnly ? _flagByte : value ? (byte)(_flagByte | 0x08) : (byte)(_flagByte & ~0x08); } }
+        public bool ParityOverflow { get { return (byte)(_flagByte & 0x04) > 0; } set { _flagByte = ReadOnly ? _flagByte : value ? (byte)(_flagByte | 0x04) : (byte)(_flagByte & ~0x04); } }
+        public bool Subtract { get { return (byte)(_flagByte & 0x02) > 0; } set { _flagByte = ReadOnly ? _flagByte : value ? (byte)(_flagByte | 0x02) : (byte)(_flagByte & ~0x02); } }
+        public bool Carry { get { return (byte)(_flagByte & 0x01) > 0; } set { _flagByte = ReadOnly ? _flagByte : value ? (byte)(_flagByte | 0x01) : (byte)(_flagByte & ~0x01); } }
 
         public byte Value { get { return _flagByte; } }
 
@@ -67,13 +70,14 @@ namespace Zem80.Core.CPU
             return new Flags(_flagByte);
         }
 
-        private void CheckReadOnly()
-        {
-            if (ReadOnly) throw new InvalidOperationException("This flags object is read-only and cannot be written to.");
-        }
-
         public Flags()
         {
+        }
+
+        public Flags(FlagState flags, bool readOnly = false)
+        {
+            _flagByte = (byte)flags;
+            ReadOnly = readOnly;
         }
 
         public Flags(byte flags, bool readOnly = false)

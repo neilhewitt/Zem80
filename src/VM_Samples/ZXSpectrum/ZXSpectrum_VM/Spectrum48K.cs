@@ -232,7 +232,7 @@ namespace ZXSpectrum.VM
                 // ULA will respond to all even port numbers - this is
                 // a supreme Sinclair hack, but it works well
 
-                if (portAddress.LowByte() == 0xFE) // PORT OxFE
+                if (portAddress.LowByte() == 0xFE)
                 {
                     _ula.SetBorderColour(output);
                 }

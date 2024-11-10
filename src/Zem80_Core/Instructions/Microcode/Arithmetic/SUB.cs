@@ -16,7 +16,7 @@ namespace Zem80.Core.CPU
             byte right = instruction.MarshalSourceByte(data, cpu, 3);
 
             if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-            var sub = ALUOperations.Subtract(left, right, false);
+            var sub = ArithmeticOperations.Subtract(left, right, false);
             r.A = sub.Result;
 
             return new ExecutionResult(package, sub.Flags);

@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Zem80.Core.CPU;
-using Zem80.Core.CPU;
 using ZexNext.Core;
 
 namespace Zem80.Core.Tests.Zexall
@@ -18,11 +17,16 @@ namespace Zem80.Core.Tests.Zexall
     {
         private Processor _cpu;
         private TestRunner _runner;
+        private bool _runZexall;
+        private bool _runZexdoc;
 
         [OneTimeSetUp]
         public void Setup()
         {
             _cpu = new Processor();
+
+            _runZexall = true;
+            _runZexdoc = false;
 
             // set up the ZexNext test runner using the zipped test file (zexall.zip)
             Task.Run(() => _runner = new TestRunner(
@@ -96,6 +100,8 @@ namespace Zem80.Core.Tests.Zexall
         [TestCase("ld (<bc,de>),a")]
         public void Zexall(string testSetName)
         {
+            if (!_runZexall) return;
+
             // this is basically ZexNext tests running inside NUnit tests as a host
 
             // ensure the Visual Studio UI remains responsive while the tests are loading and compiling
@@ -171,6 +177,8 @@ namespace Zem80.Core.Tests.Zexall
         [TestCase("ld (<bc,de>),a")]
         public void Zexdoc(string testSetName)
         {
+            if (!_runZexdoc) return;
+
             // this is basically ZexNext tests running inside NUnit tests as a host
 
             // ensure the Visual Studio UI remains responsive while the tests are loading and compiling

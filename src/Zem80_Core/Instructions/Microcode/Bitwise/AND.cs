@@ -14,8 +14,7 @@ namespace Zem80.Core.CPU
 
             if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
             byte operand = instruction.MarshalSourceByte(data, cpu, 3);
-            int result = (r.A & operand);
-            Flags flags = FlagLookup.LogicalFlags(r.A, operand, LogicalOperation.And);
+            (int result, Flags flags) = LogicalOperations.And(r.A, operand);
             r.A = (byte)result;            
 
             return new ExecutionResult(package, flags);

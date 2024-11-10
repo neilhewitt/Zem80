@@ -12,7 +12,7 @@ namespace Zem80.Core.CPU
             byte a = cpu.Registers.A;
             byte b = cpu.Memory.ReadByteAt(cpu.Registers.HL, 3);
 
-            var compare = ALUOperations.Subtract(a, b, false);
+            var compare = ArithmeticOperations.Subtract(a, b, false);
             Flags flags = compare.Flags;
 
             cpu.Registers.BC--;

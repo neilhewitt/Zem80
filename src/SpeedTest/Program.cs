@@ -14,8 +14,8 @@ int[] cpuWaitPattern = new int[] {
             };
 
 Processor cpu = new Processor(clock:
-    ClockMaker.TimeSlicedClock(3.5f, TimeSpan.FromMilliseconds(5))); 
-    //ClockMaker.RealTimeClock(4));//, cpuWaitPattern));
+    ClockMaker.TimeSlicedClock(3.5f, TimeSpan.FromMilliseconds(5)));
+//ClockMaker.RealTimeClock(4));//, cpuWaitPattern));
 Instruction lde = InstructionSet.Instructions[0x1E];
 int ticks = ((lde.MachineCycles.TStates * 10000) + 4); // +4 is for the final HALT instruction
 
@@ -46,7 +46,7 @@ while (!quit)
         cpu.Start(endOnHalt: true);
         cpu.RunUntilStopped();
         long ticksOut = cpu.Clock.Ticks;
-        Console.WriteLine($"Was {ticksOut - ticksIn} ticks, should be { ticks} ticks.");
+        Console.WriteLine($"Was {ticksOut - ticksIn} ticks, should be {ticks} ticks.");
         // should be 40ms
         Console.WriteLine($"Elapsed was {cpu.LastRunTime.Milliseconds}ms, should be 10ms");
     }

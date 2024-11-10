@@ -38,9 +38,15 @@ namespace Zem80.Core.CPU
                     r[register] = (byte)(value - 1);
                 }
 
+                int result = value - 1;
                 bool carry = flags.Carry;
-                flags = FlagLookup.ByteArithmeticFlags(value, 1, false, true);
+                flags.Zero = ((byte)result == 0);
+                flags.Sign = ((sbyte)result < 0);
+                flags.HalfCarry = ((value ^ (byte)(result & 0xFF) ^ 1) & 0x10) != 0;
                 flags.ParityOverflow = (value == 0x80);
+                flags.Subtract = true;
+                flags.X = (result & 0x08) > 0; // copy bit 3
+                flags.Y = (result & 0x20) > 0; // copy bit 5
                 flags.Carry = carry; // always unaffected
             }
 

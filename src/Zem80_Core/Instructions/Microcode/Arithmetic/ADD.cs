@@ -23,7 +23,7 @@ namespace Zem80.Core.CPU
 
                 cpu.Timing.InternalOperationCycle(4);
                 cpu.Timing.InternalOperationCycle(3);
-                var sum = ALUOperations.Add(left, right, false, false, flags);
+                var sum = ArithmeticOperations.Add(left, right, false, false, flags);
                 r[destination] = sum.Result;
                 flags = sum.Flags;
                 r.WZ = (ushort)(left + 1);
@@ -35,7 +35,7 @@ namespace Zem80.Core.CPU
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
                 byte right = instruction.MarshalSourceByte(data, cpu, 3);
 
-                var sum = ALUOperations.Add(left, right, false);
+                var sum = ArithmeticOperations.Add(left, right, false);
                 r.A = sum.Result;
                 flags = sum.Flags;
             }

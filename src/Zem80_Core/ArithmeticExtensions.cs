@@ -4,9 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Zem80.Core.CPU;
 
 namespace Zem80.Core
 {
+
     public static class ArithmeticExtensions
     {
         public static byte LowByte(this ushort input)
@@ -105,6 +107,28 @@ namespace Zem80.Core
             }
 
             return bits;
+        }
+
+        public static byte RotateLeft(this byte input)
+        {
+            return (byte)((input << 1) | (input >> 7));
+        }
+
+        public static byte RotateRight(this byte input)
+        {
+            return (byte)((input >> 1) | (input << 7));
+        }
+
+        public static byte RotateLeftThroughCarry(this byte input, bool carryIn, out bool carryOut)
+        {
+            carryOut = (input & 0x80) > 0;
+            return (byte)((input << 1) | (carryIn ? 1 : 0)); ;
+        }
+
+        public static byte RotateRightThroughCarry(this byte input, bool carryIn, out bool carryOut)
+        {
+            carryOut = (input & 0x01) > 0;
+            return (byte)((input >> 1) | (carryIn ? 0x80 : 0));
         }
 
         public static byte Invert(this byte input)

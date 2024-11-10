@@ -15,22 +15,14 @@ namespace Zem80.Core.CPU
             sbyte offset = (sbyte)(data.Argument1);
             ByteRegister register = instruction.Target.AsByteRegister();
 
-            void setFlags(byte original)
-            {
-                flags = FlagLookup.BitwiseFlags(original, BitwiseOperation.ShiftLeft, flags.Carry);
-                flags.Carry = original.GetBit(7);
-                flags.HalfCarry = false;
-                flags.Subtract = false;
-            }
-
             byte original, shifted;
             if (register != ByteRegister.None)
             {
                 original = r[register];
-                shifted = (byte)(original << 1);
-                shifted = shifted.SetBit(0, false);
-                setFlags(original);
-                r[register] = shifted;
+
+                (shifted, flags) = BitwiseOperations.ShiftLeftResetBit0(original, flags);
+
+                r[register] = shifted;                
             }
             else
             {
@@ -41,12 +33,14 @@ namespace Zem80.Core.CPU
                     0xFDCB => (ushort)(r.IY + offset),
                     _ => (ushort)0xFFFF
                 };
+                
                 original = cpu.Memory.ReadByteAt(address, 4);
-                shifted = (byte)(original << 1);
-                shifted = shifted.SetBit(0, false);
-                setFlags(original);
+
+                (shifted, flags) = BitwiseOperations.ShiftLeftResetBit0(original, flags);
+
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(4);
                 cpu.Memory.WriteByteAt(address, shifted, 3);
+
                 if (instruction.CopiesResultToRegister)
                 {
                     r[instruction.CopyResultTo] = shifted;

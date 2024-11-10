@@ -20,7 +20,7 @@ namespace Zem80.Core.CPU
                 cpu.Timing.InternalOperationCycle(3);
                 ushort right = instruction.MarshalSourceWord(data, cpu, 3);
 
-                var subtraction = ALUOperations.Subtract(left, right, flags.Carry, true, flags);
+                var subtraction = ArithmeticOperations.Subtract(left, right, flags.Carry, true, flags);
                 r.HL = subtraction.Result;
                 flags = subtraction.Flags;
                 r.WZ = (ushort)(left + 1);
@@ -31,7 +31,7 @@ namespace Zem80.Core.CPU
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
                 byte right = instruction.MarshalSourceByte(data, cpu, 3);
 
-                var subtraction = ALUOperations.Subtract(left, right, flags.Carry);
+                var subtraction = ArithmeticOperations.Subtract(left, right, flags.Carry);
                 r.A = subtraction.Result;
                 flags = subtraction.Flags;
             }
