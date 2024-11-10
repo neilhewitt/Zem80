@@ -26,32 +26,32 @@
         private byte _defaultDataBusValue = 0;
 
         public ushort ADDRESS_BUS { get; private set; }
-        public bool A0 { get { return ADDRESS_BUS.GetBit(0); } }
-        public bool A1 { get { return ADDRESS_BUS.GetBit(1); } }
-        public bool A2 { get { return ADDRESS_BUS.GetBit(2); } }
-        public bool A3 { get { return ADDRESS_BUS.GetBit(3); } }
-        public bool A4 { get { return ADDRESS_BUS.GetBit(4); } }
-        public bool A5 { get { return ADDRESS_BUS.GetBit(5); } }
-        public bool A6 { get { return ADDRESS_BUS.GetBit(6); } }
-        public bool A7 { get { return ADDRESS_BUS.GetBit(7); } }
-        public bool A8 { get { return ADDRESS_BUS.GetBit(8); } }
-        public bool A9 { get { return ADDRESS_BUS.GetBit(9); } }
-        public bool A10 { get { return ADDRESS_BUS.GetBit(10); } }
-        public bool A11 { get { return ADDRESS_BUS.GetBit(11); } }
-        public bool A12 { get { return ADDRESS_BUS.GetBit(12); } }
-        public bool A13 { get { return ADDRESS_BUS.GetBit(13); } }
-        public bool A14 { get { return ADDRESS_BUS.GetBit(14); } }
-        public bool A15 { get { return ADDRESS_BUS.GetBit(15); } }
+        public bool A0 { get { return (ADDRESS_BUS & 0x01) != 0; } }
+        public bool A1 { get { return (ADDRESS_BUS & 0x02) != 0; } }
+        public bool A2 { get { return (ADDRESS_BUS & 0x04) != 0; } }
+        public bool A3 { get { return (ADDRESS_BUS & 0x08) != 0; } }
+        public bool A4 { get { return (ADDRESS_BUS & 0x10) != 0; } }
+        public bool A5 { get { return (ADDRESS_BUS & 0x20) != 0; } }
+        public bool A6 { get { return (ADDRESS_BUS & 0x40) != 0; } }
+        public bool A7 { get { return (ADDRESS_BUS & 0x80) != 0; } }
+        public bool A8 { get { return (ADDRESS_BUS & 0x100) != 0; } }
+        public bool A9 { get { return (ADDRESS_BUS & 0x200) != 0; } }
+        public bool A10 { get { return (ADDRESS_BUS & 0x400) != 0; } }
+        public bool A11 { get { return (ADDRESS_BUS & 0x800) != 0; } }
+        public bool A12 { get { return (ADDRESS_BUS & 0x1000) != 0; } }
+        public bool A13 { get { return (ADDRESS_BUS & 0x2000) != 0; } }
+        public bool A14 { get { return (ADDRESS_BUS & 0x4000) != 0; } }
+        public bool A15 { get { return (ADDRESS_BUS & 0x8000) != 0; } }
 
         public byte DATA_BUS { get; private set; }
-        public bool D0 { get { return DATA_BUS.GetBit(0); } }
-        public bool D1 { get { return DATA_BUS.GetBit(1); } }
-        public bool D2 { get { return DATA_BUS.GetBit(2); } }
-        public bool D3 { get { return DATA_BUS.GetBit(3); } }
-        public bool D4 { get { return DATA_BUS.GetBit(4); } }
-        public bool D5 { get { return DATA_BUS.GetBit(5); } }
-        public bool D6 { get { return DATA_BUS.GetBit(6); } }
-        public bool D7 { get { return DATA_BUS.GetBit(7); } }
+        public bool D0 { get { return (DATA_BUS & 0x01) != 0; } }
+        public bool D1 { get { return (DATA_BUS & 0x02) != 0; } }
+        public bool D2 { get { return (DATA_BUS & 0x04) != 0; } }
+        public bool D3 { get { return (DATA_BUS & 0x08) != 0    ; } }
+        public bool D4 { get { return (DATA_BUS & 0x10) != 0; } }
+        public bool D5 { get { return (DATA_BUS & 0x20) != 0; } }
+        public bool D6 { get { return (DATA_BUS & 0x40) != 0; } }
+        public bool D7 { get { return (DATA_BUS & 0x80) != 0; } }
 
         public bool MREQ { get; private set; }
         public bool IORQ { get; private set; }

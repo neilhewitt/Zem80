@@ -892,7 +892,7 @@ namespace Zem80.Core.CPU
                     {
                         if (i != 6)
                         {
-                            byte opcode = instruction.LastOpcodeByte.SetBits(0, false, false, false);
+                            byte opcode = (byte)(instruction.LastOpcodeByte & 0xF8);
                             opcode += (byte)i;
 
                             string opcodeAsString = instruction.OpcodeString.Substring(0, 4);
