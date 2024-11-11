@@ -2,10 +2,8 @@
 {
     public enum BitwiseOperation
     {
-        ShiftLeft, 
         ShiftLeftSetBit0,
         ShiftLeftResetBit0,
-        ShiftRight, 
         ShiftRightPreserveBit7,
         ShiftRightResetBit7,
         RotateLeft, 

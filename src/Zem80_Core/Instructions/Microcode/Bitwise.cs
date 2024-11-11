@@ -4,11 +4,6 @@ namespace Zem80.Core.CPU
 {
     public static class Bitwise
     {
-        public static (byte Result, Flags Flags) ShiftLeft(this byte value, Flags currentFlags, FlagState? flagsToSet = null)
-        {
-            return BitwiseFlags(value, BitwiseOperation.ShiftLeft, currentFlags, flagsToSet);
-        }
-
         public static (byte Result, Flags Flags) ShiftLeftSetBit0(this byte value, Flags currentFlags, FlagState? flagsToSet = null)
         {
             return BitwiseFlags(value, BitwiseOperation.ShiftLeftSetBit0, currentFlags, flagsToSet);
@@ -17,11 +12,6 @@ namespace Zem80.Core.CPU
         public static (byte Result, Flags Flags) ShiftLeftResetBit0(this byte value, Flags currentFlags, FlagState? flagsToSet = null)
         {
             return BitwiseFlags(value, BitwiseOperation.ShiftLeftResetBit0, currentFlags, flagsToSet);
-        }
-
-        public static (byte Result, Flags Flags) ShiftRight(this byte value, Flags currentFlags, FlagState? flagsToSet = null)
-        {
-            return BitwiseFlags(value, BitwiseOperation.ShiftRight, currentFlags, flagsToSet);
         }
 
         public static (byte Result, Flags Flags) ShiftRightPreserveBit7(this byte value, Flags currentFlags, FlagState? flagsToSet = null)
@@ -56,17 +46,17 @@ namespace Zem80.Core.CPU
 
         private static (byte Result, Flags Flags) BitwiseFlags(byte value, BitwiseOperation operation, Flags flags, FlagState? flagsToSet)
         {
-            Flags set = new Flags(flagsToSet ?? Flags.All); // to easily check if we should set a flag
+            // some bitwise instructions don't set all flags; the FlagState parameter allows the caller to specify which flags to set
+            // we turn this into a Flags object here so we can easily check for the presence of flags
+            Flags set = new Flags(flagsToSet ?? Flags.All); // if no FlagState is provided, set all flags
 
             byte leftCarry = (byte)(flags.Carry ? 0x01 : 0);
             byte rightCarry = (byte)(flags.Carry ? 0x80 : 0);
 
             int result = operation switch
             {
-                BitwiseOperation.ShiftLeft => (value << 1),
                 BitwiseOperation.ShiftLeftSetBit0 => (value << 1) + 1,
                 BitwiseOperation.ShiftLeftResetBit0 => ((value << 1) & ~0x01),
-                BitwiseOperation.ShiftRight => value >> 1,
                 BitwiseOperation.ShiftRightPreserveBit7 => ((byte)(value >> 1 | (value & 0x80))),
                 BitwiseOperation.ShiftRightResetBit7 => ((byte)((value >> 1) & ~0x80)),
                 BitwiseOperation.RotateLeft => ((byte)(value << 1 | value >> 7)),
@@ -80,10 +70,8 @@ namespace Zem80.Core.CPU
             {
                 flags.Carry = operation switch
                 {
-                    BitwiseOperation.ShiftLeft => (byte)(value & 0x80) > 0,
                     BitwiseOperation.ShiftLeftSetBit0 => (byte)(value & 0x80) > 0,
                     BitwiseOperation.ShiftLeftResetBit0 => (byte)(value & 0x80) > 0,
-                    BitwiseOperation.ShiftRight => (byte)(value & 0x01) > 0,
                     BitwiseOperation.ShiftRightPreserveBit7 => (byte)(value & 0x01) > 0,
                     BitwiseOperation.ShiftRightResetBit7 => (byte)(value & 0x01) > 0,
                     BitwiseOperation.RotateLeft => (byte)(value & 0x80) > 0,
