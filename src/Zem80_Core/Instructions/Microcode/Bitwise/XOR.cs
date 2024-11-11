@@ -13,8 +13,8 @@ namespace Zem80.Core.CPU
             IRegisters r = cpu.Registers;
 
             if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-            byte operand = instruction.MarshalSourceByte(data, cpu, out ushort address, 3);
-            (int result, Flags flags) = LogicalOperations.Xor(r.A, operand);
+            byte operand = Resolver.GetSourceByte(instruction, data, cpu, out ushort address, 3);
+            (int result, Flags flags) = Logical.Xor(r.A, operand);
             r.A = (byte)result;
 
             return new ExecutionResult(package, flags);

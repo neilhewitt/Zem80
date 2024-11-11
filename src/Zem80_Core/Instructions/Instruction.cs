@@ -23,6 +23,7 @@ namespace Zem80.Core.CPU
         public bool PerformsIO { get; private set; }
         public bool HasIntermediateDisplacementByte { get; private set; }
         public bool IsLoopingInstruction { get; private set; }
+        public byte BitIndex { get; private set; }
         public IMicrocode Microcode { get; private set; }
         public InstructionElement Target { get; private set; }
         public InstructionElement Source { get; private set; }
@@ -56,6 +57,7 @@ namespace Zem80.Core.CPU
                 OpcodeBytes[i] = Convert.ToByte(fullOpcode.Substring(i * 2, 2), 16);
             }
             LastOpcodeByte = OpcodeBytes.Last();
+            BitIndex = LastOpcodeByte.GetByteFromBits(3, 3);
 
             Mnemonic = mnemonic;
             SizeInBytes = sizeInBytes;

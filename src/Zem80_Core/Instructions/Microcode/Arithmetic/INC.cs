@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.SymbolStore;
 using System.Text;
 
 namespace Zem80.Core.CPU
@@ -28,7 +27,7 @@ namespace Zem80.Core.CPU
                 {
                     // inc byte in memory
                     if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-                    value = instruction.MarshalSourceByte(data, cpu, out ushort address, 4);
+                    value = Resolver.GetSourceByte(instruction, data, cpu, out ushort address, 4);
                     cpu.Memory.WriteByteAt(address, (byte)(value + 1), 3);
                 }
                 else

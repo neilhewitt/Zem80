@@ -2,7 +2,7 @@
 
 namespace Zem80.Core.CPU
 {
-    public static class BitwiseOperations
+    public static class Bitwise
     {
         public static (byte Result, Flags Flags) ShiftLeft(this byte value, Flags currentFlags, FlagState? flagsToSet = null)
         {

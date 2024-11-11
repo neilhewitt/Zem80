@@ -1,6 +1,6 @@
 ﻿namespace Zem80.Core.CPU
 {
-    public static class LogicalOperations
+    public static class Logical
     {
         public static (byte Result, Flags Flags) And(this byte first, byte second)
         {

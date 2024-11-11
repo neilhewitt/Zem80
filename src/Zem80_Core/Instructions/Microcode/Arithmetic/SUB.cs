@@ -13,13 +13,11 @@ namespace Zem80.Core.CPU
             IRegisters r = cpu.Registers;
 
             byte left = r.A;
-            byte right = instruction.MarshalSourceByte(data, cpu, 3);
-
+            byte right = Resolver.GetSourceByte(instruction, data, cpu, 3);
             if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-            var sub = ArithmeticOperations.Subtract(left, right, false);
-            r.A = sub.Result;
+            (r.A, Flags flags) = Arithmetic.Subtract(left, right, false);
 
-            return new ExecutionResult(package, sub.Flags);
+            return new ExecutionResult(package, flags);
         }
 
         public SUB()

@@ -12,7 +12,7 @@ namespace Zem80.Core.CPU
             IRegisters r = cpu.Registers;
 
             byte value = r.A;
-            (value, flags) = BitwiseOperations.RotateRightThroughCarry(value, flags, FlagState.Carry | FlagState.HalfCarry | FlagState.Subtract | FlagState.X | FlagState.Y);
+            (value, flags) = Bitwise.RotateRightThroughCarry(value, flags, FlagState.Carry | FlagState.HalfCarry | FlagState.Subtract | FlagState.X | FlagState.Y);
             r.A = value;
 
             return new ExecutionResult(package, flags);

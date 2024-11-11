@@ -13,7 +13,7 @@ namespace Zem80.Core.CPU
             IRegisters r = cpu.Registers;
             Flags flags = cpu.Flags.Clone();
 
-            byte bitIndex = instruction.GetBitIndex();
+            byte bitIndex = instruction.BitIndex;
             byte value;
             bool set;
             ByteRegister register = instruction.Source.AsByteRegister();
@@ -28,7 +28,7 @@ namespace Zem80.Core.CPU
             else // BIT b,(IX/IY+d) or BIT b,(HL)
             {
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-                value = instruction.MarshalSourceByte(data, cpu, out ushort address, 4);
+                value = Resolver.GetSourceByte(instruction, data, cpu, out ushort address, 4);
                 set = (value & (1 << bitIndex)) != 0;
                 byte valueXY = instruction.IsIndexed ? address.HighByte() : r.WZ.HighByte(); // this is literally the only place the WZ value is *ever* actually used
                 flags.X = (valueXY & 0x08) > 0; // copy bit 3

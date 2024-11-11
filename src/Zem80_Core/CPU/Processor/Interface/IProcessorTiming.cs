@@ -16,6 +16,7 @@ namespace Zem80.Core.CPU
         void EndStackReadCycle(byte data);
         void EndStackWriteCycle();
         void InternalOperationCycle(int tStates);
+        void InternalOperationCycles(params int[] tStates);
         void MemoryReadCycle(ushort address, byte data, byte tStates);
         void MemoryWriteCycle(ushort address, byte data, byte tStates);
         void OpcodeFetchCycle(ushort address, byte opcode, byte tStates);

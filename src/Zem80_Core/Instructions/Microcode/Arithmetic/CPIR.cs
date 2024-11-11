@@ -8,10 +8,26 @@ namespace Zem80.Core.CPU
     {
         public ExecutionResult Execute(Processor cpu, InstructionPackage package)
         {
-            CPI cpi = new CPI();
-            ExecutionResult result = cpi.Execute(cpu, package);
+            bool carry = cpu.Flags.Carry;
+            byte a = cpu.Registers.A;
+            byte b = cpu.Memory.ReadByteAt(cpu.Registers.HL, 3);
 
-            if (result.Flags.Zero || !result.Flags.ParityOverflow)
+            (byte result, Flags flags) = Arithmetic.Subtract(a, b, false);
+
+            cpu.Registers.BC--;
+            flags.ParityOverflow = (cpu.Registers.BC != 0);
+            cpu.Registers.HL++;
+
+            flags.Subtract = true;
+            flags.Carry = carry;
+            byte valueXY = (byte)(a - b - (flags.HalfCarry ? 1 : 0));
+            flags.X = (valueXY & 0x08) > 0; // copy bit 3
+            flags.Y = (valueXY & 0x02) > 0; // copy bit 1 (note: non-standard behaviour)
+
+            cpu.Registers.WZ++;
+            cpu.Timing.InternalOperationCycle(5);
+
+            if (flags.Zero || !flags.ParityOverflow)
             {
                 cpu.Timing.InternalOperationCycle(5);
             }
@@ -21,7 +37,7 @@ namespace Zem80.Core.CPU
                 cpu.Registers.WZ = (ushort)(cpu.Registers.PC + 1);
             }
 
-            return new ExecutionResult(package, result.Flags);
+            return new ExecutionResult(package, flags);
         }
 
         public CPIR()

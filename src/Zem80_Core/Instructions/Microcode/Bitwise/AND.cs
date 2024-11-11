@@ -13,8 +13,8 @@ namespace Zem80.Core.CPU
             IRegisters r = cpu.Registers;
 
             if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-            byte operand = instruction.MarshalSourceByte(data, cpu, 3);
-            (int result, Flags flags) = LogicalOperations.And(r.A, operand);
+            byte operand = Resolver.GetSourceByte(instruction, data, cpu, 3);
+            (int result, Flags flags) = Logical.And(r.A, operand);
             r.A = (byte)result;            
 
             return new ExecutionResult(package, flags);

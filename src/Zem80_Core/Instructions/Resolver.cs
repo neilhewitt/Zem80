@@ -5,19 +5,14 @@ using System.Runtime.CompilerServices;
 
 namespace Zem80.Core.CPU
 {
-    public static class InstructionExtensions
+    public static class Resolver
     {
-        public static byte GetBitIndex(this Instruction instruction)
+        public static byte GetSourceByte(Instruction instruction, InstructionData data, Processor cpu, byte memoryReadTStates)
         {
-            return instruction.LastOpcodeByte.GetByteFromBits(3, 3);
+            return GetSourceByte(instruction, data, cpu, out ushort _, memoryReadTStates);
         }
 
-        public static byte MarshalSourceByte(this Instruction instruction, InstructionData data, Processor cpu, byte memoryReadTStates)
-        {
-            return MarshalSourceByte(instruction, data, cpu, out ushort _, memoryReadTStates);
-        }
-
-        public static byte MarshalSourceByte(this Instruction instruction, InstructionData data, Processor cpu, out ushort address, byte memoryReadTStates)
+        public static byte GetSourceByte(Instruction instruction, InstructionData data, Processor cpu, out ushort address, byte memoryReadTStates)
         {
             // this fetches a byte operand value for the instruction given, adjusting how it is fetched based on the addressing of the instruction
 
@@ -67,7 +62,7 @@ namespace Zem80.Core.CPU
             return value;
         }
 
-        public static ushort MarshalSourceWord(this Instruction instruction, InstructionData data, Processor cpu, byte memoryReadTStates)
+        public static ushort GetSourceWord(Instruction instruction, InstructionData data, Processor cpu, byte memoryReadTStates)
         {
             IRegisters r = cpu.Registers;
             ushort address = 0x0000;
@@ -98,6 +93,19 @@ namespace Zem80.Core.CPU
             }
 
             return value;
+        }
+
+        public static ushort GetSourceAddress(Instruction instruction, Processor cpu, sbyte offset)
+        {
+            IRegisters r = cpu.Registers;
+            ushort address = instruction.Prefix switch
+            {
+                0xCB => r.HL,
+                0xDDCB => (ushort)(r.IX + offset),
+                0xFDCB => (ushort)(r.IY + offset),
+                _ => (ushort)0xFFFF
+            };
+            return address;
         }
     }
 }

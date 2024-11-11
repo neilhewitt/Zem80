@@ -183,6 +183,14 @@ namespace Zem80.Core.CPU
             _cpu.Clock.WaitForClockTicks(tStates);
         }
 
+        public void InternalOperationCycles(params int[] tStates)
+        {
+            foreach(int t in tStates)
+            {
+                _cpu.Clock.WaitForClockTicks(t);
+            }
+        }
+
         private void InsertWaitCycles()
         {
             int cyclesToAdd = _waitCyclesPending;

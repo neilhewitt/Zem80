@@ -31,7 +31,7 @@ namespace Zem80.Core.CPU
             }
             else
             {
-                r.PC = package.InstructionAddress;
+                r.PC = package.InstructionAddress; // repeat the instruction until BC is zero
             }
 
             return new ExecutionResult(package, flags);

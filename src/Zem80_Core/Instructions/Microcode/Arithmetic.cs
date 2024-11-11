@@ -6,7 +6,7 @@ using Zem80.Core.CPU;
 
 namespace Zem80.Core.CPU
 {
-    public static class ArithmeticOperations
+    public static class Arithmetic
     {
         public static (byte Result, Flags Flags) Add(byte left, byte right, bool carry)
         {

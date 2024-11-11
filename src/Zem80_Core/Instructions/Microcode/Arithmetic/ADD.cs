@@ -19,13 +19,9 @@ namespace Zem80.Core.CPU
                 // it's one of the 16-bit adds (HL,DE etc)
                 WordRegister destination = instruction.Target.AsWordRegister();
                 ushort left = r[destination];
-                ushort right = instruction.MarshalSourceWord(data, cpu, 3);
-
-                cpu.Timing.InternalOperationCycle(4);
-                cpu.Timing.InternalOperationCycle(3);
-                var sum = ArithmeticOperations.Add(left, right, false, false, flags);
-                r[destination] = sum.Result;
-                flags = sum.Flags;
+                cpu.Timing.InternalOperationCycles(4, 3);
+                ushort right = Resolver.GetSourceWord(instruction, data, cpu, 3);
+                (r[destination], flags) = Arithmetic.Add(left, right, false, false, flags);
                 r.WZ = (ushort)(left + 1);
             }
             else
@@ -33,11 +29,8 @@ namespace Zem80.Core.CPU
                 // it's an 8-bit add to A
                 byte left = r.A;
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-                byte right = instruction.MarshalSourceByte(data, cpu, 3);
-
-                var sum = ArithmeticOperations.Add(left, right, false);
-                r.A = sum.Result;
-                flags = sum.Flags;
+                byte right = Resolver.GetSourceByte(instruction, data, cpu, 3);
+                (r.A, flags) = Arithmetic.Add(left, right, false);
             }
 
             return new ExecutionResult(package, flags);

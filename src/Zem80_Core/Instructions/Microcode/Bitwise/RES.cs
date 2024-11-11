@@ -11,7 +11,7 @@ namespace Zem80.Core.CPU
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             IRegisters r = cpu.Registers;
-            byte bitIndex = instruction.GetBitIndex();
+            byte bitIndex = instruction.BitIndex;
             sbyte offset = (sbyte)(data.Argument1);
             ByteRegister register = instruction.Source.AsByteRegister();
 
@@ -22,15 +22,8 @@ namespace Zem80.Core.CPU
             }
             else
             {
-                ushort address = instruction.Prefix switch
-                {
-                    0xCB => r.HL,
-                    0xDDCB => (ushort)(r.IX + offset),
-                    0xFDCB => (ushort)(r.IY + offset),
-                    _ => (ushort)0xFFFF
-                };
+                ushort address = Resolver.GetSourceAddress(instruction, cpu, offset);
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-
                 byte value = cpu.Memory.ReadByteAt(address, 4);
                 value = value.SetBit(bitIndex, false);
                 cpu.Memory.WriteByteAt(address, value, 3);

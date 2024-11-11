@@ -16,24 +16,17 @@ namespace Zem80.Core.CPU
             if (instruction.TargetsWordRegister)
             {
                 ushort left = r.HL;
-                cpu.Timing.InternalOperationCycle(4);
-                cpu.Timing.InternalOperationCycle(3);
-                ushort right = instruction.MarshalSourceWord(data, cpu, 3);
-
-                var subtraction = ArithmeticOperations.Subtract(left, right, flags.Carry, true, flags);
-                r.HL = subtraction.Result;
-                flags = subtraction.Flags;
+                cpu.Timing.InternalOperationCycles(4, 3);
+                ushort right = Resolver.GetSourceWord(instruction, data, cpu, 3);
+                (r.HL, flags) = Arithmetic.Subtract(left, right, flags.Carry, true, flags);
                 r.WZ = (ushort)(left + 1);
             }
             else
             {
                 byte left = r.A;
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-                byte right = instruction.MarshalSourceByte(data, cpu, 3);
-
-                var subtraction = ArithmeticOperations.Subtract(left, right, flags.Carry);
-                r.A = subtraction.Result;
-                flags = subtraction.Flags;
+                byte right = Resolver.GetSourceByte(instruction, data, cpu, 3);
+                (r.A, flags) = Arithmetic.Subtract(left, right, flags.Carry);
             }
 
             return new ExecutionResult(package, flags);

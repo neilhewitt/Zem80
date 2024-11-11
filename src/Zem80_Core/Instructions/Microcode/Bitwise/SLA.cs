@@ -20,24 +20,15 @@ namespace Zem80.Core.CPU
             {
                 original = r[register];
 
-                (shifted, flags) = BitwiseOperations.ShiftLeftResetBit0(original, flags);
+                (shifted, flags) = Bitwise.ShiftLeftResetBit0(original, flags);
 
                 r[register] = shifted;                
             }
             else
             {
-                ushort address = instruction.Prefix switch
-                {
-                    0xCB => r.HL,
-                    0xDDCB => (ushort)(r.IX + offset),
-                    0xFDCB => (ushort)(r.IY + offset),
-                    _ => (ushort)0xFFFF
-                };
-                
+                ushort address = Resolver.GetSourceAddress(instruction, cpu, offset);
                 original = cpu.Memory.ReadByteAt(address, 4);
-
-                (shifted, flags) = BitwiseOperations.ShiftLeftResetBit0(original, flags);
-
+                (shifted, flags) = Bitwise.ShiftLeftResetBit0(original, flags);
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(4);
                 cpu.Memory.WriteByteAt(address, shifted, 3);
 
