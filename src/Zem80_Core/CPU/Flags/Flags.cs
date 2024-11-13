@@ -7,9 +7,6 @@ namespace Zem80.Core.CPU
 {
     public class Flags : IReadOnlyFlags
     {
-        public static FlagState All => FlagState.Carry | FlagState.Subtract | FlagState.ParityOverflow | FlagState.X | FlagState.HalfCarry | FlagState.Y | FlagState.Zero | FlagState.Sign;
-        public static FlagState None => FlagState.None;
-
         private byte _flagByte;
 
         public bool Sign { get { return (byte)(_flagByte & 0x80) > 0; } set { _flagByte = ReadOnly ? _flagByte : value ? (byte)(_flagByte | 0x80) : (byte)(_flagByte & ~0x80); } }

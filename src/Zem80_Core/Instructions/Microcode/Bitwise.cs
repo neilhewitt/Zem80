@@ -48,7 +48,9 @@ namespace Zem80.Core.CPU
         {
             // some bitwise instructions don't set all flags; the FlagState parameter allows the caller to specify which flags to set
             // we turn this into a Flags object here so we can easily check for the presence of flags
-            Flags set = new Flags(flagsToSet ?? Flags.All); // if no FlagState is provided, set all flags
+            Flags set = new Flags(flagsToSet ?? 
+                FlagState.Carry | FlagState.Subtract | FlagState.ParityOverflow | FlagState.X | FlagState.HalfCarry | FlagState.Y | FlagState.Zero | FlagState.Sign
+                ); // if no FlagState is provided, set all flags
 
             byte leftCarry = (byte)(flags.Carry ? 0x01 : 0);
             byte rightCarry = (byte)(flags.Carry ? 0x80 : 0);
