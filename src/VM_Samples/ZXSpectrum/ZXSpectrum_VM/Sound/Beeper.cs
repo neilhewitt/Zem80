@@ -113,21 +113,28 @@ namespace ZXSpectrum.VM.Sound
 
         public Beeper(Processor cpu)
         {
-            _cpu = cpu;
+            try
+            {
+                _cpu = cpu;
 
-            SetupSamples();
+                SetupSamples();
 
-            _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, true, 20); // can do lower latency than WaveOut
-            
-            int sampleRate = ((TICKS_PER_FRAME * FRAMES_PER_SECOND) / TICKS_PER_SAMPLE);
-            WaveFormat format = new WaveFormat(sampleRate, 8, 1);
+                _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, true, 20); // can do lower latency than WaveOut
 
-            _provider = new BufferedWaveProvider(format);
-            _provider.BufferLength = SAMPLE_SIZE;
-            _provider.DiscardOnBufferOverflow = true;
+                int sampleRate = ((TICKS_PER_FRAME * FRAMES_PER_SECOND) / TICKS_PER_SAMPLE);
+                WaveFormat format = new WaveFormat(sampleRate, 8, 1);
 
-            _player.Init(_provider);
-            _player.Volume = 0.33f;
+                _provider = new BufferedWaveProvider(format);
+                _provider.BufferLength = SAMPLE_SIZE;
+                _provider.DiscardOnBufferOverflow = true;
+
+                _player.Init(_provider);
+                _player.Volume = 0.33f;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 }

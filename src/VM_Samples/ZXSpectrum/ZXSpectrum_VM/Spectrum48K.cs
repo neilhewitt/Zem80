@@ -1,15 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using Zem80.Core;
 using Zem80.Core.CPU;
 using Zem80.Core.Memory;
-using ZXSpectrum.VM.Sound;
-using System.Linq;
-using Timer = MultimediaTimer.Timer;
-using System.Reflection.Metadata.Ecma335;
 
 namespace ZXSpectrum.VM
 {

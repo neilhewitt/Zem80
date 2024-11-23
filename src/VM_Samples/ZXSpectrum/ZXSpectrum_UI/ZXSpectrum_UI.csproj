@@ -2,12 +2,14 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows7.0</TargetFramework>
     <UseWPF>true</UseWPF>
     <RootNamespace>ZXSpectrum.UI</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.0.0" />
+    <PackageReference Include="NAudio.Core" Version="2.0.0" />
     <PackageReference Include="WriteableBitmapEx" Version="1.6.8" />
   </ItemGroup>
 
