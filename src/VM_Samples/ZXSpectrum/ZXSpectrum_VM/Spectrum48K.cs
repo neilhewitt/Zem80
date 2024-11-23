@@ -96,7 +96,7 @@ namespace ZXSpectrum.VM
             _cpu = new Processor(
                 map: map,
                 clock: ClockMaker.TimeSlicedClock(
-                    3.5f, // 3.5MHz 
+                    3.2f, // Real Spectrum runs at 3.5MHz but contended memory etc slows it down, so we'll run at 3.2MHz
                     TimeSpan.FromMilliseconds(20)
                     )
                 );

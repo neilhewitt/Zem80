@@ -17,10 +17,10 @@ namespace ZXSpectrum.VM.Sound
         private Processor _cpu;
 
         // NOTE - varies by Spectrum model / region - TODO make configurable
-        private const int TICKS_PER_SAMPLE = 8;
-        private const int TICKS_PER_FRAME = 70000; 
-        private const int FRAMES_PER_SECOND = 50;
-        private const int SAMPLE_SIZE = 120000;
+        private int TICKS_PER_SAMPLE = 8;
+        private int TICKS_PER_FRAME = 70000; 
+        private int FRAMES_PER_SECOND = 50;
+        private int SAMPLE_SIZE = 120000;
 
         private byte[][] _sampleData; // divided into three sets: empty, low frequency, high frequency
 
@@ -116,10 +116,14 @@ namespace ZXSpectrum.VM.Sound
             try
             {
                 _cpu = cpu;
+                long defaultFrequency = 3500000; // 3.5MHz
+                long frequency = (long)(_cpu.Clock.FrequencyInMHz * 1000000);
+                TICKS_PER_FRAME = (int)(frequency / FRAMES_PER_SECOND);
+                TICKS_PER_SAMPLE = (int)(frequency / (int)(defaultFrequency / TICKS_PER_SAMPLE));
 
                 SetupSamples();
 
-                _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, true, 20); // can do lower latency than WaveOut
+                _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, true, 1000 / FRAMES_PER_SECOND); // can do lower latency than WaveOut
 
                 int sampleRate = ((TICKS_PER_FRAME * FRAMES_PER_SECOND) / TICKS_PER_SAMPLE);
                 WaveFormat format = new WaveFormat(sampleRate, 8, 1);
