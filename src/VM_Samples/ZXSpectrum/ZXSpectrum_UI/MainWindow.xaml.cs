@@ -31,7 +31,7 @@ namespace ZXSpectrum.UI
             if (dialog.ShowDialog() == true)
             {
                 string imagePath = dialog.FileName;
-                _vm.StartWithSnapshot(imagePath);
+                _vm.Start(imagePath);
             }
             else
             {
