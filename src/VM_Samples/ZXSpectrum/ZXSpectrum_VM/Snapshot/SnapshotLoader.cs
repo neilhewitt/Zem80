@@ -10,28 +10,28 @@ using Zem80.Core.CPU;
 
 namespace ZXSpectrum.VM
 {
-    public class Loader
+    public class SnapshotLoader
     {
         private Processor _cpu;
         private ULA _ula;
 
-        public void LoadSnapshot(string path)
+        public void Load(string snapshotPath)
         {
-            if (!File.Exists(path))
+            if (!File.Exists(snapshotPath))
             {
-                throw new FileNotFoundException($"Snapshot file {path} does not exist.");
+                throw new FileNotFoundException($"Snapshot file {snapshotPath} does not exist.");
             }
 
             try
             {
-                switch (Path.GetExtension(path).ToUpper())
+                switch (Path.GetExtension(snapshotPath).ToUpper())
                 {
                     case ".SNA":
-                        LoadSNA(path);
+                        LoadSNA(snapshotPath);
                         break;
 
                     case ".Z80":
-                        LoadZ80(path);
+                        LoadZ80(snapshotPath);
                         break;
 
                     default:
@@ -51,18 +51,20 @@ namespace ZXSpectrum.VM
 
             r.I = snapshot[0];
 
+            // shadow registers first
             r.ExchangeBCDEHL();
-            r.HL = getWord(1);
-            r.DE = getWord(3);
-            r.BC = getWord(5);
-            r.AF = getWord(7);
+            r.HL = GetWord(snapshot, 1);
+            r.DE = GetWord(snapshot, 3);
+            r.BC = GetWord(snapshot, 5);
+            r.AF = GetWord(snapshot, 7);
 
+            // main registers
             r.ExchangeBCDEHL();
-            r.HL = getWord(9);
-            r.DE = getWord(11);
-            r.BC = getWord(13);
-            r.IY = getWord(15);
-            r.IX = getWord(17);
+            r.HL = GetWord(snapshot, 9);
+            r.DE = GetWord(snapshot, 11);
+            r.BC = GetWord(snapshot, 13);
+            r.IY = GetWord(snapshot, 15);
+            r.IX = GetWord(snapshot, 17);
 
             _cpu.Interrupts.Disable();
             if (snapshot[19].GetBit(2))
@@ -71,8 +73,8 @@ namespace ZXSpectrum.VM
             }
 
             r.R = snapshot[20];
-            r[WordRegister.AF] = getWord(21);
-            r.SP = getWord(23);
+            r[WordRegister.AF] = GetWord(snapshot, 21);
+            r.SP = GetWord(snapshot, 23);
 
             _cpu.Interrupts.SetMode((InterruptMode)snapshot[25]);
             _ula.SetBorderColour(snapshot[26]);
@@ -81,10 +83,10 @@ namespace ZXSpectrum.VM
             ushort pc = _cpu.Stack.Debug.PopStackDirect(); // pops the top value from the stack and moves the stack pointer, but doesn't run any internal cycles
             _cpu.Registers.PC = pc;
 
-            ushort getWord(int index)
-            {
-                return (snapshot[index], snapshot[index + 1]).ToWord();
-            }
+            //ushort GetWord(snapshot, int index)
+            //{
+            //    return (snapshot[index], snapshot[index + 1]).ToWord();
+            //}
         }
 
         private void LoadZ80(string path)
@@ -94,34 +96,32 @@ namespace ZXSpectrum.VM
             byte[] snapshot = File.ReadAllBytes(path);
             IRegisters r = _cpu.Registers;
 
-            r.AF = getWord(0);
-            r.BC = getWord(2);
-            r.HL = getWord(4);
-            r.PC = getWord(6);
-            r.SP = getWord(8);
+            // set main registers (AF, BC, HL, PC, SP, I, R, DE)
+            r.AF = GetWord(snapshot, 0);
+            r.BC = GetWord(snapshot, 2);
+            r.HL = GetWord(snapshot, 4);
+            r.PC = GetWord(snapshot, 6);
+            r.SP = GetWord(snapshot, 8);
             r.I = snapshot[10];
             r.R = snapshot[11];
+            r.DE = GetWord(snapshot, 13);
 
-            byte twelve = snapshot[12];
-            if (twelve == 255) twelve = 1;
-            byte borderColour = twelve.GetByteFromBits(1, 3);
-            _ula.SetBorderColour(borderColour);
-
-            bool compressed = twelve.GetBit(5);
-
-            r.DE = getWord(13);
-
+            // set shadow registers (AF', BC', DE', HL')
             r.ExchangeBCDEHL();
             r.ExchangeAF();
-            r.BC = getWord(15);
-            r.DE = getWord(17);
-            r.HL = getWord(19);
-            r.AF = getWord(21);
+            r.BC = GetWord(snapshot, 15);
+            r.DE = GetWord(snapshot, 17);
+            r.HL = GetWord(snapshot, 19);
+            r.AF = GetWord(snapshot, 21);
             r.ExchangeAF();
             r.ExchangeBCDEHL();
 
-            r.IY = getWord(23);
-            r.IX = getWord(25);
+            // index registers (IX, IY)
+            r.IY = GetWord(snapshot, 23);
+            r.IX = GetWord(snapshot, 25);
+
+            byte statusByte = snapshot[12];
+            if (statusByte == 255) statusByte = 1;
 
             _cpu.Interrupts.Disable();
             if (snapshot[27] == 1)
@@ -133,8 +133,12 @@ namespace ZXSpectrum.VM
             if (interruptMode == InterruptMode.IM0) interruptMode = InterruptMode.IM1; // IM0 not used on Spectrum
             _cpu.Interrupts.SetMode(interruptMode);
 
+            // set border colour before we start the machine
+            byte borderColour = statusByte.GetByteFromBits(1, 3);
+            _ula.SetBorderColour(borderColour);
+
             byte[] memoryImage;
-            if (compressed)
+            if (statusByte.GetBit(5)) // compressed data
             {
                 List<byte> expanded = new List<byte>();
                 for (int i = 30; i < snapshot.Length - 4; i++)
@@ -170,15 +174,14 @@ namespace ZXSpectrum.VM
             }
 
             _cpu.Memory.WriteBytesAt(16384, memoryImage);
-
-            ushort getWord(int index)
-            {
-                return (snapshot[index], snapshot[index + 1]).ToWord();
-            }
         }
 
+        private ushort GetWord(byte[] snapshot, int index)
+        {
+            return (snapshot[index], snapshot[index + 1]).ToWord();
+        }
 
-        public Loader(Processor cpu, ULA ula)
+        public SnapshotLoader(Processor cpu, ULA ula)
         {
             _cpu = cpu;
             _ula = ula;

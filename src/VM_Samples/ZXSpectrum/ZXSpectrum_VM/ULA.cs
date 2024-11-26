@@ -14,6 +14,7 @@ namespace ZXSpectrum.VM
 {
     public class ULA
     {
+        public const int FRAME_RATE = 50; // PAL only
         public const int FLASH_FRAME_RATE = 16; // PAL only
         public const int TICKS_PER_FRAME = 70000;
 
@@ -75,13 +76,13 @@ namespace ZXSpectrum.VM
             _cpu.Interrupts.RaiseMaskable();
         }
 
-        public ULA(Processor cpu)
+        public ULA(Processor cpu, float beeperVolume)
         {
             _cpu = cpu;
             _cpu.Clock.SetEvent(TICKS_PER_FRAME, () => UpdateDisplay(), true);
 
             _screen = new ScreenMap();
-            _beeper = new Beeper(cpu);
+            _beeper = new Beeper(cpu, FRAME_RATE, beeperVolume);
         }
     }
 }

@@ -17,10 +17,9 @@ namespace ZXSpectrum.VM.Sound
         private Processor _cpu;
 
         // NOTE - varies by Spectrum model / region - TODO make configurable
-        private int TICKS_PER_SAMPLE = 8;
-        private int TICKS_PER_FRAME = 70000; 
-        private int FRAMES_PER_SECOND = 50;
-        private int SAMPLE_SIZE = 120000;
+        private int _ticksPerSample;
+        private int _ticksPerFrame; 
+        private int _bufferSize = 120000;
 
         private byte[][] _sampleData; // divided into three sets: empty, low frequency, high frequency
 
@@ -80,8 +79,8 @@ namespace ZXSpectrum.VM.Sound
                 long currentTStates = _cpu.Clock.Ticks;
                 long ticks = currentTStates - _lastTStates;
 
-                long samplesRequired = (ticks / TICKS_PER_SAMPLE);
-                if (samplesRequired <= SAMPLE_SIZE && samplesRequired > 0)
+                long samplesRequired = (ticks / _ticksPerSample);
+                if (samplesRequired <= _bufferSize && samplesRequired > 0)
                 {
                     _currentFrequencyRange = _currentFrequencyRange == 0 ? frequencyRange : 0;
                     _provider.AddSamples(_sampleData[_currentFrequencyRange], 0, (int)samplesRequired);
@@ -101,8 +100,8 @@ namespace ZXSpectrum.VM.Sound
 
             for (int i = 0; i < 3; i++)
             {
-                _sampleData[i] = new byte[SAMPLE_SIZE];
-                for (int j = 0; j < SAMPLE_SIZE; j++)
+                _sampleData[i] = new byte[_bufferSize];
+                for (int j = 0; j < _bufferSize; j++)
                 {
                     // 0 = no sound, 10 = low frequency sound, 20 = high frequency sound
                     // basically, oscillating between low/high at different rates creates the tones
@@ -111,29 +110,44 @@ namespace ZXSpectrum.VM.Sound
             }
         }
 
-        public Beeper(Processor cpu)
+        public Beeper(Processor cpu, int displayFramesPerSecond, float volume)
         {
             try
             {
                 _cpu = cpu;
-                long defaultFrequency = 3500000; // 3.5MHz
-                long frequency = (long)(_cpu.Clock.FrequencyInMHz * 1000000);
-                TICKS_PER_FRAME = (int)(frequency / FRAMES_PER_SECOND);
-                TICKS_PER_SAMPLE = (int)(frequency / (int)(defaultFrequency / TICKS_PER_SAMPLE));
 
+                // Spectrum normally clocks at 3.5MHz, and would require 8 ticks per audio sample
+                // But in order to allow the Spectrum to run at a different clock speed, we need
+                // work out the divisor for the audio frequency based on the actual clock speed of 
+                // the emulated CPU.
+                long frequencyDivisor = 3500000 / 8; 
+
+                // we need the actual frequency of the emulated CPU in Hz
+                long frequency = (long)(_cpu.Clock.FrequencyInMHz * 1000000);
+
+                // now work out the number of ticks per frame and per sample
+                _ticksPerFrame = (int)(frequency / displayFramesPerSecond);
+                _ticksPerSample = (int)(frequency / frequencyDivisor);
+
+                // generate sample data for each frequency range
                 SetupSamples();
 
-                _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, true, 1000 / FRAMES_PER_SECOND); // can do lower latency than WaveOut
+                // 1000 / displayFramesPerSecond is the required latency in milliseconds (ie 1000ms / 50fps = 20ms) and 
+                // we need to use the smallest latency that we can
+                _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, true, 1000 / displayFramesPerSecond); // WasapiOut can do lower latency than WaveOut
 
-                int sampleRate = ((TICKS_PER_FRAME * FRAMES_PER_SECOND) / TICKS_PER_SAMPLE);
+                // finally, work out the sample rate for the WAV data
+                int sampleRate = ((_ticksPerFrame * displayFramesPerSecond) / _ticksPerSample);
                 WaveFormat format = new WaveFormat(sampleRate, 8, 1);
 
+                // the BufferedWaveProvider can run for as long as we need it, adding to the buffer as we go, and
+                // circularly overwriting the buffer as we run out of space
                 _provider = new BufferedWaveProvider(format);
-                _provider.BufferLength = SAMPLE_SIZE;
+                _provider.BufferLength = _bufferSize;
                 _provider.DiscardOnBufferOverflow = true;
 
                 _player.Init(_provider);
-                _player.Volume = 0.33f;
+                _player.Volume = ((volume > 1.0f) ? 1.0f : volume); // 0.0 to 1.0
             }
             catch (Exception ex)
             {

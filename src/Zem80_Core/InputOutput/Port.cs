@@ -16,7 +16,7 @@ namespace Zem80.Core.InputOutput
         public byte ReadByte(bool bc)
         {
             _timing.BeginPortReadCycle(Number, bc);
-            byte input = (byte)((_read != null) ? _read() : 0);
+            byte input = (byte)(_read?.Invoke() ?? 0);
             _timing.EndPortReadCycle(input);
             return input;
         }
@@ -24,26 +24,20 @@ namespace Zem80.Core.InputOutput
         public void WriteByte(byte output, bool bc)
         {
             _timing.BeginPortWriteCycle(output, Number, bc);
-            if (_write != null) _write(output);
+            _write?.Invoke(output);
             _timing.EndPortWriteCycle();
         }
 
         public void SignalRead()
         {
             // tells port that data is about to be read to data bus
-            if (_signalRead != null)
-            {
-                _signalRead();
-            }
+            _signalRead?.Invoke();
         }
 
         public void SignalWrite()
         {
             // tells port to write to the data bus
-            if (_signalWrite != null)
-            {
-                _signalWrite();
-            }
+            _signalWrite?.Invoke();
         }
 
         public void Connect(Func<byte> reader, Action<byte> writer, Action signalRead, Action signalWrite)
