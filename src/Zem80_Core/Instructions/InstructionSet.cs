@@ -23,7 +23,7 @@ namespace Zem80.Core.CPU
                 var instructions = new List<Instruction>();
 
                 // we have to build the complete Z80 instruction set, with metadata to allow us to reflect on the instructions as we process them
-                // below is a (very long) table of Instruction object instantiations wrapped in an 'instruction_build' block (so you can collapse them easily)
+                // below is a (very long) table of Instruction object instantiations wrapped in an 'instruction_table' block (so you can collapse them easily)
                 // instruction constructor is: new Instruction(opcode, mnemonic, condition, target, source, argument1, argument2, sizeInBytes, machine cycles)
 
                 // note that this table includes undocumented instructions and duplicate instructions (same instruction on a different extended opcode)
@@ -922,7 +922,7 @@ namespace Zem80.Core.CPU
                                 instruction.SizeInBytes,
                                 instruction.MachineCycles.Cycles,
                                 (instruction.Mnemonic.StartsWith("BIT ") ? ByteRegister.None : (ByteRegister)i) // BIT instructions have no result to store
-                                );
+                            );
                             undocumentedInstructions.Add(undocumentedInstruction);
                         }
                     }
