@@ -165,8 +165,8 @@ namespace Zem80.Core.CPU
                         // on the real Z80, during instruction decode, memory timing for the opcode fetch and operand reads is happening
                         // but here we will simulate the timing based on the instruction package received
                         // (all the rest of the timing happens during the execution of the instruction microcode, and the microcode is responsible for it)
-                        Timing.OpcodeFetchTiming(package.Instruction, address);
-                        Timing.OperandReadTiming(package.Instruction, address, package.Data.Argument1, package.Data.Argument2);
+                        Timing.AddOpcodeFetchTiming(package.Instruction, address);
+                        Timing.AddOperandReadTiming(package.Instruction, address, package.Data.Argument1, package.Data.Argument2);
 
                         Registers.PC += (ushort)package.Instruction.SizeInBytes;
                         ExecuteInstruction(package);

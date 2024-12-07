@@ -20,7 +20,7 @@ namespace Zem80.Core.CPU
         void MemoryReadCycle(ushort address, byte data, byte tStates);
         void MemoryWriteCycle(ushort address, byte data, byte tStates);
         void OpcodeFetchCycle(ushort address, byte opcode, byte tStates);
-        void OpcodeFetchTiming(Instruction instruction, ushort address);
-        void OperandReadTiming(Instruction instruction, ushort address, params byte[] operands);
+        void AddOpcodeFetchTiming(Instruction instruction, ushort address);
+        void AddOperandReadTiming(Instruction instruction, ushort address, params byte[] operands);
     }
 }

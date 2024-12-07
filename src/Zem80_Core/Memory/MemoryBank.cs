@@ -26,9 +26,7 @@ namespace Zem80.Core.Memory
             _initialised = true;
         }
 
-        private IMemoryBank Me => this as IMemoryBank;
-
-        byte IMemoryBank.ReadByteAt(ushort address, byte? tStates)
+        public byte ReadByteAt(ushort address, byte? tStates)
         {
             if (!_initialised) throw new MemoryNotInitialisedException();
 
@@ -38,7 +36,7 @@ namespace Zem80.Core.Memory
             return output;
         }
 
-        void IMemoryBank.WriteByteAt(ushort address, byte value, byte? tStates)
+        public void WriteByteAt(ushort address, byte value, byte? tStates)
         {
             if (!_initialised) throw new MemoryNotInitialisedException();
 
@@ -51,20 +49,20 @@ namespace Zem80.Core.Memory
             if (tStates > 0) _cpu.Timing.MemoryWriteCycle(address, value, tStates.Value);
         }
 
-        ushort IMemoryBank.ReadWordAt(ushort address, byte? tStatesPerByte)
+        public ushort ReadWordAt(ushort address, byte? tStatesPerByte)
         {
-            byte low = Me.ReadByteAt(address, tStatesPerByte);
-            byte high = Me.ReadByteAt(++address, tStatesPerByte);
+            byte low = ReadByteAt(address, tStatesPerByte);
+            byte high = ReadByteAt(++address, tStatesPerByte);
             return (ushort)((high * 256) + low);
         }
 
-        void IMemoryBank.WriteWordAt(ushort address, ushort value, byte? tStatesPerByte)
+        public void WriteWordAt(ushort address, ushort value, byte? tStatesPerByte)
         {
-            Me.WriteByteAt(address, (byte)(value % 256), tStatesPerByte);
-            Me.WriteByteAt(++address, (byte)(value / 256), tStatesPerByte);
+            WriteByteAt(address, (byte)(value % 256), tStatesPerByte);
+            WriteByteAt(++address, (byte)(value / 256), tStatesPerByte);
         }
 
-        byte[] IMemoryBank.ReadBytesAt(ushort address, ushort numberOfBytes, byte? tStatesPerByte)
+        public byte[] ReadBytesAt(ushort address, ushort numberOfBytes, byte? tStatesPerByte)
         {
             uint availableBytes = numberOfBytes;
             if (address + availableBytes >= SizeInBytes) availableBytes = SizeInBytes - address; // if this read overflows the end of memory, we can read only this many bytes
@@ -72,16 +70,16 @@ namespace Zem80.Core.Memory
             byte[] bytes = new byte[numberOfBytes];
             for (int i = 0; i < availableBytes; i++)
             {
-                bytes[i] = Me.ReadByteAt((ushort)(address + i), tStatesPerByte);
+                bytes[i] = ReadByteAt((ushort)(address + i), tStatesPerByte);
             }
             return bytes; // bytes beyond the available byte limit (if any) will be 0x00
         }
 
-        void IMemoryBank.WriteBytesAt(ushort address, byte[] bytes, byte? tStatesPerByte)
+        public void WriteBytesAt(ushort address, byte[] bytes, byte? tStatesPerByte)
         {
             for (ushort i = 0; i < bytes.Length; i++)
             {
-                Me.WriteByteAt((ushort)(address + i), bytes[i], tStatesPerByte);
+                WriteByteAt((ushort)(address + i), bytes[i], tStatesPerByte);
             }
         }
 

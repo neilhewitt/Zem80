@@ -26,12 +26,25 @@ namespace Zem80.Core.CPU
             _waitCyclesPending += waitCycles;
         }
 
-        public void OpcodeFetchTiming(Instruction instruction, ushort address)
+        public void AddOpcodeFetchTiming(Instruction instruction, ushort address)
         {
             int opcodeByteIndex = 0;
             foreach (MachineCycle machineCycle in instruction.MachineCycles.OpcodeFetches)
             {
                 OpcodeFetchCycle(address, instruction.OpcodeBytes[opcodeByteIndex++], machineCycle.TStates);
+            }
+        }
+
+        public void AddOperandReadTiming(Instruction instruction, ushort address, params byte[] operands)
+        {
+            // move on to the operand bytes
+            address += (ushort)instruction.MachineCycles.OpcodeFetches.Count();
+
+            // either single operand byte read, or operand low / high reads
+            int operandByteIndex = 0;
+            foreach (MachineCycle machineCycle in instruction.MachineCycles.OperandReads)
+            {
+                MemoryReadCycle(address, operands[operandByteIndex++], machineCycle.TStates);
             }
         }
 
@@ -53,19 +66,6 @@ namespace Zem80.Core.CPU
             _cpu.Clock.WaitForNextClockTick();
 
             if (extraTStates > 0) _cpu.Clock.WaitForClockTicks(extraTStates);
-        }
-
-        public void OperandReadTiming(Instruction instruction, ushort address, params byte[] operands)
-        {
-            // move on to the operand bytes
-            address += (ushort)instruction.MachineCycles.OpcodeFetches.Count();
-
-            // either single operand byte read, or operand low / high reads
-            int operandByteIndex = 0;
-            foreach (MachineCycle machineCycle in instruction.MachineCycles.OperandReads)
-            {
-                MemoryReadCycle(address, operands[operandByteIndex++], machineCycle.TStates);
-            }
         }
 
         public void MemoryReadCycle(ushort address, byte data, byte tStates)
