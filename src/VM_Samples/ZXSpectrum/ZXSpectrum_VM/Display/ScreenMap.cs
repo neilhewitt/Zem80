@@ -39,10 +39,11 @@ namespace ZXSpectrum.VM
             foreach (byte attribute in attributes)
             {
                 // 32 x 24
+                byte paper = attribute.GetByteFromBits(3, 3);
                 AttributeMap[rowCounter, columnCounter] = new DisplayAttribute()
                 {
-                    Ink = DisplayColour.FromThreeBit(attribute.GetByteFromBits(0, 3)),
-                    Paper = DisplayColour.FromThreeBit(attribute.GetByteFromBits(3, 3)),
+                    Ink = DisplayColour.FromThreeBit(attribute, 0),
+                    Paper = DisplayColour.FromThreeBit(attribute, 3),
                     Bright = attribute.GetBit(6),
                     Flash = attribute.GetBit(7)
                 };
@@ -111,8 +112,7 @@ namespace ZXSpectrum.VM
 
         public void SetBorderColour(byte threeBit)
         {
-            threeBit = threeBit.GetByteFromBits(0, 3);
-            _border = DisplayColour.FromThreeBit(threeBit);
+            _border = DisplayColour.FromThreeBit(threeBit, 0);
         }
 
         public ScreenMap()

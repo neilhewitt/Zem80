@@ -35,7 +35,7 @@ namespace Zem80.Core.CPU
                 {
                     // sequences of 0xDD / 0xFD / 0xED count as NOP until the final 0xDD / 0xFD / 0xED which is then the prefix byte
                     // for this pair of bytes, we will decode a NOP and move the program counter on
-                    instruction = InstructionSet.NOP;
+                    instruction = InstructionSet.NOP; // this *doesn't* count as an opcode error even though it's a 'synthetic' NOP
                 }
                 else if ((b0 == 0xDD || b0 == 0xFD) && b1 == 0xCB)
                 {
@@ -44,6 +44,7 @@ namespace Zem80.Core.CPU
                     {
                         // not a valid instruction - the Z80 spec says we should run a single NOP instead
                         instruction = InstructionSet.NOP;
+                        opcodeErrorNOP = true;
                     }
                     else
                     {
@@ -64,6 +65,7 @@ namespace Zem80.Core.CPU
                         // otherwise, if the prefix was 0xDD or 0xFD and the instruction is invalid, the spec says we should run a NOP now but then run the equivalent
                         // unprefixed instruction next - this will happen automatically when PC advances past the synthetic NOP
                         instruction = InstructionSet.NOP;
+                        opcodeErrorNOP = true;
                     }
                     else
                     {
@@ -97,11 +99,6 @@ namespace Zem80.Core.CPU
                         }
                     }
                 }
-            }
-
-            if (b0 != 0x00 && instruction == InstructionSet.NOP)
-            {
-                opcodeErrorNOP = true; // this is a 'pseudo-NOP' caused by an invalid opcode, after which interrupts (including NMI) must not run
             }
 
             return new InstructionPackage(instruction, data, address);
