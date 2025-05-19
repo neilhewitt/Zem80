@@ -6,7 +6,7 @@ namespace Zem80.Core.Memory
     {
         uint SizeInBytes { get; }
         void Clear();
-        void Initialise(Processor cpu, IMemoryMap map);
+        void Initialise(IProcessorTiming timing, IMemoryMap map);
         byte ReadByteAt(ushort address, byte? tStates = null);
         byte[] ReadBytesAt(ushort address, ushort numberOfBytes, byte? tStatesPerByte = null);
         ushort ReadWordAt(ushort address, byte? tStatesPerByte = null);

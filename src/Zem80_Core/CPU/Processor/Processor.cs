@@ -155,11 +155,10 @@ namespace Zem80.Core.CPU
                     {
                         ushort address = Registers.PC;
                         // when the Z80 is *halted*, it doesn't stop running. It continuously executes NOP instructions until an interrupt occurs;
-                        // if halted (or skipping because of an instruction set error) we provide 4 zero-bytes; otherwise, the 4 bytes at the Program Counter
-                        // note that instructions can be 1-4 bytes long but we always send the next 4 bytes to the decoder
+                        // if halted (or skipping because of an instruction set error) we provide 4 zero-bytes; otherwise, the 4 bytes at the Program Counter.
+                        // note that instructions can be 1-4 bytes long, but we always send the next 4 bytes to the decoder
                         byte[] instructionBytes = (_halted || skipNextByte) ? new byte[4] : Memory.ReadBytesAt(address, 4);
 
-                        // decode the bytes
                         InstructionPackage package = _instructionDecoder.DecodeInstruction(instructionBytes, address, out skipNextByte, out bool opcodeErrorNOP);
 
                         // on the real Z80, during instruction decode, memory timing for the opcode fetch and operand reads is happening
@@ -168,6 +167,7 @@ namespace Zem80.Core.CPU
                         Timing.AddOpcodeFetchTiming(package.Instruction, address);
                         Timing.AddOperandReadTiming(package.Instruction, address, package.Data.Argument1, package.Data.Argument2);
 
+                        // advance the Program Counter to the start of the next instruction - but the current instruction may still change it
                         Registers.PC += (ushort)package.Instruction.SizeInBytes;
                         ExecuteInstruction(package);
 
@@ -175,7 +175,7 @@ namespace Zem80.Core.CPU
                         {
                             Interrupts.HandleAll();
                         }
-                        
+
                         RefreshMemory();
                     }
                     while (skipNextByte); // usually false, but if true, the cycle will run again with a NOP and skip over the next byte in RAM
@@ -200,13 +200,18 @@ namespace Zem80.Core.CPU
 
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
             if (result.Flags != null) Registers.F = result.Flags.Value;
-            
+
             AfterExecuteInstruction?.Invoke(this, result);
         }
 
         private void RefreshMemory()
         {
             Registers.R = (byte)(Registers.R + 1 & 0x7F | Registers.R & 0x80); // bits 0-6 of R are incremented as part of the memory refresh - bit 7 is preserved 
+        }
+
+        public Processor()
+            : this(null, null, null, null, null, null, null, null, null, null)
+        {
         }
 
         public Processor(IMemoryBank memory = null, IMemoryMap map = null, IStack stack = null, IClock clock = null, IRegisters registers = null, IPorts ports = null,
@@ -228,7 +233,7 @@ namespace Zem80.Core.CPU
             // You can supply your own memory implementations, for example if you need to do RAM paging for >64K implementations.
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.
             Memory = memory ?? new MemoryBank();
-            Memory.Initialise(this, map ?? new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES, true));
+            Memory.Initialise(Timing, map ?? new MemoryMap(MAX_MEMORY_SIZE_IN_BYTES, true));
 
             // stack pointer defaults to 0xFFFF - this is undocumented but verified behaviour of the Z80
             Stack = stack ?? new Stack(topOfStackAddress, this);

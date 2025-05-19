@@ -13,6 +13,6 @@ namespace Zem80.Core.CPU
         HalfCarry = 16,
         Y = 32,
         Zero = 64,
-        Sign = 128,
+        Sign = 128
     }
 }

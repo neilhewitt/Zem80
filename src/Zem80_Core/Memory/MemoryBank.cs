@@ -9,7 +9,7 @@ namespace Zem80.Core.Memory
     public class MemoryBank : IMemoryBank
     {
         internal IMemoryMap _map;
-        internal Processor _cpu;
+        internal IProcessorTiming _timing;
         internal bool _initialised;
 
         public uint SizeInBytes => _map.SizeInBytes;
@@ -19,9 +19,9 @@ namespace Zem80.Core.Memory
             _map.ClearAllWritableMemory();
         }
 
-        public void Initialise(Processor cpu, IMemoryMap map)
+        public void Initialise(IProcessorTiming timing, IMemoryMap map)
         {
-            _cpu = cpu;
+            _timing = timing;
             _map = map;
             _initialised = true;
         }
@@ -32,7 +32,7 @@ namespace Zem80.Core.Memory
 
             IMemorySegment segment = _map.SegmentFor(address);
             byte output = segment?.ReadByteAt(AddressOffset(address, segment)) ?? 0x00; // 0x00 if address is unallocated
-            if (tStates > 0) _cpu.Timing.MemoryReadCycle(address, output, tStates.Value);
+            if (tStates > 0) _timing.MemoryReadCycle(address, output, tStates.Value);
             return output;
         }
 
@@ -46,7 +46,7 @@ namespace Zem80.Core.Memory
                 segment.WriteByteAt(AddressOffset(address, segment), value);
             }
 
-            if (tStates > 0) _cpu.Timing.MemoryWriteCycle(address, value, tStates.Value);
+            if (tStates > 0) _timing.MemoryWriteCycle(address, value, tStates.Value);
         }
 
         public ushort ReadWordAt(ushort address, byte? tStatesPerByte)
