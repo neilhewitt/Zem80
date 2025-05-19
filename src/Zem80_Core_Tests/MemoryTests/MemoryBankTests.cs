@@ -18,15 +18,15 @@ namespace Zem80.Core.Tests.MemoryTests
         {
             _segment = Substitute.For<IMemorySegment>();
             _segment.StartAddress.Returns((ushort)0x0000);
-            _segment.SizeInBytes.Returns((uint)256);
+            _segment.SizeInBytes.Returns((uint)0x400);
             _segment.ReadOnly.Returns(false);
 
             _map = Substitute.For<IMemoryMap>();
-            _map.SizeInBytes.Returns(256u);
+            _map.SizeInBytes.Returns((uint)0x400);
             _map.SegmentFor(Arg.Any<ushort>()).Returns(call =>
             {
-                ushort addr = call.Arg<ushort>();
-                if (addr >= _segment.StartAddress && addr < _segment.StartAddress + _segment.SizeInBytes)
+                ushort address = call.Arg<ushort>();
+                if (address >= _segment.StartAddress && address < _segment.StartAddress + _segment.SizeInBytes)
                     return _segment;
                 return null;
             });
@@ -140,12 +140,13 @@ namespace Zem80.Core.Tests.MemoryTests
         [Test]
         public void ReadBytesAt_Overflow_ReturnsZeroes()
         {
-            // Only addresses 0x00FE and 0x00FF are mapped, 0x0100+ is unmapped
-            _map.SizeInBytes.Returns(256u);
-            _segment.ReadByteAt(254).Returns((byte)0xFE);
-            _segment.ReadByteAt(255).Returns((byte)0xFF);
+            _map.SizeInBytes.Returns((uint)0x400);
+            _segment.ReadByteAt(0x3FE).Returns((byte)0xFE);
+            _segment.ReadByteAt(0x3FF).Returns((byte)0xFF);
 
-            var bytes = _bank.ReadBytesAt(0x00FE, 4, null);
+            // read 4 bytes starting from 0x3FF
+            // this overflows the memory map, and bytes beyond 0x400 should be zero
+            var bytes = _bank.ReadBytesAt(0x3FE, 4, null);
 
             Assert.That(bytes.Length, Is.EqualTo(4));
             Assert.That(bytes[0], Is.EqualTo(0xFE));
