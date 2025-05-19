@@ -38,13 +38,13 @@ namespace Zem80.Core.Tests.MemoryTests
         [Test]
         public void SegmentFor_ReturnsCorrectSegment()
         {
-            var segA = _map.SegmentFor(0x0000);
-            var segB = _map.SegmentFor(0x0400);
-            var segNone = _map.SegmentFor(0x0800);
+            var segment1 = _map.SegmentFor(0x0000);
+            var segment2 = _map.SegmentFor(0x0400);
+            var nullSegment = _map.SegmentFor(0x0800);
 
-            Assert.That(segA, Is.EqualTo(_segment1));
-            Assert.That(segB, Is.EqualTo(_segment2));
-            Assert.That(segNone, Is.Null);
+            Assert.That(segment1, Is.EqualTo(_segment1));
+            Assert.That(segment2, Is.EqualTo(_segment2));
+            Assert.That(nullSegment, Is.Null);
         }
 
         [Test]
@@ -56,8 +56,8 @@ namespace Zem80.Core.Tests.MemoryTests
 
             _map.Map(newSegment, 0x0000, overwriteMappedPages: true);
 
-            var seg = _map.SegmentFor(0x0000);
-            Assert.That(seg, Is.EqualTo(newSegment));
+            var segment = _map.SegmentFor(0x0000);
+            Assert.That(segment, Is.EqualTo(newSegment));
         }
 
         [Test]
