@@ -144,8 +144,8 @@ namespace Zem80.Core.Tests.MemoryTests
             _segment.ReadByteAt(0x3FE).Returns((byte)0xFE);
             _segment.ReadByteAt(0x3FF).Returns((byte)0xFF);
 
-            // read 4 bytes starting from 0x3FF
-            // this overflows the memory map, and bytes beyond 0x400 should be zero
+            // read 4 bytes starting from 0x3FE
+            // this overflows the memory map, and bytes beyond 0x3FF should be zero
             var bytes = _bank.ReadBytesAt(0x3FE, 4, null);
 
             Assert.That(bytes.Length, Is.EqualTo(4));
