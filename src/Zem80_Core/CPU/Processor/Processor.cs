@@ -18,6 +18,7 @@ namespace Zem80.Core.CPU
         private HaltReason _reasonForLastHalt;
 
         private Thread _instructionCycle;
+        private InstructionDecoder _instructionDecoder;
 
         public bool EndOnHalt { get; private set; }
 
@@ -159,7 +160,7 @@ namespace Zem80.Core.CPU
                         byte[] instructionBytes = (_halted || skipNextByte) ? new byte[4] : Memory.ReadBytesAt(address, 4);
 
                         // decode the bytes
-                        InstructionPackage package = InstructionDecoder.DecodeInstruction(instructionBytes, address, out skipNextByte, out bool opcodeErrorNOP);
+                        InstructionPackage package = _instructionDecoder.DecodeInstruction(instructionBytes, address, out skipNextByte, out bool opcodeErrorNOP);
 
                         // on the real Z80, during instruction decode, memory timing for the opcode fetch and operand reads is happening
                         // but here we will simulate the timing based on the instruction package received
@@ -235,6 +236,7 @@ namespace Zem80.Core.CPU
 
             // The Z80 instruction set needs to be built (all Instruction objects are created, bound to the microcode instances, and indexed into a hashtable - undocumented 'overloads' are built here too)
             InstructionSet.Build();
+            _instructionDecoder = new InstructionDecoder(this);
         }
     }
 }
