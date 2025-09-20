@@ -185,8 +185,7 @@ namespace Zem80.Core.CPU
                 opcode[i] = _interruptCallback();
             }
 
-            InstructionDecoder decoder = new InstructionDecoder(_cpu);
-            InstructionPackage package = decoder.DecodeInstruction(opcode, _cpu.Registers.PC, out bool _, out bool _);
+            InstructionPackage package = InstructionDecoder.DecodeInstruction(opcode, _cpu.Registers.PC, out bool _, out bool _);
 
             return package;
         }

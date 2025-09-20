@@ -9,7 +9,6 @@ namespace Zem80.Core.CPU
     public class DebugProcessor : IDebugProcessor
     {
         private Processor _cpu;
-        private InstructionDecoder _instructionDecoder;
         private EventHandler<InstructionPackage> _onBreakpoint;
         private Action<InstructionPackage> _executeInstruction;
         private IList<ushort> _breakpoints;
@@ -52,7 +51,7 @@ namespace Zem80.Core.CPU
         {
             Array.Resize(ref opcode, 4); // must be 4 bytes to decode
             _cpu.Memory.WriteBytesAt(_cpu.Registers.PC, opcode);
-            InstructionPackage package = _instructionDecoder.DecodeInstruction(opcode, _cpu.Registers.PC, out bool _, out bool _);
+            InstructionPackage package = InstructionDecoder.DecodeInstruction(opcode, _cpu.Registers.PC, out bool _, out bool _);
             _cpu.Registers.PC += package.Instruction.SizeInBytes;
 
             _executeInstruction(package);
@@ -80,7 +79,6 @@ namespace Zem80.Core.CPU
         public DebugProcessor(Processor cpu, Action<InstructionPackage> executeInstruction)
         {
             _cpu = cpu;
-            _instructionDecoder = new InstructionDecoder(cpu);
             _executeInstruction = executeInstruction;
             _breakpoints = new List<ushort>();
         }

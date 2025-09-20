@@ -8,11 +8,9 @@ using System.Threading.Tasks;
 
 namespace Zem80.Core.CPU
 {
-    public class InstructionDecoder
+    public static class InstructionDecoder
     {
-        private Processor _cpu;
-
-        public InstructionPackage DecodeInstruction(byte[] instructionBytes, ushort address, out bool skipNextByte, out bool opcodeErrorNOP)
+        public static InstructionPackage DecodeInstruction(byte[] instructionBytes, ushort address, out bool skipNextByte, out bool opcodeErrorNOP)
         {
             if (instructionBytes.Length != 4) throw new InstructionDecoderException("Supplied byte array must be 4 bytes long.");
 
@@ -102,11 +100,6 @@ namespace Zem80.Core.CPU
             }
 
             return new InstructionPackage(instruction, data, address);
-        }
-
-        public InstructionDecoder(Processor cpu)
-        {
-            _cpu = cpu;
         }
     }
 }
