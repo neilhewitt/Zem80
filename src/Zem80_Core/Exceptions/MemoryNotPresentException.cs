@@ -16,9 +16,5 @@ namespace Zem80.Core
         public MemoryNotPresentException(string message, Exception innerException) : base(message, innerException)
         {
         }
-
-        protected MemoryNotPresentException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
     }
 }

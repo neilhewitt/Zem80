@@ -21,6 +21,8 @@ namespace Zem80.Core.CPU
         private Processor _cpu;
         private int _waitCyclesPending;
 
+        public event EventHandler<int> BeforeInsertWaitCycles;
+
         public void AddWaitCycles(int waitCycles)
         {
             _waitCyclesPending += waitCycles;
@@ -193,6 +195,8 @@ namespace Zem80.Core.CPU
 
         private void InsertWaitCycles()
         {
+            BeforeInsertWaitCycles?.Invoke(this, _waitCyclesPending);
+
             int cyclesToAdd = _waitCyclesPending;
             _waitCyclesPending = 0;
             if (cyclesToAdd > 0)

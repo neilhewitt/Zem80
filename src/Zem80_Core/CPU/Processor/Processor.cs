@@ -21,15 +21,15 @@ namespace Zem80.Core.CPU
 
         public bool EndOnHalt { get; private set; }
 
-        public IRegisters Registers { get; init; }
-        public IStack Stack { get; init; }
-        public IPorts Ports { get; init; }
-        public IIO IO { get; init; }
-        public IInterrupts Interrupts { get; init; }
-        public IProcessorTiming Timing { get; init; }
-        public IDebugProcessor Debug { get; init; }
-        public IMemoryBank Memory { get; init; }
-        public IClock Clock { get; init; }
+        public IRegisters Registers { get; private set; }
+        public IStack Stack { get; private set; }
+        public IPorts Ports { get; private set; }
+        public IIO IO { get; private set; }
+        public IInterrupts Interrupts { get; private set; }
+        public IProcessorTiming Timing { get; private set; }
+        public IDebugProcessor Debug { get; private set; }
+        public IMemoryBank Memory { get; private set; }
+        public IClock Clock { get; private set; }
 
         public IReadOnlyFlags Flags => new Flags(Registers.F, true);
 
@@ -43,7 +43,6 @@ namespace Zem80.Core.CPU
 
         public event EventHandler<InstructionPackage> BeforeExecuteInstruction;
         public event EventHandler<ExecutionResult> AfterExecuteInstruction;
-        public event EventHandler<int> BeforeInsertWaitCycles;
         public event EventHandler AfterInitialise;
         public event EventHandler OnStop;
         public event EventHandler OnSuspend;

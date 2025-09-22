@@ -11,11 +11,12 @@ namespace Zem80.Core.CPU
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             IRegisters r = cpu.Registers;
+            Flags flags;
 
             byte left = r.A;
             byte right = Resolver.GetSourceByte(instruction, data, cpu, 3);
             if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
-            (r.A, Flags flags) = Arithmetic.Subtract(left, right, false);
+            (r.A, flags) = Arithmetic.Subtract(left, right, false);
 
             return new ExecutionResult(package, flags);
         }

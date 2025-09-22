@@ -57,13 +57,13 @@ namespace ZXSpectrum.VM
                 if (portAddress.LowByte() == 0xFE)
                 {
                     _ula.SetBorderColour(output);
-                }
+                    _ula.SetBeeper(output);
 
-                _ula.SetBeeper(output);
+                }
             }
         }
 
-        public Spectrum48K(EventHandler<byte[]> OnUpdateDisplay, float beeperVolume = 0.33f)
+        public Spectrum48K(EventHandler<byte[]> OnUpdateDisplay)
         {
             string romPath = "rom\\48k.rom";
 
@@ -89,12 +89,12 @@ namespace ZXSpectrum.VM
             _cpu = new Processor(
                 map: map,
                 clock: ClockMaker.TimeSlicedClock(
-                    3.2f, // Real Spectrum runs at 3.5MHz but contended memory etc slows it down, so we'll run at 3.2MHz which seems near enough right
+                    3f, // Real Spectrum runs at 3.5MHz but contended memory etc slows it down, so we'll run at 3MHz which seems near enough right
                     TimeSpan.FromMilliseconds(20)
                     )
                 );
 
-            _ula = new ULA(_cpu, beeperVolume); // models the ULA chip which controls the screen and sound
+            _ula = new ULA(_cpu); // models the ULA chip which controls the screen and sound
             _ula.OnUpdateDisplay += OnUpdateDisplay;
 
             _loader = new SnapshotLoader(_cpu, _ula); // handles loading of snapshots

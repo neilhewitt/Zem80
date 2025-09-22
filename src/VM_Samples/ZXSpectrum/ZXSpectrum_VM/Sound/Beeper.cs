@@ -10,6 +10,9 @@ namespace ZXSpectrum.VM.Sound
      * is freely distributed by Magnus on his Web site, but no license file or information is included or provided
      * anywhere that I could find, I have written this code entirely from scratch but have based it on the design of the 
      * relevant class in SoftSpectrum 48. 
+     * 
+     * This implementation is not by any means perfect. We still get audio glitching. For a demo VM, I'm not that bothered.
+     * If you want to fix it... feel free to open a PR :-)
      */
 
     public class Beeper : IDisposable
@@ -19,7 +22,7 @@ namespace ZXSpectrum.VM.Sound
         // NOTE - varies by Spectrum model / region - TODO make configurable
         private int _ticksPerSample;
         private int _ticksPerFrame; 
-        private int _bufferSize = 120000;
+        private int _bufferSize = 131072; // 128KB - big enough but not big enough to cause audio latency
 
         private byte[][] _sampleData; // divided into three sets: empty, low frequency, high frequency
 
@@ -110,7 +113,7 @@ namespace ZXSpectrum.VM.Sound
             }
         }
 
-        public Beeper(Processor cpu, int displayFramesPerSecond, float volume)
+        public Beeper(Processor cpu, int displayFramesPerSecond)
         {
             try
             {
@@ -134,7 +137,7 @@ namespace ZXSpectrum.VM.Sound
 
                 // 1000 / displayFramesPerSecond is the required latency in milliseconds (ie 1000ms / 50fps = 20ms) and 
                 // we need to use the smallest latency that we can
-                _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, true, 1000 / displayFramesPerSecond); // WasapiOut can do lower latency than WaveOut
+                _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, false, 1000 / displayFramesPerSecond); // WasapiOut can do lower latency than WaveOut
 
                 // finally, work out the sample rate for the WAV data
                 int sampleRate = ((_ticksPerFrame * displayFramesPerSecond) / _ticksPerSample);
@@ -147,7 +150,6 @@ namespace ZXSpectrum.VM.Sound
                 _provider.DiscardOnBufferOverflow = true;
 
                 _player.Init(_provider);
-                _player.Volume = ((volume > 1.0f) ? 1.0f : volume); // 0.0 to 1.0
             }
             catch (Exception ex)
             {

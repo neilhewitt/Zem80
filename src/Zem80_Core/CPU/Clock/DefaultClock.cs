@@ -15,7 +15,7 @@ namespace Zem80.Core.CPU
         protected Processor _cpu;
         protected IDictionary<int, ClockEvent> _events;
 
-        public float FrequencyInMHz { get; init; }
+        public float FrequencyInMHz { get; protected set; }
         public long Ticks { get; private set; }
 
         public event EventHandler<long> OnTick;
@@ -43,12 +43,12 @@ namespace Zem80.Core.CPU
             return index;
         }
 
-        public virtual void UnsetEvent(int timerIndex)
+        public virtual void UnsetEvent(int eventIndex)
         {
-            if (_events.TryGetValue(timerIndex, out ClockEvent timer))
+            if (_events.TryGetValue(eventIndex, out ClockEvent clockEvent))
             {
-                timer.Stop();
-                _events.Remove(timerIndex);
+                clockEvent.Stop();
+                _events.Remove(eventIndex);
             }
         }
 

@@ -76,13 +76,13 @@ namespace ZXSpectrum.VM
             _cpu.Interrupts.RaiseMaskable();
         }
 
-        public ULA(Processor cpu, float beeperVolume)
+        public ULA(Processor cpu)
         {
             _cpu = cpu;
             _cpu.Clock.SetEvent(TICKS_PER_FRAME, () => UpdateDisplay(), true);
 
             _screen = new ScreenMap();
-            _beeper = new Beeper(cpu, FRAME_RATE, beeperVolume);
+            _beeper = new Beeper(cpu, FRAME_RATE);
         }
     }
 }

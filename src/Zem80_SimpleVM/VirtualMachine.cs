@@ -3,7 +3,6 @@ using System.Globalization;
 using System.IO;
 using Zem80.Core;
 using Zem80.Core.CPU;
-using Zem80.Core.CPU;
 
 namespace Zem80.SimpleVM
 {

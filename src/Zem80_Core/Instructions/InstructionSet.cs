@@ -892,9 +892,10 @@ namespace Zem80.Core.CPU
                     {
                         if (i != 6)
                         {
+                            // new opcode = first 2 bytes of base opcode + the 3rd byte with bottom 3 bits zeroed + the value of i (0-5 or 7)
                             int newOpcode = (instruction.Opcode & 0xFFFF00) + (byte)(instruction.LastOpcodeByte & 0xF8) + i;
 
-                            // ordinal is different than our default
+                            // copy register ordinal is different than our usual default
                             ByteRegister destination = i switch
                             {
                                 0 => ByteRegister.B,

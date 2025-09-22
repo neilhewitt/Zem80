@@ -9,7 +9,7 @@ namespace Zem80.Core.CPU
         private IClock _clock;
         bool _repeats;
 
-        public long TicksToWait { get; init; }
+        public long TicksToWait { get; private set; }
         public long TicksSoFar { get; private set; }
 
         public void Stop()

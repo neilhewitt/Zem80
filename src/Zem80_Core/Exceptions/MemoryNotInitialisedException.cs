@@ -16,9 +16,5 @@ namespace Zem80.Core
         public MemoryNotInitialisedException(string message, Exception innerException) : base(message, innerException)
         {
         }
-
-        protected MemoryNotInitialisedException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
     }
 }

@@ -8,7 +8,7 @@ namespace Zem80.Core.CPU
     {
         private MachineCycle[] _machineCycles = new MachineCycle[6];
 
-        public IEnumerable<MachineCycle> Cycles => _machineCycles.Where(x => x is not null);
+        public IEnumerable<MachineCycle> Cycles => _machineCycles.Where(x => x != null);
 
         public MachineCycle M1 => _machineCycles[0];
         public MachineCycle M2 => _machineCycles[1];
@@ -22,12 +22,12 @@ namespace Zem80.Core.CPU
         public IEnumerable<MachineCycle> MemoryReads => Cycles.Where(x => x.Type == MachineCycleType.MemoryRead || x.Type == MachineCycleType.MemoryReadHigh || x.Type == MachineCycleType.MemoryReadLow);
         public IEnumerable<MachineCycle> MemoryWrites => Cycles.Where(x => x.Type == MachineCycleType.MemoryWrite || x.Type == MachineCycleType.MemoryWriteHigh || x.Type == MachineCycleType.MemoryWriteLow);
         
-        public int TStates { get; init; }
+        public int TStates { get; private set; }
 
         public InstructionMachineCycles(IEnumerable<MachineCycle> machineCycles)
         {
             machineCycles.ToArray().CopyTo(_machineCycles, 0);
-            TStates = Cycles.Where(x => x is not null).Sum(x => x.TStates);
+            TStates = Cycles.Where(x => x != null).Sum(x => x.TStates);
         }
     }
 }

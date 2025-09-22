@@ -6,9 +6,9 @@ namespace Zem80.Core.CPU
 {
     public class InstructionPackage
     {
-        public Instruction Instruction { get; init; }
-        public InstructionData Data { get; init; }
-        public ushort InstructionAddress { get; init; }
+        public Instruction Instruction { get; private set; }
+        public InstructionData Data { get; private set; }
+        public ushort InstructionAddress { get; private set; }
 
         public InstructionPackage(Instruction instruction, InstructionData data, ushort instructionAddress)
         {

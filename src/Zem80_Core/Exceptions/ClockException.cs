@@ -20,9 +20,5 @@ namespace Zem80.Core
         public ClockException(string message, Exception innerException) : base(message, innerException)
         {
         }
-
-        protected ClockException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
     }
 }

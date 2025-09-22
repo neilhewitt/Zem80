@@ -50,7 +50,8 @@ namespace Zem80.Core.CPU
         }
 
         // runs as fast as possible, but only for as many ticks as there would be in the defined slice of time
-        // after which the CPU suspends until the end of the time slice in real time, then begins the next slice
+        // after which the CPU *emulation* suspends until the end of the time slice in real time, then begins the next slice
+        // (note: suspend is NOT the same as halt - the CPU loop is paused, whereas during halt the CPU executes NOPs)
         public static IClock TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice)
         {
             TimeSlicedClock clock = new TimeSlicedClock(frequencyInMHz, timeSlice);

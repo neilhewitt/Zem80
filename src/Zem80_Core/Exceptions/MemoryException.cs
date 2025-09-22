@@ -16,9 +16,5 @@ namespace Zem80.Core
         public MemoryException(string message, Exception innerException) : base(message, innerException)
         {
         }
-
-        protected MemoryException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
     }
 }
