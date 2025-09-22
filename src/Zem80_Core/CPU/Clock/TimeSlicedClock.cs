@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Timer = MultimediaTimer.Timer;
 
 namespace Zem80.Core.CPU
 {
@@ -10,7 +9,7 @@ namespace Zem80.Core.CPU
     {
         private int _ticksPerTimeSlice;
         private int _ticksThisTimeSlice;
-        private Timer _timer;
+        private MultimediaTimer.Timer _timer;
 
         public override void Start()
         {
@@ -47,7 +46,7 @@ namespace Zem80.Core.CPU
             float timeSliceInSeconds = (float)timeSlice.Ticks / 10000000f; // timeSlice.TotalSeconds is an integer
             _ticksPerTimeSlice = (int)(z80TicksPerSecond * timeSliceInSeconds);
 
-            _timer = new Timer();
+            _timer = new MultimediaTimer.Timer();
             _timer.Interval = timeSlice;
             _timer.Elapsed += (sender, args) => { _cpu.Resume(); };
         }

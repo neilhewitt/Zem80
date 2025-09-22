@@ -4,7 +4,11 @@ using System.Runtime.InteropServices;
 
 namespace MultimediaTimer
 {
-    //Used https://docs.microsoft.com/en-us/dotnet/standard/native-interop/pinvoke as a guide 
+    // This code is derived from MultimediaTimer by Mike James and is used under the terms of the MIT License
+    // It is reproduced here because the available Nuget package is not compatible with .NET Standard 2.1
+    // See LICENSE.txt in the folder root for license information.
+
+    // Used https://docs.microsoft.com/en-us/dotnet/standard/native-interop/pinvoke as a guide 
     // This was also VERY useful: https://docs.microsoft.com/en-gb/windows/win32/multimedia/timer-operations
 
     public sealed class Timer : IComponent
@@ -269,7 +273,8 @@ namespace MultimediaTimer
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            // does nothing, but if the event is not fired there will be a compiler warning
+            Disposed?.Invoke(this, EventArgs.Empty);
         }
 
         ~Timer()
