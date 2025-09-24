@@ -48,7 +48,7 @@ The other main component is the ZX Spectrum VM, which has several known issues:
 
 ## Acknowledgements ##
 
-This project contains code taken from **MultimediaTimer** which is copyright **Mike James** and is distributed under the terms of that project's license. See /src/Zem80_Core/MultimediaTimer/LICENSE.txt.
+This project contains code taken from **MultimediaTimer** which is copyright **Mike James** and is distributed under the terms of that project's license. See /src/Zem80_Core/CPU/Clock/Timer/LICENSE.txt.
 
 This project contains materials derived from **ZEXALL** which is copyright **Frank Cringle**, with amendments copyright **J.G. Harston**, and which are distributed under the terms of the ZEXALL license. 
 
