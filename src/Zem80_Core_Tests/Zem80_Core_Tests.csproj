@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Zem80_Core\Zem80_Core.csproj" />
+    <ProjectReference Include="..\ZexNext\ZexNext_Core\ZexNext_Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
