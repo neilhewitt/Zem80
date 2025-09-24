@@ -43,7 +43,6 @@ namespace Zem80.Core.CPU
         public event EventHandler Started;
         public event EventHandler Stopped;
         public event EventHandler Elapsed;
-        public event EventHandler Disposed;
 
         public void Start()
         {
