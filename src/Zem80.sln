@@ -22,6 +22,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrum__VM", "VM_Sample
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrum_UI", "VM_Samples\ZXSpectrum\ZXSpectrum_UI\ZXSpectrum_UI.csproj", "{ED2F29C3-B6B8-4C49-8BB4-6AF6C83F4887}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZexNext_Core", "ZexNext_Core\ZexNext_Core.csproj", "{BC45B5F0-1C88-0028-8C7C-9C5EFA15C198}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZexNext_Runner", "ZexNext_Runner\ZexNext_Runner.csproj", "{2FFF5D04-D6A6-1074-0C36-35B6653AC349}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -78,6 +82,22 @@ Global
 		{ED2F29C3-B6B8-4C49-8BB4-6AF6C83F4887}.Release|Any CPU.Build.0 = Release|Any CPU
 		{ED2F29C3-B6B8-4C49-8BB4-6AF6C83F4887}.Release|x64.ActiveCfg = Release|Any CPU
 		{ED2F29C3-B6B8-4C49-8BB4-6AF6C83F4887}.Release|x64.Build.0 = Release|Any CPU
+		{BC45B5F0-1C88-0028-8C7C-9C5EFA15C198}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC45B5F0-1C88-0028-8C7C-9C5EFA15C198}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC45B5F0-1C88-0028-8C7C-9C5EFA15C198}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BC45B5F0-1C88-0028-8C7C-9C5EFA15C198}.Debug|x64.Build.0 = Debug|Any CPU
+		{BC45B5F0-1C88-0028-8C7C-9C5EFA15C198}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC45B5F0-1C88-0028-8C7C-9C5EFA15C198}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC45B5F0-1C88-0028-8C7C-9C5EFA15C198}.Release|x64.ActiveCfg = Release|Any CPU
+		{BC45B5F0-1C88-0028-8C7C-9C5EFA15C198}.Release|x64.Build.0 = Release|Any CPU
+		{2FFF5D04-D6A6-1074-0C36-35B6653AC349}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FFF5D04-D6A6-1074-0C36-35B6653AC349}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FFF5D04-D6A6-1074-0C36-35B6653AC349}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2FFF5D04-D6A6-1074-0C36-35B6653AC349}.Debug|x64.Build.0 = Debug|Any CPU
+		{2FFF5D04-D6A6-1074-0C36-35B6653AC349}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FFF5D04-D6A6-1074-0C36-35B6653AC349}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FFF5D04-D6A6-1074-0C36-35B6653AC349}.Release|x64.ActiveCfg = Release|Any CPU
+		{2FFF5D04-D6A6-1074-0C36-35B6653AC349}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
