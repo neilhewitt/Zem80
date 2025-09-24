@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.0.11012.119 d18.0
+VisualStudioVersion = 18.0.11012.119
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_Core", "Zem80_Core\Zem80_Core.csproj", "{F1912952-2484-4C19-8137-D0F2BB18BEDA}"
 EndProject
@@ -17,8 +17,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_SimpleVM", "Zem80_SimpleVM\Zem80_SimpleVM.csproj", "{2CE7281F-B876-46E7-A571-56E6C55F2A0F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_Zexall", "Zem80_Zexall\Zem80_Zexall.csproj", "{6BF4132D-20D2-44A2-A2A6-9EB64D7DF6B3}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpeedTest", "SpeedTest\SpeedTest.csproj", "{25D75CE1-249E-4145-9ACC-3F6D1A84534D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZXSpectrum__VM", "VM_Samples\ZXSpectrum\ZXSpectrum_VM\ZXSpectrum__VM.csproj", "{F54315F1-9EC9-4EB5-93BE-39B6D084C1BD}"
 EndProject
@@ -64,14 +62,6 @@ Global
 		{6BF4132D-20D2-44A2-A2A6-9EB64D7DF6B3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6BF4132D-20D2-44A2-A2A6-9EB64D7DF6B3}.Release|x64.ActiveCfg = Release|Any CPU
 		{6BF4132D-20D2-44A2-A2A6-9EB64D7DF6B3}.Release|x64.Build.0 = Release|Any CPU
-		{25D75CE1-249E-4145-9ACC-3F6D1A84534D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{25D75CE1-249E-4145-9ACC-3F6D1A84534D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{25D75CE1-249E-4145-9ACC-3F6D1A84534D}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{25D75CE1-249E-4145-9ACC-3F6D1A84534D}.Debug|x64.Build.0 = Debug|Any CPU
-		{25D75CE1-249E-4145-9ACC-3F6D1A84534D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{25D75CE1-249E-4145-9ACC-3F6D1A84534D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{25D75CE1-249E-4145-9ACC-3F6D1A84534D}.Release|x64.ActiveCfg = Release|Any CPU
-		{25D75CE1-249E-4145-9ACC-3F6D1A84534D}.Release|x64.Build.0 = Release|Any CPU
 		{F54315F1-9EC9-4EB5-93BE-39B6D084C1BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F54315F1-9EC9-4EB5-93BE-39B6D084C1BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F54315F1-9EC9-4EB5-93BE-39B6D084C1BD}.Debug|x64.ActiveCfg = Debug|Any CPU
