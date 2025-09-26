@@ -35,6 +35,18 @@ Complete Z80 instruction set implementation with microcode.
 - [Instruction](./Instructions.md#instruction)
 - [Microcode](./Instructions.md#microcode)
 
+### [Instruction System](./Instructions.md)
+Complete Z80 instruction set implementation with microcode.
+- [InstructionSet](./Instructions.md#instructionset-class) - Complete Z80 instruction set management
+- [Instruction](./Instructions.md#instruction-class) - Individual instruction metadata and execution
+- [IMicrocode](./Instructions.md#imicrocode-interface) - Instruction execution interface
+
+### [I/O System](./IO.md)
+Input/Output pin simulation and port management.
+- [IIO](./IO.md#iio-interface) - Z80 I/O pin state management
+- [IPorts](./IO.md#iports-interface) - Port collection management
+- [IPort](./IO.md#iport-interface) - Individual port interface
+
 ### [Exceptions](./Exceptions.md)
 Custom exception hierarchy for Z80 emulation errors.
 
