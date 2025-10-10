@@ -2,18 +2,6 @@
 
 A simple emulation of the Z80 CPU written in C# and running on .NET 8.0
 
-## .NET 10 and .NET Standard versions coming soon
-
-I'm working on an upgrade to .NET 10 that also dual-targets the library to .NET Standard 2.1. This will allow you to consume the library from any version of .NET Core, but not with the .NET Framework. I think this is a reasonable compromise to widen the potential audience for Zem80 while still allowing me to use later C# features in the code.
-
-In order to make this work I had to remove the dependency on MultimediaTimer, which doesn't support .NET Standard. I have replaced this with a similar timer implementation in the core code that should work on all platforms. One job for the immediate future is to set up test hosts for Linux and MacOS to make sure this works properly.
-
-Note that I'm only dual-targeting the core library. Other projects in the solution will remain .NET 10 only, including the ZX Spectrum VM sample, so you'll need .NET 10 installed work with the code and run the tests and samples.
-
-All of this will be merged to main only after .NET 10 is released, and I'll bump the version number to 2.1 to reflect the change. If you want to play with it now, the code is on the net10 branch.
-
-I'll also be including the source for the ZexNext test framework, as having this as a separate repo makes little sense.
-
 ## Version 2.0 now available
 
 Zem80 v2.0 includes a completely redesigned emulator core with improved performance. There are some minor breaking API and event changes, but from the point of view of consuming code, little has changed. Most of the work here was to improve the architecture of the system and tidy up the timing mechanisms. 
