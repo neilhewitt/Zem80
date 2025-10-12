@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Windows.Forms;
 using Zem80.Core;
 using Zem80.Core.CPU;
 using Zem80.Core.Memory;
@@ -57,13 +56,13 @@ namespace ZXSpectrum.VM
                 if (portAddress.LowByte() == 0xFE)
                 {
                     _ula.SetBorderColour(output);
-                    _ula.SetBeeper(output);
-
                 }
+
+                _ula.SetBeeper(output);
             }
         }
 
-        public Spectrum48K(EventHandler<byte[]> OnUpdateDisplay)
+        public Spectrum48K(Action<byte[]> OnUpdateDisplay)
         {
             string romPath = "rom\\48k.rom";
 
@@ -95,7 +94,7 @@ namespace ZXSpectrum.VM
                 );
 
             _ula = new ULA(_cpu); // models the ULA chip which controls the screen and sound
-            _ula.OnUpdateDisplay += OnUpdateDisplay;
+            _ula.OnUpdateDisplay += (sender, rgba) => OnUpdateDisplay(rgba);
 
             _loader = new SnapshotLoader(_cpu, _ula); // handles loading of snapshots
 

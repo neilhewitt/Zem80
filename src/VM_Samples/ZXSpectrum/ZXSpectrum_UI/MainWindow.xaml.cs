@@ -41,26 +41,26 @@ namespace ZXSpectrum.UI
 
         private void MainWindow_KeyUp(object sender, KeyEventArgs e)
         {
-            SpectrumKeyboard.KeyUp((int)e.Key);
+            SpectrumKeyboard.WpfKeyUp((int)e.Key);
         }
 
         private void MainWindow_KeyDown(object sender, KeyEventArgs e)
         {
-            SpectrumKeyboard.KeyDown((int)e.Key);
+            SpectrumKeyboard.WpfKeyDown((int)e.Key);
         }
 
         private void RunTests(object sender, RoutedEventArgs e)
         {
         }
 
-        public void UpdateDisplay(object sender, byte[] rgba)
+        public void UpdateDisplay(byte[] rgba)
         {
             if (!_isClosing)
             {
                 Dispatcher.InvokeAsync(() =>
                 {
                     var bitmap = BitmapFactory.New(320, 256).FromByteArray(rgba);
-                    DisplaySurface.Stretch = Stretch.Fill;
+                    DisplaySurface.Stretch = Stretch.Uniform;
                     DisplaySurface.Source = bitmap;
                 });
             }

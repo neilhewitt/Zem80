@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Zem80.Core.CPU
 {
-    public class TimeSlicedClock : DefaultClock, IClock, IDisposable
+    public class TimeSlicedClock : ClockBase, IClock, IDisposable
     {
         private int _ticksPerTimeSlice;
         private int _ticksThisTimeSlice;

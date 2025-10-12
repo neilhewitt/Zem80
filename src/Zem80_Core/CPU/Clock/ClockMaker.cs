@@ -5,9 +5,6 @@ namespace Zem80.Core.CPU
 {
     public static class ClockMaker
     {
-        // just runs as fast as possible, so not real time, but all events happen in the right order
-        public static IClock DefaultClock(float frequencyInMHz) => new DefaultClock(frequencyInMHz); 
-       
         // attempts to run all events at the same time intervals they would run on the actual hardware
         public static IClock RealTimeClock(float frequencyInMHz, int[] cycleWaitPattern = null)
         {

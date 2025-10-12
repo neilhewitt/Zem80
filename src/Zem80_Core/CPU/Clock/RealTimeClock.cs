@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace Zem80.Core.CPU
 {
-    public class RealTimeClock : DefaultClock
+    public class RealTimeClock : ClockBase
     {
         private Stopwatch _stopwatch;
         

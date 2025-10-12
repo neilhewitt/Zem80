@@ -9,7 +9,7 @@ using Zem80.Core.InputOutput;
 namespace Zem80.Core.CPU
 {
 
-    public class DefaultClock : IClock
+    public abstract class ClockBase : IClock
     {
         protected bool _started;
         protected Processor _cpu;
@@ -68,7 +68,7 @@ namespace Zem80.Core.CPU
             }
         }
 
-        protected internal DefaultClock(float frequencyInMHz)
+        protected internal ClockBase(float frequencyInMHz)
         {
             FrequencyInMHz = frequencyInMHz;
             _events = new Dictionary<int, ClockEvent>();

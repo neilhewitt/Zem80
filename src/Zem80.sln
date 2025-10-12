@@ -26,6 +26,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZexNext_Core", "ZexNext\Zex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZexNext_Runner", "ZexNext\ZexNext_Runner\ZexNext_Runner.csproj", "{B942D7D6-8514-A128-DCB9-2A63331EC2ED}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZXSpectrum_MAUI", "VM_Samples\ZXSpectrum\ZXSpectrum_MAUI\ZXSpectrum_MAUI.csproj", "{1932788B-2363-4552-BA86-9662962C8D9C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -98,6 +100,14 @@ Global
 		{B942D7D6-8514-A128-DCB9-2A63331EC2ED}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B942D7D6-8514-A128-DCB9-2A63331EC2ED}.Release|x64.ActiveCfg = Release|Any CPU
 		{B942D7D6-8514-A128-DCB9-2A63331EC2ED}.Release|x64.Build.0 = Release|Any CPU
+		{1932788B-2363-4552-BA86-9662962C8D9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1932788B-2363-4552-BA86-9662962C8D9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1932788B-2363-4552-BA86-9662962C8D9C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1932788B-2363-4552-BA86-9662962C8D9C}.Debug|x64.Build.0 = Debug|Any CPU
+		{1932788B-2363-4552-BA86-9662962C8D9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1932788B-2363-4552-BA86-9662962C8D9C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1932788B-2363-4552-BA86-9662962C8D9C}.Release|x64.ActiveCfg = Release|Any CPU
+		{1932788B-2363-4552-BA86-9662962C8D9C}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -151,12 +151,11 @@ namespace Zem80.Core.CPU
                     bool skipNextByte = false;
                     do
                     {
-                        ushort address = Registers.PC;
                         // when the Z80 is *halted*, it doesn't stop running. It continuously executes NOP instructions until an interrupt occurs;
                         // if halted (or skipping because of an instruction set error) we provide 4 zero-bytes; otherwise, the 4 bytes at the Program Counter.
                         // note that instructions can be 1-4 bytes long, but we always send the next 4 bytes to the decoder
+                        ushort address = Registers.PC;
                         byte[] instructionBytes = (_halted || skipNextByte) ? new byte[4] : Memory.ReadBytesAt(address, 4);
-
                         InstructionPackage package = InstructionDecoder.DecodeInstruction(instructionBytes, address, out skipNextByte, out bool opcodeErrorNOP);
 
                         // on the real Z80, during instruction decode, memory timing for the opcode fetch and operand reads is happening
@@ -192,7 +191,7 @@ namespace Zem80.Core.CPU
             // check for breakpoints
             Debug.EvaluateAndRunBreakpoint(package.InstructionAddress, package);
 
-            // set the internal WZ register to an initial value based on whether this is an indexed instruction or not; the instruction that runs may alter/set WZ itself
+            // set the internal WZ register to an initial value based on whether this is an indexed instruction or not; the instruction that runs may still alter/set WZ itself
             // the value in WZ (sometimes known as MEMPTR in Z80 enthusiast circles) is only ever used to control the behavior of the BIT instruction
             Registers.WZ = (ushort)(package.Instruction.IsIndexed ? (Registers[package.Instruction.IndexedRegister] + package.Data.Argument1) : 0);
 
@@ -215,10 +214,10 @@ namespace Zem80.Core.CPU
         public Processor(IMemoryBank memory = null, IMemoryMap map = null, IStack stack = null, IClock clock = null, IRegisters registers = null, IPorts ports = null,
             IProcessorTiming cycleTiming = null, IIO io = null, IInterrupts interrupts = null, IDebugProcessor debug = null, ushort topOfStackAddress = 0xFFFF)
         {
-            // Default clock is the fast DefaultClock which, well, isn't really a clock. It'll run as fast as possible on the hardware and in .NET
-            // but it'll *say* that it's running at 4MHz. It's a lying liar that lies. You may want a different clock - luckily there are several.
-            // Clocks and timing are a thing, too much to go into here, so check the docs (one day, there will be docs!).
-            Clock = clock ?? ClockMaker.DefaultClock(DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ);
+            // default clock is the RealTimeClock at 4MHz (which is the normal Z80 clock speed) - this will attempt to run as close to real time
+            // as possible on a non-deterministic platform like .NET, but this only works if the host platform has a high-resolution timer
+            // otherwise this clock will just run as fast as the host platform can manage and timing will not be accurate
+            Clock = clock ?? ClockMaker.RealTimeClock(DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ);
             Clock.Initialise(this);
 
             Timing = cycleTiming ?? new ProcessorTiming(this);

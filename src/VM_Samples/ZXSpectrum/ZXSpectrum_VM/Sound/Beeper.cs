@@ -21,8 +21,9 @@ namespace ZXSpectrum.VM.Sound
 
         // NOTE - varies by Spectrum model / region - TODO make configurable
         private int _ticksPerSample;
-        private int _ticksPerFrame; 
-        private int _bufferSize = 131072; // 128KB - big enough but not big enough to cause audio latency
+        private int _ticksPerFrame;
+        private int _sampleFactor = 2;
+        private int _bufferSize = 120000; // big enough but not big enough to cause audio latency
 
         private byte[][] _sampleData; // divided into three sets: empty, low frequency, high frequency
 
@@ -82,7 +83,7 @@ namespace ZXSpectrum.VM.Sound
                 long currentTStates = _cpu.Clock.Ticks;
                 long ticks = currentTStates - _lastTStates;
 
-                long samplesRequired = (ticks / _ticksPerSample);
+                long samplesRequired = (ticks / _ticksPerSample) / _sampleFactor;
                 if (samplesRequired <= _bufferSize && samplesRequired > 0)
                 {
                     _currentFrequencyRange = _currentFrequencyRange == 0 ? frequencyRange : 0;
@@ -140,7 +141,7 @@ namespace ZXSpectrum.VM.Sound
                 _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, false, 1000 / displayFramesPerSecond); // WasapiOut can do lower latency than WaveOut
 
                 // finally, work out the sample rate for the WAV data
-                int sampleRate = ((_ticksPerFrame * displayFramesPerSecond) / _ticksPerSample);
+                int sampleRate = ((_ticksPerFrame * displayFramesPerSecond) / (_ticksPerSample * _sampleFactor));
                 WaveFormat format = new WaveFormat(sampleRate, 8, 1);
 
                 // the BufferedWaveProvider can run for as long as we need it, adding to the buffer as we go, and
@@ -150,6 +151,7 @@ namespace ZXSpectrum.VM.Sound
                 _provider.DiscardOnBufferOverflow = true;
 
                 _player.Init(_provider);
+                _player.Volume = 1f;
             }
             catch (Exception ex)
             {

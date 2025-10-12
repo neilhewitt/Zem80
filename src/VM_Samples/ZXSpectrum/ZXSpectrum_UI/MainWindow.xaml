@@ -7,7 +7,7 @@
         x:Name="Main"
         Title="ZX Spectrum 48K Test UI" Height="600" Width="800"
         >
-    <Grid RenderOptions.BitmapScalingMode="HighQuality">
-        <Image x:Name="DisplaySurface" Grid.Column="0" Margin ="10" Stretch="Fill" Visibility="Visible" />
+    <Grid RenderOptions.BitmapScalingMode="Fant">
+        <Image x:Name="DisplaySurface" Grid.Column="0" Margin ="10" Stretch="UniformToFill" Visibility="Visible" />
     </Grid>
 </Window>
