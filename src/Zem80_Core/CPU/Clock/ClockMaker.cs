@@ -5,6 +5,11 @@ namespace Zem80.Core.CPU
 {
     public static class ClockMaker
     {
+        public static IClock NoClock(int pretendFrequencyInMHz = 4)
+        {
+            return new NoClock(pretendFrequencyInMHz);
+        }
+
         // attempts to run all events at the same time intervals they would run on the actual hardware
         public static IClock RealTimeClock(float frequencyInMHz, int[] cycleWaitPattern = null)
         {

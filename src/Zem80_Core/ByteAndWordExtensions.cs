@@ -8,7 +8,7 @@ using Zem80.Core.CPU;
 
 namespace Zem80.Core
 {
-    public static class ArithmeticExtensions
+    public static class ByteAndWordExtensions
     {
         public static byte LowByte(this ushort input)
         {

@@ -31,6 +31,11 @@ namespace Zem80.SimpleVM
                 _cpu.AfterExecuteInstruction += DebugOutput_AfterExecute;
             }
 
+            if (callbackAfterInstructionExecute != null)
+            {
+                _cpu.AfterExecuteInstruction += (s, e) => callbackAfterInstructionExecute(e);
+            }
+
             _cpu.Start(address, endOnHalt);
             if (synchronous) _cpu.RunUntilStopped();
         }
