@@ -30,8 +30,14 @@ namespace Zem80.Core.CPU
             int ticksToWait = _waitPattern[_waitCount++];
             long targetTicks = _lastElapsedTicks + ticksToWait;
 
-            while (_stopwatch.ElapsedTicks < targetTicks) ; // spin until enough Windows ticks have elapsed
-            _lastElapsedTicks = _stopwatch.ElapsedTicks;
+            // if Processor was created with the RealTimeClock but has never been started, Stopwatch won't be running
+            // if you use DebugProcessor.ExecuteDirect() to run instructions directly then this would hang the clock here
+            // so we'll check that and if it's not running we'll just skip the wait
+            if (_stopwatch.IsRunning)
+            {
+                while (_stopwatch.ElapsedTicks < targetTicks) ; // spin until enough Windows ticks have elapsed
+                _lastElapsedTicks = _stopwatch.ElapsedTicks;
+            }
 
             base.WaitForNextClockTick();
         }
