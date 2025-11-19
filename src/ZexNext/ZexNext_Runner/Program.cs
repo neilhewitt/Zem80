@@ -24,7 +24,7 @@ namespace ZexNext_Runner
         {
             Console.WriteLine("ZexNext Console Test Runner (C)2020 Neil Hewitt\n");
 
-            _cpu = new Processor(clock: ClockMaker.NoClock()); // we're going to execute directly, so no clock needed (and it would tank performance)
+            _cpu = new Processor();
 
             string path = args.FirstOrDefault();
             if (path == null) path = "zexall.zxl";

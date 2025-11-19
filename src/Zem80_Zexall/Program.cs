@@ -22,7 +22,7 @@ namespace Zem80_Zexall
 
             VirtualMachine vm = new VirtualMachine(enforceTiming: false, clock: ClockMaker.NoClock());
             vm.Load(0x0005, "..\\..\\..\\zexall\\cpm_patch.bin");
-            vm.Load(0x0100, "..\\..\\..\\zexall\\zexdoc.bin");
+            vm.Load(0x0100, "..\\..\\..\\zexall\\zexall.bin");
             vm.Start(address: 0x100, synchronous: true, debugOutput: false);//, callbackAfterInstructionExecute: Callback);//, outputLogPath: "zexall.log");
 
             Console.CursorVisible = true;

@@ -28,12 +28,12 @@ namespace ZXSpectrum.VM
 
         public void Start()
         {
-            _beeper?.Start();
+            _beeper.Start();
         }
 
         public void Stop()
         {
-            _beeper?.Dispose();
+            _beeper.Dispose();
         }
 
         public void SetBorderColour(byte colour)
@@ -43,7 +43,7 @@ namespace ZXSpectrum.VM
 
         public void SetBeeper(byte output)
         {
-            _beeper?.Update(output);
+            _beeper.Update(output);
         }
 
         public void UpdateDisplay()
@@ -81,7 +81,7 @@ namespace ZXSpectrum.VM
             _cpu.Clock.SetEvent(TICKS_PER_FRAME, () => UpdateDisplay(), true);
 
             _screen = new ScreenMap();
-            //_beeper = new Beeper(cpu, FRAME_RATE);
+            _beeper = new Beeper(cpu, FRAME_RATE);
         }
     }
 }
