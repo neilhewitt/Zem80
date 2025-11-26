@@ -46,6 +46,16 @@ namespace ZXSpectrum.VM
             _beeper.Update(output);
         }
 
+        public void MuteBeeper()
+        {
+            _beeper.Stop();
+        }
+
+        public void UnmuteBeeper()
+        {
+            _beeper.Start();
+        }  
+
         public void UpdateDisplay()
         {
             // we're faking the screen update process here - in reality there are lots

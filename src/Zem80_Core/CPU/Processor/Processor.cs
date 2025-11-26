@@ -27,9 +27,10 @@ namespace Zem80.Core.CPU
         public IIO IO { get; private set; }
         public IInterrupts Interrupts { get; private set; }
         public IProcessorTiming Timing { get; private set; }
-        public IDebugProcessor Debug { get; private set; }
         public IMemoryBank Memory { get; private set; }
         public IClock Clock { get; private set; }
+
+        public DebugProcessor Debug { get; private set; }
 
         public IReadOnlyFlags Flags => new Flags(Registers.F, true);
 
@@ -146,36 +147,29 @@ namespace Zem80.Core.CPU
 
             while (_running)
             {
+                bool skipNextByte = false;
+
                 if (!_suspended)
                 {
-                    bool skipNextByte = false;
-                    do
-                    {
-                        // when the Z80 is *halted*, it doesn't stop running. It continuously executes NOP instructions until an interrupt occurs;
-                        // if halted (or skipping because of an instruction set error) we provide 4 zero-bytes; otherwise, the 4 bytes at the Program Counter.
-                        // note that instructions can be 1-4 bytes long, but we always send the next 4 bytes to the decoder
-                        ushort address = Registers.PC;
-                        byte[] instructionBytes = (_halted || skipNextByte) ? new byte[4] : Memory.ReadBytesAt(address, 4);
-                        InstructionPackage package = InstructionDecoder.DecodeInstruction(instructionBytes, address, out skipNextByte, out bool opcodeErrorNOP);
+                    // when the Z80 is *halted*, it doesn't stop running. It continuously executes NOP instructions until an interrupt occurs;
+                    // if halted (or skipping because of an instruction set error) we provide 4 zero-bytes; otherwise, the 4 bytes at the Program Counter.
+                    // note that instructions can be 1-4 bytes long, but we always send the next 4 bytes to the decoder
+                    ushort address = Registers.PC;
+                    byte[] instructionBytes = (_halted || skipNextByte) ? new byte[4] : Memory.ReadBytesAt(address, 4);
+                    InstructionPackage package = InstructionDecoder.DecodeInstruction(instructionBytes, address, out skipNextByte, out bool opcodeErrorNOP);
 
-                        // on the real Z80, during instruction decode, memory timing for the opcode fetch and operand reads is happening
-                        // but here we will simulate the timing based on the instruction package received
-                        // (all the rest of the timing happens during the execution of the instruction microcode, and the microcode is responsible for it)
-                        Timing.AddOpcodeFetchTiming(package.Instruction, address);
-                        Timing.AddOperandReadTiming(package.Instruction, address, package.Data.Argument1, package.Data.Argument2);
+                    // on the real Z80, during instruction decode, memory timing for the opcode fetch and operand reads is happening
+                    // but here we will simulate the timing based on the instruction package received
+                    // (all the rest of the timing happens during the execution of the instruction microcode, and the microcode is responsible for it)
+                    Timing.AddOpcodeFetchTiming(package.Instruction, address);
+                    Timing.AddOperandReadTiming(package.Instruction, address, package.Data.Argument1, package.Data.Argument2);
 
-                        // advance the Program Counter to the start of the next instruction - but the current instruction may still change it
-                        Registers.PC += (ushort)package.Instruction.SizeInBytes;
-                        ExecuteInstruction(package);
+                    // advance the Program Counter to the start of the next instruction - but the current instruction may still change it
+                    Registers.PC += (ushort)package.Instruction.SizeInBytes;
+                    ExecuteInstruction(package);
 
-                        if (!opcodeErrorNOP)
-                        {
-                            Interrupts.HandleAll();
-                        }
-
-                        RefreshMemory();
-                    }
-                    while (skipNextByte); // usually false, but if true, the cycle will run again with a NOP and skip over the next byte in RAM
+                    Interrupts.HandleAll();
+                    RefreshMemory();
                 }
                 else
                 {
@@ -186,10 +180,8 @@ namespace Zem80.Core.CPU
 
         private void ExecuteInstruction(InstructionPackage package)
         {
+            Debug.NotifyExecute(package); // gets first crack before events
             BeforeExecuteInstruction?.Invoke(this, package);
-
-            // check for breakpoints
-            Debug.EvaluateAndRunBreakpoint(package.InstructionAddress, package);
 
             // set the internal WZ register to an initial value based on whether this is an indexed instruction or not; the instruction that runs may still alter/set WZ itself
             // the value in WZ (sometimes known as MEMPTR in Z80 enthusiast circles) is only ever used to control the behavior of the BIT instruction
@@ -197,6 +189,7 @@ namespace Zem80.Core.CPU
 
             ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
             if (result.Flags != null) Registers.F = result.Flags.Value;
+            if (Registers.PC != package.InstructionAddress + package.Instruction.SizeInBytes) result.ProgramCounterWasModified = true;
 
             AfterExecuteInstruction?.Invoke(this, result);
         }
@@ -207,12 +200,12 @@ namespace Zem80.Core.CPU
         }
 
         public Processor()
-            : this(null, null, null, null, null, null, null, null, null, null)
+            : this(null, null, null, null, null, null, null, null, null)
         {
         }
 
         public Processor(IMemoryBank memory = null, IMemoryMap map = null, IStack stack = null, IClock clock = null, IRegisters registers = null, IPorts ports = null,
-            IProcessorTiming cycleTiming = null, IIO io = null, IInterrupts interrupts = null, IDebugProcessor debug = null, ushort topOfStackAddress = 0xFFFF)
+            IProcessorTiming cycleTiming = null, IIO io = null, IInterrupts interrupts = null, ushort topOfStackAddress = 0xFFFF)
         {
             // default clock is the RealTimeClock at 4MHz (which is the normal Z80 clock speed) - this will attempt to run as close to real time
             // as possible on a non-deterministic platform like .NET, but this only works if the host platform has a high-resolution timer
@@ -225,7 +218,7 @@ namespace Zem80.Core.CPU
             Ports = ports ?? new Ports(Timing);
             IO = io ?? new IO(this);
             Interrupts = interrupts ?? new Interrupts(this, ExecuteInstruction);
-            Debug = debug ?? new DebugProcessor(this, ExecuteInstruction);
+            Debug = new DebugProcessor(this, ExecuteInstruction);
 
             // You can supply your own memory implementations, for example if you need to do RAM paging for >64K implementations.
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.

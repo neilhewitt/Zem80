@@ -42,6 +42,11 @@ namespace ZXSpectrum.VM.Sound
             _player.Play();
         }
 
+        public void Stop()
+        {
+            _player.Stop();
+        }
+
         public void Dispose()
         {
             _player.Stop();
@@ -151,7 +156,6 @@ namespace ZXSpectrum.VM.Sound
                 _provider.DiscardOnBufferOverflow = true;
 
                 _player.Init(_provider);
-                _player.Volume = 1f;
             }
             catch (Exception ex)
             {

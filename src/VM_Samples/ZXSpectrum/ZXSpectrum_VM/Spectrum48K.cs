@@ -12,6 +12,8 @@ namespace ZXSpectrum.VM
         private Processor _cpu;
         private ULA _ula;
         private SnapshotLoader _loader;
+
+        public Processor CPU => _cpu;
         
         public void Start(string snapshotPath = null)
         {
@@ -62,6 +64,16 @@ namespace ZXSpectrum.VM
             }
         }
 
+        public void Mute()
+        {
+            _ula.MuteBeeper();
+        }
+
+        public void Unmute()
+        {
+            _ula.UnmuteBeeper();
+        }
+
         public Spectrum48K(Action<byte[]> OnUpdateDisplay)
         {
             string romPath = "rom\\48k.rom";
@@ -91,7 +103,7 @@ namespace ZXSpectrum.VM
                     3f, // Real Spectrum runs at 3.5MHz but contended memory etc slows it down, so we'll run at 3MHz which seems near enough right
                     TimeSpan.FromMilliseconds(20)
                     )
-                );
+                );            
 
             _ula = new ULA(_cpu); // models the ULA chip which controls the screen and sound
             _ula.OnUpdateDisplay += (sender, rgba) => OnUpdateDisplay(rgba);

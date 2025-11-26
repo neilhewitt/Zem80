@@ -7,12 +7,15 @@ using Zem80.Core;
 
 namespace Zem80.Core.CPU
 {
-
     public class ProcessorTiming : IProcessorTiming
     {
         public const byte OPCODE_FETCH_NORMAL_TSTATES = 4;
         public const byte MEMORY_READ_NORMAL_TSTATES = 3;
         public const byte MEMORY_WRITE_NORMAL_TSTATES = 3;
+        public const byte STACK_READ_NORMAL_TSTATES = 3;
+        public const byte STACK_WRITE_NORMAL_TSTATES = 3;
+        public const byte PORT_READ_NORMAL_TSTATES = 4;
+        public const byte PORT_WRITE_NORMAL_TSTATES = 4;
         public const byte NMI_INTERRUPT_ACKNOWLEDGE_TSTATES = 5;
         public const byte IM0_INTERRUPT_ACKNOWLEDGE_TSTATES = 6;
         public const byte IM1_INTERRUPT_ACKNOWLEDGE_TSTATES = 7;
@@ -20,8 +23,21 @@ namespace Zem80.Core.CPU
 
         private Processor _cpu;
         private int _waitCyclesPending;
+        private byte _currentStackData;
+        private byte _currentPort;
+        private bool _currentPortAddressFromBC;
+        private byte _currentPortData;
 
         public event EventHandler<int> BeforeInsertWaitCycles;
+        public event EventHandler<MemoryReadWriteCycleInfo> OnOpcodeFetch;
+        public event EventHandler<MemoryReadWriteCycleInfo> OnMemoryRead;
+        public event EventHandler<MemoryReadWriteCycleInfo> OnMemoryWrite;
+        public event EventHandler<StackReadWriteCycleInfo> OnStackRead;
+        public event EventHandler<StackReadWriteCycleInfo> OnStackWrite;
+        public event EventHandler<PortReadWriteCycleInfo> OnPortRead;
+        public event EventHandler<PortReadWriteCycleInfo> OnPortWrite;
+        public event EventHandler OnInterruptAcknowledge;
+        public event EventHandler<int> OnInternalOperation;
 
         public void AddWaitCycles(int waitCycles)
         {
@@ -68,6 +84,8 @@ namespace Zem80.Core.CPU
             _cpu.Clock.WaitForNextClockTick();
 
             if (extraTStates > 0) _cpu.Clock.WaitForClockTicks(extraTStates);
+
+            OnOpcodeFetch?.Invoke(this, new MemoryReadWriteCycleInfo { Address = address, Data = opcode, TStates = tStates });
         }
 
         public void MemoryReadCycle(ushort address, byte data, byte tStates)
@@ -85,6 +103,13 @@ namespace Zem80.Core.CPU
             _cpu.Clock.WaitForNextClockTick();
 
             if (extraTStates > 0) _cpu.Clock.WaitForClockTicks(extraTStates);
+
+            OnMemoryRead?.Invoke(this, new MemoryReadWriteCycleInfo() {
+                Address = address,
+                Data = data,
+                TStates = tStates 
+                }
+            );
         }
 
         public void MemoryWriteCycle(ushort address, byte data, byte tStates)
@@ -100,6 +125,13 @@ namespace Zem80.Core.CPU
             _cpu.Clock.WaitForNextClockTick();
 
             if (extraTStates > 0) _cpu.Clock.WaitForClockTicks(extraTStates);
+
+            OnMemoryWrite?.Invoke(this, new MemoryReadWriteCycleInfo() { 
+                Address = address, 
+                Data = data, 
+                TStates = tStates 
+                }
+            );
         }
 
         public void BeginStackReadCycle()
@@ -116,10 +148,18 @@ namespace Zem80.Core.CPU
 
             _cpu.IO.EndMemoryReadState();
             _cpu.Clock.WaitForNextClockTick();
+
+            OnStackRead?.Invoke(this, new StackReadWriteCycleInfo() { 
+                Data = data, 
+                StackPointer = _cpu.Registers.SP, 
+                TStates = STACK_READ_NORMAL_TSTATES 
+                }
+            );
         }
 
         public void BeginStackWriteCycle(byte data)
         {
+            _currentStackData = data;
             _cpu.IO.SetMemoryWriteState(_cpu.Registers.SP, data);
             _cpu.Clock.WaitForNextClockTick();
             _cpu.Clock.WaitForNextClockTick();
@@ -130,10 +170,19 @@ namespace Zem80.Core.CPU
         {
             _cpu.IO.EndMemoryWriteState();
             _cpu.Clock.WaitForNextClockTick();
+
+            OnStackWrite?.Invoke(this, new StackReadWriteCycleInfo() { 
+                Data = _currentStackData, 
+                StackPointer = _cpu.Registers.SP, 
+                TStates = STACK_WRITE_NORMAL_TSTATES 
+                }
+            );
         }
 
         public void BeginPortReadCycle(byte port, bool addressFromBC)
         {
+            _currentPort = port;
+            _currentPortAddressFromBC = addressFromBC;
             ushort address = addressFromBC ? (_cpu.Registers.C, _cpu.Registers.B).ToWord() : (port, _cpu.Registers.A).ToWord();
 
             _cpu.IO.SetPortReadState(address);
@@ -149,10 +198,20 @@ namespace Zem80.Core.CPU
             _cpu.Clock.WaitForNextClockTick();
             _cpu.IO.EndPortReadState();
             _cpu.Clock.WaitForNextClockTick();
+
+            OnPortRead?.Invoke(this, new PortReadWriteCycleInfo() { 
+                Port = _currentPort, Data = data, 
+                AddressFromBC = _currentPortAddressFromBC, 
+                TStates = PORT_READ_NORMAL_TSTATES 
+                }
+            );
         }
 
         public void BeginPortWriteCycle(byte data, byte port, bool addressFromBC)
         {
+            _currentPort = port;
+            _currentPortAddressFromBC = addressFromBC;
+            _currentPortData = data;
             ushort address = addressFromBC ? (_cpu.Registers.C, _cpu.Registers.B).ToWord() : (port, _cpu.Registers.A).ToWord();
 
             _cpu.IO.SetPortWriteState(address, data);
@@ -167,6 +226,13 @@ namespace Zem80.Core.CPU
             _cpu.Clock.WaitForNextClockTick();
             _cpu.IO.EndPortWriteState();
             _cpu.Clock.WaitForNextClockTick();
+
+            OnPortWrite?.Invoke(this, new PortReadWriteCycleInfo() { 
+                Port = _currentPort, 
+                Data = _currentPortData, 
+                AddressFromBC = _currentPortAddressFromBC, 
+                TStates = PORT_WRITE_NORMAL_TSTATES }
+            );
         }
 
         public void BeginInterruptRequestAcknowledgeCycle(int tStates)
@@ -178,11 +244,13 @@ namespace Zem80.Core.CPU
         public void EndInterruptRequestAcknowledgeCycle()
         {
             _cpu.IO.EndInterruptState();
+            OnInterruptAcknowledge?.Invoke(this, EventArgs.Empty);
         }
 
         public void InternalOperationCycle(int tStates)
         {
             _cpu.Clock.WaitForClockTicks(tStates);
+            OnInternalOperation?.Invoke(this, tStates);
         }
 
         public void InternalOperationCycles(params int[] tStates)
@@ -191,6 +259,8 @@ namespace Zem80.Core.CPU
             {
                 _cpu.Clock.WaitForClockTicks(t);
             }
+
+            OnInternalOperation?.Invoke(this, tStates.Sum());
         }
 
         private void InsertWaitCycles()

@@ -10,6 +10,7 @@ namespace Zem80.Core.CPU
         public InstructionData Data { get; }
         public Flags Flags { get; }
         public ushort InstructionAddress { get; }
+        public bool ProgramCounterWasModified { get; internal set; }
 
         public ExecutionResult(InstructionPackage package, Flags flags)
         {

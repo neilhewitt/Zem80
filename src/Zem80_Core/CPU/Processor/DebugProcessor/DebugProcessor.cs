@@ -3,19 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Zem80.Core.Debugger;
 
 namespace Zem80.Core.CPU
 {
-    public class DebugProcessor : IDebugProcessor
+    public class DebugProcessor
     {
         private Processor _cpu;
-        private EventHandler<InstructionPackage> _onBreakpoint;
         private Action<InstructionPackage> _executeInstruction;
-        private IList<ushort> _breakpoints;
+        private List<ushort> _breakpoints;
+        private List<Action<ushort, DebugSession>> _subscribers;
 
-        IEnumerable<ushort> Breakpoints => _breakpoints;
+        private DebugSession _debugSession;
 
-        event EventHandler<InstructionPackage> OnBreakpoint { add { _onBreakpoint += value; } remove { _onBreakpoint -= value; } }
+        public IReadOnlyCollection<ushort> Breakpoints => (IReadOnlyCollection<ushort>)_breakpoints;
 
         public void AddBreakpoint(ushort address)
         {
@@ -38,11 +39,11 @@ namespace Zem80.Core.CPU
             }
         }
 
-        public void EvaluateAndRunBreakpoint(ushort address, InstructionPackage executingPackage)
+        public void SubscribeToDebug(Action<ushort, DebugSession> subscription)
         {
-            if (_breakpoints.Contains(address))
+            if (!_subscribers.Contains(subscription))
             {
-                _onBreakpoint.Invoke(_cpu, executingPackage);
+                _subscribers.Add(subscription);
             }
         }
 
@@ -76,11 +77,27 @@ namespace Zem80.Core.CPU
             _executeInstruction(package);
         }
 
+        public void NotifyExecute(InstructionPackage package)
+        {
+            if (_breakpoints.Contains(package.InstructionAddress))
+            {
+                if (_debugSession == null) 
+                {
+                    _debugSession = new DebugSession(_cpu, package);
+                }
+
+                _subscribers.ForEach(s => s(package.InstructionAddress, _debugSession));
+                _debugSession.NotifyBreakpointHit(package.InstructionAddress);
+            }
+        }
+
         public DebugProcessor(Processor cpu, Action<InstructionPackage> executeInstruction)
         {
             _cpu = cpu;
+
             _executeInstruction = executeInstruction;
             _breakpoints = new List<ushort>();
+            _subscribers = new List<Action<ushort, DebugSession>>();
         }
     }
 }
