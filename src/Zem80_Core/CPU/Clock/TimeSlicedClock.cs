@@ -10,15 +10,18 @@ namespace Zem80.Core.CPU
         private int _ticksPerTimeSlice;
         private int _ticksThisTimeSlice;
         private HighResolutionTimer _timer;
+        private bool _stopped;
 
         public override void Start()
         {
+            _stopped = false;
             _timer.Start();
             base.Start();
         }
 
         public override void Stop()
         {
+            _stopped = true;
             _timer.Stop();
             base.Stop();
         }
@@ -48,6 +51,12 @@ namespace Zem80.Core.CPU
 
             _timer = new HighResolutionTimer(timeSlice.Milliseconds);
             _timer.Elapsed += (sender, args) => { _cpu.Resume(); };
+
+            OnInitialised += (sender, args) =>
+            {
+                _cpu.Debug.OnBreakpointReached += (sender, args) => { if (!_stopped) _timer.Stop(); };
+                _cpu.Debug.OnDebugSessionEnded += (sender, args) => { if (!_stopped) _timer.Start(); };
+            };
         }
     }
 }

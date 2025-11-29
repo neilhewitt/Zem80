@@ -15,6 +15,8 @@ namespace Zem80.Core.CPU
         protected Processor _cpu;
         protected IDictionary<int, ClockEvent> _events;
 
+        public event EventHandler OnInitialised;
+
         public float FrequencyInMHz { get; protected set; }
         public long Ticks { get; private set; }
 
@@ -23,6 +25,7 @@ namespace Zem80.Core.CPU
         void IClock.Initialise(Processor cpu)
         { 
             _cpu = cpu;
+            OnInitialised?.Invoke(this, EventArgs.Empty);
         }
 
         public virtual void Start()
@@ -54,7 +57,7 @@ namespace Zem80.Core.CPU
 
         public virtual void WaitForNextClockTick()
         {
-            while (_cpu.Suspended) ; // if Suspend() is called in the middle of an instruction cycle, we want to stop immediately
+            while (!_cpu.Debug.IsDebugging && _cpu.Suspended) ; // if Suspend() is called in the middle of an instruction cycle, we want to stop immediately
 
             Ticks++;
             OnTick?.Invoke(this, Ticks);

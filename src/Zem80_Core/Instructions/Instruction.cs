@@ -4,11 +4,40 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Zem80.Core.CPU
 {
     public class Instruction
     {
+        public static string Disassemble(Instruction instruction, byte arg1, byte arg2)
+        {
+            // pattern = mnemonic, replace single n or o with argument1, replace nn with argument1+argument2 (concat, not comma-separated)
+            // indexed instructions use o for the displacement byte but show the +/- sign
+            // using sizeinbytes doesn't work
+            // use the mnemonic itself as a template
+            string disassembly = instruction.Mnemonic;
+            if (disassembly.Contains("nn"))
+            {
+                disassembly = disassembly.Replace("nn", (arg1, arg2).ToWord().ToString("X4", CultureInfo.InvariantCulture) + "H");
+            }
+            else
+            {
+                if (disassembly.Contains("n"))
+                {
+                    disassembly = disassembly.Replace("n", arg1.ToString("X2", CultureInfo.InvariantCulture) + "H");
+                }
+                if (disassembly.Contains("o"))
+                {
+                    string replace = disassembly.Contains("+o") ? "+o": "o";
+                    sbyte displacement = (sbyte)arg1;
+                    disassembly = disassembly.Replace(replace, (displacement > 0 ? "+": "-") + displacement.ToString("X2", CultureInfo.InvariantCulture) + "H");
+                }
+            }
+
+            return disassembly;
+        }
+
         public int Opcode { get; private set; }
         public byte[] OpcodeBytes { get; private set; }
         public int Prefix { get; private set; }

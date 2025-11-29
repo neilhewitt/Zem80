@@ -12,7 +12,7 @@ namespace Zem80.Core
     {
         public static byte LowByte(this ushort input)
         {
-            return (byte)(input % 256); 
+            return (byte)(input % 256);
         }
 
         public static byte HighByte(this ushort input)
@@ -103,6 +103,13 @@ namespace Zem80.Core
         public static ushort ToWord(this (byte low, byte high) bytePair)
         {
             return (ushort)((bytePair.high * 256) + bytePair.low);
+        }
+
+        public static (byte low, byte high) ToBytes(this ushort word)
+        {
+            byte high = (byte)(word / 256);
+            byte low = (byte)(word % 256);
+            return (low, high);
         }
     }
 }

@@ -2,18 +2,11 @@
 
 namespace Zem80.Core.Debugger
 {
-    public enum MonitorState
-    {
-        Active,
-        PendingBreakpoint,
-        Stopped
-    }
-
     public class DebugMonitor
     {
         private ushort? _breakpointAddress;
 
-        public MonitorState MonitorState { get; private set; }
+        public MonitorState State { get; private set; }
         public DebugEventTypes EventTypes { get; }
         public Func<DebugState, DebugResponse> Handler { get; }
 
@@ -21,30 +14,21 @@ namespace Zem80.Core.Debugger
         {
             if (_breakpointAddress == null || instructionAddress == _breakpointAddress.Value)
             {
-                MonitorState = MonitorState.Active;
+                State = MonitorState.Active;
                 return true;
             }
 
             return false;
         }
 
-        public DebugResponse Step(ushort instructionAddress, DebugState state)
+        internal DebugResponse Step(ushort instructionAddress, DebugState state)
         {
-            if (MonitorState == MonitorState.Active)
+            if (State == MonitorState.Active)
             {
                 DebugResponse response = Handler(state);
-                if (response.Type == DebugResponseType.Run)
+                if (response == DebugResponse.Stop) // Stop
                 {
-                    if (response.RunToAddress.HasValue)
-                    {
-                        _breakpointAddress = response.RunToAddress.Value;
-                    }
-                    
-                    MonitorState = MonitorState.PendingBreakpoint;
-                }
-                else if (response.Type == DebugResponseType.Stop) // Stop
-                {
-                    MonitorState = MonitorState.Stopped;
+                    State = MonitorState.PendingBreakpoint;
                 }
 
                 return response;
@@ -61,7 +45,7 @@ namespace Zem80.Core.Debugger
 
         public DebugMonitor(DebugEventTypes eventTypes, Func<DebugState, DebugResponse> handler)
         {
-            MonitorState = MonitorState.PendingBreakpoint;
+            State = MonitorState.PendingBreakpoint;
             EventTypes = eventTypes;
             Handler = handler;
         }

@@ -207,6 +207,8 @@ namespace Zem80.Core.CPU
         public Processor(IMemoryBank memory = null, IMemoryMap map = null, IStack stack = null, IClock clock = null, IRegisters registers = null, IPorts ports = null,
             IProcessorTiming cycleTiming = null, IIO io = null, IInterrupts interrupts = null, ushort topOfStackAddress = 0xFFFF)
         {
+            Debug = new DebugProcessor(this, ExecuteInstruction);
+
             // default clock is the RealTimeClock at 4MHz (which is the normal Z80 clock speed) - this will attempt to run as close to real time
             // as possible on a non-deterministic platform like .NET, but this only works if the host platform has a high-resolution timer
             // otherwise this clock will just run as fast as the host platform can manage and timing will not be accurate
@@ -218,7 +220,6 @@ namespace Zem80.Core.CPU
             Ports = ports ?? new Ports(Timing);
             IO = io ?? new IO(this);
             Interrupts = interrupts ?? new Interrupts(this, ExecuteInstruction);
-            Debug = new DebugProcessor(this, ExecuteInstruction);
 
             // You can supply your own memory implementations, for example if you need to do RAM paging for >64K implementations.
             // Since there are several different methods for doing this and no 'official' method, there is no paged RAM implementation in the core code.

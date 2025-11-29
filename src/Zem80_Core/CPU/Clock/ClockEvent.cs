@@ -23,7 +23,7 @@ namespace Zem80.Core.CPU
             if (TicksSoFar >= TicksToWait)
             {
                 TicksSoFar = 0;
-                Task.Run(() => _callback());
+                _callback();
                 if (!_repeats) Stop();
             }
         }

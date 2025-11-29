@@ -16,11 +16,11 @@ public partial class DisplayPage : ContentPage
 
     private bool _isDebuggerVisible = false;
     private bool _breakpointReached = false;
-    private bool _breakpointEntryHasFocus = false;
-    private bool _canvasHasFocus = false;
+    private bool _sendKeysToEmulator = true;
     private bool _debuggerPaneHasFocus = false;
     private bool _waitingForNextInstructionButton = false;
     private bool _jumped;
+    private bool _debuggingStopped;
 
     private Label _lastDebuggerLine;
     private Label _currentDebuggerLine;
@@ -59,54 +59,6 @@ public partial class DisplayPage : ContentPage
                     });
             }
         }
-    }
-
-    public DisplayPage()
-    {
-        InitializeComponent();
-
-        // Pre-create all labels for the circular buffer
-        for (int i = 0; i < MAX_DEBUGGER_LINES; i++)
-        {
-            var label = new Label
-            {
-                FontFamily = "Consolas,Courier New,monospace",
-                FontSize = 12,
-                Padding = new Thickness(5, 0),
-                IsVisible = false // Start hidden
-            };
-            _debuggerLabels[i] = label;
-            DebuggerOutputStack.Add(label);
-        }
-
-        // Track focus for breakpoint and run-to entries to prevent keys going to Spectrum
-        BreakpointAddressEntry.Focused += (s, e) => 
-        { 
-            _breakpointEntryHasFocus = true; 
-            UpdateDebuggerHeaderFocusState(false); // Breakpoint entry is in left pane, not debugger
-        };
-        BreakpointAddressEntry.Unfocused += (s, e) => { _breakpointEntryHasFocus = false; };
-        RunToAddressEntry.Focused += (s, e) => 
-        { 
-            _breakpointEntryHasFocus = true; 
-            UpdateDebuggerHeaderFocusState(true); // Run-to entry is in debugger pane
-        };
-        RunToAddressEntry.Unfocused += (s, e) => 
-        { 
-            _breakpointEntryHasFocus = false; 
-            UpdateDebuggerHeaderFocusState(false);
-        };
-
-        // Track focus for scroll view in debugger pane
-        DebuggerScrollView.Focused += (s, e) => UpdateDebuggerHeaderFocusState(true);
-        DebuggerScrollView.Unfocused += (s, e) => UpdateDebuggerHeaderFocusState(false);
-
-        BreakpointAddressEntry.Completed += (s, e) => OnAddBreakpointClicked(s, e);
-        RunToAddressEntry.Completed += (s, e) => OnRunToAddressClicked(s, e);
-
-        // MAUI does not have Loaded, Focusable, Focused, Unfocused, KeyDown, KeyUp on ContentPage.
-        // Use Appearing event and attach keyboard events to a view that can receive focus, e.g., SKCanvasView.
-        this.Appearing += DisplayPage_Appearing;
     }
 
     private void UpdateWindowSize()
@@ -199,6 +151,7 @@ public partial class DisplayPage : ContentPage
             string existingMarkup = FormattedDebugMessageConverter.Convert(label.FormattedText, System.Globalization.CultureInfo.CurrentCulture);
             string plainText = FormattedDebugMessageConverter.ConvertToPlainText(existingMarkup);
             int padding = 30 - plainText.Length;
+            if (padding < 0) padding = 0;
 
             string updatedMessage = existingMarkup + new string(' ', padding) + message;
 
@@ -206,33 +159,21 @@ public partial class DisplayPage : ContentPage
         });
     }
 
-    //private void BreakpointReached(IBreakpointInfo breakpointInfo)   
-    //{
-    //    _breakpointReached = true;
-        
-    //    // Automatically give focus to the debugger pane when breakpoint is hit
-    //    Dispatcher.Dispatch(() =>
-    //    {
-    //        UpdateDebuggerHeaderFocusState(true);
-            
-    //        // Reset register/flag change tracking when first entering debug mode
-    //        _previousWordRegisterValues.Clear();
-    //        _previousFlagValues.Clear();
-            
-    //        // Actually set keyboard focus to the scroll view so Enter key works immediately
-    //        DebuggerScrollView.Focus();
-    //    });
-    //}
-
     private async void DisplayPage_Appearing(object sender, EventArgs e)
     {
         // Set initial window size
         UpdateWindowSize();
 
-        _vm = new Spectrum48K(UpdateDisplay);
-        _vm.CPU.Debug.SubscribeToDebug(BeginDebugging);
-        _vm.CPU.BeforeExecuteInstruction += CPU_BeforeExecuteInstruction;
-        _vm.CPU.AfterExecuteInstruction += CPU_AfterExecuteInstruction;
+        _vm = new Spectrum48K(UpdateSpectrumDisplay);
+        _vm.CPU.Debug.OnBreakpointReached += BeginDebugging;
+        _vm.CPU.Debug.OnDebugSessionEnded += (sender, state) =>
+        {
+            _debuggingStopped = true;
+            Dispatcher.Dispatch(() =>
+            {
+                DebuggerHeader.BackgroundColor = Color.FromArgb("#3D3D40"); // blue
+            });
+        };
 
         //var result = await FilePicker.Default.PickAsync(new PickOptions
         //{
@@ -249,7 +190,7 @@ public partial class DisplayPage : ContentPage
         //}
         //else
         //{
-            _vm.Start();
+        _vm.Start();
         //}
 
 #if WINDOWS
@@ -257,140 +198,56 @@ public partial class DisplayPage : ContentPage
 #endif
     }
 
-    private void BeginDebugging(ushort breakpointAddress, DebugSession debugSession)
+    private void BeginDebugging(object sender, DebugSession debugSession)
     {
         _breakpointReached = true;
         _debugSession = debugSession;
 
-        DebugMonitor beforeInstructionMonitor =_debugSession.Monitor(DebugEventTypes.BeforeInstructionExecution, state =>
+        _debugSession.Monitor(DebugEventTypes.BeforeInstructionExecution, state =>
         {
-            return DebugResponse.StepNext();
+            return Debug_BeforeExecuteInstruction(state);
         });
 
-        DebugMonitor afterInstructionMonitor = _debugSession.Monitor(DebugEventTypes.AfterInstructionExecution, state =>
+        _debugSession.Monitor(DebugEventTypes.AfterInstructionExecution, state =>
         {
-            return DebugResponse.StepNext();
+            return Debug_AfterExecuteInstruction(state);
         });
 
         // Automatically give focus to the debugger pane when breakpoint is hit
         Dispatcher.Dispatch(() =>
         {
-            UpdateDebuggerHeaderFocusState(true);
-            // Reset register/flag change tracking when first entering debug mode
             _previousByteRegisterValues.Clear();
             _previousWordRegisterValues.Clear();
             _previousFlagValues.Clear();
-            // Actually set keyboard focus to the scroll view so Enter key works immediately
+
+            DebuggerHeader.BackgroundColor = Color.FromArgb("#005500");
             DebuggerScrollView.Focus();
         });
     }
 
-    private void CPU_BeforeExecuteInstruction(object sender, InstructionPackage instructionPackage)
+    private void UpdateSpectrumDisplay(byte[] rgba)
     {
-        if (!DebuggerVisible || !_breakpointReached || _vm?.CPU == null) return;
-
-        (ushort address, string disassembly) = instructionPackage.Disassemble();
-
-        AddDebuggerOutput($"<color:{(_jumped ? "green" : "darkgray")}>0x{address.ToString("X4")}</color> <color:white>{disassembly}</color>");
-        if (_jumped) _jumped = false;
-
-        if (_runningToAddress.HasValue && _runningToAddress != instructionPackage.InstructionAddress) return;
-
-        _waitingForNextInstructionButton = true;
-        while (_waitingForNextInstructionButton)
+        if (!_isClosing)
         {
-            // allow all other UI events to process
-            System.Threading.Thread.Sleep(1);
+            lock (_bitmapLock)
+            {
+                _currentBitmap?.Dispose();
+                _currentBitmap = new SKBitmap(320, 256, SKColorType.Bgra8888, SKAlphaType.Opaque);
+
+                unsafe
+                {
+                    fixed (byte* ptr = rgba)
+                    {
+                        _currentBitmap.SetPixels((IntPtr)ptr);
+                    }
+                }
+            }
+
+            Dispatcher.Dispatch(() =>
+            {
+                DisplayCanvas.InvalidateSurface();
+            });
         }
-    }
-
-    private void CPU_AfterExecuteInstruction(object sender, ExecutionResult executionResult)
-    {
-        if (!DebuggerVisible || !_breakpointReached || _vm?.CPU == null) return;
-
-        _jumped = executionResult.ProgramCounterWasModified;
-
-        Dispatcher.Dispatch(() =>
-        {
-            var registers = _vm.CPU.Registers;
-            var flags = _vm.CPU.Flags;
-
-            string changedRegisters = "";
-
-            if (executionResult.Instruction.TargetsByteRegister)
-            {
-                foreach (var byteRegister in Enum.GetValues<ByteRegister>())
-                {
-                    if (byteRegister == ByteRegister.None) continue;
-                    
-                    byte currentValue = registers[byteRegister];
-                    string registerName = byteRegister.ToString();
-                    
-                    if (_previousByteRegisterValues.TryGetValue(registerName, out byte previousValue))
-                    {
-                        if (previousValue != currentValue)
-                        {
-                            changedRegisters += $"<bold><color:gray>{registerName}</color>:<color:darkgray>{previousValue:X2}</color>-><color:green>{currentValue:X2}</color></bold>,";
-                            _previousByteRegisterValues[registerName] = previousValue;
-                        }
-                        else if (byteRegister == executionResult.Instruction.Target.AsByteRegister())
-                        {
-                            changedRegisters += $"<bold><color:gray>{registerName}</color>:<color:white>{previousValue:X2}</color></bold>,";
-                        }
-                    }
-                }
-            }
-            else if (executionResult.Instruction.TargetsWordRegister)
-            {
-                foreach (var wordRegister in Enum.GetValues<WordRegister>())
-                {
-                    if (wordRegister == WordRegister.None) continue;
-                    
-                    ushort currentValue = registers[wordRegister];
-                    string registerName = wordRegister.ToString();
-
-                    if (_previousWordRegisterValues.TryGetValue(registerName, out ushort previousValue))
-                    {
-                        if (previousValue != currentValue)
-                        {
-                            if (wordRegister != WordRegister.PC)
-                            {
-                                changedRegisters += $"<bold><color:gray>{registerName}</color>:<color:darkgray>{previousValue}</color>-><color:green>{currentValue:X4}</color></bold>,";
-                            }
-                        }
-                        else if (wordRegister == executionResult.Instruction.Target.AsWordRegister())
-                        {
-                            changedRegisters += $"<bold><color:gray>{registerName}</color>:<color:white>{previousValue:X4}</color></bold>,";
-                        }
-                    }
-                }
-            }
-
-            changedRegisters = changedRegisters.TrimEnd(',');
-            if (changedRegisters.Length > 0)
-            {
-                UpdateLastDebuggerLine(changedRegisters);
-            }
-
-            UpdateRegisterDisplay("AF", ValueAF, registers.AF);
-            UpdateRegisterDisplay("BC", ValueBC, registers.BC);
-            UpdateRegisterDisplay("DE", ValueDE, registers.DE);
-            UpdateRegisterDisplay("HL", ValueHL, registers.HL);
-            UpdateRegisterDisplay("IX", ValueIX, registers.IX);
-            UpdateRegisterDisplay("IY", ValueIY, registers.IY);
-            UpdateRegisterDisplay("SP", ValueSP, registers.SP);
-            UpdateRegisterDisplay("PC", ValuePC, registers.PC);
-            UpdateRegisterDisplay("IR", ValueIR, registers.IR);
-
-            UpdateFlagDisplay("S", FlagS, flags.Sign);
-            UpdateFlagDisplay("Z", FlagZ, flags.Zero);
-            UpdateFlagDisplay("Y", FlagY, flags.Y);
-            UpdateFlagDisplay("H", FlagH, flags.HalfCarry);
-            UpdateFlagDisplay("X", FlagX, flags.X);
-            UpdateFlagDisplay("P", FlagP, flags.ParityOverflow);
-            UpdateFlagDisplay("N", FlagN, flags.Subtract);
-            UpdateFlagDisplay("C", FlagC, flags.Carry);
-        });
     }
 
     private void UpdateRegisterDisplay(string registerName, Label label, byte newValue)
@@ -436,80 +293,6 @@ public partial class DisplayPage : ContentPage
 
         label.Text = newValue ? "1" : "0";
         _previousFlagValues[flagName] = newValue;
-    }
-
-#if WINDOWS
-    private void SetupWindowsKeyboardHandling()
-    {
-        // Get the native Windows window
-        var window = Application.Current?.Windows[0];
-        if (window?.Handler?.PlatformView is Microsoft.UI.Xaml.Window nativeWindow)
-        {
-            // Subscribe to key events on the native window content
-            var content = nativeWindow.Content as Microsoft.UI.Xaml.FrameworkElement;
-            if (content != null)
-            {
-                content.KeyDown += (s, e) =>
-                {
-                    // Check if Enter is pressed while debugger is visible and waiting for next instruction
-                    // BUT only if the canvas doesn't have focus (so emulator can still receive Enter)
-                    if (_waitingForNextInstructionButton && 
-                        !_breakpointEntryHasFocus && 
-                        !_canvasHasFocus &&
-                        e.Key == Windows.System.VirtualKey.Enter)
-                    {
-                        // Trigger Next Instruction button
-                        Dispatcher.Dispatch(() => OnNextInstructionClicked(this, EventArgs.Empty));
-                        e.Handled = true;
-                        return;
-                    }
-
-                    // Only send keys to Spectrum if:
-                    // - Breakpoint entry doesn't have focus
-                    // - Not waiting for next instruction (in stepping mode)
-                    // OR canvas has explicit focus (user clicked on it)
-                    if (!_breakpointEntryHasFocus && (!_waitingForNextInstructionButton || _canvasHasFocus))
-                    {
-                        SpectrumKeyboard.MauiKeyDown((int)e.Key);
-                    }
-                };
-
-                content.KeyUp += (s, e) =>
-                {
-                    // Same logic as KeyDown
-                    if (!_breakpointEntryHasFocus && (!_waitingForNextInstructionButton || _canvasHasFocus))
-                    {
-                        SpectrumKeyboard.MauiKeyUp((int)e.Key);
-                    }
-                };
-            }
-        }
-    }
-#endif
-
-    private void UpdateDisplay(byte[] rgba)
-    {
-        if (!_isClosing)
-        {
-            lock (_bitmapLock)
-            {
-                _currentBitmap?.Dispose();
-                _currentBitmap = new SKBitmap(320, 256, SKColorType.Bgra8888, SKAlphaType.Opaque);
-
-                unsafe
-                {
-                    fixed (byte* ptr = rgba)
-                    {
-                        _currentBitmap.SetPixels((IntPtr)ptr);
-                    }
-                }
-            }
-
-            Dispatcher.Dispatch(() =>
-            {
-                DisplayCanvas.InvalidateSurface();
-            });
-        }
     }
 
     private void OnCanvasViewPaintSurface(object sender, SKPaintSurfaceEventArgs e)
@@ -576,7 +359,7 @@ public partial class DisplayPage : ContentPage
         }
     }
 
-    private async void OnAddBreakpointClicked(object sender, EventArgs e)
+    private void OnAddBreakpointClicked(object sender, EventArgs e)
     {
         string addressText = BreakpointAddressEntry.Text?.Trim();
 
@@ -599,7 +382,7 @@ public partial class DisplayPage : ContentPage
             }
 
             // Add the breakpoint
-            _vm?.CPU?.Debug?.AddBreakpoint(address);
+            _vm.CPU.Debug.AddBreakpoint(address);
 
             // Clear the entry
             BreakpointAddressEntry.Text = "";
@@ -663,35 +446,213 @@ public partial class DisplayPage : ContentPage
         base.OnDisappearing();
     }
 
-    private void UpdateDebuggerHeaderFocusState(bool isFocused)
+    private void SetupWindowsKeyboardHandling()
     {
-        _debuggerPaneHasFocus = isFocused;
-        
-        if (isFocused)
+        // Get the native Windows window
+        var window = Application.Current?.Windows[0];
+        if (window?.Handler?.PlatformView is Microsoft.UI.Xaml.Window nativeWindow)
         {
-            // Invert colors when focused
-            DebuggerHeader.BackgroundColor = Color.FromArgb("#007ACC");
-        }
-        else
-        {
-            // Default colors when unfocused
-            DebuggerHeader.BackgroundColor = Color.FromArgb("#3D3D40");
+            // Subscribe to key events on the native window content
+            var content = nativeWindow.Content as Microsoft.UI.Xaml.FrameworkElement;
+            if (content != null)
+            {
+                content.KeyDown += (s, e) =>
+                {
+                    if (!_waitingForNextInstructionButton && _sendKeysToEmulator)
+                    {
+                        SpectrumKeyboard.MauiKeyDown((int)e.Key);
+                        return;
+                    }
+                    else if (_waitingForNextInstructionButton)
+                    {
+                        if (e.Key == Windows.System.VirtualKey.Enter)
+                        {
+                            // Trigger Next Instruction button
+                            Dispatcher.Dispatch(() => OnNextInstructionClicked(this, EventArgs.Empty));
+                            e.Handled = true;
+                            return;
+                        }
+                        else if (e.Key == Windows.System.VirtualKey.Escape)
+                        {
+                            _debuggingStopped = true;
+                            _waitingForNextInstructionButton = false;
+                            e.Handled = true;
+                            return;
+                        }
+                    }
+                };
+
+                content.KeyUp += (s, e) =>
+                {
+                    // Same logic as KeyDown
+                    if (!_waitingForNextInstructionButton && _sendKeysToEmulator)
+                    {
+                        SpectrumKeyboard.MauiKeyUp((int)e.Key);
+                        return;
+                    }
+                };
+            }
         }
     }
 
-    private void OnCanvasTapped(object sender, EventArgs e)
+    private DebugResponse Debug_BeforeExecuteInstruction(DebugState state)
     {
-        // User clicked on the canvas - they want to interact with the emulator
-        _canvasHasFocus = true;
-        
-        // Canvas gaining focus means debugger loses focus
-        UpdateDebuggerHeaderFocusState(false);
+        AddDebuggerOutput($"<color:{(_jumped ? "green" : "darkgray")}>0x{state.Address.ToString("X4")}</color> <color:white>{state.Disassembly}</color>");
+        if (_jumped) _jumped = false;
+
+        if (!_runningToAddress.HasValue)
+        {
+            _waitingForNextInstructionButton = true;
+            while (_waitingForNextInstructionButton)
+            {
+                // allow all other UI events to process
+                Thread.Sleep(1);
+            }
+        }
+
+        return DebugResponse.None;
     }
 
-    private void OnDebuggerPaneTapped(object sender, EventArgs e)
+    private DebugResponse Debug_AfterExecuteInstruction(DebugState state)
     {
-        // User clicked in the debugger pane - they want to interact with the debugger
-        _canvasHasFocus = false;
-        UpdateDebuggerHeaderFocusState(true);
+        _jumped = state.ProgramCounterWasModified;
+
+            var registers = _vm.CPU.Registers;
+            var flags = _vm.CPU.Flags;
+
+            string changedRegisters = "";
+
+        if (state.Instruction.TargetsByteRegister)
+        {
+            foreach (var byteRegister in Enum.GetValues<ByteRegister>())
+            {
+                if (byteRegister == ByteRegister.None) continue;
+
+                byte currentValue = registers[byteRegister];
+                string registerName = byteRegister.ToString();
+
+                if (_previousByteRegisterValues.TryGetValue(registerName, out byte previousValue))
+                {
+                    if (previousValue != currentValue)
+                    {
+                        changedRegisters += $"<bold><color:gray>{registerName}</color>:<color:darkgray>{previousValue:X2}H</color>-><color:green>{currentValue:X2}H</color></bold>|";
+                        _previousByteRegisterValues[registerName] = previousValue;
+                    }
+                    else if (byteRegister == state.Instruction.Target.AsByteRegister())
+                    {
+                        changedRegisters += $"<bold><color:gray>{registerName}</color>:<color:green>{previousValue:X2}H</color></bold>|";
+                    }
+                }
+            }
+        }
+        else if (state.Instruction.TargetsWordRegister)
+        {
+            foreach (var wordRegister in Enum.GetValues<WordRegister>())
+            {
+                if (wordRegister == WordRegister.None) continue;
+
+                ushort currentValue = registers[wordRegister];
+                string registerName = wordRegister.ToString();
+
+                if (_previousWordRegisterValues.TryGetValue(registerName, out ushort previousValue))
+                {
+                    if (previousValue != currentValue)
+                    {
+                        if (wordRegister != WordRegister.PC)
+                        {
+                            changedRegisters += $"<bold><color:gray>{registerName}</color>:<color:darkgray>{previousValue:X4}H</color>-><color:green>{currentValue:X4}H</color></bold>|";
+                        }
+                    }
+                    else if (wordRegister == state.Instruction.Target.AsWordRegister())
+                    {
+                        changedRegisters += $"<bold><color:gray>{registerName}</color>:<color:green>{previousValue:X4}H</color></bold>|";
+                    }
+                }
+            }
+        }
+
+        if (_jumped)
+        {
+            changedRegisters += $"<bold><color:gray>PC</color>:<color:green>{registers.PC:X4}</color></bold>";
+        }
+
+        string flagStatus = "<bold>";
+        flagStatus += markUp('S', flags.Sign);
+        flagStatus += markUp('Z', flags.Zero);
+        flagStatus += markUp('Y', flags.Y);
+        flagStatus += markUp('H', flags.HalfCarry);
+        flagStatus += markUp('X', flags.X);
+        flagStatus += markUp('P', flags.ParityOverflow);
+        flagStatus += markUp('N', flags.Subtract);
+        flagStatus += markUp('C', flags.Carry);
+        flagStatus += "</bold>";
+
+        string markUp(char flag, bool state)
+        {
+            return state ? $"<color:green>{flag}</color>" : "<color:gray>_</color>";
+        }
+
+        Dispatcher.Dispatch(() =>
+        {
+            changedRegisters = changedRegisters.TrimEnd(',', '|');
+            changedRegisters = flagStatus + " " + changedRegisters;
+            if (changedRegisters.Length > 0)
+            {
+                UpdateLastDebuggerLine(changedRegisters);
+            }
+
+            UpdateRegisterDisplay("AF", ValueAF, registers.AF);
+            UpdateRegisterDisplay("BC", ValueBC, registers.BC);
+            UpdateRegisterDisplay("DE", ValueDE, registers.DE);
+            UpdateRegisterDisplay("HL", ValueHL, registers.HL);
+            UpdateRegisterDisplay("IX", ValueIX, registers.IX);
+            UpdateRegisterDisplay("IY", ValueIY, registers.IY);
+            UpdateRegisterDisplay("SP", ValueSP, registers.SP);
+            UpdateRegisterDisplay("PC", ValuePC, registers.PC);
+            UpdateRegisterDisplay("IR", ValueIR, registers.IR);
+
+            UpdateFlagDisplay("S", FlagS, flags.Sign);
+            UpdateFlagDisplay("Z", FlagZ, flags.Zero);
+            UpdateFlagDisplay("Y", FlagY, flags.Y);
+            UpdateFlagDisplay("H", FlagH, flags.HalfCarry);
+            UpdateFlagDisplay("X", FlagX, flags.X);
+            UpdateFlagDisplay("P", FlagP, flags.ParityOverflow);
+            UpdateFlagDisplay("N", FlagN, flags.Subtract);
+            UpdateFlagDisplay("C", FlagC, flags.Carry);
+        });
+
+        return _debuggingStopped ? DebugResponse.Stop : DebugResponse.StepNext;
+    }
+
+    public DisplayPage()
+    {
+        InitializeComponent();
+
+        // Pre-create all labels for the circular buffer
+        for (int i = 0; i < MAX_DEBUGGER_LINES; i++)
+        {
+            var label = new Label
+            {
+                FontFamily = "Consolas,Courier New,monospace",
+                FontSize = 12,
+                Padding = new Thickness(5, 0),
+                IsVisible = false // Start hidden
+            };
+            _debuggerLabels[i] = label;
+            DebuggerOutputStack.Add(label);
+        }
+
+        // Track focus for breakpoint and run-to entries to prevent keys going to Spectrum
+        BreakpointAddressEntry.Focused += (s, e) => { _sendKeysToEmulator = false; };
+        BreakpointAddressEntry.Unfocused += (s, e) => { _sendKeysToEmulator = true; };
+        RunToAddressEntry.Focused += (s, e) => { _sendKeysToEmulator = false; };
+        RunToAddressEntry.Unfocused += (s, e) => { _sendKeysToEmulator = true; };
+
+        BreakpointAddressEntry.Completed += (s, e) => OnAddBreakpointClicked(s, e);
+        RunToAddressEntry.Completed += (s, e) => OnRunToAddressClicked(s, e);
+
+        // MAUI does not have Loaded, Focusable, Focused, Unfocused, KeyDown, KeyUp on ContentPage.
+        // Use Appearing event and attach keyboard events to a view that can receive focus, e.g., SKCanvasView.
+        this.Appearing += DisplayPage_Appearing;
     }
 }

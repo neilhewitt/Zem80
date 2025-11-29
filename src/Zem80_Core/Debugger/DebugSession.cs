@@ -12,8 +12,8 @@ namespace Zem80.Core.Debugger
         private Processor _cpu;
         private InstructionPackage _executingPackage;
 
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
+        public DateTime StartTime { get; private set; }
+        public ushort StartAddress { get; private set; }
 
         public IReadOnlyCollection<DebugMonitor> Monitors => (IReadOnlyCollection<DebugMonitor>)_monitors.AsReadOnly();
 
@@ -51,6 +51,12 @@ namespace Zem80.Core.Debugger
             }
         }
 
+        public void End()
+        {
+            _cpu.Debug.NotifySessionEnded();
+            Dispose();
+        }
+
         internal void NotifyBreakpointHit(ushort address)
         {
             HandleMonitors(DebugEventTypes.BreakpointReached, new DebugState(_cpu.Registers, _cpu.Flags, _executingPackage, "BreakpointHit"));
@@ -62,9 +68,14 @@ namespace Zem80.Core.Debugger
 
             foreach (DebugMonitor monitor in monitors)
             {
-                if (monitor.MonitorState == MonitorState.Active || monitor.Breaks(state.Address))
+                if (monitor.State == MonitorState.Active || monitor.Breaks(state.Address))
                 {
                     DebugResponse response = monitor.Step(state.Address, state);
+                    if (response == DebugResponse.Stop)
+                    {
+                        End();
+                        return;
+                    }
                 }
             }
         }
@@ -204,6 +215,7 @@ namespace Zem80.Core.Debugger
             }
 
             StartTime = DateTime.Now;
+            StartAddress = initialPackage.InstructionAddress;
         }
     }
 }

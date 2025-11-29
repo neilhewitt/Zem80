@@ -30,9 +30,6 @@
                                    WidthRequest="640"
                                    HeightRequest="512"
                                    EnableTouchEvents="True">
-                    <skia:SKCanvasView.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnCanvasTapped" />
-                    </skia:SKCanvasView.GestureRecognizers>
                 </skia:SKCanvasView>
 
                 <!-- Breakpoint Controls -->
@@ -83,9 +80,6 @@
             <Grid x:Name="DebuggerPane"
                   WidthRequest="640"
                   IsVisible="False">
-                <Grid.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnDebuggerPaneTapped" />
-                </Grid.GestureRecognizers>
                 <Border BackgroundColor="#1E1E1E"
                         Stroke="#333333"
                         StrokeThickness="1">

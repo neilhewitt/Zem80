@@ -28,7 +28,7 @@ namespace ZXSpectrum.VM
 
         public void Start()
         {
-            _beeper.Start();
+            //_beeper.Start();
         }
 
         public void Stop()
@@ -53,7 +53,7 @@ namespace ZXSpectrum.VM
 
         public void UnmuteBeeper()
         {
-            _beeper.Start();
+            //_beeper.Start();
         }  
 
         public void UpdateDisplay()
@@ -82,7 +82,10 @@ namespace ZXSpectrum.VM
             // would be to enable some form of vsync with Windows, probably via DirectX, which is very much
             // out of scope for this sample.
 
-            _cpu.Interrupts.RaiseMaskable();
+            if (!_cpu.Debug.IsDebugging)
+            {
+                _cpu.Interrupts.RaiseMaskable();
+            }
         }
 
         public ULA(Processor cpu)
