@@ -12,11 +12,14 @@ In order to make this work I had to remove the dependency on MultimediaTimer, wh
 
 **CRITICAL BUG FIX:** In 2.0 I introduced a bug in the handling of the HALT instruction, where the program counter would continue to increment while halted. This would have broken lots of programs and in particular it broke the ZX Spectrum ROM. This has now been fixed in 2.1. It is critical that you upgrade to 2.1 if you have been using 2.0. The 2.0 release package has been removed.
 
-### Spectrum sample changes ###
+### ZexNext source
+
+I've included the source for the ZexNext test framework in the projects ZexNext_Core and ZexNext_Runner, as having this as a separate repo makes little sense. These libraries are used by Zem80_Core_Tests to run the ZEXALL tests within Visual Studio rather than in a console app.
+
+### Spectrum sample changes
 
 I moved the ZX Spectrum VM sample to MAUI from WPF. However, this sample still only runs on Windows desktop. The move was to allow better virtual screen handling. I also added a basic debugger to the Spectrum sample, because I needed to step through code in order to identify and fix the HALT bug. I've left this code in just for curiosity's sake. If you want to break a Spectrum program and step through it, you can. However, since interrupts are disabled during debugging, things like keyboard handling won't work. I may just remove this debug window in the next release, so enjoy it for now if you care to!
 
-I've also included the source for the ZexNext test framework, as having this as a separate repo makes little sense.
 
 ### Version 2.0
 
