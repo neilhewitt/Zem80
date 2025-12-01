@@ -28,7 +28,7 @@ namespace ZXSpectrum.VM
 
         public void Start()
         {
-            //_beeper.Start();
+            _beeper.Start();
         }
 
         public void Stop()
@@ -53,7 +53,7 @@ namespace ZXSpectrum.VM
 
         public void UnmuteBeeper()
         {
-            //_beeper.Start();
+            _beeper.Start();
         }  
 
         public void UpdateDisplay()
