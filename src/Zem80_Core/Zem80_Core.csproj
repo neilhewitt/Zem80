@@ -12,7 +12,7 @@
 		<Copyright>Copyright 2020 Neil Hewitt</Copyright>
 		<Title>Zem80</Title>
 		<Nullable>disable</Nullable>
-		<Version>2.2</Version>
+		<Version>2.1</Version>
 		<Description>A Z80 emulator written in idiomatic C#</Description>
 		<AssemblyVersion>2.2.0.0</AssemblyVersion>
 	</PropertyGroup>

@@ -2,25 +2,22 @@
 
 A simple emulation of the Z80 CPU written in C# and running on .NET 8.0
 
-## .NET 10 and .NET Standard versions coming soon
+## Version 2.1 now available with .NET 10 and .NET Standard support
 
-I'm working on an upgrade to .NET 10 that also dual-targets the library to .NET Standard 2.1. This will allow you to consume the library from any version of .NET Core, but not with the .NET Framework. I think this is a reasonable compromise to widen the potential audience for Zem80 while still allowing me to use later C# features in the code.
+I have moved all of the projects in the solution to target .NET 10. I am also targeting .NET Standard 2.1 for Zem80_Core. 
+
+This means that you will need to have .NET 10 installed to build and run the code, but you can consume the Zem80_Core library from any .NET version that supports .NET Standard 2.1 (ie .NET Core 3.0 and later). Make sure to use the DLLs from the _netstandard2.1_ output folder. The Nuget package generated on build only contains the .NET 10 versions.
 
 In order to make this work I had to remove the dependency on MultimediaTimer, which doesn't support .NET Standard. I have replaced this with a similar timer implementation in the core code that should work on all platforms. One job for the immediate future is to set up test hosts for Linux and MacOS to make sure this works properly.
 
-Note that I'm only dual-targeting the core library. Other projects in the solution will remain .NET 10 only, including the ZX Spectrum VM sample, so you'll need .NET 10 installed work with the code and run the tests and samples.
+I've also included the source for the ZexNext test framework, as having this as a separate repo makes little sense.
 
-All of this will be merged to main only after .NET 10 is released, and I'll bump the version number to 2.1 to reflect the change. If you want to play with it now, the code is on the net10 branch.
+**CRITICAL BUGFIX:** In 2.0 I introduced a bug in the handling of the HALT instruction, where the program counter would continue to increment while halted. This would have broken lots of programs and in particular it broke the ZX Spectrum ROM. This has now been fixed in 2.1. It is highly recommended that you upgrade to 2.1 if you have been using 2.0.
 
-I'll also be including the source for the ZexNext test framework, as having this as a separate repo makes little sense.
+### Version 2.0
 
-## Version 2.0 now available
+Zem80 v2.0 included a completely redesigned emulator core with improved performance. There are some minor breaking API and event changes, but from the point of view of consuming code, little has changed. Most of the work here was to improve the architecture of the system and tidy up the timing mechanisms. 
 
-Zem80 v2.0 includes a completely redesigned emulator core with improved performance. There are some minor breaking API and event changes, but from the point of view of consuming code, little has changed. Most of the work here was to improve the architecture of the system and tidy up the timing mechanisms. 
-
-The emulator is now compiled and built using .NET 8.0, so you will need to have this installed to use it, and your consuming projects must be compiled with .NET 8.0 as well. Since .NET 8.0 is both LTS and about to be superceded by .NET 9.0, I don't feel particularly guilty about this. I am considering a .NET Standard version of the library but this may involve too many compromises. A NativeAOT implementation is still a goal for a potential v3.0.
-
-If you are using the emulator (hi, David!) I strongly suggest you upgrade to v2.0.
 
 ## Project goals
 
@@ -32,24 +29,21 @@ I have now written a complete Z80 emulation including as much of the undocumente
 
 I have also added a basic ZX Spectrum emulation, but this is a sample and not intended for actual use as an emulator.
 
+
 ## Performance - some thoughts
 The amount of CPU required to run the Z80 emulation is significant using the RealTimeClock. This is because the emulation thread has to spin continuously while waiting for clock ticks in order to generate the right events at exactly the right time. This is likely to only be necessary for emulating hardware that is timing-critical, and even then it's probably possible to do it a different way.
 
 To improve this I've added a TimeSlicedClock as an alternative where the emulator will run as fast as possible but after a specified number of Z80 ticks (the 'time slice', which you will need to work out against your timing and your Z80 emulated speed) it will suspend the CPU and wait for a timer (not on the main thread) to elapse and then resumes the CPU. This will resynchronise execution with real time, while avoiding executing any code on the main thread while the timer runs. This allows for instructions to be 'fast-forwarded' as quickly as possible, while still making sure that code like screen updates can run at the proper time. The ZX Spectrum VM sample now uses this technique and this drastically reduces the PC CPU required to run it on my machine (Release build).  
+
 
 ## The future for this project
 Where I think this project can be useful is in perhaps explaining how to do CPU emulation in principle. It's a pretty complex subject that requires a lot of learning to approach and do, and learning from the existing code is difficult because it's often quite... opaque. This emulator is actually quite straightforward - not that you would understand it at first glance, or without knowledge of how the Z80 itself works in quite a lot of detail - and hopefully might give people a useful starting point to build their own emulators. If it does, then my work is done!
 
 I built this thing just to prove to myself that I could. I have a fully-functioning emulator built on a platform that's not generally thought of as one you could build something so low-level on. Take that, C++.
 
-## Project status
-16/08/2024 - 2.0 release. Mostly a refactoring and redesign release, 2.0 doesn't add any major new features. Many bugs were fixed and timing improved, but timing is still the emulator's achilles heel. If you don't care about absolutely precise timing, you will be fine. The Spectrum sample was updated to work with this version and slightly refactored itself, but is otherwise untouched and remains a fairly poor implementation intended for demo purposes only.
-
-The project moves to .NET 8.0 in this release. 
-
 ### Known issues ###
 
-* Interrupt Mode 0 remains essentially untested and may not work properly. I plan to create a virtual machine to test this out. 
+* Interrupt Mode 0 remains essentially untested and may not work properly.
 * Interrupt Mode 2 appears to be slightly bugged but I'm not 100% sure how or why. I am looking for Spectrum games which are known to use IM2 to test. 
 
 The other main component is the ZX Spectrum VM, which has several known issues:
