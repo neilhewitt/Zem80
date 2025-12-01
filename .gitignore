@@ -5,6 +5,8 @@
 
 *.zxl
 Docs/
+zout/
+zmac.exe
 
 # User-specific files
 *.rsuser
