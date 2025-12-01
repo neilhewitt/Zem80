@@ -14,10 +14,10 @@ namespace Zem80.Core.CPU
         private Func<byte> _interruptCallback;
 
         public InterruptMode Mode { get; private set; }
-        public bool Enabled { get; private set; }
+        public bool Enabled => IFF1;
         public bool IFF1 { get; private set; }
         public bool IFF2 { get; private set; }
-
+        
         public event EventHandler<long> OnMaskableInterrupt;
         public event EventHandler<long> OnNonMaskableInterrupt;
 
@@ -39,18 +39,19 @@ namespace Zem80.Core.CPU
 
         public void Disable()
         {
-            Enabled = false;
+            IFF1 = false;
+            IFF2 = IFF1;
         }
 
         public void Enable()
         {
-            Enabled = true;
+            IFF1 = true;
+            IFF2 = IFF1;
         }
 
         public void RestoreAfterNMI()
         {
             IFF1 = IFF2;
-            IFF2 = false;
         }
 
         public void HandleAll()
@@ -69,8 +70,8 @@ namespace Zem80.Core.CPU
             {
                 _cpu.Resume(); // in case we're halted
 
-                IFF2 = Enabled; // save IFF1 state ready for RETN
-                Enabled = false; // disable maskable interrupts until RETN
+                IFF2 = IFF1; // save enabled state ready for RETN
+                IFF1 = false; // disable maskable interrupts until RETN
 
                 _cpu.Timing.BeginInterruptRequestAcknowledgeCycle(ProcessorTiming.NMI_INTERRUPT_ACKNOWLEDGE_TSTATES);
 
@@ -81,18 +82,20 @@ namespace Zem80.Core.CPU
                 _cpu.Timing.EndInterruptRequestAcknowledgeCycle();
 
                 handledNMI = true;
-            }
 
-            OnNonMaskableInterrupt?.Invoke(this, _cpu.Clock.Ticks);
-            _cpu.IO.EndNMIState();
+                OnNonMaskableInterrupt?.Invoke(this, _cpu.Clock.Ticks);
+                _cpu.IO.EndNMIState();
+            }
 
             return handledNMI;
         }
 
         private void HandleMaskableInterrupts()
         {
-            if (_cpu.IO.INT && Enabled)
+            if (_cpu.IO.INT && IFF1)
             {
+                Disable();
+
                 if (_interruptCallback == null && Mode == InterruptMode.IM0)
                 {
                     throw new InterruptException("Interrupt mode is IM0 which requires a callback for reading data from the interrupting device. Callback was null.");
@@ -112,17 +115,21 @@ namespace Zem80.Core.CPU
                         // 0x00s will be ignored, but you must return 4 bytes even if the instruction is shorter than that. See DecodeIM0Interrupt below for details of how this works.
 
                         // The decoded instruction is executed in the current execution context with registers and program counter where they were when the interrupt was triggered.
-                        // The program counter is pushed on the stack before executing the instruction and restored afterwards (but *not* popped), so instructions like JR, JP and CALL will have no effect. 
+                        // The program counter is pushed on the stack before executing the instruction. 
 
                         // NOTE: I have not been able to test this mode extensively based on real-world examples. It may well be buggy compared to the real Z80. 
                         // TODO: verify the behaviour of the real Z80 and fix the code if necessary
 
                         _cpu.Timing.BeginInterruptRequestAcknowledgeCycle(ProcessorTiming.IM0_INTERRUPT_ACKNOWLEDGE_TSTATES);
+                        
                         InstructionPackage package = DecodeIM0Interrupt();
                         ushort pc = _cpu.Registers.PC;
-                        _cpu.Stack.Push(WordRegister.PC);
+                        Type instructionType = package.Instruction.GetType();
+                        if (instructionType == typeof(CALL) || instructionType == typeof(RST))
+                        {
+                            _cpu.Stack.Push(WordRegister.PC);
+                        }
                         _executeInstruction(package);
-                        _cpu.Registers.PC = pc;
                         _cpu.Registers.WZ = _cpu.Registers.PC;
                         break;
 
@@ -185,7 +192,7 @@ namespace Zem80.Core.CPU
                 opcode[i] = _interruptCallback();
             }
 
-            InstructionPackage package = InstructionDecoder.DecodeInstruction(opcode, _cpu.Registers.PC, out bool _, out bool _);
+            InstructionPackage package = InstructionDecoder.DecodeInstruction(opcode, _cpu.Registers.PC);
 
             return package;
         }

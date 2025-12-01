@@ -9,16 +9,13 @@ namespace Zem80.Core.CPU
 {
     public static class InstructionDecoder
     {
-        public static InstructionPackage DecodeInstruction(byte[] instructionBytes, ushort address, out bool skipNextByte, out bool opcodeErrorNOP)
+        public static InstructionPackage DecodeInstruction(byte[] instructionBytes, ushort address)
         {
             if (instructionBytes.Length != 4) throw new InstructionDecoderException("Supplied byte array must be 4 bytes long.");
 
             byte b0, b1, b2, b3;
             Instruction instruction;
             InstructionData data = new InstructionData();
-
-            skipNextByte = false;
-            opcodeErrorNOP = false;
 
             b0 = instructionBytes[0];
             b1 = instructionBytes[1];
@@ -40,8 +37,7 @@ namespace Zem80.Core.CPU
                     if (!InstructionSet.Instructions.TryGetValue(b3 | b1 << 8 | b0 << 16, out instruction))
                     {
                         // not a valid instruction - the Z80 spec says we should run a single NOP instead
-                        instruction = InstructionSet.NOP;
-                        opcodeErrorNOP = true;
+                        ThrowInvalidInstruction();
                     }
                     else
                     {
@@ -53,16 +49,7 @@ namespace Zem80.Core.CPU
                     // all other prefixed instructions (CB, ED, DD, FD): a two-byte opcode + up to 2 operand bytes
                     if (!InstructionSet.Instructions.TryGetValue(b1 | b0 << 8, out instruction))
                     {
-                        // if prefix was 0xED and the instruction is invalid, the spec says run *two* NOPs
-                        if (b0 == 0xED)
-                        {
-                            skipNextByte = true; // causes the processor to run an extra NOP *after* this one and skip over the invalid instruction byte
-                        }
-
-                        // otherwise, if the prefix was 0xDD or 0xFD and the instruction is invalid, the spec says we should run a NOP now but then run the equivalent
-                        // unprefixed instruction next - this will happen automatically when PC advances past the synthetic NOP
-                        instruction = InstructionSet.NOP;
-                        opcodeErrorNOP = true;
+                        ThrowInvalidInstruction();
                     }
                     else
                     {
@@ -83,8 +70,8 @@ namespace Zem80.Core.CPU
                 // unprefixed instruction - 1 byte opcode + up to 2 operand bytes
                 if (!InstructionSet.Instructions.TryGetValue(b0, out instruction))
                 {
-                    instruction = InstructionSet.NOP;
-                }     
+                    ThrowInvalidInstruction();
+                }
                 else
                 {
                     if (instruction.Argument1 != InstructionElement.None)
@@ -99,6 +86,11 @@ namespace Zem80.Core.CPU
             }
 
             return new InstructionPackage(instruction, data, address);
+
+            void ThrowInvalidInstruction()
+            {
+                throw new InstructionDecoderException("Not a valid instruction: " + b0.ToString("X2") + b1.ToString("X2") + b2.ToString("X2") + b3.ToString("X2"));
+            }
         }
     }
 }

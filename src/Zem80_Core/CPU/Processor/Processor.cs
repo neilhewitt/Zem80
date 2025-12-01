@@ -147,16 +147,23 @@ namespace Zem80.Core.CPU
 
             while (_running)
             {
-                bool skipNextByte = false;
-
                 if (!_suspended)
                 {
-                    // when the Z80 is *halted*, it doesn't stop running. It continuously executes NOP instructions until an interrupt occurs;
-                    // if halted (or skipping because of an instruction set error) we provide 4 zero-bytes; otherwise, the 4 bytes at the Program Counter.
-                    // note that instructions can be 1-4 bytes long, but we always send the next 4 bytes to the decoder
+                    InstructionPackage package = null;
                     ushort address = Registers.PC;
-                    byte[] instructionBytes = (_halted || skipNextByte) ? new byte[4] : Memory.ReadBytesAt(address, 4);
-                    InstructionPackage package = InstructionDecoder.DecodeInstruction(instructionBytes, address, out skipNextByte, out bool opcodeErrorNOP);
+
+                    // when the Z80 is *halted*, it doesn't stop running. It continuously executes NOP instructions until an interrupt occurs;
+                    // if not halted we provide the 4 bytes at the Program Counter to the decoder
+                    // note that instructions can be 1-4 bytes long, but we always send the next 4 bytes to the decoder
+                    if (_halted)
+                    {
+                        package = new InstructionPackage(InstructionSet.NOP, new InstructionData(), address);
+                    }
+                    else
+                    {
+                        byte[] instructionBytes = Memory.ReadBytesAt(address, 4);
+                        package = InstructionDecoder.DecodeInstruction(instructionBytes, address);
+                    }
 
                     // on the real Z80, during instruction decode, memory timing for the opcode fetch and operand reads is happening
                     // but here we will simulate the timing based on the instruction package received
@@ -165,7 +172,8 @@ namespace Zem80.Core.CPU
                     Timing.AddOperandReadTiming(package.Instruction, address, package.Data.Argument1, package.Data.Argument2);
 
                     // advance the Program Counter to the start of the next instruction - but the current instruction may still change it
-                    Registers.PC += (ushort)package.Instruction.SizeInBytes;
+                    // if we're halted, we don't advance the PC here as we want to stay on the HALT instruction
+                    if (!_halted) Registers.PC += (ushort)package.Instruction.SizeInBytes;
                     ExecuteInstruction(package);
 
                     Interrupts.HandleAll();

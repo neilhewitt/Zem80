@@ -41,6 +41,7 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
                     <Label Grid.Column="0"
@@ -73,6 +74,17 @@
                             VerticalOptions="Center"
                             MinimumHeightRequest="30"
                             Clicked="OnAddBreakpointClicked" />
+
+                    <Button Grid.Column="3"
+                            Text="Break Now"
+                            FontSize="11"
+                            BackgroundColor="DarkRed"
+                            TextColor="White"
+                            VerticalOptions="Center"
+                            HorizontalOptions="End"
+                            MinimumHeightRequest="30"
+                            Margin="0,0,20,0"
+                            Clicked="OnBreakNowClicked" />
                 </Grid>
             </Grid>
 
@@ -105,7 +117,7 @@
                         <ScrollView Grid.Row="1"
                                     x:Name="DebuggerScrollView"
                                     BackgroundColor="#1E1E1E"
-                                    Margin="5,0,0,0">
+                                    Margin="5,5,5,15">
                             <VerticalStackLayout x:Name="DebuggerOutputStack"
                                                  Spacing="0" />
                         </ScrollView>
@@ -223,6 +235,7 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="140" />
                             </Grid.ColumnDefinitions>
 
                             <Label Grid.Column="0"
@@ -267,6 +280,17 @@
                                 HorizontalOptions="Center"
                                 MinimumHeightRequest="30"
                                 Clicked="OnNextInstructionClicked"
+                                />
+
+                            <Button Grid.Column="4" 
+                                Text="Stop Debugging"
+                                FontSize="11"
+                                BackgroundColor="DarkRed"
+                                TextColor="White"
+                                VerticalOptions="Center"
+                                HorizontalOptions="Center"
+                                MinimumHeightRequest="30"
+                                Clicked="OnStopDebuggingClicked"
                                 />
                         </Grid>
                     </Grid>

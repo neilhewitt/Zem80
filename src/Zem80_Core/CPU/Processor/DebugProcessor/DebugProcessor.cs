@@ -12,6 +12,7 @@ namespace Zem80.Core.CPU
         private Processor _cpu;
         private Action<InstructionPackage> _executeInstruction;
         private List<ushort> _breakpoints;
+        private bool _breakNow;
 
         private DebugSession _debugSession;
 
@@ -26,7 +27,7 @@ namespace Zem80.Core.CPU
         {
             Array.Resize(ref opcode, 4); // must be 4 bytes to decode
             _cpu.Memory.WriteBytesAt(_cpu.Registers.PC, opcode);
-            InstructionPackage package = InstructionDecoder.DecodeInstruction(opcode, _cpu.Registers.PC, out bool _, out bool _);
+            InstructionPackage package = InstructionDecoder.DecodeInstruction(opcode, _cpu.Registers.PC);
             _cpu.Registers.PC += package.Instruction.SizeInBytes;
 
             _executeInstruction(package);
@@ -72,9 +73,14 @@ namespace Zem80.Core.CPU
             }
         }
 
+        public void BreakNow()
+        {
+            _breakNow = true;
+        }
+
         internal void NotifyExecute(InstructionPackage package)
         {
-            if (_breakpoints.Contains(package.InstructionAddress))
+            if (_breakNow || _breakpoints.Contains(package.InstructionAddress))
             {
                 if (_debugSession == null) 
                 {
@@ -83,6 +89,8 @@ namespace Zem80.Core.CPU
 
                 OnBreakpointReached?.Invoke(this, _debugSession);
                 _debugSession.NotifyBreakpointHit(package.InstructionAddress);
+                
+                _breakNow = false;
             }
         }
 

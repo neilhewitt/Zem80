@@ -16,6 +16,7 @@ namespace Zem80.Core.CPU
                 cpu.Stack.Pop(WordRegister.PC);
                 cpu.Registers.WZ = cpu.Registers.PC;
             }
+            
             return new ExecutionResult(package, flags);
         }
 

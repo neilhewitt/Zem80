@@ -1,6 +1,8 @@
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using System.Drawing.Text;
+using System.Net;
+using System.Threading.Tasks;
 using Zem80.Core.CPU;
 using Zem80.Core.Debugger;
 using ZXSpectrum.VM;
@@ -20,10 +22,8 @@ public partial class DisplayPage : ContentPage
     private bool _debuggerPaneHasFocus = false;
     private bool _waitingForNextInstructionButton = false;
     private bool _jumped;
+    private bool _firstDebug;
     private bool _debuggingStopped;
-
-    private Label _lastDebuggerLine;
-    private Label _currentDebuggerLine;
 
     private DebugSession _debugSession;
 
@@ -32,12 +32,11 @@ public partial class DisplayPage : ContentPage
     private Dictionary<string, ushort> _previousWordRegisterValues = new Dictionary<string, ushort>();
     private Dictionary<string, bool> _previousFlagValues = new Dictionary<string, bool>();
 
-    private ushort? _runningToAddress = null; // null means not running to any address
-    private const int MAX_DEBUGGER_LINES = 1000;
-    
     // Circular buffer for debugger output
+    private const int MAX_DEBUGGER_LINES = 100;
     private readonly Label[] _debuggerLabels = new Label[MAX_DEBUGGER_LINES];
     private int _debuggerBufferIndex = 0;
+    private int _lastDebuggerBufferIndex = 0;
     private int _debuggerItemCount = 0;
 
     public bool DebuggerVisible
@@ -88,7 +87,8 @@ public partial class DisplayPage : ContentPage
 
     private void AddDebuggerOutput(string message)
     {
-        Label label = _debuggerLabels[_debuggerBufferIndex]; 
+        Thread.Sleep(1); // ensure ordering
+        Label label = _debuggerLabels[_debuggerBufferIndex]; ;
 
         Dispatcher.Dispatch(() =>
         {
@@ -97,6 +97,7 @@ public partial class DisplayPage : ContentPage
             label.IsVisible = true;
             
             // Move to next position in circular buffer
+            _lastDebuggerBufferIndex = _debuggerBufferIndex;
             _debuggerBufferIndex = (_debuggerBufferIndex + 1) % MAX_DEBUGGER_LINES;
             
             // Track how many items we've added (up to MAX_DEBUGGER_LINES)
@@ -113,12 +114,8 @@ public partial class DisplayPage : ContentPage
                 DebuggerOutputStack.Add(oldestLabel);
             }
             
-            // Auto-scroll to bottom
             DebuggerScrollView.ScrollToAsync(0, DebuggerOutputStack.Height, false);
         });
-
-        _lastDebuggerLine = _currentDebuggerLine;
-        _currentDebuggerLine = label;
     }
 
     private void ClearDebuggerOutput()
@@ -146,7 +143,7 @@ public partial class DisplayPage : ContentPage
                 return; // No lines to update
             }
 
-            var label = _lastDebuggerLine;
+            var label = _debuggerLabels[_lastDebuggerBufferIndex];
 
             string existingMarkup = FormattedDebugMessageConverter.Convert(label.FormattedText, System.Globalization.CultureInfo.CurrentCulture);
             string plainText = FormattedDebugMessageConverter.ConvertToPlainText(existingMarkup);
@@ -165,7 +162,7 @@ public partial class DisplayPage : ContentPage
         UpdateWindowSize();
 
         _vm = new Spectrum48K(UpdateSpectrumDisplay);
-        _vm.CPU.Debug.OnBreakpointReached += BeginDebugging;
+        _vm.CPU.Debug.OnBreakpointReached += OnBeginDebugging;
         _vm.CPU.Debug.OnDebugSessionEnded += (sender, state) =>
         {
             _debuggingStopped = true;
@@ -196,33 +193,6 @@ public partial class DisplayPage : ContentPage
 #if WINDOWS
         SetupWindowsKeyboardHandling();
 #endif
-    }
-
-    private void BeginDebugging(object sender, DebugSession debugSession)
-    {
-        _breakpointReached = true;
-        _debugSession = debugSession;
-
-        _debugSession.Monitor(DebugEventTypes.BeforeInstructionExecution, state =>
-        {
-            return Debug_BeforeExecuteInstruction(state);
-        });
-
-        _debugSession.Monitor(DebugEventTypes.AfterInstructionExecution, state =>
-        {
-            return Debug_AfterExecuteInstruction(state);
-        });
-
-        // Automatically give focus to the debugger pane when breakpoint is hit
-        Dispatcher.Dispatch(() =>
-        {
-            _previousByteRegisterValues.Clear();
-            _previousWordRegisterValues.Clear();
-            _previousFlagValues.Clear();
-
-            DebuggerHeader.BackgroundColor = Color.FromArgb("#005500");
-            DebuggerScrollView.Focus();
-        });
     }
 
     private void UpdateSpectrumDisplay(byte[] rgba)
@@ -294,6 +264,35 @@ public partial class DisplayPage : ContentPage
         label.Text = newValue ? "1" : "0";
         _previousFlagValues[flagName] = newValue;
     }
+
+    private void OnBeginDebugging(object sender, DebugSession debugSession)
+    {
+        _breakpointReached = true;
+        _debugSession = debugSession;
+        _firstDebug = true;
+
+        _debugSession.Monitor(DebugEventTypes.BeforeInstructionExecution, state =>
+        {
+            return Debug_BeforeExecuteInstruction(state);
+        });
+
+        _debugSession.Monitor(DebugEventTypes.AfterInstructionExecution, state =>
+        {
+            return Debug_AfterExecuteInstruction(state);
+        });
+
+        // Automatically give focus to the debugger pane when breakpoint is hit
+        Dispatcher.Dispatch(() =>
+        {
+            _previousByteRegisterValues.Clear();
+            _previousWordRegisterValues.Clear();
+            _previousFlagValues.Clear();
+
+            DebuggerHeader.BackgroundColor = Color.FromArgb("#005500");
+            DebuggerScrollView.Focus();
+        });
+    }
+
 
     private void OnCanvasViewPaintSurface(object sender, SKPaintSurfaceEventArgs e)
     {
@@ -390,7 +389,7 @@ public partial class DisplayPage : ContentPage
             DebuggerVisible = true;
             AddDebuggerOutput($"<bold><color:white>Breakpoint added at <color:green>0x{address:X4}</color></color></bold>");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // swallow this
         }
@@ -417,11 +416,14 @@ public partial class DisplayPage : ContentPage
                 address = Convert.ToUInt16(addressText, 16);
             }
 
-            _runningToAddress = address;
-
             RunToAddressEntry.Text = "";
+            AddDebuggerOutput($"<bold><color:white>Running to address <color:green>0x{address:X4}</color></color></bold>");
+
+            _vm.CPU.Debug.AddBreakpoint(address);
+            _debuggingStopped = true;
+            _waitingForNextInstructionButton = false;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // swallow this
         }
@@ -430,6 +432,31 @@ public partial class DisplayPage : ContentPage
     private void OnNextInstructionClicked(object sender, EventArgs e)
     {
         _waitingForNextInstructionButton = false;
+    }
+
+    private void OnBreakNowClicked(object sender, EventArgs e)
+    {
+        if (_vm.CPU.Debug.IsDebugging)
+        {
+            return; // already debugging
+        }
+
+        DebuggerVisible = true;
+        _vm.CPU.Debug.BreakNow();
+    }
+
+    private async void OnStopDebuggingClicked(object sender, EventArgs e)
+    {
+        if (_vm.CPU.Debug.IsDebugging)
+        {
+            _debuggingStopped = true; // causes Debug_AfterExecuteInstruction to return Stop
+            _waitingForNextInstructionButton = false;
+
+            AddDebuggerOutput($"<bold><color:white>Debugging stopped: </color></color></bold>");
+            await Task.Delay(3000);
+            DebuggerVisible = false;
+            ClearDebuggerOutput();
+        }
     }
 
     protected override void OnDisappearing()
@@ -497,19 +524,23 @@ public partial class DisplayPage : ContentPage
 
     private DebugResponse Debug_BeforeExecuteInstruction(DebugState state)
     {
-        AddDebuggerOutput($"<color:{(_jumped ? "green" : "darkgray")}>0x{state.Address.ToString("X4")}</color> <color:white>{state.Disassembly}</color>");
-        if (_jumped) _jumped = false;
-
-        if (!_runningToAddress.HasValue)
+        if (_firstDebug)
         {
-            _waitingForNextInstructionButton = true;
-            while (_waitingForNextInstructionButton)
-            {
-                // allow all other UI events to process
-                Thread.Sleep(1);
-            }
+            AddDebuggerOutput($"<bold><color:white>Breaking at <color:darkgray>0x{state.Address.ToString("X4")}</color></color></bold>");
+            Thread.Sleep(100); // ensure ordering
+            _firstDebug = false;
         }
 
+        AddDebuggerOutput($"<color:{(_jumped ? "green" : "darkgray")}>0x{state.Address.ToString("X4")}</color> <color:white>{state.Disassembly}</color>");
+            
+        _waitingForNextInstructionButton = true;
+        while (_waitingForNextInstructionButton)
+        {
+            // allow all other UI events to process
+            Thread.Sleep(1);
+        }
+
+        if (_jumped) _jumped = false;
         return DebugResponse.None;
     }
 
@@ -517,10 +548,10 @@ public partial class DisplayPage : ContentPage
     {
         _jumped = state.ProgramCounterWasModified;
 
-            var registers = _vm.CPU.Registers;
-            var flags = _vm.CPU.Flags;
+        var registers = _vm.CPU.Registers;
+        var flags = _vm.CPU.Flags;
 
-            string changedRegisters = "";
+        string changedRegisters = "";
 
         if (state.Instruction.TargetsByteRegister)
         {
