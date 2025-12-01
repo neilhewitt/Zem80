@@ -20,9 +20,5 @@ namespace Zem80.Core
         public TimingException(string message, Exception innerException) : base(message, innerException)
         {
         }
-
-        protected TimingException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
     }
 }

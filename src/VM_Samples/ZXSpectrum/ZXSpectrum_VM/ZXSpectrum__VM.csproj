@@ -1,15 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>ZXSpectrum.VM</RootNamespace>
     <AssemblyName>ZXSpectrum.VM</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MultimediaTimer" Version="1.0.1" />
     <PackageReference Include="NAudio" Version="2.2.1" />
-    <PackageReference Include="NAudio.Core" Version="2.2.1" />
   </ItemGroup>
 
   <ItemGroup>

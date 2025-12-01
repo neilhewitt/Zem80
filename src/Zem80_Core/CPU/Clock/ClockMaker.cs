@@ -5,9 +5,11 @@ namespace Zem80.Core.CPU
 {
     public static class ClockMaker
     {
-        // just runs as fast as possible, so not real time, but all events happen in the right order
-        public static IClock DefaultClock(float frequencyInMHz) => new DefaultClock(frequencyInMHz); 
-       
+        public static IClock NoClock(int pretendFrequencyInMHz = 4)
+        {
+            return new NoClock(pretendFrequencyInMHz);
+        }
+
         // attempts to run all events at the same time intervals they would run on the actual hardware
         public static IClock RealTimeClock(float frequencyInMHz, int[] cycleWaitPattern = null)
         {
@@ -50,7 +52,8 @@ namespace Zem80.Core.CPU
         }
 
         // runs as fast as possible, but only for as many ticks as there would be in the defined slice of time
-        // after which the CPU suspends until the end of the time slice in real time, then begins the next slice
+        // after which the CPU *emulation* suspends until the end of the time slice in real time, then begins the next slice
+        // (note: suspend is NOT the same as halt - the CPU loop is paused, whereas during halt the CPU executes NOPs)
         public static IClock TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice)
         {
             TimeSlicedClock clock = new TimeSlicedClock(frequencyInMHz, timeSlice);

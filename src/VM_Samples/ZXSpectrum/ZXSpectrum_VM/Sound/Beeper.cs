@@ -10,6 +10,9 @@ namespace ZXSpectrum.VM.Sound
      * is freely distributed by Magnus on his Web site, but no license file or information is included or provided
      * anywhere that I could find, I have written this code entirely from scratch but have based it on the design of the 
      * relevant class in SoftSpectrum 48. 
+     * 
+     * This implementation is not by any means perfect. We still get audio glitching. For a demo VM, I'm not that bothered.
+     * If you want to fix it... feel free to open a PR :-)
      */
 
     public class Beeper : IDisposable
@@ -17,10 +20,10 @@ namespace ZXSpectrum.VM.Sound
         private Processor _cpu;
 
         // NOTE - varies by Spectrum model / region - TODO make configurable
-        private const int TICKS_PER_SAMPLE = 8;
-        private const int TICKS_PER_FRAME = 70000; 
-        private const int FRAMES_PER_SECOND = 50;
-        private const int SAMPLE_SIZE = 120000;
+        private int _ticksPerSample;
+        private int _ticksPerFrame;
+        private int _sampleFactor = 2;
+        private int _bufferSize = 120000; // big enough but not big enough to cause audio latency
 
         private byte[][] _sampleData; // divided into three sets: empty, low frequency, high frequency
 
@@ -37,6 +40,11 @@ namespace ZXSpectrum.VM.Sound
         public void Start()
         {
             _player.Play();
+        }
+
+        public void Stop()
+        {
+            _player.Stop();
         }
 
         public void Dispose()
@@ -80,8 +88,8 @@ namespace ZXSpectrum.VM.Sound
                 long currentTStates = _cpu.Clock.Ticks;
                 long ticks = currentTStates - _lastTStates;
 
-                long samplesRequired = (ticks / TICKS_PER_SAMPLE);
-                if (samplesRequired <= SAMPLE_SIZE && samplesRequired > 0)
+                long samplesRequired = (ticks / _ticksPerSample) / _sampleFactor;
+                if (samplesRequired <= _bufferSize && samplesRequired > 0)
                 {
                     _currentFrequencyRange = _currentFrequencyRange == 0 ? frequencyRange : 0;
                     _provider.AddSamples(_sampleData[_currentFrequencyRange], 0, (int)samplesRequired);
@@ -101,8 +109,8 @@ namespace ZXSpectrum.VM.Sound
 
             for (int i = 0; i < 3; i++)
             {
-                _sampleData[i] = new byte[SAMPLE_SIZE];
-                for (int j = 0; j < SAMPLE_SIZE; j++)
+                _sampleData[i] = new byte[_bufferSize];
+                for (int j = 0; j < _bufferSize; j++)
                 {
                     // 0 = no sound, 10 = low frequency sound, 20 = high frequency sound
                     // basically, oscillating between low/high at different rates creates the tones
@@ -111,23 +119,48 @@ namespace ZXSpectrum.VM.Sound
             }
         }
 
-        public Beeper(Processor cpu)
+        public Beeper(Processor cpu, int displayFramesPerSecond)
         {
-            _cpu = cpu;
+            try
+            {
+                _cpu = cpu;
 
-            SetupSamples();
+                // Spectrum normally clocks at 3.5MHz, and would require 8 ticks per audio sample
+                // But in order to allow the Spectrum to run at a different clock speed, we need
+                // work out the divisor for the audio frequency based on the actual clock speed of 
+                // the emulated CPU.
+                long frequencyDivisor = 3500000 / 8; 
 
-            _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, true, 20); // can do lower latency than WaveOut
-            
-            int sampleRate = ((TICKS_PER_FRAME * FRAMES_PER_SECOND) / TICKS_PER_SAMPLE);
-            WaveFormat format = new WaveFormat(sampleRate, 8, 1);
+                // we need the actual frequency of the emulated CPU in Hz
+                long frequency = (long)(_cpu.Clock.FrequencyInMHz * 1000000);
 
-            _provider = new BufferedWaveProvider(format);
-            _provider.BufferLength = SAMPLE_SIZE;
-            _provider.DiscardOnBufferOverflow = true;
+                // now work out the number of ticks per frame and per sample
+                _ticksPerFrame = (int)(frequency / displayFramesPerSecond);
+                _ticksPerSample = (int)(frequency / frequencyDivisor);
 
-            _player.Init(_provider);
-            _player.Volume = 0.33f;
+                // generate sample data for each frequency range
+                SetupSamples();
+
+                // 1000 / displayFramesPerSecond is the required latency in milliseconds (ie 1000ms / 50fps = 20ms) and 
+                // we need to use the smallest latency that we can
+                _player = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, false, 1000 / displayFramesPerSecond); // WasapiOut can do lower latency than WaveOut
+
+                // finally, work out the sample rate for the WAV data
+                int sampleRate = ((_ticksPerFrame * displayFramesPerSecond) / (_ticksPerSample * _sampleFactor));
+                WaveFormat format = new WaveFormat(sampleRate, 8, 1);
+
+                // the BufferedWaveProvider can run for as long as we need it, adding to the buffer as we go, and
+                // circularly overwriting the buffer as we run out of space
+                _provider = new BufferedWaveProvider(format);
+                _provider.BufferLength = _bufferSize;
+                _provider.DiscardOnBufferOverflow = true;
+
+                _player.Init(_provider);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 }

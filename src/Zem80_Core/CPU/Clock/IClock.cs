@@ -17,6 +17,5 @@ namespace Zem80.Core.CPU
 
         void WaitForNextClockTick();
         void WaitForClockTicks(int ticks);
-
     }
 }

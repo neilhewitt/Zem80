@@ -3,7 +3,6 @@ using System.Globalization;
 using System.IO;
 using Zem80.Core;
 using Zem80.Core.CPU;
-using Zem80.Core.CPU;
 
 namespace Zem80.SimpleVM
 {
@@ -30,6 +29,11 @@ namespace Zem80.SimpleVM
             if (debugOutput)
             {
                 _cpu.AfterExecuteInstruction += DebugOutput_AfterExecute;
+            }
+
+            if (callbackAfterInstructionExecute != null)
+            {
+                _cpu.AfterExecuteInstruction += (s, e) => callbackAfterInstructionExecute(e);
             }
 
             _cpu.Start(address, endOnHalt);

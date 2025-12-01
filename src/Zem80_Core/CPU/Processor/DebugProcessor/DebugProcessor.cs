@@ -3,56 +3,31 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Zem80.Core.Debugger;
 
 namespace Zem80.Core.CPU
 {
-    public class DebugProcessor : IDebugProcessor
+    public class DebugProcessor
     {
         private Processor _cpu;
-        private InstructionDecoder _instructionDecoder;
-        private EventHandler<InstructionPackage> _onBreakpoint;
         private Action<InstructionPackage> _executeInstruction;
-        private IList<ushort> _breakpoints;
+        private List<ushort> _breakpoints;
+        private bool _breakNow;
 
-        IEnumerable<ushort> Breakpoints => _breakpoints;
+        private DebugSession _debugSession;
 
-        event EventHandler<InstructionPackage> OnBreakpoint { add { _onBreakpoint += value; } remove { _onBreakpoint -= value; } }
+        public IReadOnlyCollection<ushort> Breakpoints => (IReadOnlyCollection<ushort>)_breakpoints;
+        public bool IsDebugging => _debugSession != null;
 
-        public void AddBreakpoint(ushort address)
-        {
-            if (_breakpoints == null) _breakpoints = new List<ushort>();
-
-            // Note that the breakpoint functionality is *very* simple and not checked
-            // so if you add a breakpoint for an address which is not the start
-            // of an instruction in the code, it will never be triggered as PC will never get there
-            if (!_breakpoints.Contains(address))
-            {
-                _breakpoints.Add(address);
-            }
-        }
-
-        public void RemoveBreakpoint(ushort address)
-        {
-            if (_breakpoints != null && _breakpoints.Contains(address))
-            {
-                _breakpoints.Remove(address);
-            }
-        }
-
-        public void EvaluateAndRunBreakpoint(ushort address, InstructionPackage executingPackage)
-        {
-            if (_breakpoints.Contains(address))
-            {
-                _onBreakpoint.Invoke(_cpu, executingPackage);
-            }
-        }
+        public event EventHandler<DebugSession> OnBreakpointReached;
+        public event EventHandler OnDebugSessionEnded;
 
         // execute an instruction directly (without the processor loop running), for example for directly testing instructions
         public void ExecuteDirect(byte[] opcode)
         {
             Array.Resize(ref opcode, 4); // must be 4 bytes to decode
             _cpu.Memory.WriteBytesAt(_cpu.Registers.PC, opcode);
-            InstructionPackage package = _instructionDecoder.DecodeInstruction(opcode, _cpu.Registers.PC, out bool _, out bool _);
+            InstructionPackage package = InstructionDecoder.DecodeInstruction(opcode, _cpu.Registers.PC);
             _cpu.Registers.PC += package.Instruction.SizeInBytes;
 
             _executeInstruction(package);
@@ -77,10 +52,58 @@ namespace Zem80.Core.CPU
             _executeInstruction(package);
         }
 
+        public void AddBreakpoint(ushort address)
+        {
+            if (_breakpoints == null) _breakpoints = new List<ushort>();
+
+            // Note that the breakpoint is not checked,
+            // so if you add a breakpoint for an address which is not the start
+            // of an instruction in the code, it will never be triggered as PC will never get there
+            if (!_breakpoints.Contains(address))
+            {
+                _breakpoints.Add(address);
+            }
+        }
+
+        public void RemoveBreakpoint(ushort address)
+        {
+            if (_breakpoints != null && _breakpoints.Contains(address))
+            {
+                _breakpoints.Remove(address);
+            }
+        }
+
+        public void BreakNow()
+        {
+            _breakNow = true;
+        }
+
+        internal void NotifyExecute(InstructionPackage package)
+        {
+            if (_breakNow || _breakpoints.Contains(package.InstructionAddress))
+            {
+                if (_debugSession == null) 
+                {
+                    _debugSession = new DebugSession(_cpu, package);
+                }
+
+                OnBreakpointReached?.Invoke(this, _debugSession);
+                _debugSession.NotifyBreakpointHit(package.InstructionAddress);
+                
+                _breakNow = false;
+            }
+        }
+
+        internal void NotifySessionEnded()
+        {
+            OnDebugSessionEnded?.Invoke(this, EventArgs.Empty);
+            _debugSession = null;
+        }
+
         public DebugProcessor(Processor cpu, Action<InstructionPackage> executeInstruction)
         {
             _cpu = cpu;
-            _instructionDecoder = new InstructionDecoder(cpu);
+
             _executeInstruction = executeInstruction;
             _breakpoints = new List<ushort>();
         }

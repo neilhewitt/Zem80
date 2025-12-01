@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace Zem80.Core.CPU
 {
-    public class RealTimeClock : DefaultClock
+    public class RealTimeClock : ClockBase
     {
         private Stopwatch _stopwatch;
         
@@ -11,8 +11,6 @@ namespace Zem80.Core.CPU
         private int _waitCount;
         
         private long _lastElapsedTicks;
-
-        public bool IsRealTime => Stopwatch.IsHighResolution;
 
         public override void Start()
         {

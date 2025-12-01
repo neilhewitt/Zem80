@@ -4,15 +4,44 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Zem80.Core.CPU
 {
     public class Instruction
     {
+        public static string Disassemble(Instruction instruction, byte arg1, byte arg2)
+        {
+            // pattern = mnemonic, replace single n or o with argument1, replace nn with argument1+argument2 (concat, not comma-separated)
+            // indexed instructions use o for the displacement byte but show the +/- sign
+            // using sizeinbytes doesn't work
+            // use the mnemonic itself as a template
+            string disassembly = instruction.Mnemonic;
+            if (disassembly.Contains("nn"))
+            {
+                disassembly = disassembly.Replace("nn", (arg1, arg2).ToWord().ToString("X4", CultureInfo.InvariantCulture) + "H");
+            }
+            else
+            {
+                if (disassembly.Contains("n"))
+                {
+                    disassembly = disassembly.Replace("n", arg1.ToString("X2", CultureInfo.InvariantCulture) + "H");
+                }
+                if (disassembly.Contains("o"))
+                {
+                    string replace = disassembly.Contains("+o") ? "+o": "o";
+                    sbyte displacement = (sbyte)arg1;
+                    disassembly = disassembly.Replace(replace, (displacement > 0 ? "+": "-") + displacement.ToString("X2", CultureInfo.InvariantCulture) + "H");
+                }
+            }
+
+            return disassembly;
+        }
+
+        public int Opcode { get; private set; }
+        public byte[] OpcodeBytes { get; private set; }
         public int Prefix { get; private set; }
         public byte LastOpcodeByte { get; private set; }
-        public string OpcodeString { get; private set; }
-        public byte[] OpcodeBytes { get; private set; }
         public string Mnemonic { get; private set; }
         public Condition Condition { get; private set; }
         public byte SizeInBytes { get; private set; }
@@ -36,27 +65,24 @@ namespace Zem80.Core.CPU
         public bool CopiesResultToRegister { get; private set; }
         public ByteRegister CopyResultTo { get; private set; }
 
-        public Instruction(string fullOpcode, string mnemonic, Condition condition, InstructionElement target, InstructionElement source, InstructionElement arg1, InstructionElement arg2, 
+        public Instruction(int opcode, string mnemonic, Condition condition, InstructionElement target, InstructionElement source, InstructionElement arg1, InstructionElement arg2, 
             byte sizeInBytes, IEnumerable<MachineCycle> machineCycles, ByteRegister copyResultTo = ByteRegister.None, IMicrocode microcode = null)
         {
             CopiesResultToRegister = copyResultTo != ByteRegister.None;
             CopyResultTo = copyResultTo;
 
-            // find opcode prefix
-            OpcodeString = fullOpcode;
-            int opcodeByteLength = fullOpcode.Length / 2;
-            if (int.TryParse(fullOpcode[..^2], NumberStyles.HexNumber, null, out int prefix))
-            {
-                Prefix = prefix;
-            }
+            Opcode = opcode;
+            Prefix = opcode >> 8; // prefix is all but the last byte
 
             // split opcode into bytes
-            OpcodeBytes = new byte[opcodeByteLength];
-            for (int i = 0; i < opcodeByteLength; i++)
+            int opcodeLength = opcode > 0xFFFF ? 3 : opcode > 0xFF ? 2 : 1;
+            OpcodeBytes = new byte[opcodeLength];
+            for (int i = 0; i < opcodeLength; i++)
             {
-                OpcodeBytes[i] = Convert.ToByte(fullOpcode.Substring(i * 2, 2), 16);
+                OpcodeBytes[i] = (byte)(opcode >> (8 * (opcodeLength - i - 1))); // shift right to remove the byte/s we've already processed, then convert to byte to shorten it to 8 bits
             }
-            LastOpcodeByte = OpcodeBytes.Last();
+
+            LastOpcodeByte = OpcodeBytes[opcodeLength - 1];
             BitIndex = LastOpcodeByte.GetByteFromBits(3, 3);
 
             Mnemonic = mnemonic;

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
 using Zem80.Core.CPU;
-using Zem80.Core.CPU;
 
 namespace Zem80.Core.Tests.MicrocodeTests
 {

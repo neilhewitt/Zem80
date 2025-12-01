@@ -18,9 +18,9 @@ namespace Zem80.Core.CPU
         public bool Subtract { get { return (byte)(_flagByte & 0x02) > 0; } set { _flagByte = ReadOnly ? _flagByte : value ? (byte)(_flagByte | 0x02) : (byte)(_flagByte & ~0x02); } }
         public bool Carry { get { return (byte)(_flagByte & 0x01) > 0; } set { _flagByte = ReadOnly ? _flagByte : value ? (byte)(_flagByte | 0x01) : (byte)(_flagByte & ~0x01); } }
 
-        public byte Value { get { return _flagByte; } }
-
         public bool ReadOnly { get; private set; }
+
+        public byte Value { get { return _flagByte; } }
 
         public FlagState State => (FlagState)_flagByte;
 

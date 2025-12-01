@@ -16,9 +16,5 @@ namespace Zem80.Core
         public MemoryNotWritableException(string message, Exception innerException) : base(message, innerException)
         {
         }
-
-        protected MemoryNotWritableException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
     }
 }

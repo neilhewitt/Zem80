@@ -1,12 +1,14 @@
 ﻿using System.Drawing;
+using Zem80.Core;
 
 namespace ZXSpectrum.VM
 {
     public static class DisplayColour
     {
-        public static ColourValue FromThreeBit(byte threeBit)
+        public static ColourValue FromThreeBit(byte threeBit, int bitIndex)
         {
-            foreach(ColourValue colour in new ColourValue[] { Black, Blue, Red, Magenta, Green, Cyan, Yellow, White })
+            threeBit = (byte)((threeBit >> bitIndex) & 0b111);
+            foreach (ColourValue colour in new ColourValue[] { Black, Blue, Red, Magenta, Green, Cyan, Yellow, White })
             {
                 if (threeBit == colour.Bits) return colour;
             }

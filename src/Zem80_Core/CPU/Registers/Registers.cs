@@ -32,8 +32,8 @@ namespace Zem80.Core.CPU
         public ushort HL { get { return Get16BitValue(6); } set { Set16BitValue(6, value); } }
 
         // There is a second 'shadow' bank of register values (AF', BC', DE', HL'). These are stored in _registers[8..15].
-        // To access these you call ExchangeAF (to get access to values in AF') or ExchangeBCDEHL (to get access to values in BC', DE' and HL'). But for debug purposes we can
-        // access them directly by casting to the IShadowRegisters interface (or by using the Shadow property, preferably)
+        // To access these you call ExchangeAF (to get access to values in AF') or ExchangeBCDEHL (to get access to values in BC', DE' and HL').
+        // But for debug purposes we can access them directly by casting to the IShadowRegisters interface (using the Shadow property, preferably)
         ushort IShadowRegisters.AF { get { return Get16BitValue(8); } set { Set16BitValue(8, value); } }
         ushort IShadowRegisters.BC { get { return Get16BitValue(10); } set { Set16BitValue(10, value); } }
         ushort IShadowRegisters.DE { get { return Get16BitValue(12); } set { Set16BitValue(12, value); } }

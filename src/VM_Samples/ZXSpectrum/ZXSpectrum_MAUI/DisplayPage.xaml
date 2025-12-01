@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:skia="clr-namespace:SkiaSharp.Views.Maui.Controls;assembly=SkiaSharp.Views.Maui.Controls"
+             xmlns:local="clr-namespace:ZXSpectrum_MAUI"
+             x:Class="ZXSpectrum_MAUI.DisplayPage"
+             BackgroundColor="Black"
+             >
+
+    <ContentPage.Resources>
+        <local:FormattedDebugMessageConverter x:Key="FormattedDebugMessageConverter" />
+    </ContentPage.Resources>
+
+    <Grid>
+        <HorizontalStackLayout>
+            <!-- Left Pane: Display Canvas and Breakpoint Controls -->
+            <Grid WidthRequest="640" x:Name="LeftPane">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="512" />
+                    <RowDefinition Height="40" />
+                </Grid.RowDefinitions>
+
+                <!-- Display Canvas (invisible button prevents the breakpoint box from getting focus) -->
+                <Button HeightRequest="0" WidthRequest="0" Margin="0" Padding="0" />
+                <skia:SKCanvasView Grid.Row="0"
+                                   x:Name="DisplayCanvas"
+                                   PaintSurface="OnCanvasViewPaintSurface"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"
+                                   WidthRequest="640"
+                                   HeightRequest="512"
+                                   EnableTouchEvents="True">
+                </skia:SKCanvasView>
+
+                <!-- Breakpoint Controls -->
+                <Grid Grid.Row="1" 
+                      x:Name="BreakpointControls"
+                      BackgroundColor="#2D2D30"
+                      Padding="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Label Grid.Column="0"
+                           Text="Breakpoint address:"
+                           TextColor="White"
+                           FontSize="11"
+                           VerticalOptions="Center"
+                           Margin="10,0,10,0"
+                           />
+
+                    <Entry Grid.Column="1"
+                           x:Name="BreakpointAddressEntry"
+                           Placeholder="0x0000"
+                           PlaceholderColor="#666666"
+                           TextColor="White"
+                           FontSize="11"
+                           BackgroundColor="#1E1E1E"
+                           MaxLength="6"
+                           WidthRequest="80"
+                           VerticalOptions="Center"
+                           Margin="0,0,10,0"
+                           MinimumHeightRequest="30"
+                           TextChanged="OnAddressTextChanged" />
+
+                    <Button Grid.Column="2"
+                            Text="Add"
+                            FontSize="11"
+                            BackgroundColor="#007ACC"
+                            TextColor="White"
+                            VerticalOptions="Center"
+                            MinimumHeightRequest="30"
+                            Clicked="OnAddBreakpointClicked" />
+
+                    <Button Grid.Column="3"
+                            Text="Break Now"
+                            FontSize="11"
+                            BackgroundColor="DarkRed"
+                            TextColor="White"
+                            VerticalOptions="Center"
+                            HorizontalOptions="End"
+                            MinimumHeightRequest="30"
+                            Margin="0,0,20,0"
+                            Clicked="OnBreakNowClicked" />
+                </Grid>
+            </Grid>
+
+            <!-- Right Pane: Debugger View (Collapsible) -->
+            <Grid x:Name="DebuggerPane"
+                  WidthRequest="640"
+                  IsVisible="False">
+                <Border BackgroundColor="#1E1E1E"
+                        Stroke="#333333"
+                        StrokeThickness="1">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="40" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Header -->
+                        <Label Grid.Row="0"
+                               x:Name="DebuggerHeader"
+                               Text="Debugger"
+                               FontSize="12"
+                               FontAttributes="Bold"
+                               TextColor="#FFFFFF"
+                               Padding="10"
+                               BackgroundColor="#3D3D40" />
+
+                        <!-- Scrollable view for debugger output -->
+                        <ScrollView Grid.Row="1"
+                                    x:Name="DebuggerScrollView"
+                                    BackgroundColor="#1E1E1E"
+                                    Margin="5,5,5,15">
+                            <VerticalStackLayout x:Name="DebuggerOutputStack"
+                                                 Spacing="0" />
+                        </ScrollView>
+                        
+                        <!--Register and flags display -->
+                        <Grid Grid.Row="2"
+                              x:Name="RegistersPane"
+                              BackgroundColor="#252526"
+                              Padding="10,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Registers Table -->
+                            <StackLayout Grid.Column="0" Spacing="2" HorizontalOptions="Center">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="50" />
+                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="50" />
+                                        <ColumnDefinition Width="60" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Column 1 -->
+                                    <Label Grid.Row="0" Grid.Column="0" Text="AF:" TextColor="#569CD6" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="0" Grid.Column="1" x:Name="ValueAF" Text="0000" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    
+                                    <Label Grid.Row="1" Grid.Column="0" Text="BC:" TextColor="#569CD6" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="1" Grid.Column="1" x:Name="ValueBC" Text="0000" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    
+                                    <Label Grid.Row="2" Grid.Column="0" Text="DE:" TextColor="#569CD6" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="2" Grid.Column="1" x:Name="ValueDE" Text="0000" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    
+                                    <Label Grid.Row="3" Grid.Column="0" Text="HL:" TextColor="#569CD6" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="3" Grid.Column="1" x:Name="ValueHL" Text="0000" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    
+                                    <!-- Column 2 -->
+                                    <Label Grid.Row="0" Grid.Column="2" Text="IX:" TextColor="#569CD6" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="0" Grid.Column="3" x:Name="ValueIX" Text="0000" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    
+                                    <Label Grid.Row="1" Grid.Column="2" Text="IY:" TextColor="#569CD6" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="1" Grid.Column="3" x:Name="ValueIY" Text="0000" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    
+                                    <Label Grid.Row="2" Grid.Column="2" Text="SP:" TextColor="#569CD6" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="2" Grid.Column="3" x:Name="ValueSP" Text="0000" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    
+                                    <Label Grid.Row="3" Grid.Column="2" Text="IR:" TextColor="#569CD6" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="3" Grid.Column="3" x:Name="ValueIR" Text="0000" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    
+                                    <Label Grid.Row="4" Grid.Column="2" Text="PC:" TextColor="Green" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="4" Grid.Column="3" x:Name="ValuePC" Text="0000" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                </Grid>
+                            </StackLayout>
+
+                            <!-- Flags Display -->
+                            <StackLayout Grid.Column="1" Spacing="2">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="40" />
+                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="40" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Column 1 -->
+                                    <Label Grid.Row="0" Grid.Column="0" Text="Sign:" TextColor="#4EC9B0" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="0" Grid.Column="1" x:Name="FlagS" Text="-" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    
+                                    <Label Grid.Row="1" Grid.Column="0" Text="Zero:" TextColor="#4EC9B0" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="1" Grid.Column="1" x:Name="FlagZ" Text="-" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    
+                                    <Label Grid.Row="2" Grid.Column="0" Text="Y:" TextColor="#4EC9B0" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="2" Grid.Column="1" x:Name="FlagY" Text="-" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    
+                                    <Label Grid.Row="3" Grid.Column="0" Text="HalfCarry:" TextColor="#4EC9B0" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="3" Grid.Column="1" x:Name="FlagH" Text="-" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    
+                                    <!-- Column 2 -->
+                                    <Label Grid.Row="0" Grid.Column="2" Text="X:" TextColor="#4EC9B0" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="0" Grid.Column="3" x:Name="FlagX" Text="-" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    
+                                    <Label Grid.Row="1" Grid.Column="2" Text="P/V:" TextColor="#4EC9B0" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="1" Grid.Column="3" x:Name="FlagP" Text="-" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    
+                                    <Label Grid.Row="2" Grid.Column="2" Text="Subtract:" TextColor="#4EC9B0" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="2" Grid.Column="3" x:Name="FlagN" Text="-" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    
+                                    <Label Grid.Row="3" Grid.Column="2" Text="Carry:" TextColor="#4EC9B0" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                    <Label Grid.Row="3" Grid.Column="3" x:Name="FlagC" Text="-" TextColor="#D4D4D4" FontFamily="Consolas" FontSize="10" VerticalOptions="Center" />
+                                </Grid>
+                            </StackLayout>
+                        </Grid>
+
+                        <!-- Debugger Controls -->
+                        <Grid Grid.Row="3" 
+                              x:Name="DebuggerControls"
+                              BackgroundColor="#2D2D30"
+                              Padding="5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="140" />
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Column="0"
+                               Text="Run to address:"
+                               TextColor="White"
+                               FontSize="11"
+                               VerticalOptions="Center"
+                               Margin="10,0,10,0"
+                               />
+
+                            <Entry Grid.Column="1"
+                               x:Name="RunToAddressEntry"
+                               Placeholder="0x0000"
+                               PlaceholderColor="#666666"
+                               TextColor="White"
+                               FontSize="11"
+                               BackgroundColor="#1E1E1E"
+                               MaxLength="6"
+                               WidthRequest="80"
+                               VerticalOptions="Center"
+                               Margin="0,0,10,0"
+                               MinimumHeightRequest="30"
+                               TextChanged="OnAddressTextChanged" />
+
+                            <Button Grid.Column="2"
+                                Text="Run"
+                                FontSize="11"
+                                BackgroundColor="#007ACC"
+                                TextColor="White"
+                                VerticalOptions="Center"
+                                MinimumHeightRequest="30"
+                                MaximumWidthRequest="60"
+                                HorizontalOptions="Start"
+                                Clicked="OnRunToAddressClicked" />
+
+                            <Button Grid.Column="3" 
+                                Text="Next Instruction"
+                                FontSize="11"
+                                BackgroundColor="DarkGreen"
+                                TextColor="White"
+                                VerticalOptions="Center"
+                                HorizontalOptions="Center"
+                                MinimumHeightRequest="30"
+                                Clicked="OnNextInstructionClicked"
+                                />
+
+                            <Button Grid.Column="4" 
+                                Text="Stop Debugging"
+                                FontSize="11"
+                                BackgroundColor="DarkRed"
+                                TextColor="White"
+                                VerticalOptions="Center"
+                                HorizontalOptions="Center"
+                                MinimumHeightRequest="30"
+                                Clicked="OnStopDebuggingClicked"
+                                />
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
+        </HorizontalStackLayout>
+    </Grid>
+
+</ContentPage>

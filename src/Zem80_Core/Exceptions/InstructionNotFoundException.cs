@@ -16,9 +16,5 @@ namespace Zem80.Core
         public InstructionNotFoundException(string message, Exception innerException) : base(message, innerException)
         {
         }
-
-        protected InstructionNotFoundException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
     }
 }

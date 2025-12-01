@@ -4,7 +4,7 @@
     {
         IDebugStack Debug { get; }
         ushort Pointer { get; }
-        ushort Top { get; init; }
+        ushort Top { get; }
 
         void Pop(WordRegister register);
         void Push(WordRegister register);

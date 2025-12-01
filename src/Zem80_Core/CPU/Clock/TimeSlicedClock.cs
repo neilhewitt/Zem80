@@ -2,24 +2,26 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Timer = MultimediaTimer.Timer;
 
 namespace Zem80.Core.CPU
 {
-    public class TimeSlicedClock : DefaultClock, IClock, IDisposable
+    public class TimeSlicedClock : ClockBase, IClock, IDisposable
     {
         private int _ticksPerTimeSlice;
         private int _ticksThisTimeSlice;
-        private Timer _timer;
+        private HighResolutionTimer _timer;
+        private bool _stopped;
 
         public override void Start()
         {
+            _stopped = false;
             _timer.Start();
             base.Start();
         }
 
         public override void Stop()
         {
+            _stopped = true;
             _timer.Stop();
             base.Stop();
         }
@@ -47,9 +49,14 @@ namespace Zem80.Core.CPU
             float timeSliceInSeconds = (float)timeSlice.Ticks / 10000000f; // timeSlice.TotalSeconds is an integer
             _ticksPerTimeSlice = (int)(z80TicksPerSecond * timeSliceInSeconds);
 
-            _timer = new Timer();
-            _timer.Interval = timeSlice;
+            _timer = new HighResolutionTimer(timeSlice.Milliseconds);
             _timer.Elapsed += (sender, args) => { _cpu.Resume(); };
+
+            OnInitialised += (sender, args) =>
+            {
+                _cpu.Debug.OnBreakpointReached += (sender, args) => { if (!_stopped) _timer.Stop(); };
+                _cpu.Debug.OnDebugSessionEnded += (sender, args) => { if (!_stopped) _timer.Start(); };
+            };
         }
     }
 }

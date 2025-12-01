@@ -5,7 +5,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using Zem80.Core;
 using Zem80.Core.CPU;
 using ZXSpectrum.VM.Sound;
@@ -14,6 +13,7 @@ namespace ZXSpectrum.VM
 {
     public class ULA
     {
+        public const int FRAME_RATE = 50; // PAL only
         public const int FLASH_FRAME_RATE = 16; // PAL only
         public const int TICKS_PER_FRAME = 70000;
 
@@ -28,7 +28,7 @@ namespace ZXSpectrum.VM
 
         public void Start()
         {
-            _beeper.Start();
+            //_beeper.Start();
         }
 
         public void Stop()
@@ -45,6 +45,16 @@ namespace ZXSpectrum.VM
         {
             _beeper.Update(output);
         }
+
+        public void MuteBeeper()
+        {
+            _beeper.Stop();
+        }
+
+        public void UnmuteBeeper()
+        {
+            //_beeper.Start();
+        }  
 
         public void UpdateDisplay()
         {
@@ -72,7 +82,10 @@ namespace ZXSpectrum.VM
             // would be to enable some form of vsync with Windows, probably via DirectX, which is very much
             // out of scope for this sample.
 
-            _cpu.Interrupts.RaiseMaskable();
+            if (!_cpu.Debug.IsDebugging)
+            {
+                _cpu.Interrupts.RaiseMaskable();
+            }
         }
 
         public ULA(Processor cpu)
@@ -81,7 +94,7 @@ namespace ZXSpectrum.VM
             _cpu.Clock.SetEvent(TICKS_PER_FRAME, () => UpdateDisplay(), true);
 
             _screen = new ScreenMap();
-            _beeper = new Beeper(cpu);
+            _beeper = new Beeper(cpu, FRAME_RATE);
         }
     }
 }

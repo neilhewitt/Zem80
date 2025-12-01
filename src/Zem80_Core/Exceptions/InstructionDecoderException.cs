@@ -18,9 +18,5 @@ namespace Zem80.Core
         public InstructionDecoderException(string message, Exception innerException) : base(message, innerException)
         {
         }
-
-        protected InstructionDecoderException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
     }
 }

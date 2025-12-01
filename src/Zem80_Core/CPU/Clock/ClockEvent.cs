@@ -9,7 +9,7 @@ namespace Zem80.Core.CPU
         private IClock _clock;
         bool _repeats;
 
-        public long TicksToWait { get; init; }
+        public long TicksToWait { get; private set; }
         public long TicksSoFar { get; private set; }
 
         public void Stop()
@@ -23,7 +23,7 @@ namespace Zem80.Core.CPU
             if (TicksSoFar >= TicksToWait)
             {
                 TicksSoFar = 0;
-                Task.Run(() => _callback());
+                _callback();
                 if (!_repeats) Stop();
             }
         }
