@@ -1,6 +1,6 @@
 # Zem80
 
-A simple emulation of the Z80 CPU written in C# and running on .NET 8.0
+A simple emulation of the Z80 CPU written in C# and running on .NET 10.0
 
 ## Version 2.1 now available with .NET 10 and .NET Standard support
 
