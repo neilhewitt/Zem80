@@ -4,6 +4,9 @@ using System.Text;
 
 namespace ZXSpectrum.VM
 {
+    // copy of the Windows.System.WindowsKey enum
+    // we have to do this because we can't reference Windows assemblies here
+
     public enum WindowsKey
     {
         None = 0,

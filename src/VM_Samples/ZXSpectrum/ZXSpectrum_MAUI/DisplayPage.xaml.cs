@@ -490,21 +490,23 @@ public partial class DisplayPage : ContentPage
             {
                 content.KeyDown += (s, e) =>
                 {
+                    VirtualKey key = (VirtualKey)e.Key; // need to convert to our local VirtualKey even though the values are identical
+
                     if (!_waitingForNextInstructionButton && _sendKeysToEmulator)
                     {
-                        SpectrumKeyboard.MauiKeyDown((int)e.Key);
+                        SpectrumKeyboard.SendKeyDown(key);
                         return;
                     }
                     else if (_waitingForNextInstructionButton)
                     {
-                        if (e.Key == Windows.System.VirtualKey.Enter)
+                        if (key == VirtualKey.Enter)
                         {
                             // Trigger Next Instruction button
                             Dispatcher.Dispatch(() => OnNextInstructionClicked(this, EventArgs.Empty));
                             e.Handled = true;
                             return;
                         }
-                        else if (e.Key == Windows.System.VirtualKey.Escape)
+                        else if (key == VirtualKey.Escape)
                         {
                             _debuggingStopped = true;
                             _waitingForNextInstructionButton = false;
@@ -519,7 +521,7 @@ public partial class DisplayPage : ContentPage
                     // Same logic as KeyDown
                     if (!_waitingForNextInstructionButton && _sendKeysToEmulator)
                     {
-                        SpectrumKeyboard.MauiKeyUp((int)e.Key);
+                        SpectrumKeyboard.SendKeyUp((VirtualKey)e.Key);
                         return;
                     }
                 };

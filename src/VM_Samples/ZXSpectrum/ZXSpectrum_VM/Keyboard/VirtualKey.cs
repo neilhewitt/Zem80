@@ -1,5 +1,8 @@
 ﻿namespace ZXSpectrum.VM
 {
+    // copy of the Windows.System.VirtualKey enum
+    // we have to do this because we can't reference Windows assemblies here
+
     public enum VirtualKey
     {
         None = 0,
