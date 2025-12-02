@@ -488,11 +488,17 @@ public partial class DisplayPage : ContentPage
             var content = nativeWindow.Content as Microsoft.UI.Xaml.FrameworkElement;
             if (content != null)
             {
+                bool sendKeysToEmulator = !_settingsManager.Settings.DebuggerAvailable;
+                if (!sendKeysToEmulator)
+                {
+                    sendKeysToEmulator = !_isDebuggerVisible || !_waitingForNextInstructionButton || _sendKeysToEmulator;
+                }
+
                 content.KeyDown += (s, e) =>
                 {
                     VirtualKey key = (VirtualKey)e.Key; // need to convert to our local VirtualKey even though the values are identical
 
-                    if (!_waitingForNextInstructionButton && _sendKeysToEmulator)
+                    if (sendKeysToEmulator)
                     {
                         SpectrumKeyboard.SendKeyDown(key);
                         return;
@@ -519,7 +525,7 @@ public partial class DisplayPage : ContentPage
                 content.KeyUp += (s, e) =>
                 {
                     // Same logic as KeyDown
-                    if (!_waitingForNextInstructionButton && _sendKeysToEmulator)
+                    if (sendKeysToEmulator)
                     {
                         SpectrumKeyboard.SendKeyUp((VirtualKey)e.Key);
                         return;

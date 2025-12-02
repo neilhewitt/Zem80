@@ -45,22 +45,7 @@ namespace ZXSpectrum.VM
             SendKeyUp(windowsKey);
         }
 
-        private static IEnumerable<SpectrumKey> SpectrumKeysForWindowsKey(WindowsKey key)
-        {
-            return _keyMap[(int)key];
-        }
-
-        private static void SetSpectrumKeyStates(IEnumerable<SpectrumKey> keys, KeyState state)
-        {
-            if (keys == null) return;
-
-            foreach (SpectrumKey key in keys)
-            {
-                _keyStates[(int)key] = state;
-            }
-        }
-
-        private static byte GetBitValuesFor(byte rowSelector, byte value)
+        public static byte GetBitValuesFor(byte rowSelector, byte value)
         {
             if (_matrix.TryGetValue(rowSelector, out string keyRow))
             {
@@ -74,6 +59,21 @@ namespace ZXSpectrum.VM
             }
 
             return value;
+        }
+
+        private static IEnumerable<SpectrumKey> SpectrumKeysForWindowsKey(WindowsKey key)
+        {
+            return _keyMap[(int)key];
+        }
+
+        private static void SetSpectrumKeyStates(IEnumerable<SpectrumKey> keys, KeyState state)
+        {
+            if (keys == null) return;
+
+            foreach (SpectrumKey key in keys)
+            {
+                _keyStates[(int)key] = state;
+            }
         }
 
         private static void Setup()
