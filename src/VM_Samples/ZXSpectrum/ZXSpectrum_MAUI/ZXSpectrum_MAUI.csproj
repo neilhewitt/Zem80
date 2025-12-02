@@ -78,6 +78,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <None Update="appsettings.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	  <None Update="ROM\48k.rom">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>

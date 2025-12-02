@@ -7,7 +7,6 @@
     Title="ZXSpectrum_MAUI">
 
     <ShellContent
-        ContentTemplate="{DataTemplate local:DisplayPage}"
         Route="DisplayPage" />
 
 </Shell>

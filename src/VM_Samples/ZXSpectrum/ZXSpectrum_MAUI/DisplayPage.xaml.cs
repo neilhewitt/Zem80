@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Zem80.Core.CPU;
 using Zem80.Core.Debugger;
 using ZXSpectrum.VM;
+using ZXSpectrum_MAUI.Settings;
 
 namespace ZXSpectrum_MAUI;
 
@@ -17,15 +18,14 @@ public partial class DisplayPage : ContentPage
     private readonly object _bitmapLock = new object();
 
     private bool _isDebuggerVisible = false;
-    private bool _breakpointReached = false;
     private bool _sendKeysToEmulator = true;
-    private bool _debuggerPaneHasFocus = false;
     private bool _waitingForNextInstructionButton = false;
     private bool _jumped;
     private bool _firstDebug;
     private bool _debuggingStopped;
 
     private DebugSession _debugSession;
+    private SettingsManager _settingsManager;
 
     // Track previous display values for highlighting changes
     private Dictionary<string, byte> _previousByteRegisterValues = new Dictionary<string, byte>();
@@ -33,8 +33,8 @@ public partial class DisplayPage : ContentPage
     private Dictionary<string, bool> _previousFlagValues = new Dictionary<string, bool>();
 
     // Circular buffer for debugger output
-    private const int MAX_DEBUGGER_LINES = 100;
-    private readonly Label[] _debuggerLabels = new Label[MAX_DEBUGGER_LINES];
+    private int MAX_DEBUGGER_LINES = 100;
+    private Label[] _debuggerLabels;
     private int _debuggerBufferIndex = 0;
     private int _lastDebuggerBufferIndex = 0;
     private int _debuggerItemCount = 0;
@@ -47,8 +47,17 @@ public partial class DisplayPage : ContentPage
             if (_isDebuggerVisible != value)
             {
                 _isDebuggerVisible = value;
-                if (value) _vm.Mute(); // stop crackling in debug
-                else _vm.Unmute();
+                
+                var settings = _settingsManager?.Settings ?? new AppSettings();
+                
+                if (value && settings.MuteWhenDebugging) 
+                {
+                    _vm.Mute(); // stop crackling in debug
+                }
+                else if (!value)
+                {
+                    _vm.Unmute();
+                }
 
                 // use Dispatcher to ensure UI updates happen on the main thread in case we get called from another thread
                 Dispatcher.Dispatch(() =>
@@ -62,20 +71,21 @@ public partial class DisplayPage : ContentPage
 
     private void UpdateWindowSize()
     {
+        var settings = _settingsManager?.Settings ?? new AppSettings();
+
         // Update the window size based on debugger visibility
         var window = Application.Current?.Windows[0];
         if (window != null)
-        {
+        {            
             // Measure the actual height of the left pane (canvas + breakpoint controls)
-            // Canvas is 512px, breakpoint controls are approximately 40px (reduced padding + smaller controls)
             int canvasHeight = 512;
             int breakpointControlsHeight = 40; // Approximate height for the smaller controls section
-            int totalHeight = canvasHeight + breakpointControlsHeight;
+            int totalHeight = canvasHeight + (settings.DebuggerAvailable ? breakpointControlsHeight : 0);
 
             // Update debugger pane to match the left pane height
             DebuggerPane.HeightRequest = totalHeight;
 
-            // Base width is just the canvas width
+            // Base width is the canvas width
             int baseWidth = 640;
             int debuggerWidth = _isDebuggerVisible ? 640 : 0;
             int totalWidth = baseWidth + debuggerWidth;
@@ -172,23 +182,34 @@ public partial class DisplayPage : ContentPage
             });
         };
 
-        //var result = await FilePicker.Default.PickAsync(new PickOptions
-        //{
-        //    PickerTitle = "Select ZX Spectrum Snapshot",
-        //    FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
-        //    {
-        //        { DevicePlatform.WinUI, new[] { ".sna", ".z80" } }
-        //    })
-        //});
+        var settings = _settingsManager?.Settings ?? new AppSettings();
+        if (!settings.DebuggerAvailable)
+        {
+            DebuggerPane.IsVisible = false;
+            BreakpointControls.IsVisible = false;
+        }
 
-        //if (result != null)
-        //{
-        //    _vm.Start(result.FullPath);
-        //}
-        //else
-        //{
-        _vm.Start();
-        //}
+        if (settings.ShowFilePickerOnStartup)
+        {
+            var result = await FilePicker.Default.PickAsync(new PickOptions
+            {
+                PickerTitle = "Select ZX Spectrum Snapshot",
+                FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+                {
+                    { DevicePlatform.WinUI, new[] { ".sna", ".z80" } }
+                })
+                
+            });
+
+            if (result != null)
+            {
+                _vm.Start(result.FullPath);
+            }
+        }
+        else
+        {
+            _vm.Start();
+        }
 
 #if WINDOWS
         SetupWindowsKeyboardHandling();
@@ -218,21 +239,6 @@ public partial class DisplayPage : ContentPage
                 DisplayCanvas.InvalidateSurface();
             });
         }
-    }
-
-    private void UpdateRegisterDisplay(string registerName, Label label, byte newValue)
-    {
-        if (_previousByteRegisterValues.TryGetValue(registerName, out byte previousValue))
-        {
-            label.TextColor = (previousValue != newValue) ? Colors.Green : Colors.White;
-        }
-        else
-        {
-            label.TextColor = Colors.White;
-        }
-
-        label.Text = newValue.ToString("X2");
-        _previousByteRegisterValues[registerName] = newValue;
     }
 
     private void UpdateRegisterDisplay(string registerName, Label label, ushort newValue)
@@ -267,7 +273,6 @@ public partial class DisplayPage : ContentPage
 
     private void OnBeginDebugging(object sender, DebugSession debugSession)
     {
-        _breakpointReached = true;
         _debugSession = debugSession;
         _firstDebug = true;
 
@@ -655,10 +660,17 @@ public partial class DisplayPage : ContentPage
         return _debuggingStopped ? DebugResponse.Stop : DebugResponse.StepNext;
     }
 
-    public DisplayPage()
+    public DisplayPage(SettingsManager settingsManager)
     {
         InitializeComponent();
 
+        // Get settings manager from DI via constructor injection
+        _settingsManager = settingsManager;
+        
+        // Initialize debugger labels
+        MAX_DEBUGGER_LINES = 100;
+        _debuggerLabels = new Label[MAX_DEBUGGER_LINES];
+        
         // Pre-create all labels for the circular buffer
         for (int i = 0; i < MAX_DEBUGGER_LINES; i++)
         {

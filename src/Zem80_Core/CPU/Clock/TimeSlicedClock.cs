@@ -10,7 +10,10 @@ namespace Zem80.Core.CPU
         private int _ticksPerTimeSlice;
         private int _ticksThisTimeSlice;
         private HighResolutionTimer _timer;
+        private int _timeSliceInMilliseconds;
         private bool _stopped;
+
+        public int TimeSliceInMilliseconds => _timeSliceInMilliseconds;
 
         public override void Start()
         {
@@ -48,6 +51,7 @@ namespace Zem80.Core.CPU
             int z80TicksPerSecond = (int)(frequencyInMHz * 1000000);
             float timeSliceInSeconds = (float)timeSlice.Ticks / 10000000f; // timeSlice.TotalSeconds is an integer
             _ticksPerTimeSlice = (int)(z80TicksPerSecond * timeSliceInSeconds);
+            _timeSliceInMilliseconds = timeSlice.Milliseconds;
 
             _timer = new HighResolutionTimer(timeSlice.Milliseconds);
             _timer.Elapsed += (sender, args) => { _cpu.Resume(); };
