@@ -2,7 +2,7 @@
 {
     public class NotAClock: ClockBase, IClock
     {
-        public NotAClock(int pretendFrequencyInMHz = 4) : base(pretendFrequencyInMHz)
+        public NotAClock(float pretendFrequencyInMHz = 4) : base(pretendFrequencyInMHz)
         {
         }
     }

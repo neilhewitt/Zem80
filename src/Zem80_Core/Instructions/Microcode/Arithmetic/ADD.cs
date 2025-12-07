@@ -29,7 +29,7 @@ namespace Zem80.Core.CPU
                 WordRegister destination = instruction.Target.AsWordRegister();
                 ushort left = r[destination];
                 cpu.Timing.InternalOperationCycles(4, 3);
-                ushort right = Resolver.GetSourceWord(instruction, data, cpu, 3);
+                ushort right = r[instruction.Source.AsWordRegister()];
                 (r[destination], flags) = Arithmetic.Add(left, right, false, false, flags);
                 r.WZ = (ushort)(left + 1);
             }

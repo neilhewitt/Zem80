@@ -90,60 +90,6 @@ namespace Zem80.Core.CPU
             return value;
         }
 
-        public ushort GetSourceWordAndAddTimingAndEvents()
-        {
-            IRegisters r = _cpu.Registers;
-            Instruction instruction = _package.Instruction;
-            InstructionData data = _package.Data;
-            ushort address = 0x0000;
-
-            ushort value;
-            WordRegister source = instruction.Source.AsWordRegister();
-            if (source != WordRegister.None)
-            {
-                // source is word register
-                value = r[source];
-                NotifyMachineCycle(MachineCycle.InternalOperation1);
-                NotifyMachineCycle(MachineCycle.InternalOperation2);
-            }
-
-            else
-            {
-                if (instruction.Argument1 == InstructionElement.ByteValue && instruction.Argument2 == InstructionElement.ByteValue)
-                {
-                    value = data.ArgumentsAsWord;
-                    NotifyMachineCycle(MachineCycle.OperandReadLow);
-                    NotifyMachineCycle(MachineCycle.OperandReadHigh);
-                }
-                else
-                {
-                    address = instruction.Source.AsWordRegister() switch
-                    {
-                        WordRegister.IX => (ushort)(r.IX + (sbyte)data.Argument1),
-                        WordRegister.IY => (ushort)(r.IY + (sbyte)data.Argument1),
-                        _ => r.HL
-                    };
-
-                    // indexed addressing adds an internal operation cycle
-                    if (instruction.IsIndexed)
-                    {
-                        _cpu.Timing.InternalOperationCycle(MachineCycle.InternalOperation1.TStates);
-                        NotifyMachineCycle(MachineCycle.InternalOperation1);
-                    }
-
-                    value = _cpu.Memory.ReadWordAt(address);
-
-
-                    _cpu.Timing.MemoryReadCycle(address, value.LowByte(), MachineCycle.OperandReadLow.TStates);
-                    NotifyMachineCycle(MachineCycle.OperandReadLow, value.LowByte());
-                    _cpu.Timing.MemoryReadCycle(address, value.HighByte(), MachineCycle.OperandReadHigh.TStates);
-                    NotifyMachineCycle(MachineCycle.OperandReadHigh, value.HighByte());
-                }
-            }
-
-            return value;
-        }
-
         public void InternalOperation1()
         {
             MachineCycle cycle = MachineCycle.InternalOperation1;

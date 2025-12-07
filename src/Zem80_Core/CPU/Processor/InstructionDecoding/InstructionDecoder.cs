@@ -11,6 +11,10 @@ namespace Zem80.Core.CPU
     {
         public static InstructionPackage DecodeInstruction(byte[] instructionBytes, ushort address)
         {
+            // note that ZEXALL actually tests invalid instructions, so I've had to go back to handling them
+            // but the behaviour when an invalid instruction is 0xED-prefixed isn't possible in the current
+            // processor implementation, so that still throws an exception
+
             if (instructionBytes.Length != 4) throw new InstructionDecoderException("Supplied byte array must be 4 bytes long.");
 
             byte b0, b1, b2, b3;
@@ -37,7 +41,7 @@ namespace Zem80.Core.CPU
                     if (!InstructionSet.Instructions.TryGetValue(b3 | b1 << 8 | b0 << 16, out instruction))
                     {
                         // not a valid instruction - the Z80 spec says we should run a single NOP instead
-                        ThrowInvalidInstruction();
+                        instruction = InstructionSet.NOP;
                     }
                     else
                     {
@@ -49,7 +53,12 @@ namespace Zem80.Core.CPU
                     // all other prefixed instructions (CB, ED, DD, FD): a two-byte opcode + up to 2 operand bytes
                     if (!InstructionSet.Instructions.TryGetValue(b1 | b0 << 8, out instruction))
                     {
-                        ThrowInvalidInstruction();
+                        if (b0 == 0xED)
+                        {
+                            throw new InstructionDecoderException("Not a valid instruction: " + b0.ToString("X2") + b1.ToString("X2") + b2.ToString("X2") + b3.ToString("X2"));
+                        }
+
+                        instruction = InstructionSet.NOP;
                     }
                     else
                     {
@@ -70,7 +79,7 @@ namespace Zem80.Core.CPU
                 // unprefixed instruction - 1 byte opcode + up to 2 operand bytes
                 if (!InstructionSet.Instructions.TryGetValue(b0, out instruction))
                 {
-                    ThrowInvalidInstruction();
+                    instruction = InstructionSet.NOP;
                 }
                 else
                 {
@@ -86,11 +95,6 @@ namespace Zem80.Core.CPU
             }
 
             return new InstructionPackage(instruction, data, address);
-
-            void ThrowInvalidInstruction()
-            {
-                throw new InstructionDecoderException("Not a valid instruction: " + b0.ToString("X2") + b1.ToString("X2") + b2.ToString("X2") + b3.ToString("X2"));
-            }
         }
     }
 }

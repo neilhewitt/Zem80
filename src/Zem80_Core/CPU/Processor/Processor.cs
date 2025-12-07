@@ -211,6 +211,9 @@ namespace Zem80.Core.CPU
             : this(null, null, null, null, null, null, null, null, null)
         {
             // just defaults everything - provided for test scenarios and reflection
+            // except that we use the NotAClock to avoid any suspension
+            Clock = ClockMaker.NotAClock(DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ);
+            Clock.Initialise(this);
         }
 
         public Processor(IMemoryBank memory = null, IMemoryMap map = null, IStack stack = null, IClock clock = null, IRegisters registers = null, IPorts ports = null,

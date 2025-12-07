@@ -7,6 +7,20 @@ using System.Text;
 
 namespace ZexNext.Core
 {
+    [Flags]
+    public enum FlagState
+    {
+        None = 0,
+        Carry = 1,
+        Subtract = 2,
+        ParityOverflow = 4,
+        X = 8,
+        HalfCarry = 16,
+        Y = 32,
+        Zero = 64,
+        Sign = 128
+    }
+
     public struct TestStateDiff
     {
         public bool Opcode;
@@ -38,6 +52,8 @@ namespace ZexNext.Core
         public ushort IY { get; private set; }
         public ushort SP { get; private set; }
         public ushort PC { get; private set; }
+
+        public FlagState Flags => (FlagState)F;
 
         public void MaskFlags(byte mask)
         {

@@ -27,9 +27,9 @@ namespace Zem80.Core.CPU
             else
             {
                 if (instruction.Target == InstructionElement.AddressFromSP)
-                { 
+                {
                     // EX (SP),HL/IX/IY
-                    ushort value = Resolver.GetSourceWord(instruction, data, cpu, 0); // 0 tStates == untimed
+                    ushort value = r[instruction.Source.AsWordRegister()];
                     ushort valueAtSP = cpu.Memory.ReadWordAt(r.SP);
                     r[instruction.Source.AsWordRegister()] = valueAtSP;
                     cpu.Memory.WriteWordAt(r.SP, value, 0);

@@ -18,11 +18,12 @@ namespace Zem80.Core.CPU
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;
             Flags flags = cpu.Flags.Clone();
+            IRegisters r = cpu.Registers;
 
             if (instruction.Source != InstructionElement.WordValue)
             {
                 // JP HL / IX / IY
-                cpu.Registers.PC = Resolver.GetSourceWord(instruction, data, cpu, 0);
+                cpu.Registers.PC = r[instruction.Source.AsWordRegister()];
             }
             else if (instruction.Condition == Condition.None || flags.SatisfyCondition(instruction.Condition))
             {

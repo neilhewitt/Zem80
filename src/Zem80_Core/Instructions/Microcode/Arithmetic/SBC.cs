@@ -24,7 +24,7 @@ namespace Zem80.Core.CPU
             {
                 ushort left = r.HL;
                 cpu.Timing.InternalOperationCycles(4, 3);
-                ushort right = Resolver.GetSourceWord(instruction, data, cpu, 3);
+                ushort right = r[instruction.Source.AsWordRegister()];
                 (r.HL, flags) = Arithmetic.Subtract(left, right, flags.Carry, true, flags);
                 r.WZ = (ushort)(left + 1);
             }

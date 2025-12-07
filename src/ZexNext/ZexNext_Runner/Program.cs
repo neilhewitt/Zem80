@@ -47,8 +47,7 @@ namespace ZexNext_Runner
 
             Console.WriteLine("\n\nCompiling tests...\n");
             _runner = new TestRunner(
-                (address, data) => _cpu.Memory.WriteBytesAt(address, data), 
-                testFilePaths);
+                (address, data) => _cpu.Memory.WriteBytesAt(address, data), false, testFilePaths);
 
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.White;

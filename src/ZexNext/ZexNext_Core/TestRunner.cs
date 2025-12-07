@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ZexNext.Core
 {
     public class TestRunner
     {
+        private bool _exceptionOnTestFail;
+
         public IEnumerable<TestSet> TestSets { get; private set; }
 
         public IEnumerable<TestResult> RunAll(Func<TestState, TestState> testExecutor, bool useFlagMasks, Func<TestResult, bool> afterCycle = null)
@@ -43,7 +46,8 @@ namespace ZexNext.Core
 
             foreach (TestCycle cycle in test.Cycles)
             {
-                results.Add(ExecuteTest(test, cycle, testExecutor, useFlagMasks, afterCycle));
+                TestResult result = ExecuteTest(test, cycle, testExecutor, useFlagMasks, afterCycle);
+                results.Add(result);
             }
 
             return results;
@@ -72,6 +76,12 @@ namespace ZexNext.Core
             bool passed = actual.Equals(expected);
 
             TestResult result = new TestResult(cycle, test.Name, cycle.Mnemonic, passed, input, expected, actual);
+            
+            if (_exceptionOnTestFail && !result.Passed)
+            {
+                throw new TestFailureException($"Test failed.", result);
+            }
+
             if (afterCycle?.Invoke(result) == false)
             {
                 // nothing here ATM - debug point if we need it
@@ -80,8 +90,10 @@ namespace ZexNext.Core
             return result;
         }
 
-        public TestRunner(Action<ushort, byte[]> memoryPatcher, params string[] testSetPaths)
+        public TestRunner(Action<ushort, byte[]> memoryPatcher, bool throwExceptionOnTestFail, params string[] testSetPaths)
         {
+            _exceptionOnTestFail = throwExceptionOnTestFail;
+
             List<TestSet> testSets = new List<TestSet>();
             foreach(string testSetPath in testSetPaths)
             {

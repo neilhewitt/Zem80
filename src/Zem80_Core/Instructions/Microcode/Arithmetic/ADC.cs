@@ -22,9 +22,10 @@ namespace Zem80.Core.CPU
 
             if (instruction.TargetsWordRegister)
             {
+                // it's ADC HL,rr
                 ushort left = r.HL;
                 cpu.Timing.InternalOperationCycles(4, 3);
-                ushort right = Resolver.GetSourceWord(instruction, data, cpu, 3);
+                ushort right = r[instruction.Source.AsWordRegister()];
                 (r.HL, flags) = Arithmetic.Add(left, right, flags.Carry, true, flags);
                 r.WZ = (ushort)(left + 1);
             }
@@ -63,7 +64,7 @@ namespace Zem80.Core.CPU
 
                 WordRegister destination = instruction.Target.AsWordRegister();
                 ushort left = r[destination];
-                ushort right = GetSourceWordAndAddTimingAndEvents();
+                ushort right = 0;// GetSourceWordAndAddTimingAndEvents();
                 (r.HL, flags) = Arithmetic.Add(left, right, flags.Carry, true, flags);
                 r.WZ = (ushort)(left + 1);
             }

@@ -8,7 +8,7 @@ namespace Zem80.Core.CPU
     public static class ClockMaker
     {
         // pretends to be a clock running at xMHz, but actually runs as fast as possible with no timing at all
-        public static IClock NotAClock(int pretendFrequencyInMHz = 4)
+        public static IClock NotAClock(float pretendFrequencyInMHz = 4)
         {
             return new NotAClock(pretendFrequencyInMHz);
         }
