@@ -53,7 +53,7 @@ namespace Zem80.Core.CPU
         public bool HasIntermediateDisplacementByte { get; private set; }
         public bool IsLoopingInstruction { get; private set; }
         public byte BitIndex { get; private set; }
-        public IMicrocode Microcode { get; private set; }
+        public MicrocodeBase Microcode { get; private set; }
         public InstructionElement Target { get; private set; }
         public InstructionElement Source { get; private set; }
         public InstructionElement Argument1 { get; private set; }
@@ -68,7 +68,7 @@ namespace Zem80.Core.CPU
         public ByteRegister CopyResultTo { get; private set; }
 
         public Instruction(int opcode, string mnemonic, Condition condition, InstructionElement target, InstructionElement source, InstructionElement arg1, InstructionElement arg2, 
-            byte sizeInBytes, IEnumerable<MachineCycle> machineCycles, ByteRegister copyResultTo = ByteRegister.None, IMicrocode microcode = null)
+            byte sizeInBytes, IEnumerable<MachineCycle> machineCycles, ByteRegister copyResultTo = ByteRegister.None, MicrocodeBase microcode = null)
         {
             CopiesResultToRegister = copyResultTo != ByteRegister.None;
             CopyResultTo = copyResultTo;
@@ -115,7 +115,7 @@ namespace Zem80.Core.CPU
             {
                 Type microcodeType = Assembly.GetExecutingAssembly().GetTypes().
                     SingleOrDefault(x => x.Name == mnemonic.Split(' ')[0].TrimEnd('0','1','2','3','4','5','6','7')); // cater for duplicate instructions (NEG2 etc)
-                Microcode = (IMicrocode)Activator.CreateInstance(microcodeType);
+                Microcode = (MicrocodeBase)Activator.CreateInstance(microcodeType);
             }
             else
             {

@@ -4,11 +4,11 @@ using System.Text;
 
 namespace Zem80.Core.CPU
 {
-    public class PUSH : IMicrocode
+    public class PUSH : MicrocodeBase
     {
         // PUSH rr
 
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
+        public override ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
 

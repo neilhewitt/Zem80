@@ -5,9 +5,9 @@ using Zem80.Core.InputOutput;
 
 namespace Zem80.Core.CPU
 {
-    public class OUTI : IMicrocode
+    public class OUTI : MicrocodeBase
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
+        public override ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Flags flags = cpu.Flags.Clone();
             IRegisters r = cpu.Registers;

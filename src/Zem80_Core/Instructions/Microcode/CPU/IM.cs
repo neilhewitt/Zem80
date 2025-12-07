@@ -4,13 +4,13 @@ using System.Text;
 
 namespace Zem80.Core.CPU
 {
-    public class IM : IMicrocode
+    public class IM : MicrocodeBase
     {
         // IM 0
         // IM 1
         // IM 2
 
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
+        public override ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
 

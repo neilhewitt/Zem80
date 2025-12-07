@@ -4,9 +4,9 @@ using System.Text;
 
 namespace Zem80.Core.CPU
 {
-    public class RLA : IMicrocode
+    public class RLA : MicrocodeBase
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
+        public override ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Flags flags = cpu.Flags.Clone();
             IRegisters r = cpu.Registers;

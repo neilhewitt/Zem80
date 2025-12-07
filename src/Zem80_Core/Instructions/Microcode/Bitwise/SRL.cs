@@ -4,14 +4,14 @@ using System.Text;
 
 namespace Zem80.Core.CPU
 {
-    public class SRL : IMicrocode
+    public class SRL : MicrocodeBase
     {
         // SRL r
         // SRL (HL)
         // SRL (IX+o)
         // SRL (IY+o)
 
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
+        public override ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;

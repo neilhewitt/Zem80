@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Zem80.Core.CPU
 {
-    public class CP : IMicrocode
+    public class CP : MicrocodeBase
     {
         // CP r
         // CP n
@@ -12,7 +12,7 @@ namespace Zem80.Core.CPU
         // CP (IX+o)
         // CP (IY+o)
 
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
+        public override ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;

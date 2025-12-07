@@ -5,12 +5,12 @@ using Zem80.Core.InputOutput;
 
 namespace Zem80.Core.CPU
 {
-    public class OUT : IMicrocode
+    public class OUT : MicrocodeBase
     {
         // OUT (n),A
         // OUT (C),r
 
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
+        public override ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;

@@ -4,12 +4,12 @@ using System.Text;
 
 namespace Zem80.Core.CPU
 {
-    public class CPDR : CPXX, IMicrocode { public CPDR() : base("CPDR") {} }
-    public class CPIR : CPXX, IMicrocode { public CPIR() : base("CPIR") {} }
-    public class CPD : CPXX, IMicrocode { public CPD() : base("CPD") {} }
-    public class CPI : CPXX, IMicrocode { public CPI() : base("CPI") {} }
+    public class CPDR : CPD_R_CPI_R { public CPDR() : base("CPDR") {} }
+    public class CPIR : CPD_R_CPI_R { public CPIR() : base("CPIR") {} }
+    public class CPD : CPD_R_CPI_R { public CPD() : base("CPD") {} }
+    public class CPI : CPD_R_CPI_R { public CPI() : base("CPI") {} }
 
-    public class CPXX : IMicrocode
+    public class CPD_R_CPI_R : MicrocodeBase
     {
         // this class supplies the microcode for CPI, CPD, CPIR and CPDR
         // which are all substantially the same except for the increment/decrement
@@ -18,7 +18,7 @@ namespace Zem80.Core.CPU
         bool _increments;
         bool _repeats;
 
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
+        public override ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             bool carry = cpu.Flags.Carry; // current value before CPD
             byte a = cpu.Registers.A;
@@ -60,7 +60,7 @@ namespace Zem80.Core.CPU
             return new ExecutionResult(package, flags);
         }
 
-        public CPXX(string z80Mnemonic)
+        public CPD_R_CPI_R(string z80Mnemonic)
         {
             _increments = z80Mnemonic == "CPI" || z80Mnemonic == "CPIR";
             _repeats = z80Mnemonic == "CPIR" || z80Mnemonic == "CPDR";

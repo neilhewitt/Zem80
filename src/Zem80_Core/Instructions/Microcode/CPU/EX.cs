@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Zem80.Core.CPU
 {
-    public class EX : IMicrocode
+    public class EX : MicrocodeBase
     {
         // EX AF,AF'
         // EX DE,HL
@@ -13,7 +13,7 @@ namespace Zem80.Core.CPU
         // EX (SP),IX
         // EX (SP),IY
 
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
+        public override ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;

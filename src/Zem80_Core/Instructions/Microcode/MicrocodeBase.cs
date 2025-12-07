@@ -24,7 +24,9 @@ namespace Zem80.Core.CPU
             //_machineCycles = new List<MachineCycle>(MachineCycle.Cycles); // want a realised countable list
         }
 
-        public byte GetSourceByteAndAddTimingAndEvents()
+        public abstract ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle);
+
+        protected byte GetSourceByteAndAddTimingAndEvents()
         {
             // this fetches a byte operand value for the instruction given, adjusting how it is fetched based on the addressing of the instruction
 
@@ -90,7 +92,7 @@ namespace Zem80.Core.CPU
             return value;
         }
 
-        public void InternalOperation1()
+        protected void InternalOperation1()
         {
             MachineCycle cycle = MachineCycle.InternalOperation1;
             if (cycle != null)
@@ -100,7 +102,7 @@ namespace Zem80.Core.CPU
             }
         }
 
-        public void InternalOperation2()
+        protected void InternalOperation2()
         {
             MachineCycle cycle = MachineCycle.InternalOperation2;
             if (cycle != null)
@@ -110,7 +112,7 @@ namespace Zem80.Core.CPU
             }
         }
 
-        public void NotifyMachineCycle(MachineCycle cycle, byte? arg1 = null, byte? arg2 = null)
+        protected void NotifyMachineCycle(MachineCycle cycle, byte? arg1 = null, byte? arg2 = null)
         {
             if (_onMachineCycle != null)
             {

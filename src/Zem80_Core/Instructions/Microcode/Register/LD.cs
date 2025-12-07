@@ -5,7 +5,7 @@ using System.Xml.Schema;
 
 namespace Zem80.Core.CPU
 {
-    public class LD : MicrocodeBase, IMicrocode
+    public class LD : MicrocodeBase
     {
         // LD r,r'
         // LD r,n
@@ -35,7 +35,7 @@ namespace Zem80.Core.CPU
         // LD A,I
         // LD A,R
 
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
+        public override ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Setup(cpu, package, onMachineCycle);
 

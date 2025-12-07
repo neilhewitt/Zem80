@@ -4,9 +4,9 @@ using System.Text;
 
 namespace Zem80.Core.CPU
 {
-    public class DI : IMicrocode
+    public class DI : MicrocodeBase
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
+        public override ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             cpu.Interrupts.Disable();
             return new ExecutionResult(package, null);

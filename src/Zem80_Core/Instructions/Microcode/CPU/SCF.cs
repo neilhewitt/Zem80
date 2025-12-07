@@ -4,9 +4,9 @@ using System.Text;
 
 namespace Zem80.Core.CPU
 {
-    public class SCF : IMicrocode
+    public class SCF : MicrocodeBase
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
+        public override ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Flags flags = cpu.Flags.Clone();
             flags.Carry = true;
