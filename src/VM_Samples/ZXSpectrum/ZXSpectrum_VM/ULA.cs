@@ -88,10 +88,17 @@ namespace ZXSpectrum.VM
             }
         }
 
+        public void NotifyMachineCycleExecution(object sender, ExecutionState state)
+        {
+            // do nothing for now - we're going to use this for memory contention etc
+        }
+
         public ULA(Processor cpu)
         {
             _cpu = cpu;
             _cpu.Clock.SetEvent(TICKS_PER_FRAME, () => UpdateDisplay(), true);
+
+            //_cpu.OnMachineCycleExecution += NotifyMachineCycleExecution;
 
             _screen = new ScreenMap();
             _beeper = new Beeper(cpu, FRAME_RATE);

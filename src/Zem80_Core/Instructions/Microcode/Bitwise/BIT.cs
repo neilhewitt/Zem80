@@ -6,7 +6,12 @@ namespace Zem80.Core.CPU
 {
     public class BIT : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        // BIT b,r
+        // BIT b,(HL)
+        // BIT b,(IX+o)
+        // BIT b,(IY+o)
+
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;

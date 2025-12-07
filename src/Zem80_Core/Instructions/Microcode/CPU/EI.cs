@@ -6,7 +6,7 @@ namespace Zem80.Core.CPU
 {
     public class EI : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             cpu.Interrupts.Enable();
             return new ExecutionResult(package, cpu.Flags.Clone()); // interrupts aren't enabled until the *next* instruction

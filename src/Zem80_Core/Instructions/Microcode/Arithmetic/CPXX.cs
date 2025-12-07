@@ -18,7 +18,7 @@ namespace Zem80.Core.CPU
         bool _increments;
         bool _repeats;
 
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             bool carry = cpu.Flags.Carry; // current value before CPD
             byte a = cpu.Registers.A;

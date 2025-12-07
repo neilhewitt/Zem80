@@ -6,7 +6,9 @@ namespace Zem80.Core.CPU
 {
     public class PUSH : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        // PUSH rr
+
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
 

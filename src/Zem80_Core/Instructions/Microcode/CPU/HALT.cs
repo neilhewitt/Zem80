@@ -6,7 +6,7 @@ namespace Zem80.Core.CPU
 {
     public class HALT : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             cpu.Halt(HaltReason.HaltInstruction);
 

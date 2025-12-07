@@ -7,7 +7,16 @@ namespace Zem80.Core.CPU
 {
     public class ADD : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        // ADD A,r
+        // ADD A,n
+        // ADD A,(HL)
+        // ADD A,(IX+o)
+        // ADD A,(IY+o)
+        // ADD HL,rr
+        // ADD IX,rr
+        // ADD IY,rr
+
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;

@@ -6,7 +6,7 @@ namespace Zem80.Core.CPU
 {
     public class DJNZ : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             InstructionData data = package.Data;
 

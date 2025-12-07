@@ -6,7 +6,13 @@ namespace Zem80.Core.CPU
 {
     public class XOR : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        // XOR r
+        // XOR n
+        // XOR (HL)
+        // XOR (IX+o)
+        // XOR (IY+o)
+
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;

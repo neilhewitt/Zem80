@@ -43,6 +43,7 @@ namespace Zem80.Core.CPU
         public TimeSpan LastRunTime { get; private set; }
 
         public event EventHandler<InstructionPackage> BeforeExecuteInstruction;
+        public event EventHandler<ExecutionState> OnMachineCycleExecution;
         public event EventHandler<ExecutionResult> AfterExecuteInstruction;
         public event EventHandler AfterInitialise;
         public event EventHandler OnStop;
@@ -168,8 +169,8 @@ namespace Zem80.Core.CPU
                     // on the real Z80, during instruction decode, memory timing for the opcode fetch and operand reads is happening
                     // but here we will simulate the timing based on the instruction package received
                     // (all the rest of the timing happens during the execution of the instruction microcode, and the microcode is responsible for it)
-                    Timing.AddOpcodeFetchTiming(package.Instruction, address);
-                    Timing.AddOperandReadTiming(package.Instruction, address, package.Data.Argument1, package.Data.Argument2);
+                    Timing.AddOpcodeFetchTiming(package.Instruction, address, NotifyMachineCycle);
+                    Timing.AddOperandReadTiming(package.Instruction, address, NotifyMachineCycle, package.Data.Argument1, package.Data.Argument2);
 
                     // advance the Program Counter to the start of the next instruction - but the current instruction may still change it
                     // if we're halted, we don't advance the PC here as we want to stay on the HALT instruction
@@ -195,11 +196,16 @@ namespace Zem80.Core.CPU
             // the value in WZ (sometimes known as MEMPTR in Z80 enthusiast circles) is only ever used to control the behavior of the BIT instruction
             Registers.WZ = (ushort)(package.Instruction.IsIndexed ? (Registers[package.Instruction.IndexedRegister] + package.Data.Argument1) : 0);
 
-            ExecutionResult result = package.Instruction.Microcode.Execute(this, package);
+            ExecutionResult result = package.Instruction.Microcode.Execute(this, package, NotifyMachineCycle);
             if (result.Flags != null) Registers.F = result.Flags.Value;
             if (Registers.PC != package.InstructionAddress + package.Instruction.SizeInBytes) result.ProgramCounterWasModified = true;
 
             AfterExecuteInstruction?.Invoke(this, result);
+        }
+
+        private void NotifyMachineCycle(ExecutionState state)
+        {
+            OnMachineCycleExecution?.Invoke(this, state);
         }
 
         private void RefreshMemory()

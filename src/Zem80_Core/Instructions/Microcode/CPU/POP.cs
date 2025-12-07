@@ -6,7 +6,9 @@ namespace Zem80.Core.CPU
 {
     public class POP : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        // POP rr
+
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
 

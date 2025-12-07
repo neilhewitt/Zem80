@@ -6,7 +6,13 @@ namespace Zem80.Core.CPU
 {
     public class SUB : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        // SUB r
+        // SUB n
+        // SUB (HL)
+        // SUB (IX+o)
+        // SUB (IY+o)
+
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;

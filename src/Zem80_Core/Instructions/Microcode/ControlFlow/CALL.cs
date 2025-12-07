@@ -6,7 +6,10 @@ namespace Zem80.Core.CPU
 {
     public class CALL : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        // CALL nn
+        // CALL cc,nn
+
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;

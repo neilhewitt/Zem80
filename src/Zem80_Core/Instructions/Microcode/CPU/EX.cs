@@ -7,7 +7,13 @@ namespace Zem80.Core.CPU
 {
     public class EX : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        // EX AF,AF'
+        // EX DE,HL
+        // EX (SP),HL
+        // EX (SP),IX
+        // EX (SP),IY
+
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;

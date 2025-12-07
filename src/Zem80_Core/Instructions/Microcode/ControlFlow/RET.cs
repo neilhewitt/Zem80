@@ -6,7 +6,10 @@ namespace Zem80.Core.CPU
 {
     public class RET : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        // RET
+        // RET cc
+
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
             Flags flags = cpu.Flags.Clone();

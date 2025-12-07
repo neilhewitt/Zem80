@@ -104,12 +104,5 @@ namespace Zem80.Core
         {
             return (ushort)((bytePair.high * 256) + bytePair.low);
         }
-
-        public static (byte low, byte high) ToBytes(this ushort word)
-        {
-            byte high = (byte)(word / 256);
-            byte low = (byte)(word % 256);
-            return (low, high);
-        }
     }
 }

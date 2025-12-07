@@ -6,7 +6,7 @@ namespace Zem80.Core.CPU
 {
     public class RETI : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             cpu.Stack.Pop(WordRegister.PC);
             cpu.Registers.WZ = cpu.Registers.PC;
