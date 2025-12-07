@@ -14,14 +14,16 @@ namespace Zem80.Core.Debugger
 
         public DateTime StartTime { get; private set; }
         public ushort StartAddress { get; private set; }
+        public bool DebugsTiming => _cpu.Timing is ProcessorTiming;
+        public bool DebugsInterrupts => _cpu.Interrupts is Interrupts;
 
         public IReadOnlyCollection<DebugMonitor> Monitors => (IReadOnlyCollection<DebugMonitor>)_monitors.AsReadOnly();
 
         public DebugMonitor Monitor(ushort breakpointAddress, DebugEventTypes eventTypes, Func<DebugState, DebugResponse> handler)
         {
-            if (_cpu.Debug.Breakpoints.Contains(breakpointAddress))
+            if (!_cpu.Debug.Breakpoints.Contains(breakpointAddress))
             {
-                throw new DebuggerException("Specified breakpoint does not exist.");
+                _cpu.Debug.AddBreakpoint(breakpointAddress);
             }
 
             lock (_monitors)
@@ -68,7 +70,7 @@ namespace Zem80.Core.Debugger
 
             foreach (DebugMonitor monitor in monitors)
             {
-                if (monitor.State == MonitorState.Active || monitor.Breaks(state.Address))
+                if (monitor.State == MonitorState.Active || monitor.ShouldBreakAt(state.Address))
                 {
                     DebugResponse response = monitor.Step(state.Address, state);
                     if (response == DebugResponse.Stop)

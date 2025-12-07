@@ -58,6 +58,8 @@ namespace Zem80.Core.CPU
 
             OnInitialised += (sender, args) =>
             {
+                // pause the timer when debugging starts, and resume it when debugging ends
+                // while debugging, instructions will run without any timing constraints
                 _cpu.Debug.OnBreakpointReached += (sender, args) => { if (!_stopped) _timer.Stop(); };
                 _cpu.Debug.OnDebugSessionEnded += (sender, args) => { if (!_stopped) _timer.Start(); };
             };

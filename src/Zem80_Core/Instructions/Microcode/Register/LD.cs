@@ -102,6 +102,7 @@ namespace Zem80.Core.CPU
                 flags.Y = (input & 0x20) > 0; // copy bit 5
             }
 
+            // LD is the last instruction that's implemented with a bit long switch statement - one to fix in the next version
             switch (instruction.Prefix)
             {
                 case 0x00:

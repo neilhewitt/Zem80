@@ -10,7 +10,7 @@ namespace Zem80.Core.Debugger
         public DebugEventTypes EventTypes { get; }
         public Func<DebugState, DebugResponse> Handler { get; }
 
-        public bool Breaks(ushort instructionAddress)
+        internal bool ShouldBreakAt(ushort instructionAddress)
         {
             if (_breakpointAddress == null || instructionAddress == _breakpointAddress.Value)
             {

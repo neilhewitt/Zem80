@@ -57,7 +57,9 @@ namespace Zem80.Core.CPU
 
         public virtual void WaitForNextClockTick()
         {
-            while (!_cpu.Debug.IsDebugging && _cpu.Suspended) ; // if Suspend() is called in the middle of an instruction cycle, we want to stop immediately
+            // if Suspend() is called in the middle of an instruction cycle, we want to stop immediately
+            // but we don't want to stop while debugging, because the clock is already suspended
+            while (!_cpu.Debug.IsDebugging && _cpu.Suspended) ;
 
             Ticks++;
             OnTick?.Invoke(this, Ticks);

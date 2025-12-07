@@ -25,6 +25,10 @@ namespace Zem80.Core.CPU
         // execute an instruction directly (without the processor loop running), for example for directly testing instructions
         public void ExecuteDirect(byte[] opcode)
         {
+            // we're going to write the opcode bytes into memory at the current PC, and run them there
+            // so when you call this method, you need to have properly intialised the CPU and memory map
+            // and (if necessary) set PC where you want it, otherwise it defaults to 0x0000
+
             Array.Resize(ref opcode, 4); // must be 4 bytes to decode
             _cpu.Memory.WriteBytesAt(_cpu.Registers.PC, opcode);
             InstructionPackage package = InstructionDecoder.DecodeInstruction(opcode, _cpu.Registers.PC);
@@ -36,6 +40,8 @@ namespace Zem80.Core.CPU
         // execute an instruction directly (specified by mnemonic, so no decoding necessary)
         public void ExecuteDirect(string mnemonic, byte? arg1, byte? arg2)
         {
+            // do *you* know where your program counter is? You'd better do before you call this method
+
             if (!InstructionSet.InstructionsByMnemonic.TryGetValue(mnemonic, out Instruction instruction))
             {
                 throw new InstructionDecoderException("Supplied mnemonic does not correspond to a valid instruction");

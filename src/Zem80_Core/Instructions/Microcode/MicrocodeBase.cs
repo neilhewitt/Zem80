@@ -12,7 +12,7 @@ namespace Zem80.Core.CPU
         protected Action<ExecutionState> _onMachineCycle;
         protected IList<MachineCycle> _machineCycles;
 
-        protected InstructionMachineCycles MachineCycle { get; private set; }
+        public InstructionMachineCycles MachineCycle { get; private set; }
 
         public void Setup(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
@@ -28,42 +28,9 @@ namespace Zem80.Core.CPU
         {
             if (_onMachineCycle != null)
             {
-                if (cycle !=null)
+                if (cycle != null)
                 {
                     ExecutionState state = new ExecutionState(_package.Instruction, arg1, arg2, _cpu.Flags.Clone(), _cpu.Registers.Snapshot(), cycle);
-                    _onMachineCycle(state);
-                }
-            }
-        }
-
-        public void NotifyMachineCycle(int cycleIndex)
-        {
-            NotifyMachineCycle(cycleIndex, null, null);
-        }
-
-        public void NotifyMachineCycle(int cycleIndex, byte arg1)
-        {
-            NotifyMachineCycle(cycleIndex, arg1, null);
-        }
-
-        public void NotifyMachineCycle(int cycleIndex, byte arg1, byte arg2)
-        {
-            NotifyMachineCycle(cycleIndex, arg1, arg2);
-        }
-
-        public void NotifyMachineCycle(int cycleIndex, ushort args)
-        {
-            NotifyMachineCycle(cycleIndex, args.LowByte(), args.HighByte());
-        }   
-
-        private void NotifyMachineCycle(int cycleIndex, byte? arg1, byte? arg2)
-        {
-            if (_onMachineCycle != null)
-            {
-                MachineCycle machineCycle = _machineCycles.Count >= cycleIndex ? _machineCycles[cycleIndex - 1] : null;
-                if (machineCycle != null)
-                {
-                    ExecutionState state = new ExecutionState(_package.Instruction, arg1, arg2, _cpu.Flags.Clone(), _cpu.Registers.Snapshot(), machineCycle);
                     _onMachineCycle(state);
                 }
             }

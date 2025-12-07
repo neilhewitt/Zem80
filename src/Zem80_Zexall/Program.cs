@@ -20,7 +20,7 @@ namespace Zem80_Zexall
             Console.ForegroundColor = ConsoleColor.Green;
             Console.CursorVisible = false;
 
-            VirtualMachine vm = new VirtualMachine(enforceTiming: false, clock: ClockMaker.NoClock());
+            VirtualMachine vm = new VirtualMachine(enforceTiming: false, clock: ClockMaker.NotAClock());
             vm.Load(0x0005, "..\\..\\..\\zexall\\cpm_patch.bin");
             vm.Load(0x0100, "..\\..\\..\\zexall\\zexall.bin");
             vm.Start(address: 0x100, synchronous: true, debugOutput: false);//, callbackAfterInstructionExecute: Callback);//, outputLogPath: "zexall.log");

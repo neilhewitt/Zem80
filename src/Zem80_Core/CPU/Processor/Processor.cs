@@ -30,8 +30,6 @@ namespace Zem80.Core.CPU
         public IMemoryBank Memory { get; private set; }
         public IClock Clock { get; private set; }
 
-        public DebugProcessor Debug { get; private set; }
-
         public IReadOnlyFlags Flags => new Flags(Registers.F, true);
 
         public bool Running => _running;
@@ -50,6 +48,8 @@ namespace Zem80.Core.CPU
         public event EventHandler OnSuspend;
         public event EventHandler OnResume;
         public event EventHandler<HaltReason> OnHalt;
+
+        public DebugProcessor Debug { get; private set; }
 
         public void Dispose()
         {
@@ -96,6 +96,7 @@ namespace Zem80.Core.CPU
 
         public void Resume()
         {
+            // resume comes back from a HALT or when the processor has been suspended
             if (_halted)
             {
                 _halted = false;
@@ -156,15 +157,8 @@ namespace Zem80.Core.CPU
                     // when the Z80 is *halted*, it doesn't stop running. It continuously executes NOP instructions until an interrupt occurs;
                     // if not halted we provide the 4 bytes at the Program Counter to the decoder
                     // note that instructions can be 1-4 bytes long, but we always send the next 4 bytes to the decoder
-                    if (_halted)
-                    {
-                        package = new InstructionPackage(InstructionSet.NOP, new InstructionData(), address);
-                    }
-                    else
-                    {
-                        byte[] instructionBytes = Memory.ReadBytesAt(address, 4);
-                        package = InstructionDecoder.DecodeInstruction(instructionBytes, address);
-                    }
+                    byte[] instructionBytes = _halted ? new byte[4] : Memory.ReadBytesAt(address, 4);
+                    package = InstructionDecoder.DecodeInstruction(instructionBytes, address);
 
                     // on the real Z80, during instruction decode, memory timing for the opcode fetch and operand reads is happening
                     // but here we will simulate the timing based on the instruction package received
@@ -172,8 +166,8 @@ namespace Zem80.Core.CPU
                     Timing.AddOpcodeFetchTiming(package.Instruction, address, NotifyMachineCycle);
                     Timing.AddOperandReadTiming(package.Instruction, address, NotifyMachineCycle, package.Data.Argument1, package.Data.Argument2);
 
-                    // advance the Program Counter to the start of the next instruction - but the current instruction may still change it
-                    // if we're halted, we don't advance the PC here as we want to stay on the HALT instruction
+                    // advance the Program Counter to the start of the next instruction (but the current instruction may change it again)
+                    // if we're halted, we don't advance the PC here as we want to stay on the HALT instruction ready to resume
                     if (!_halted) Registers.PC += (ushort)package.Instruction.SizeInBytes;
                     ExecuteInstruction(package);
 
@@ -216,6 +210,7 @@ namespace Zem80.Core.CPU
         public Processor()
             : this(null, null, null, null, null, null, null, null, null)
         {
+            // just defaults everything - provided for test scenarios and reflection
         }
 
         public Processor(IMemoryBank memory = null, IMemoryMap map = null, IStack stack = null, IClock clock = null, IRegisters registers = null, IPorts ports = null,
@@ -224,7 +219,7 @@ namespace Zem80.Core.CPU
             Debug = new DebugProcessor(this, ExecuteInstruction);
 
             // default clock is the RealTimeClock at 4MHz (which is the normal Z80 clock speed) - this will attempt to run as close to real time
-            // as possible on a non-deterministic platform like .NET, but this only works if the host platform has a high-resolution timer
+            // as possible on a non-real-time platform like .NET, but this only works if the host platform has a high-resolution timer
             // otherwise this clock will just run as fast as the host platform can manage and timing will not be accurate
             Clock = clock ?? ClockMaker.RealTimeClock(DEFAULT_PROCESSOR_FREQUENCY_IN_MHZ);
             Clock.Initialise(this);

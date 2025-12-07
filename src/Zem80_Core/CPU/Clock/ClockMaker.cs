@@ -3,11 +3,14 @@ using System.Diagnostics;
 
 namespace Zem80.Core.CPU
 {
+    // there's a bit of ceremony around creating clocks, so we use a factory class
+    // to avoid making the constructors complicated
     public static class ClockMaker
     {
-        public static IClock NoClock(int pretendFrequencyInMHz = 4)
+        // pretends to be a clock running at xMHz, but actually runs as fast as possible with no timing at all
+        public static IClock NotAClock(int pretendFrequencyInMHz = 4)
         {
-            return new NoClock(pretendFrequencyInMHz);
+            return new NotAClock(pretendFrequencyInMHz);
         }
 
         // attempts to run all events at the same time intervals they would run on the actual hardware
@@ -51,8 +54,8 @@ namespace Zem80.Core.CPU
             return new RealTimeClock(frequencyInMHz, cycleWaitPattern);
         }
 
-        // runs as fast as possible, but only for as many ticks as there would be in the defined slice of time
-        // after which the CPU *emulation* suspends until the end of the time slice in real time, then begins the next slice
+        // runs as fast as possible, but only for as many Z80 ticks as there *would* be in the defined slice of time
+        // after which the CPU emulation suspends until the end of that time slice in real time, then resumes and begins the next slice
         // (note: suspend is NOT the same as halt - the CPU loop is paused, whereas during halt the CPU executes NOPs)
         public static IClock TimeSlicedClock(float frequencyInMHz, TimeSpan timeSlice)
         {

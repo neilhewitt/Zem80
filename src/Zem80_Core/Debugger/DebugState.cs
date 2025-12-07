@@ -12,6 +12,7 @@ namespace Zem80.Core.Debugger
         public byte Arg1 { get; }
         public byte Arg2 { get; }
         public bool ProgramCounterWasModified { get; }
+        public bool IsAfterInstructionExecution { get; }
 
         public string EventName { get; }
         public string Disassembly { get; }
@@ -29,6 +30,7 @@ namespace Zem80.Core.Debugger
 
             Disassembly = Instruction.Disassemble(Instruction, Arg1, Arg2);
             ProgramCounterWasModified = result.ProgramCounterWasModified;
+            IsAfterInstructionExecution = true;
         }
 
         public DebugState(IRegisters registers, IReadOnlyFlags flags, InstructionPackage instructionPackage, string eventName)
