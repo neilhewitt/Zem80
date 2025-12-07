@@ -6,7 +6,13 @@ namespace Zem80.Core.CPU
 {
     public class AND : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        // AND r
+        // AND n
+        // AND (HL)
+        // AND (IX+o)
+        // AND (IY+o)
+
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;

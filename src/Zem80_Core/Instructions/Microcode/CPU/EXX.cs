@@ -6,7 +6,7 @@ namespace Zem80.Core.CPU
 {
     public class EXX : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             cpu.Registers.ExchangeBCDEHL();
             return new ExecutionResult(package, null);

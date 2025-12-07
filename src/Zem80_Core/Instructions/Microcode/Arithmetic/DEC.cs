@@ -6,7 +6,13 @@ namespace Zem80.Core.CPU
 {
     public class DEC : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        // DEC r
+        // DEC (HL)
+        // DEC (IX+o)
+        // DEC (IY+o)
+        // DEC rr
+
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;

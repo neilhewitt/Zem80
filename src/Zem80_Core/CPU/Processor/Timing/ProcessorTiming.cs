@@ -44,16 +44,23 @@ namespace Zem80.Core.CPU
             _waitCyclesPending += waitCycles;
         }
 
-        public void AddOpcodeFetchTiming(Instruction instruction, ushort address)
+        public void AddOpcodeFetchTiming(Instruction instruction, ushort address, Action<ExecutionState> notifyMachineCycle)
         {
+            // for indexed instructions, the 1st and 2nd bytes are the prefix and opcode,
+            // then the 3rd byte is the displacement, then the 4th byte is opcode again
+            // and the final opcode byte read is timed as an internal operation of 5 cycles
+            // this is implemented in the microcode, so it's fine that we miss it here
+
             int opcodeByteIndex = 0;
-            foreach (MachineCycle machineCycle in instruction.MachineCycles.OpcodeFetches)
+            foreach (MachineCycle machineCycle in instruction.MachineCycles.OpcodeFetches) // doesn't include the final opcode byte for indexed instructions
             {
-                OpcodeFetchCycle(address, instruction.OpcodeBytes[opcodeByteIndex++], machineCycle.TStates);
+                byte opcode = instruction.OpcodeBytes[opcodeByteIndex++];
+                OpcodeFetchCycle(address, opcode, machineCycle.TStates);
+                notifyMachineCycle(new ExecutionState(instruction, opcode, null, _cpu.Flags.Clone(), _cpu.Registers.Snapshot(), machineCycle));
             }
         }
 
-        public void AddOperandReadTiming(Instruction instruction, ushort address, params byte[] operands)
+        public void AddOperandReadTiming(Instruction instruction, ushort address, Action<ExecutionState> notifyMachineCycle, params byte[] operands)
         {
             // move on to the operand bytes
             address += (ushort)instruction.MachineCycles.OpcodeFetches.Count();
@@ -62,7 +69,9 @@ namespace Zem80.Core.CPU
             int operandByteIndex = 0;
             foreach (MachineCycle machineCycle in instruction.MachineCycles.OperandReads)
             {
-                MemoryReadCycle(address, operands[operandByteIndex++], machineCycle.TStates);
+                byte operand = operands[operandByteIndex++];
+                MemoryReadCycle(address, operand, machineCycle.TStates);
+                notifyMachineCycle(new ExecutionState(instruction, operand, null, _cpu.Flags.Clone(), _cpu.Registers.Snapshot(), machineCycle));
             }
         }
 

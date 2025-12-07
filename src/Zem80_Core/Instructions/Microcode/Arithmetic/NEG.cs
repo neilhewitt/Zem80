@@ -6,7 +6,7 @@ namespace Zem80.Core.CPU
 {
     public class NEG : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             IRegisters r = cpu.Registers;
             Flags flags = cpu.Flags.Clone();

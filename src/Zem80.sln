@@ -12,6 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 		..\LICENSE.md = ..\LICENSE.md
 		..\README.md = ..\README.md
+		z80_instructions_machine_cycles.md = z80_instructions_machine_cycles.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zem80_SimpleVM", "Zem80_SimpleVM\Zem80_SimpleVM.csproj", "{2CE7281F-B876-46E7-A571-56E6C55F2A0F}"

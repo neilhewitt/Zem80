@@ -6,7 +6,7 @@ namespace Zem80.Core.CPU
 {
     public class NOP : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             return new ExecutionResult(package, null);
         }

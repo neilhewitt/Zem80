@@ -6,7 +6,13 @@ namespace Zem80.Core.CPU
 {
     public class CP : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        // CP r
+        // CP n
+        // CP (HL)
+        // CP (IX+o)
+        // CP (IY+o)
+
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;

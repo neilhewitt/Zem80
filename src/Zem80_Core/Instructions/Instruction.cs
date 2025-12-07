@@ -63,6 +63,8 @@ namespace Zem80.Core.CPU
         public bool TargetsWordRegister { get; private set; }
         public bool TargetsByteInMemory { get; private set; }
         public bool CopiesResultToRegister { get; private set; }
+        public bool TakesByte { get; private set; }
+        public bool TakesWord { get; private set; }
         public ByteRegister CopyResultTo { get; private set; }
 
         public Instruction(int opcode, string mnemonic, Condition condition, InstructionElement target, InstructionElement source, InstructionElement arg1, InstructionElement arg2, 
@@ -98,6 +100,8 @@ namespace Zem80.Core.CPU
             HasIntermediateDisplacementByte = Prefix == 0xDDCB || Prefix == 0xFDCB;
             IsConditional = Condition != Condition.None;
             IsLoopingInstruction = (new[] { "CPDR", "CPIR", "INDR", "INIR", "OTDR", "OTIR", "LDDR", "LDIR" }).Contains(mnemonic);
+            TakesByte = Source == InstructionElement.ByteValue;
+            TakesWord = Source == InstructionElement.WordValue;
 
             // deal with timing + any exceptions
             MachineCycles = new InstructionMachineCycles(machineCycles);

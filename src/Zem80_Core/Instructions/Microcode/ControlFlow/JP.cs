@@ -7,7 +7,13 @@ namespace Zem80.Core.CPU
 {
     public class JP : IMicrocode
     {
-        public ExecutionResult Execute(Processor cpu, InstructionPackage package)
+        // JP nn
+        // JP cc,nn
+        // JP (HL)
+        // JP (IX)
+        // JP (IY)
+
+        public ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Instruction instruction = package.Instruction;
             InstructionData data = package.Data;

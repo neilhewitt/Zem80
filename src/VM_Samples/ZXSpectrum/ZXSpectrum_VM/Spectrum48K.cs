@@ -103,7 +103,7 @@ namespace ZXSpectrum.VM
                     3f, // Real Spectrum runs at 3.5MHz but contended memory etc slows it down, so we'll run at 3MHz which seems near enough right
                     TimeSpan.FromMilliseconds(20)
                     )
-                );            
+                );
 
             _ula = new ULA(_cpu); // models the ULA chip which controls the screen and sound
             _ula.OnUpdateDisplay += (sender, rgba) => OnUpdateDisplay(rgba);
