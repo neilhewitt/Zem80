@@ -31,25 +31,7 @@ namespace ZXSpectrum.VM
             lock (_keyboardLock)
             {
                 IEnumerable<SpectrumKey> spectrumKeys = SpectrumKeysForWindowsKey(windowsKeyCode);
-                SetSpectrumKeyStates(spectrumKeys, KeyState.Down);
-            }
-        }
-
-        public static void SendKeyDownPending(WindowsKey windowsKeyCode)
-        {
-            lock (_keyboardLock)
-            {
-                IEnumerable<SpectrumKey> spectrumKeys = SpectrumKeysForWindowsKey(windowsKeyCode);
                 _pendingKeysDown.AddRange(spectrumKeys);
-            }
-        }
-
-        public static void SendKeyUpPending(WindowsKey windowsKeyCode)
-        {
-            lock (_keyboardLock)
-            {
-                IEnumerable<SpectrumKey> spectrumKeys = SpectrumKeysForWindowsKey(windowsKeyCode);
-                _pendingKeysUp.AddRange(spectrumKeys);
             }
         }
 
@@ -58,26 +40,15 @@ namespace ZXSpectrum.VM
             lock (_keyboardLock)
             {
                 IEnumerable<SpectrumKey> spectrumKeys = SpectrumKeysForWindowsKey(windowsKeyCode);
-                SetSpectrumKeyStates(spectrumKeys, KeyState.Up);
+                _pendingKeysUp.AddRange(spectrumKeys);
             }
         }
+
 
         public static void SendKeyDown(VirtualKey virtualKeyCode)
         {
             WindowsKey windowsKey = KeyConverter.WindowsKeyFromVirtualKey(virtualKeyCode);
             SendKeyDown(windowsKey);
-        }
-
-        public static void SendKeyDownPending(VirtualKey virtualKeyCode)
-        {
-            WindowsKey windowsKey = KeyConverter.WindowsKeyFromVirtualKey(virtualKeyCode);
-            SendKeyDownPending(windowsKey);
-        }
-
-        public static void SendKeyUpPending(VirtualKey virtualKeyCode)
-        {
-            WindowsKey windowsKey = KeyConverter.WindowsKeyFromVirtualKey(virtualKeyCode);
-            SendKeyUpPending(windowsKey);
         }
 
         public static void SendKeyUp(VirtualKey virtualKeyCode)
@@ -86,7 +57,7 @@ namespace ZXSpectrum.VM
             SendKeyUp(windowsKey);
         }
 
-        public static void ProcessPendingKeyDowns()
+        internal static void ProcessPendingKeyDowns()
         {
             lock (_keyboardLock)
             {
@@ -96,7 +67,7 @@ namespace ZXSpectrum.VM
             }
         }
 
-        public static void ProcessPendingKeyUps()
+        internal static void ProcessPendingKeyUps()
         {
             lock (_keyboardLock)
             {

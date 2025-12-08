@@ -504,7 +504,7 @@ public partial class DisplayPage : ContentPage
 
                     if (sendKeysToEmulator)
                     {
-                        SpectrumKeyboard.SendKeyDownPending(key);
+                        SpectrumKeyboard.SendKeyDown(key);
                         return;
                     }
                     else if (_waitingForNextInstructionButton)
@@ -531,7 +531,7 @@ public partial class DisplayPage : ContentPage
                     // Same logic as KeyDown
                     if (sendKeysToEmulator)
                     {
-                        SpectrumKeyboard.SendKeyUpPending((VirtualKey)e.Key);
+                        SpectrumKeyboard.SendKeyUp((VirtualKey)e.Key);
                         return;
                     }
                 };

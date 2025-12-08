@@ -84,10 +84,10 @@ namespace ZXSpectrum.VM
 
             if (!_cpu.Debug.IsDebugging)
             {
+                // keys are queued until the interrupt, which makes the keyboard more responsive
                 SpectrumKeyboard.ProcessPendingKeyDowns();
-                SpectrumKeyboard.ProcessPendingKeyUps();
-
                 _cpu.Interrupts.RaiseMaskable();
+                SpectrumKeyboard.ProcessPendingKeyUps();
             }
         }
 
