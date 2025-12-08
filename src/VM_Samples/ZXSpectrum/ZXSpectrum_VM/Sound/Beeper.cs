@@ -22,7 +22,7 @@ namespace ZXSpectrum.VM.Sound
         // NOTE - varies by Spectrum model / region - TODO make configurable
         private int _tStatesPerSample;
         private int _tStatesPerFrame;
-        private int _bufferSize = 240000; // big enough but not big enough to cause audio latency
+        private int _bufferSize = 131072; // big enough but not big enough to cause audio latency
 
         private byte[][] _sampleData; // divided into three sets: empty, low frequency, high frequency
 

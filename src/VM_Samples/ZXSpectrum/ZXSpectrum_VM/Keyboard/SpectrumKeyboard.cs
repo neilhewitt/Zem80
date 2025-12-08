@@ -6,6 +6,11 @@ namespace ZXSpectrum.VM
 {
     public static class SpectrumKeyboard
     {
+        private static object _keyboardLock = new object();
+
+        private static List<SpectrumKey> _pendingKeysDown = new List<SpectrumKey>();
+        private static List<SpectrumKey> _pendingKeysUp = new List<SpectrumKey>();
+
         private static IDictionary<int, string> _matrix = new Dictionary<int, string>()
         {
             { 0xF7, "12345" },
@@ -23,14 +28,38 @@ namespace ZXSpectrum.VM
         
         public static void SendKeyDown(WindowsKey windowsKeyCode)
         {
-            IEnumerable<SpectrumKey> spectrumKeys = SpectrumKeysForWindowsKey(windowsKeyCode);
-            SetSpectrumKeyStates(spectrumKeys, KeyState.Down);
+            lock (_keyboardLock)
+            {
+                IEnumerable<SpectrumKey> spectrumKeys = SpectrumKeysForWindowsKey(windowsKeyCode);
+                SetSpectrumKeyStates(spectrumKeys, KeyState.Down);
+            }
+        }
+
+        public static void SendKeyDownPending(WindowsKey windowsKeyCode)
+        {
+            lock (_keyboardLock)
+            {
+                IEnumerable<SpectrumKey> spectrumKeys = SpectrumKeysForWindowsKey(windowsKeyCode);
+                _pendingKeysDown.AddRange(spectrumKeys);
+            }
+        }
+
+        public static void SendKeyUpPending(WindowsKey windowsKeyCode)
+        {
+            lock (_keyboardLock)
+            {
+                IEnumerable<SpectrumKey> spectrumKeys = SpectrumKeysForWindowsKey(windowsKeyCode);
+                _pendingKeysUp.AddRange(spectrumKeys);
+            }
         }
 
         public static void SendKeyUp(WindowsKey windowsKeyCode)
         {
-            IEnumerable<SpectrumKey> spectrumKeys = SpectrumKeysForWindowsKey(windowsKeyCode);
-            SetSpectrumKeyStates(spectrumKeys, KeyState.Up);
+            lock (_keyboardLock)
+            {
+                IEnumerable<SpectrumKey> spectrumKeys = SpectrumKeysForWindowsKey(windowsKeyCode);
+                SetSpectrumKeyStates(spectrumKeys, KeyState.Up);
+            }
         }
 
         public static void SendKeyDown(VirtualKey virtualKeyCode)
@@ -39,10 +68,42 @@ namespace ZXSpectrum.VM
             SendKeyDown(windowsKey);
         }
 
+        public static void SendKeyDownPending(VirtualKey virtualKeyCode)
+        {
+            WindowsKey windowsKey = KeyConverter.WindowsKeyFromVirtualKey(virtualKeyCode);
+            SendKeyDownPending(windowsKey);
+        }
+
+        public static void SendKeyUpPending(VirtualKey virtualKeyCode)
+        {
+            WindowsKey windowsKey = KeyConverter.WindowsKeyFromVirtualKey(virtualKeyCode);
+            SendKeyUpPending(windowsKey);
+        }
+
         public static void SendKeyUp(VirtualKey virtualKeyCode)
         {
             WindowsKey windowsKey = KeyConverter.WindowsKeyFromVirtualKey(virtualKeyCode);
             SendKeyUp(windowsKey);
+        }
+
+        public static void ProcessPendingKeyDowns()
+        {
+            lock (_keyboardLock)
+            {
+                if (_pendingKeysDown.Count == 0) return;
+                SetSpectrumKeyStates(_pendingKeysDown, KeyState.Down);
+                _pendingKeysDown.Clear();
+            }
+        }
+
+        public static void ProcessPendingKeyUps()
+        {
+            lock (_keyboardLock)
+            {
+                if (_pendingKeysUp.Count == 0) return;
+                SetSpectrumKeyStates(_pendingKeysUp, KeyState.Up);
+                _pendingKeysUp.Clear();
+            }
         }
 
         public static byte GetBitValuesFor(byte rowSelector, byte value)

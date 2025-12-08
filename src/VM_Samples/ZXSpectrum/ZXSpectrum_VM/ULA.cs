@@ -84,6 +84,9 @@ namespace ZXSpectrum.VM
 
             if (!_cpu.Debug.IsDebugging)
             {
+                SpectrumKeyboard.ProcessPendingKeyDowns();
+                SpectrumKeyboard.ProcessPendingKeyUps();
+
                 _cpu.Interrupts.RaiseMaskable();
             }
         }

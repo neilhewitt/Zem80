@@ -205,6 +205,10 @@ public partial class DisplayPage : ContentPage
             {
                 _vm.Start(result.FullPath);
             }
+            else
+            {
+                _vm.Start();
+            }
         }
         else
         {
@@ -500,7 +504,7 @@ public partial class DisplayPage : ContentPage
 
                     if (sendKeysToEmulator)
                     {
-                        SpectrumKeyboard.SendKeyDown(key);
+                        SpectrumKeyboard.SendKeyDownPending(key);
                         return;
                     }
                     else if (_waitingForNextInstructionButton)
@@ -527,7 +531,7 @@ public partial class DisplayPage : ContentPage
                     // Same logic as KeyDown
                     if (sendKeysToEmulator)
                     {
-                        SpectrumKeyboard.SendKeyUp((VirtualKey)e.Key);
+                        SpectrumKeyboard.SendKeyUpPending((VirtualKey)e.Key);
                         return;
                     }
                 };
