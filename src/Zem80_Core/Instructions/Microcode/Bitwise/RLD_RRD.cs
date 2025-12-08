@@ -4,22 +4,34 @@ using System.Text;
 
 namespace Zem80.Core.CPU
 {
-    public class RRD : MicrocodeBase
+    public class RLD : RLD_RRD { public RLD() : base("RLD") { } }
+    public class RRD : RLD_RRD { public RRD() : base("RRD") { } }
+
+    public class RLD_RRD : MicrocodeBase
     {
+        bool _isRLD;
+
         public override ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
             Flags flags = cpu.Flags.Clone();
 
-            byte xHL = cpu.Memory.ReadByteAt(cpu.Registers.HL, 4);
+            byte xHL = cpu.Memory.ReadByteAt(cpu.Registers.HL, (byte?)(_isRLD ? 3 : 4));
             byte A = cpu.Registers.A;
 
-            // result = (HL) = LO: high-order bits of (HL) + HI: low-order bits of A
-            // A = LO: low-order bits of (HL) + HI: high-order bits of A
+            // result = (HL) = LO: high-order bits of (HL) + HI: high-order bits of A
+            // A = LO: low-order bits of (HL) + HI: low-order bits of A
 
             byte lowA = A.GetLowNybble();
-            A = A.SetLowNybble(xHL.GetLowNybble());
-            xHL = xHL.SetLowNybble(xHL.GetHighNybble());
-            xHL = xHL.SetHighNybble(lowA);
+            byte lowxHL = xHL.GetLowNybble();
+            byte highxHL = xHL.GetHighNybble();
+
+            // pattern is:
+            // RLD: A.low = xHL.high; xHL.high = xHL.low; xHL.low = A.low
+            // RRD: A.low = xHL.low;  xHL.high = A.low;   xHL.low = xHL.high;
+
+            A = A.SetLowNybble(_isRLD ? highxHL : lowxHL);
+            xHL = xHL.SetHighNybble(_isRLD ? lowxHL : lowA);
+            xHL = xHL.SetLowNybble(_isRLD ? lowA : highxHL);
 
             cpu.Timing.InternalOperationCycle(4);
             cpu.Memory.WriteByteAt(cpu.Registers.HL, xHL, 3);
@@ -41,8 +53,9 @@ namespace Zem80.Core.CPU
             return new ExecutionResult(package, flags);
         }
 
-        public RRD()
+        public RLD_RRD(string z80Mnemonic)
         {
+            _isRLD = (z80Mnemonic == "RLD");
         }
     }
 }

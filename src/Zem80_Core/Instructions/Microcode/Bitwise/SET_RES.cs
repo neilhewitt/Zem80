@@ -4,12 +4,17 @@ using System.Text;
 
 namespace Zem80.Core.CPU
 {
-    public class RES : MicrocodeBase
+    public class SET : SET_RES { public SET() : base("SET") {} }
+    public class RES : SET_RES { public RES() : base("RES") {} }
+
+    public class SET_RES : MicrocodeBase
     {
-        // RES b,r
-        // RES b,(HL)
-        // RES b,(IX+o)
-        // RES b,(IY+o)
+        // SET / RES b,r
+        // SET / RES b,(HL)
+        // SET / RES b,(IX+o)
+        // SET / RES b,(IY+o)
+
+        bool _set;
 
         public override ExecutionResult Execute(Processor cpu, InstructionPackage package, Action<ExecutionState> onMachineCycle)
         {
@@ -18,19 +23,20 @@ namespace Zem80.Core.CPU
             IRegisters r = cpu.Registers;
             byte bitIndex = instruction.BitIndex;
             sbyte offset = (sbyte)(data.Argument1);
+            
             ByteRegister register = instruction.Source.AsByteRegister();
-
             if (register != ByteRegister.None)
             {
-                byte value = r[register].SetBit(bitIndex, false);
+                byte value = r[register].SetBit(bitIndex, _set);
                 r[register] = value;
             }
             else
             {
                 ushort address = Resolver.GetSourceAddress(instruction, cpu, offset);
                 if (instruction.IsIndexed) cpu.Timing.InternalOperationCycle(5);
+                
                 byte value = cpu.Memory.ReadByteAt(address, 4);
-                value = value.SetBit(bitIndex, false);
+                value = value.SetBit(bitIndex, _set);
                 cpu.Memory.WriteByteAt(address, value, 3);
                 if (instruction.CopiesResultToRegister)
                 {
@@ -41,8 +47,9 @@ namespace Zem80.Core.CPU
             return new ExecutionResult(package, null);
         }
 
-        public RES()
+        public SET_RES(string z80Mnemonic)
         {
+            _set = z80Mnemonic == "SET";
         }
     }
 }

@@ -9,11 +9,11 @@ namespace Zem80.Core.CPU
 
     public class INC_DEC : MicrocodeBase
     {
-        // INC r
-        // INC (HL)
-        // INC (IX+o)
-        // INC (IY+o)
-        // INC rr
+        // INC/DEC r
+        // INC/DEC (HL)
+        // INC/DEC (IX+o)
+        // INC/DEC (IY+o)
+        // INC/DEC rr
 
         private bool _inc;
 
