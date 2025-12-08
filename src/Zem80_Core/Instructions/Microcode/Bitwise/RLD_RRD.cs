@@ -18,9 +18,6 @@ namespace Zem80.Core.CPU
             byte xHL = cpu.Memory.ReadByteAt(cpu.Registers.HL, (byte?)(_isRLD ? 3 : 4));
             byte A = cpu.Registers.A;
 
-            // result = (HL) = LO: high-order bits of (HL) + HI: high-order bits of A
-            // A = LO: low-order bits of (HL) + HI: low-order bits of A
-
             byte lowA = A.GetLowNybble();
             byte lowxHL = xHL.GetLowNybble();
             byte highxHL = xHL.GetHighNybble();

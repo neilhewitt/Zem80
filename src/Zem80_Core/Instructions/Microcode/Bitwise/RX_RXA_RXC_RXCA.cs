@@ -15,10 +15,6 @@ namespace Zem80.Core.CPU
 
     public class RX_RXA_RXC_RXCA : MicrocodeBase
     {
-        private bool _left;
-        private bool _throughA;
-        private bool _withCarry;
-        private bool _bcd;
         private string _mnemonic;
 
         // this class implements all of the bitwise rotation instructions (except RLD/RRD) as a complex:
@@ -90,10 +86,6 @@ namespace Zem80.Core.CPU
 
         public RX_RXA_RXC_RXCA(string z80Mnemonic)
         {
-            _left = z80Mnemonic.StartsWith("RL");
-            _throughA = z80Mnemonic.EndsWith("A");
-            _withCarry = z80Mnemonic.Contains("C");
-            _bcd = z80Mnemonic.Contains("D");
             _mnemonic = z80Mnemonic;
         }
     }

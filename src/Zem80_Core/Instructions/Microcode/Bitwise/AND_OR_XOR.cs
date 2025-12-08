@@ -10,11 +10,11 @@ namespace Zem80.Core.CPU
 
     public class AND_OR_XOR : MicrocodeBase
     {
-        // AND r
-        // AND n
-        // AND (HL)
-        // AND (IX+o)
-        // AND (IY+o)
+        // AND/OR/XOR r
+        // AND/OR/XOR n
+        // AND/OR/XOR (HL)
+        // AND/OR/XOR (IX+o)
+        // AND/OR/XOR (IY+o)
 
         private LogicalOperation _operation;
 
